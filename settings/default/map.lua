@@ -57,7 +57,7 @@ xi.settings.map =
     EXP_PARTY_GAP_PENALTIES = true,
 
     -- Capacity Point Settings
-    CAPACITY_RATE = 1.0,
+    CAPACITY_RATE = 10.0,
 
     -- Determines Vana'diel time epoch (886/1/1 Firesday)
     -- current timestamp - vanadiel_time_epoch = vana'diel time

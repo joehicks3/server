@@ -3830,6 +3830,7 @@ INSERT INTO `mob_droplist` VALUES (420,0,0,1000,5381,@UNCOMMON); -- Pileus Cell 
 INSERT INTO `mob_droplist` VALUES (420,0,0,1000,5382,@UNCOMMON); -- Mediocris Cell (Uncommon, 10%)
 
 -- ZoneID: 107 - Carnero
+INSERT INTO `mob_droplist` VALUES (421,0,0,1000,27556,330);  	 -- Echad Ring (33%)
 INSERT INTO `mob_droplist` VALUES (421,0,0,1000,17811,@ALWAYS);  -- Katayama Ichimonji (Always, 100%)
 INSERT INTO `mob_droplist` VALUES (421,0,0,1000,882,170);        -- Sheep Tooth (17.0%)
 INSERT INTO `mob_droplist` VALUES (421,0,0,1000,505,120);        -- Sheepskin (12.0%)
@@ -7473,6 +7474,7 @@ INSERT INTO `mob_droplist` VALUES (916,0,0,1000,3173,90);   -- Goetia Seal Legs 
 INSERT INTO `mob_droplist` VALUES (916,0,0,1000,3184,90);   -- Callers Seal Legs (9.0%)
 
 -- ZoneID: 100 - Fungus Beetle
+INSERT INTO `mob_droplist` VALUES (917,0,0,1000,11811,330); -- Destrier Beret (33%)
 INSERT INTO `mob_droplist` VALUES (917,0,0,1000,12371,@ALWAYS); -- Clipeus (Always, 100%)
 INSERT INTO `mob_droplist` VALUES (917,0,0,1000,894,@COMMON);   -- Beetle Jaw (Common, 15%)
 INSERT INTO `mob_droplist` VALUES (917,0,0,1000,846,@VCOMMON);  -- Insect Wing (Very Common, 24%)
@@ -11349,7 +11351,7 @@ INSERT INTO `mob_droplist` VALUES (1389,0,0,1000,2307,130);      -- Vial Of Jody
 -- ZoneID: 100 - Jaggedy-Eared Jack
 INSERT INTO `mob_droplist` VALUES (1390,0,0,1000,856,@VCOMMON); -- Rabbit Hide (Very Common, 24%)
 INSERT INTO `mob_droplist` VALUES (1390,0,0,1000,4358,@COMMON); -- Slice Of Hare Meat (Common, 10%)
-INSERT INTO `mob_droplist` VALUES (1390,0,0,1000,13112,@VRARE); -- Rabbit Charm (Very Rare, 1%)
+INSERT INTO `mob_droplist` VALUES (1390,0,0,1000,13112,@ALWAYS); -- Rabbit Charm (Always, 100%)
 INSERT INTO `mob_droplist` VALUES (1390,2,0,1000,4389,0);       -- San Dorian Carrot (Steal)
 
 -- ZoneID:  80 - Jagidbod Of Clan Reaper
@@ -18236,6 +18238,7 @@ INSERT INTO `mob_droplist` VALUES (2307,0,0,1000,868,130); -- Handful Of Pugil S
 INSERT INTO `mob_droplist` VALUES (2307,2,0,1000,864,0);   -- Handful Of Fish Scales (Steal)
 
 -- ZoneID: 116 - Spiny Spipi
+INSERT INTO `mob_droplist` VALUES (2308,0,0,1000,16118,330); -- Moogle Cap (33%)
 INSERT INTO `mob_droplist` VALUES (2308,0,0,1000,13607,@VCOMMON); -- Mist Silk Cape (Very Common, 24%)
 INSERT INTO `mob_droplist` VALUES (2308,0,0,1000,1156,@UNCOMMON); -- Crawler Calculus (Uncommon, 10%)
 INSERT INTO `mob_droplist` VALUES (2308,0,0,1000,583,@RARE);      -- Smooth Stone (Rare, 5%)

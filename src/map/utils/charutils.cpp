@@ -884,6 +884,17 @@ namespace charutils
 
         luautils::OnZoneIn(PChar);
         luautils::OnGameIn(PChar, zoning == 1);
+		
+		if (zoning == 2)
+        {
+            // Send message to all logged in players
+            zoneutils::ForEachZone([&](CZone* PZone) {
+                PZone->ForEachChar([&](CCharEntity* PLoggedInChar) {
+                    PLoggedInChar->pushPacket(new CChatMessagePacket(PLoggedInChar, CHAT_MESSAGE_TYPE::MESSAGE_SYSTEM_1,
+                        fmt::format("{} has logged into the server.", PChar->GetName())));
+                });
+            });
+        }
     }
 
     void LoadSpells(CCharEntity* PChar)

@@ -23,6 +23,8 @@ entity.onTrigger = function(player, npc)
         17216,   165, 3, -- Light Crossbow
         17217,  2166, 3, -- Crossbow
         17336,     5, 3, -- Crossbow Bolt
+		21627,  25000, 3, -- Croc
+		21756, 25000, 3, --
     }
 
     player:showText(npc, ID.text.MJOLL_SHOP_DIALOG)

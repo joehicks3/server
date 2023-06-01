@@ -25,6 +25,29 @@ entity.onTrigger = function(player, npc)
         12417, 52289, 1,    -- Mythril Sallet
         12544, 45208, 1,    -- Breastplate
         12672, 23846, 1,    -- Gauntlets
+		13735, 50000, 3,    -- Haubergeon +1
+		13734, 50000, 3,    -- Scorpion Harness +1
+		1319, 100000, 3,    -- EAH
+		1320, 100000, 3,    -- EAB
+		1321, 100000, 3,    -- EAHA  
+		1322, 100000, 3,    -- EAL
+		1323, 100000, 3,    -- EAF
+		1355, 100000, 3,    -- CAH
+		1357, 100000, 3,    -- CAB
+		1359, 100000, 3,    -- CAHA
+		1361, 100000, 3,    -- CAL
+		1363, 100000, 3,    -- CAF
+		23375, 200000, 3, -- pummelersmask+3
+	    23442, 200000, 3, -- pumm.lorica+3
+	    23509, 200000, 3, -- pumm.mufflers+3
+	    23576, 200000, 3, -- pumm.cuisses+3
+	    23643, 200000, 3, -- pumm.calligae+3
+		23398, 200000, 3, -- agogemask+3
+	    23465, 200000, 3, -- agogelorica+3
+	    23532, 200000, 3, -- agogemufflers+3
+	    23599, 200000, 3, -- agogecuisses+3
+	    23666, 200000, 3, -- agogecalligae+3
+		
     }
 
     player:showText(npc, ID.text.BRUNHILDE_SHOP_DIALOG)

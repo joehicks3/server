@@ -23,6 +23,17 @@ entity.onTrigger = function(player, npc)
         189,  36000,    -- Autumn's End
         188,  31224,    -- Acolyte's Grief
         5085, 50400,    -- Scroll of Regen IV
+		1127,   500,    -- Kindred Seals
+		2955,   500,    -- Kindred Crests
+		2956,   500,    -- High Kindred Crests
+		2957,   500,    -- Sacred Kindred Crests
+		3541,   500,    -- Seasoning Stone
+		1450, 10000,    -- Lungo Jadeshell
+		1451, 10000,    -- Rimalia Stripeshell
+		1453, 10000,    -- Montiont Silverpiece
+		1454, 10000,    -- Ranperre Goldpiece
+		1456, 10000,    -- 100 Byne Bill
+		1457, 10000,    -- 10,000 Byne Bill
     }
 
     player:showText(npc, ID.text.DUTY_FREE_SHOP_DIALOG)

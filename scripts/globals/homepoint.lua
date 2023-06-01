@@ -152,7 +152,7 @@ local function getCost(from, to, key)
     then
         return 0
     else
-        return (500 * homepointData[to].fee) / (key and 5 or 1)
+        return (10 * homepointData[to].fee) / (key and 5 or 1)
     end
 end
 
