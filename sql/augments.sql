@@ -1724,7 +1724,7 @@ INSERT INTO `augments` VALUES (1432,0,0,0,0,0); -- Enhances "Ventriloquy" effect
 INSERT INTO `augments` VALUES (1433,0,0,0,0,0); -- Enhances "Role Reversal" effect
 INSERT INTO `augments` VALUES (1434,0,0,0,0,0); -- 1434 currently unused. Leave at zero. Edit+move or remove this note as new augments get discovered.
 INSERT INTO `augments` VALUES (1435,0,0,0,0,0); -- 1435 currently unused. Leave at zero. Edit+move or remove this note as new augments get discovered.
-INSERT INTO `augments` VALUES (1436,0,0,0,0,0); -- Enhances "No Foot" Rise effect
+INSERT INTO `augments` VALUES (1436,0,1076,1,0,0); -- Enhances "No Foot" Rise effect
 INSERT INTO `augments` VALUES (1437,0,0,0,0,0); -- Enhances "Fan Dance" effect
 INSERT INTO `augments` VALUES (1438,0,0,0,0,0); -- Enhances "Saber Dance" effect
 INSERT INTO `augments` VALUES (1439,0,0,0,0,0); -- Enhances "Closed Position" effect

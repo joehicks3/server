@@ -1826,6 +1826,9 @@ xi.mod =
 
     DIG_BYPASS_FATIGUE      = 1074, -- Chocobo digging modifier found in "Blue Race Silks". Modifier works as a direct percent.
     BREATH_DMG_DEALT        = 1075, -- Breath damage dealt
+	
+	-- AF3 AUGMENTS
+	NO_FOOT_RISE_EFFECT		= 1076, -- Adds 50tp / merit
 
     -- IF YOU ADD ANY NEW MODIFIER HERE, ADD IT IN src/map/modifier.h ASWELL!
 

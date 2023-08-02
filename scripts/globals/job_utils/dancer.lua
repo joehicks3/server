@@ -282,13 +282,20 @@ end
 
 xi.job_utils.dancer.useNoFootRiseAbility = function(player, target, ability, action)
     local addedMoves = player:getMerit(xi.merit.NO_FOOT_RISE)
+	local gearMod    = player:getMod(xi.mod.NO_FOOT_RISE_EFFECT)
     local fmEffect   = player:getStatusEffect(xi.effect.FINISHING_MOVE_1)
+	local tpGained   = addedMoves * 50
 
     if fmEffect then
         addedMoves = addedMoves + fmEffect:getPower()
     end
 
     addedMoves = math.min(addedMoves, getMaxFinishingMoves(player))
+	
+	if gearMod > 0 then
+		player:addTP(tpGained)
+	end
+	
     setFinishingMoves(player, addedMoves)
 
     return addedMoves
