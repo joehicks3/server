@@ -5,15 +5,10 @@
 -- https://ffxiclopedia.wikia.com/wiki/Logging
 -- https://ffxiclopedia.wikia.com/wiki/Mining
 -----------------------------------
-require("scripts/globals/items")
-require("scripts/globals/keyitems")
 require("scripts/globals/missions")
 require("scripts/globals/npc_util")
 require("scripts/globals/quests")
 require("scripts/globals/roe")
-require("scripts/globals/settings")
-require("scripts/globals/spell_data")
-require("scripts/globals/status")
 require("scripts/globals/zone")
 require("scripts/missions/amk/helpers")
 require("scripts/missions/wotg/helpers")
@@ -1533,6 +1528,21 @@ xi.helm.onTrade = function(player, npc, trade, helmType, csid, func)
 
             if uses == 0 then
                 movePoint(player, npc, zoneId, info)
+            end
+
+            if
+                xi.events and
+                xi.events.eggHunt and
+                xi.events.eggHunt.enabledCheck and
+                xi.events.eggHunt.enabledCheck() and
+                player:getCharVar("[EGG_HUNT]DAILY_HELM") < VanadielUniqueDay()
+            then
+                player:timer(3000, function(playerArg)
+                    if npcUtil.giveItem(playerArg, math.random(xi.items.A_EGG, xi.items.Z_EGG)) then
+                        playerArg:setCharVar("[EGG_HUNT]DAILY_HELM", VanadielUniqueDay())
+                        return
+                    end
+                end)
             end
 
             player:triggerRoeEvent(xi.roe.triggers.helmSuccess, { ["skillType"] = helmType })

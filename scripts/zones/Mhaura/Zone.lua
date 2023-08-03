@@ -3,9 +3,7 @@
 -----------------------------------
 local ID = require('scripts/zones/Mhaura/IDs')
 require('scripts/globals/conquest')
-require('scripts/globals/keyitems')
 require('scripts/globals/missions')
-require('scripts/globals/settings')
 require('scripts/globals/zone')
 -----------------------------------
 local zoneObject = {}
@@ -80,10 +78,10 @@ zoneObject.onTransportEvent = function(player, transport)
     end
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 200 then
         local DepartureTime = VanadielHour()
 

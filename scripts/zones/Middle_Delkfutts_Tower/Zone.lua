@@ -4,7 +4,6 @@
 local ID = require('scripts/zones/Middle_Delkfutts_Tower/IDs')
 require('scripts/globals/conquest')
 require('scripts/globals/npc_util')
-require('scripts/globals/settings')
 require('scripts/globals/treasure')
 require('scripts/globals/quests')
 require('scripts/globals/titles')
@@ -53,10 +52,10 @@ end
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
     -- Teleporters
     if csid <= 11 and option == 1 then
         if csid == 0 then

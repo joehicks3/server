@@ -25,6 +25,7 @@ global_objects=(
     ai
     os
     _
+    _G
 
     Module
     Override
@@ -72,8 +73,6 @@ global_objects=(
     BattlefieldQuest
     Limbus
     SeasonalEvent
-
-    removeSleepEffects
 
     QUEST_AVAILABLE
     QUEST_ACCEPTED
@@ -145,7 +144,6 @@ global_objects=(
     handleAfflatusMisery
     handleNinjutsuDebuff
     handleThrenody
-    hasSleepEffects
     isValidHealTarget
     takeAbilityDamage
 

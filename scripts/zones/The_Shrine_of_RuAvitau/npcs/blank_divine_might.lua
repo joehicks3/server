@@ -4,10 +4,8 @@
 -- !pos -40 0 -151 178
 -----------------------------------
 local ID = require("scripts/zones/The_Shrine_of_RuAvitau/IDs")
-require("scripts/globals/keyitems")
 require("scripts/globals/missions")
 require("scripts/globals/quests")
-require("scripts/globals/settings")
 require("scripts/globals/titles")
 -----------------------------------
 local entity = {}
@@ -94,7 +92,7 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
     if
         (csid == 55 or csid == 59) and
         option == 2
@@ -103,7 +101,7 @@ entity.onEventUpdate = function(player, csid, option)
     end
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
     -- Flag Divine Might
     if
         (csid == 54 or csid == 56) and

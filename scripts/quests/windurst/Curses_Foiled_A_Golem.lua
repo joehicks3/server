@@ -1,12 +1,11 @@
 -----------------------------------
 -- Curses, Foiled A-Golem!?
 -----------------------------------
--- !addquest 2 34
+-- !addquest 2 63
 -- Shantotto       : !pos 122 -2 112 239
 -- Torino-Samarino : !pos 105 -20 140 111
 -- Cermet Door     : !pos -183 0 190 204
 -----------------------------------
-require('scripts/globals/items')
 require('scripts/globals/npc_util')
 require('scripts/globals/quests')
 require('scripts/globals/titles')
@@ -186,6 +185,9 @@ quest.sections =
             onEventFinish =
             {
                 [342] = function(player, csid, option, npc)
+                    -- Per FFXIclopedia: You can still get [Total Loser] at the
+                    -- title-changing NPC after the quest has been completed.
+                    player:addTitle(xi.title.TOTAL_LOSER)
                     quest:complete(player)
                 end,
             },

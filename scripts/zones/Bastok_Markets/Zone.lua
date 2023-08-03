@@ -3,7 +3,6 @@
 -----------------------------------
 require('scripts/globals/events/harvest_festivals')
 require('scripts/globals/cutscenes')
-require('scripts/globals/settings')
 require('scripts/globals/zone')
 local ID = require('scripts/zones/Bastok_Markets/IDs')
 -----------------------------------
@@ -40,10 +39,10 @@ zoneObject.onGameDay = function()
     end
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

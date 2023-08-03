@@ -3,7 +3,6 @@
 -----------------------------------
 local ID = require('scripts/zones/Port_Jeuno/IDs')
 require('scripts/globals/conquest')
-require('scripts/globals/settings')
 require('scripts/globals/chocobo')
 require('scripts/globals/quests')
 require('scripts/globals/zone')
@@ -70,10 +69,10 @@ zoneObject.onTransportEvent = function(player, transport)
     end
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 10010 then
         player:setPos(0, 0, 0, 0, 223)
     elseif csid == 10011 then

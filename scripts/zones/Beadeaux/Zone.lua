@@ -6,7 +6,6 @@ require('scripts/globals/conquest')
 require('scripts/globals/npc_util')
 require('scripts/globals/treasure')
 require('scripts/globals/quests')
-require('scripts/globals/status')
 require('scripts/globals/titles')
 require('scripts/globals/zone')
 -----------------------------------
@@ -121,10 +120,10 @@ zoneObject.onZoneWeatherChange = function(weather)
     end
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

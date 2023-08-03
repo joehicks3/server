@@ -4,7 +4,6 @@
 local ID = require('scripts/zones/Port_Bastok/IDs')
 require('scripts/globals/conquest')
 require('scripts/globals/cutscenes')
-require('scripts/globals/settings')
 require('scripts/globals/zone')
 -----------------------------------
 local zoneObject = {}
@@ -49,10 +48,10 @@ zoneObject.onTransportEvent = function(player, transport)
     player:startEvent(71)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 71 then
         player:setPos(0, 0, 0, 0, 224)
     end

@@ -323,12 +323,12 @@ void CCharEntity::pushPacket(CBasicPacket* packet)
         else
         {
             PendingPositionPacket = packet;
-            PacketList.push_back(packet);
+            PacketList.emplace_back(packet);
         }
     }
     else
     {
-        PacketList.push_back(packet);
+        PacketList.emplace_back(packet);
     }
 }
 
@@ -344,7 +344,7 @@ void CCharEntity::updateCharPacket(CCharEntity* PChar, ENTITYUPDATE type, uint8 
     {
         // No existing packet update for the given char, so we push new packet
         CCharPacket* packet = new CCharPacket(PChar, type, updatemask);
-        PacketList.push_back(packet);
+        PacketList.emplace_back(packet);
         PendingCharPackets.emplace(PChar->id, packet);
     }
     else
@@ -361,7 +361,7 @@ void CCharEntity::updateEntityPacket(CBaseEntity* PEntity, ENTITYUPDATE type, ui
     {
         // No existing packet update for the given entity, so we push new packet
         CEntityUpdatePacket* packet = new CEntityUpdatePacket(PEntity, type, updatemask);
-        PacketList.push_back(packet);
+        PacketList.emplace_back(packet);
         PendingEntityPackets.emplace(PEntity->id, packet);
     }
     else
@@ -473,7 +473,7 @@ void CCharEntity::resetPetZoningInfo()
 
 bool CCharEntity::shouldPetPersistThroughZoning()
 {
-    PET_TYPE petType;
+    PET_TYPE petType{};
     auto     PPetEntity = dynamic_cast<CPetEntity*>(PPet);
 
     if (PPetEntity == nullptr && !petZoningInfo.respawnPet)
@@ -1148,10 +1148,10 @@ void CCharEntity::OnWeaponSkillFinished(CWeaponSkillState& state, action_t& acti
 
             actionTarget_t& actionTarget = actionList.getNewActionTarget();
 
-            uint16         tpHitsLanded;
-            uint16         extraHitsLanded;
-            int32          damage;
-            CBattleEntity* taChar = battleutils::getAvailableTrickAttackChar(this, PTarget);
+            uint16         tpHitsLanded    = 0;
+            uint16         extraHitsLanded = 0;
+            int32          damage          = 0;
+            CBattleEntity* taChar          = battleutils::getAvailableTrickAttackChar(this, PTarget);
 
             actionTarget.reaction                           = REACTION::NONE;
             actionTarget.speceffect                         = SPECEFFECT::NONE;
@@ -1919,6 +1919,7 @@ void CCharEntity::HandleErrorMessage(std::unique_ptr<CBasicPacket>& msg)
 void CCharEntity::OnDeathTimer()
 {
     TracyZoneScoped;
+    charutils::SetCharVar(this, "expLost", 0);
     charutils::HomePoint(this);
 }
 
@@ -1996,26 +1997,15 @@ void CCharEntity::OnRaise()
 
         loc.zone->PushPacket(this, CHAR_INRANGE_SELF, new CActionPacket(action));
 
-        uint8 mLevel = charutils::GetCharVar(this, "DeathLevel");
+        // Do not return EXP to the player if they do not have experienceLost variable.
+        uint16 expLost = charutils::GetCharVar(this, "expLost");
 
-        // Do not return EXP to the player if they do not have a level at death set
-        if (mLevel != 0)
+        if (expLost != 0)
         {
-            uint16 expLost = mLevel <= 67 ? (charutils::GetExpNEXTLevel(mLevel) * 8) / 100 : 2400;
-
-            uint16 xpNeededToLevel = charutils::GetExpNEXTLevel(jobs.job[GetMJob()]) - jobs.exp[GetMJob()];
-
-            // Exp is enough to level you and (you're not under a level restriction, or the level restriction is higher than your current main level).
-            if (xpNeededToLevel < expLost && (m_LevelRestriction == 0 || GetMLevel() < m_LevelRestriction))
-            {
-                // Player probably leveled down when they died.  Give they xp for the next level.
-                expLost = GetMLevel() <= 67 ? (charutils::GetExpNEXTLevel(jobs.job[GetMJob()] + 1) * 8) / 100 : 2400;
-            }
-
             uint16 xpReturned = (uint16)(ceil(expLost * ratioReturned));
             charutils::AddExperiencePoints(true, this, this, xpReturned);
 
-            charutils::SetCharVar(this, "DeathLevel", 0);
+            charutils::SetCharVar(this, "expLost", 0);
         }
 
         // If Arise was used then apply a reraise 3 effect on the target
@@ -2163,10 +2153,6 @@ void CCharEntity::Die()
         (PBattlefield == nullptr || (PBattlefield->GetRuleMask() & RULES_LOSE_EXP) == RULES_LOSE_EXP) &&
         GetMLevel() >= settings::get<uint8>("map.EXP_LOSS_LEVEL"))
     {
-        // Track what level the player died at to properly give EXP back on raise
-        int32 level = (m_LevelRestriction > 0 && m_LevelRestriction < GetMLevel()) ? m_LevelRestriction : GetMLevel();
-        charutils::SetCharVar(this, "DeathLevel", level);
-
         float retainPercent = std::clamp(settings::get<uint8>("map.EXP_RETAIN") + getMod(Mod::EXPERIENCE_RETAINED) / 100.0f, 0.0f, 1.0f);
         charutils::DelExperiencePoints(this, retainPercent, 0);
     }
@@ -2677,7 +2663,7 @@ void CCharEntity::endCurrentEvent()
 
 void CCharEntity::queueEvent(EventInfo* eventToQueue)
 {
-    eventQueue.push_back(eventToQueue);
+    eventQueue.emplace_back(eventToQueue);
     tryStartNextEvent();
 }
 

@@ -882,8 +882,8 @@ void CMobEntity::DistributeRewards()
                 if (PMember->getZone() == PChar->getZone())
                 {
                     RoeDatagramList datagrams;
-                    datagrams.push_back(RoeDatagram("mob", this));
-                    datagrams.push_back(RoeDatagram("atkType", static_cast<uint8>(this->BattleHistory.lastHitTaken_atkType)));
+                    datagrams.emplace_back(RoeDatagram("mob", this));
+                    datagrams.emplace_back(RoeDatagram("atkType", static_cast<uint8>(this->BattleHistory.lastHitTaken_atkType)));
                     roeutils::event(ROE_MOBKILL, (CCharEntity*)PMember, datagrams);
                 }
             });
@@ -996,7 +996,7 @@ void CMobEntity::DropItems(CCharEntity* PChar)
     }
 
     ZONE_TYPE zoneType  = zoneutils::GetZone(PChar->getZone())->GetType();
-    bool      validZone = zoneType != ZONE_TYPE::BATTLEFIELD && zoneType != ZONE_TYPE::DYNAMIS;
+    bool      validZone = !(this->m_Type & MOBTYPE_BATTLEFIELD) && zoneType != ZONE_TYPE::DYNAMIS;
 
     // Check if mob can drop seals -- mobmod to disable drops, zone type isnt battlefield/dynamis, mob is stronger than Too Weak, or mobmod for EXP bonus is -100 or lower (-100% exp)
     if (!getMobMod(MOBMOD_NO_DROPS) && validZone && charutils::CheckMob(m_HiPCLvl, GetMLevel()) > EMobDifficulty::TooWeak && getMobMod(MOBMOD_EXP_BONUS) > -100)

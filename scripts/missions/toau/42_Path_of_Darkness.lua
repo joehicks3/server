@@ -8,10 +8,8 @@
 -- _1e1 (Door)   : !pos 23 -6 -63 50
 -----------------------------------
 require('scripts/globals/instance')
-require('scripts/globals/items')
 require('scripts/globals/missions')
 require('scripts/globals/npc_util')
-require('scripts/globals/keyitems')
 require('scripts/globals/interaction/mission')
 require('scripts/globals/titles')
 require('scripts/globals/zone')
@@ -113,7 +111,7 @@ mission.sections =
                         option == 1 and
                         player:getLocalVar("INSTANCE_ID") == 7700
                     then
-                        xi.instance.onEventFinish(player, csid, option)
+                        xi.instance.onEventFinish(player, csid, option, npc)
                     end
                 end,
             },

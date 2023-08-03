@@ -3,8 +3,6 @@
 -----------------------------------
 local ID = require('scripts/zones/Temenos/IDs')
 require('scripts/globals/conquest')
-require('scripts/globals/settings')
-require('scripts/globals/status')
 -----------------------------------
 local zoneObject = {}
 
@@ -89,13 +87,13 @@ end
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
     if csid == 32001 or csid == 32002 then
         player:messageSpecial(ID.text.HUM + 1)
     end
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

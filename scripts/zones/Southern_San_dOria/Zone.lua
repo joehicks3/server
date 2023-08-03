@@ -6,7 +6,6 @@ require('scripts/globals/events/harvest_festivals')
 require('scripts/quests/flyers_for_regine')
 require('scripts/globals/conquest')
 require('scripts/globals/cutscenes')
-require('scripts/globals/settings')
 require('scripts/globals/chocobo')
 require('scripts/globals/zone')
 -----------------------------------
@@ -52,10 +51,10 @@ end
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 758 then
         player:setCharVar("COP_louverance_story", 3)
     end

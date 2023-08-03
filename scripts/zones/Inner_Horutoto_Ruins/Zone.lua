@@ -4,7 +4,6 @@
 local ID = require('scripts/zones/Inner_Horutoto_Ruins/IDs')
 require('scripts/globals/conquest')
 require('scripts/globals/treasure')
-require('scripts/globals/status')
 -----------------------------------
 local zoneObject = {}
 
@@ -132,10 +131,10 @@ zoneObject.onTriggerAreaLeave = function(player, triggerArea)
     end
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

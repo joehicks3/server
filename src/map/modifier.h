@@ -17,11 +17,11 @@
 #ifndef _CMODIFIER_H
 #define _CMODIFIER_H
 
-#include "../common/cbasetypes.h"
+#include "common/cbasetypes.h"
 
 enum class Mod
 {
-    // IF YOU ADD ANY NEW MODIFIER HERE, ADD IT IN scripts/globals/status.lua ASWELL!
+    // IF YOU ADD ANY NEW MODIFIER HERE, ADD IT IN scripts/enum/mod.lua ASWELL!
 
     NONE = 0,       // Essential, but does nothing :)
                     //  NAME                  = ID, // Comment
@@ -327,6 +327,18 @@ enum class Mod
     LULLABY_MEVA  = 214,
     DEATH_MEVA    = 215,
     STATUS_MEVA   = 216,
+
+    // Status effect Immunobreak modifiers.
+    SLEEP_IMMUNOBREAK    = 261,
+    POISON_IMMUNOBREAK   = 262,
+    PARALYZE_IMMUNOBREAK = 263,
+    BLIND_IMMUNOBREAK    = 264,
+    SILENCE_IMMUNOBREAK  = 265,
+    PETRIFY_IMMUNOBREAK  = 266,
+    BIND_IMMUNOBREAK     = 267,
+    GRAVITY_IMMUNOBREAK  = 268,
+    SLOW_IMMUNOBREAK     = 269,
+    ADDLE_IMMUNOBREAK    = 270,
 
     PARALYZE      = 257, // Paralyze -- percent chance to proc
     MIJIN_RERAISE = 258, // Augments Mijin Gakure
@@ -962,7 +974,7 @@ enum class Mod
     // AF3 AUGMENTS
     NO_FOOT_RISE_EFFECT = 1076, // Adds 50tp / merit
 
-    // IF YOU ADD ANY NEW MODIFIER HERE, ADD IT IN scripts/globals/status.lua ASWELL!
+    // IF YOU ADD ANY NEW MODIFIER HERE, ADD IT IN scripts/enum/mod.lua ASWELL!
 
     // The spares take care of finding the next ID to use so long as we don't forget to list IDs that have been freed up by refactoring.
     // 570 through 825 used by WS DMG mods these are not spares.
@@ -972,7 +984,7 @@ enum class Mod
     // 138 to 143
     // 156 to 159
     // 217 to 223
-    // 261 to 280
+    // 271 to 280
     //
     // SPARE = 1077 and onward
 };

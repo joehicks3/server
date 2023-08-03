@@ -1,10 +1,7 @@
 -------------------------------------------
 -- Escha/Reisenjima Portals Global
 -------------------------------------------
-require("scripts/globals/items")
-require("scripts/globals/keyitems")
 require("scripts/globals/npc_util")
-require("scripts/globals/status")
 require("scripts/globals/teleports")
 require("scripts/globals/utils")
 require("scripts/globals/zone")
@@ -109,7 +106,7 @@ xi.escha.portals.eschanPortalOnTrigger = function(player, npc, portalGlobalNumbe
     player:startEvent(9100, 0, portalBitMask, zoneId, portalGlobalNumber, lockValue, player:getCurrency("escha_silt"), getPortalCost(player), 0)
 end
 
-xi.escha.portals.eschanPortalEventUpdate = function(player, csid, option)
+xi.escha.portals.eschanPortalEventUpdate = function(player, csid, option, npc)
 end
 
 xi.escha.portals.eschanPortalEventFinish = function(player, csid, option, npc)

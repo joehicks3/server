@@ -5,7 +5,6 @@ local ID = require('scripts/zones/RuAun_Gardens/IDs')
 require('scripts/globals/missions')
 require('scripts/globals/conquest')
 require('scripts/globals/treasure')
-require('scripts/globals/status')
 require('scripts/globals/titles')
 -----------------------------------
 local zoneObject = {}
@@ -87,10 +86,10 @@ end
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 41 and option ~= 0 then
         player:setCharVar("skyShortcut", 1)
     end

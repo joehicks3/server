@@ -5,11 +5,7 @@
 -- !pos -136 -11 64 230
 -----------------------------------
 local ID = require("scripts/zones/Southern_San_dOria/IDs")
-require("scripts/globals/keyitems")
-require("scripts/globals/settings")
 require("scripts/globals/quests")
-require("scripts/globals/status")
-require("scripts/globals/titles")
 -----------------------------------
 local entity = {}
 
@@ -25,7 +21,7 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
     if csid == 63 then
         player:setCharVar("KnightStalker_Progress", 3)
     end

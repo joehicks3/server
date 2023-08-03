@@ -3,9 +3,6 @@
 -----------------------------------
 require("scripts/globals/ability")
 require("scripts/globals/jobpoints")
-require("scripts/globals/msg")
-require("scripts/globals/settings")
-require("scripts/globals/status")
 require("scripts/globals/utils")
 -----------------------------------
 xi = xi or {}

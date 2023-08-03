@@ -3,7 +3,6 @@
 -----------------------------------
 local ID = require('scripts/zones/Chamber_of_Oracles/IDs')
 require('scripts/globals/conquest')
-require('scripts/globals/keyitems')
 require('scripts/globals/missions')
 require('scripts/globals/zone')
 -----------------------------------
@@ -33,10 +32,10 @@ end
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

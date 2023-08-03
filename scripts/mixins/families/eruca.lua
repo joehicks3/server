@@ -16,7 +16,6 @@ xi.mix.eruca.config(mob, {
 
 --]]
 require("scripts/globals/mixins")
-require("scripts/globals/status")
 require("scripts/globals/magic")
 -----------------------------------
 
@@ -32,6 +31,7 @@ local function bedTime(mob)
     mob:setMobMod(xi.mobMod.NO_MOVE, 1)
     mob:setMobMod(xi.mobMod.NO_AGGRO, 1)
     mob:setMobMod(xi.mobMod.NO_LINK, 1)
+    mob:setMagicCastingEnabled(false)
     mob:setLocalVar("ResleepTime", 0)
 end
 
@@ -40,6 +40,7 @@ local function wakeUp(mob)
     mob:setMobMod(xi.mobMod.NO_MOVE, 0)
     mob:setMobMod(xi.mobMod.NO_AGGRO, 0)
     mob:setMobMod(xi.mobMod.NO_LINK, 0)
+    mob:setMagicCastingEnabled(true)
     mob:setLocalVar("ResleepTime", 0)
 end
 

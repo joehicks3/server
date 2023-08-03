@@ -4,7 +4,6 @@
 local ID = require('scripts/zones/Xarcabard/IDs')
 require('scripts/quests/i_can_hear_a_rainbow')
 require('scripts/globals/conquest')
-require('scripts/globals/keyitems')
 require('scripts/globals/teleports')
 require('scripts/globals/utils')
 require('scripts/globals/zone')
@@ -64,13 +63,13 @@ end
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
     if csid == 9 then
         quests.rainbow.onEventUpdate(player)
     end
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 4 then
         player:setCharVar("unbridledPassion", 4)
     elseif csid == 13 then

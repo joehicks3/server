@@ -1,11 +1,8 @@
 -----------------------------------
 -- Abyssea Global
 -----------------------------------
-require("scripts/globals/spell_data")
-require("scripts/globals/keyitems")
 require("scripts/globals/npc_util")
 require("scripts/globals/quests")
-require("scripts/globals/status")
 require("scripts/globals/utils")
 require("scripts/globals/weaponskillids")
 require("scripts/globals/zone")
@@ -925,11 +922,11 @@ xi.abyssea.qmOnTrigger = function(player, npc, mobId, kis, tradeReqs)
     end
 end
 
-xi.abyssea.qmOnEventUpdate = function(player, csid, option)
+xi.abyssea.qmOnEventUpdate = function(player, csid, option, npc)
     return false
 end
 
-xi.abyssea.qmOnEventFinish = function(player, csid, option)
+xi.abyssea.qmOnEventFinish = function(player, csid, option, npc)
     local zoneId = player:getZoneID()
     local events = popEvents[zoneId]
     local ID = zones[player:getZoneID()]
@@ -1096,7 +1093,7 @@ xi.abyssea.onZoneIn = function(player)
     end
 end
 
-xi.abyssea.onEventFinish = function(player, csid, option)
+xi.abyssea.onEventFinish = function(player, csid, option, npc)
     if csid == 2180 then
         local zoneID = player:getZoneID()
         player:setPos(unpack(xi.abyssea.exitPositions[zoneID]))
@@ -1236,7 +1233,7 @@ xi.abyssea.warpNPCOnTrigger = function(player, npc)
     player:startEvent(supportNPCData[player:getZoneID()][2], statusParam, totalCruor, unlockedMaws[1], unlockedMaws[2], unlockedMaws[3])
 end
 
-xi.abyssea.warpNPCOnEventUpdate = function(player, csid, option)
+xi.abyssea.warpNPCOnEventUpdate = function(player, csid, option, npc)
 end
 
 xi.abyssea.warpNPCOnEventFinish = function(player, csid, option, npc)
@@ -1278,7 +1275,7 @@ xi.abyssea.traverserNPCOnTrigger = function(player, npc)
     end
 end
 
-xi.abyssea.traverserNPCOnUpdate = function(player, csid, option)
+xi.abyssea.traverserNPCOnUpdate = function(player, csid, option, npc)
     if csid == supportNPCData[player:getZoneID()][1] then
         if option == 3 then
             -- The following values calculates the amount of time remaining for a stone by working backwards from current time.

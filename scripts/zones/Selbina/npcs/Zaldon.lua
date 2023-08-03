@@ -6,9 +6,7 @@
 -- !pos -13 -7 -5 248
 -----------------------------------
 local ID = require("scripts/zones/Selbina/IDs")
-require("scripts/globals/keyitems")
 require("scripts/globals/npc_util")
-require("scripts/globals/settings")
 require("scripts/globals/quests")
 require("scripts/globals/titles")
 -----------------------------------
@@ -576,7 +574,7 @@ entity.onTrade = function(player, npc, trade)
     if
         underTheSea == QUEST_ACCEPTED and
         not player:hasKeyItem(xi.ki.ETCHED_RING) and
-        npcUtil.tradeHas(trade, 4501)
+        npcUtil.tradeHas(trade, xi.items.FAT_GREEDIE)
     then
         if math.random(1, 100) <= 20 then
             player:startEvent(35) -- Ring found !
@@ -650,10 +648,10 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
     -- UNDER THE SEA
     if csid == 34 then
         player:setCharVar("underTheSeaVar", 4)

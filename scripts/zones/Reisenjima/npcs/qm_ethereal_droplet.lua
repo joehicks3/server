@@ -4,8 +4,6 @@
 -- Notes: Grants "Ethereal droplet" temporary item.
 -----------------------------------
 local ID = require("scripts/zones/Reisenjima/IDs")
-require("scripts/globals/items")
-require("scripts/globals/status")
 -----------------------------------
 
 local entity = {}
@@ -22,7 +20,7 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

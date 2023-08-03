@@ -5,9 +5,7 @@
 -- Optional Involvement in Quest: Chocobo's Wounds, Path of the Beastmaster
 -----------------------------------
 local ID = require("scripts/zones/Lower_Jeuno/IDs")
-require("scripts/globals/settings")
 require("scripts/globals/quests")
-require("scripts/globals/status")
 require("scripts/globals/titles")
 -----------------------------------
 local entity = {}
@@ -53,10 +51,10 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
     if csid == 5 then
         player:setCharVar("ANewDawn_Event", 1)
         if option == 1 then

@@ -4,8 +4,7 @@
 -- Gobbie Mystery Box
 -----------------------------------
 local ID = require("scripts/zones/Aht_Urhgan_Whitegate/IDs")
-require("scripts/globals/settings")
-require("scripts/globals/gobbiemysterybox")
+require("scripts/globals/gobbie_mystery_box")
 -----------------------------------
 local entity = {}
 
@@ -33,11 +32,11 @@ entity.onTrigger = function(player, npc)
     xi.mystery.onTrigger(player, npc, events)
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
     xi.mystery.onEventUpdate(player, csid, option, events)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
     xi.mystery.onEventFinish(player, csid, option, events)
 end
 

@@ -7,7 +7,6 @@ require('scripts/globals/chocobo_digging')
 require('scripts/globals/conquest')
 require('scripts/globals/missions')
 require('scripts/globals/mog_tablets')
-require('scripts/globals/status')
 require('scripts/missions/amk/helpers')
 -----------------------------------
 local zoneObject = {}
@@ -66,13 +65,13 @@ end
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
     if csid == 3 then
         quests.rainbow.onEventUpdate(player)
     end
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 zoneObject.onGameHour = function(zone)

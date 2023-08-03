@@ -2,7 +2,6 @@
 -- Login Campaign
 -- https://www.bg-wiki.com/ffxi/Repeat_Login_Campaign
 ------------------------------------
-require("scripts/globals/settings")
 require("scripts/globals/npc_util")
 local prizes = require("scripts/globals/events/login_campaign_data")
 ------------------------------------
@@ -142,7 +141,7 @@ end
 
 -- Shows list of items depending on option selected.
 -- It also is in charge of purchasing selected item.
-xi.events.loginCampaign.onEventUpdate = function(player, csid, option)
+xi.events.loginCampaign.onEventUpdate = function(player, csid, option, npc)
     if not xi.events.loginCampaign.isCampaignActive() then
         return
     end

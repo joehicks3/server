@@ -3,7 +3,6 @@
 -----------------------------------
 local ID = require('scripts/zones/Selbina/IDs')
 require('scripts/globals/conquest')
-require('scripts/globals/keyitems')
 require('scripts/globals/missions')
 require('scripts/globals/npc_util')
 require('scripts/globals/quests')
@@ -56,10 +55,10 @@ zoneObject.onTransportEvent = function(player, transport)
     player:startEvent(200)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 200 then
         if GetServerVariable("Selbina_Deastination") > 89 then
             player:setPos(0, 0, 0, 0, xi.zone.SHIP_BOUND_FOR_MHAURA_PIRATES)

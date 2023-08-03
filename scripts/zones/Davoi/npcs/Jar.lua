@@ -5,7 +5,6 @@
 -- Notes: Used to obtain Power Sandals
 -- !pos 183, 0, -190 149
 -----------------------------------
-require("scripts/globals/settings")
 local ID = require("scripts/zones/Davoi/IDs")
 -----------------------------------
 local entity = {}
@@ -29,10 +28,10 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option)
+entity.onEventUpdate = function(player, csid, option, npc)
 end
 
-entity.onEventFinish = function(player, csid, option)
+entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

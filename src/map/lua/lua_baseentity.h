@@ -212,6 +212,7 @@ public:
     uint16 getEquipID(SLOTTYPE slot);                              // Gets the Item Id of the item in specified slot
     auto   getEquippedItem(uint8 slot) -> std::optional<CLuaItem>; // Returns the item object from specified slot
     bool   hasItem(uint16 itemID, sol::object const& location);    // Check to see if Entity has item in inventory (hasItem(itemNumber))
+    uint32 getItemCount(uint16 itemID);                            // Get total number of items the player has across all inventories
     bool   addItem(sol::variadic_args va);                         // Add item to Entity inventory (additem(itemNumber,quantity))
     bool   delItem(uint16 itemID, int32 quantity, sol::object const& containerID);
     bool   addUsedItem(uint16 itemID);                                                      // Add charged item with timer already on full cooldown
@@ -544,6 +545,8 @@ public:
     // Battle Utilities
     bool isAlive();
     bool isDead();
+
+    bool hasRaiseTractorMenu();
     void sendRaise(uint8 raiseLevel);
     void sendReraise(uint8 raiseLevel);
     void sendTractor(float xPos, float yPos, float zPos, uint8 rotation);
@@ -564,7 +567,7 @@ public:
     void resetRecast(uint8 rType, uint16 recastID); // Reset one recast ID
     void resetRecasts();                            // Reset recasts for the caller
 
-    void addListener(std::string const& eventName, std::string const& identifier, sol::function func);
+    void addListener(std::string const& eventName, std::string const& identifier, sol::function const& func);
     void removeListener(std::string const& identifier);
     void triggerListener(std::string const& eventName, sol::variadic_args args);
 
@@ -608,15 +611,15 @@ public:
     // Status Effects
     bool   addStatusEffect(sol::variadic_args va);
     bool   addStatusEffectEx(sol::variadic_args va);
-    auto   getStatusEffect(uint16 StatusID, sol::object const& SubID) -> std::optional<CLuaStatusEffect>;
+    auto   getStatusEffect(uint16 StatusID, sol::object const& SubType) -> std::optional<CLuaStatusEffect>;
     auto   getStatusEffects() -> sol::table;
     int16  getStatusEffectElement(uint16 statusId);
     bool   canGainStatusEffect(uint16 effect, sol::object const& powerObj); // Returns true if the effect can be added
-    bool   hasStatusEffect(uint16 StatusID, sol::object const& SubID);      // Checks to see if character has specified effect
+    bool   hasStatusEffect(uint16 StatusID, sol::object const& SubType);    // Checks to see if character has specified effect
     uint16 hasStatusEffectByFlag(uint16 StatusID);                          // Checks to see if a character has an effect with the specified flag
     uint8  countEffect(uint16 StatusID);                                    // Gets the number of effects of a specific type on the player
 
-    bool   delStatusEffect(uint16 StatusID, sol::object const& SubID);                   // Removes Status Effect
+    bool   delStatusEffect(uint16 StatusID, sol::object const& SubType);                 // Removes Status Effect
     void   delStatusEffectsByFlag(uint32 flag, sol::object const& silent);               // Removes Status Effects by Flag
     bool   delStatusEffectSilent(uint16 StatusID);                                       // Removes Status Effect, suppresses message
     uint16 eraseStatusEffect();                                                          // Used with "Erase" spell
@@ -643,7 +646,7 @@ public:
     uint8  numBustEffects();         // Gets the number of bust effects on the player
     uint16 healingWaltz();           // Used with "Healing Waltz" ability
     bool   addBardSong(CLuaBaseEntity* PEntity, uint16 effectID, uint16 power, uint16 tick,
-                       uint16 duration, uint16 subID, uint16 subPower, uint16 tier); // Adds bard song effect
+                       uint16 duration, uint16 SubType, uint16 subPower, uint16 tier); // Adds bard song effect
 
     void charm(CLuaBaseEntity const* target); // applies charm on target
     void uncharm();                           // removes charm on target
@@ -716,6 +719,7 @@ public:
     auto   getMaster() -> std::optional<CLuaBaseEntity>;
     uint8  getPetElement();
     void   setPet(sol::object const& petObj);
+    uint8  getMinimumPetLevel(); // Returns the minimum level of the pet, such as level 23 for Courier Carrie or 0 if non applicable.
 
     auto getPetName() -> const std::string;
     void setPetName(uint8 pType, uint16 value, sol::object const& arg2);
@@ -818,9 +822,9 @@ public:
 
     bool actionQueueEmpty(); // returns whether the action queue is empty or not
 
-    void castSpell(sol::object const& spell, sol::object entity); // forces a mob to cast a spell (parameter = spell ID, otherwise picks a spell from its list)
-    void useJobAbility(uint16 skillID, sol::object const& pet);   // forces a job ability use (players/pets only)
-    void useMobAbility(sol::variadic_args va);                    // forces a mob to use a mobability (parameter = skill ID)
+    void castSpell(sol::object const& spell, sol::object const& entity); // forces a mob to cast a spell (parameter = spell ID, otherwise picks a spell from its list)
+    void useJobAbility(uint16 skillID, sol::object const& pet);          // forces a job ability use (players/pets only)
+    void useMobAbility(sol::variadic_args va);                           // forces a mob to use a mobability (parameter = skill ID)
     bool hasTPMoves();
 
     void weaknessTrigger(uint8 level);
@@ -849,7 +853,7 @@ public:
     uint32 getHistory(uint8 index);
 
     auto getChocoboRaisingInfo() -> sol::table;
-    bool setChocoboRaisingInfo(sol::table table);
+    bool setChocoboRaisingInfo(sol::table const& table);
     bool deleteRaisedChocobo();
 
     void  setMannequinPose(uint16 itemID, uint8 race, uint8 pose);

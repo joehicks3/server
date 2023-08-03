@@ -8,7 +8,6 @@ require('scripts/globals/conquest')
 require('scripts/globals/cutscenes')
 require('scripts/globals/missions')
 require('scripts/globals/npc_util')
-require('scripts/globals/settings')
 require('scripts/globals/quests')
 require('scripts/globals/titles')
 require('scripts/globals/zone')
@@ -76,10 +75,10 @@ end
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 569 then
         player:setPos(0, 0, -13, 192, 233)
     elseif

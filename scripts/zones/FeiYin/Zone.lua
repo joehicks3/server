@@ -3,7 +3,6 @@
 -----------------------------------
 local ID = require('scripts/zones/FeiYin/IDs')
 require('scripts/globals/conquest')
-require('scripts/globals/keyitems')
 require('scripts/globals/missions')
 require('scripts/globals/treasure')
 require('scripts/globals/quests')
@@ -31,7 +30,7 @@ zoneObject.onZoneIn = function(player, prevZone)
 
     if
         player:getCharVar("peaceForTheSpiritCS") == 1 and
-        not player:hasItem(1093) -- Antique Coin
+        not player:hasItem(xi.items.ANTIQUE_COIN) -- Antique Coin
     then
         SpawnMob(ID.mob.MISER_MURPHY) -- RDM AF
     end
@@ -56,10 +55,10 @@ end
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 19 then
         player:setCharVar("pieujesDecisionCS", 1)
     elseif csid == 29 then

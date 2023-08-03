@@ -5,7 +5,6 @@ local ID = require('scripts/zones/Windurst_Woods/IDs')
 require('scripts/globals/events/harvest_festivals')
 require('scripts/globals/conquest')
 require('scripts/globals/cutscenes')
-require('scripts/globals/settings')
 require('scripts/globals/chocobo')
 require('scripts/globals/zone')
 -----------------------------------
@@ -36,10 +35,10 @@ end
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
-zoneObject.onEventUpdate = function(player, csid, option)
+zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
-zoneObject.onEventFinish = function(player, csid, option)
+zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 return zoneObject

@@ -126,8 +126,8 @@ namespace luautils
 
     // Cache helpers
     auto getEntityCachedFunction(CBaseEntity* PEntity, std::string funcName) -> sol::function;
-    void CacheLuaObjectFromFile(std::string filename, bool overwriteCurrentEntry = false);
-    auto GetCacheEntryFromFilename(std::string filename) -> sol::table;
+    void CacheLuaObjectFromFile(std::string const& filename, bool overwriteCurrentEntry = false);
+    auto GetCacheEntryFromFilename(std::string const& filename) -> sol::table;
     void OnEntityLoad(CBaseEntity* PEntity);
 
     void PopulateIDLookups(std::optional<uint16> maybeZoneId = std::nullopt);
@@ -310,11 +310,11 @@ namespace luautils
     int32 OnInstanceStageChange(CInstance* PInstance);                           // triggers when stage is changed in an instance
     int32 OnInstanceComplete(CInstance* PInstance);                              // triggers when an instance is completed
 
-    uint32 GetMobRespawnTime(uint32 mobid);                        // get the respawn time of a mob
-    void   DisallowRespawn(uint32 mobid, bool allowRespawn);       // Allow or prevent a mob from spawning
-    void   UpdateNMSpawnPoint(uint32 mobid);                       // Update the spawn point of an NM
-    void   SetDropRate(uint16 dropid, uint16 itemid, uint16 rate); // Set drop rate of a mob SetDropRate(dropid,itemid,newrate)
-    int32  UpdateServerMessage();                                  // update server message, first modify in conf and update
+    uint32 GetMobRespawnTime(uint32 mobid);                  // get the respawn time of a mob
+    void   DisallowRespawn(uint32 mobid, bool allowRespawn); // Allow or prevent a mob from spawning
+    void   UpdateNMSpawnPoint(uint32 mobid);                 // Update the spawn point of an NM
+
+    std::string GetServerMessage(uint8 language); // Get the message to be delivered to player on first zone in of a session
 
     int32 OnAdditionalEffect(CBattleEntity* PAttacker, CBattleEntity* PDefender, actionTarget_t* Action, int32 damage);                                      // for mobs with additional effects
     int32 OnSpikesDamage(CBattleEntity* PDefender, CBattleEntity* PAttacker, actionTarget_t* Action, int32 damage);                                          // for mobs with spikes
@@ -329,7 +329,7 @@ namespace luautils
     void OnPlayerLevelDown(CCharEntity* PChar);
     void OnPlayerMount(CCharEntity* PChar);
     void OnPlayerEmote(CCharEntity* PChar, Emote EmoteID);
-    void OnPlayerVolunteer(CCharEntity* PChar, std::string text);
+    void OnPlayerVolunteer(CCharEntity* PChar, std::string const& text);
 
     bool OnChocoboDig(CCharEntity* PChar, bool pre); // chocobo digging, pre = check
 
@@ -345,7 +345,7 @@ namespace luautils
 
     auto SetCustomMenuContext(CCharEntity* PChar, sol::table table) -> std::string;
     bool HasCustomMenuContext(CCharEntity* PChar);
-    void HandleCustomMenu(CCharEntity* PChar, std::string selection);
+    void HandleCustomMenu(CCharEntity* PChar, const std::string& selection);
 
     // Retrive the first itemId that matches a name
     uint16 GetItemIDByName(std::string const& name);

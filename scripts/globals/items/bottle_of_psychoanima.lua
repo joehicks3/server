@@ -3,10 +3,6 @@
 -- Item: Bottle Of Psychoanima
 -- Item Effect: Intimidate
 -----------------------------------------
-require("scripts/globals/msg")
-require("scripts/globals/status")
-require("scripts/globals/player")
------------------------------------------
 local itemObject = {}
 
 itemObject.onItemCheck = function(target, player)
