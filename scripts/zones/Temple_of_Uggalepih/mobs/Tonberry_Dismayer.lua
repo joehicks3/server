@@ -3,12 +3,16 @@
 --  Mob: Tonberry Dismayer
 -- Note: PH for Tonberry Kinq
 -----------------------------------
-local ID = require("scripts/zones/Temple_of_Uggalepih/IDs")
-mixins = { require("scripts/mixins/families/tonberry") }
-require("scripts/globals/regimes")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.TEMPLE_OF_UGGALEPIH]
+mixins = { require('scripts/mixins/families/tonberry') }
 -----------------------------------
 local entity = {}
+
+local kingqPHTable =
+{
+    [ID.mob.TONBERRY_KINQ - 4] = ID.mob.TONBERRY_KINQ, -- -221.717 0.996 12.819
+    [ID.mob.TONBERRY_KINQ - 2] = ID.mob.TONBERRY_KINQ, -- -218 -0.792 24
+}
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 790, 1, xi.regime.type.GROUNDS)
@@ -20,7 +24,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.TONBERRY_KINQ_PH, 10, 21600) -- 6 hours, 10% pop chance
+    xi.mob.phOnDespawn(mob, kingqPHTable, 10, 21600) -- 6 hours, 10% pop chance
 end
 
 return entity

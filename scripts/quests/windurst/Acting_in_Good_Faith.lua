@@ -6,21 +6,16 @@
 -- qm1       : !pos -17 0 59 195 (I-10)
 -- Eperdur   : !pos 129 -6 96 231
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local eldiemeID = require('scripts/zones/The_Eldieme_Necropolis/IDs')
+local eldiemeID = zones[xi.zone.THE_ELDIEME_NECROPOLIS]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.WINDURST, xi.quest.id.windurst.ACTING_IN_GOOD_FAITH)
+local quest = Quest:new(xi.questLog.WINDURST, xi.quest.id.windurst.ACTING_IN_GOOD_FAITH)
 
 quest.reward =
 {
     fame     = 30,
-    fameArea = xi.quest.fame_area.WINDURST,
-    item     = xi.items.SCROLL_OF_TELEPORT_MEA,
+    fameArea = xi.fameArea.WINDURST,
+    item     = xi.item.SCROLL_OF_TELEPORT_MEA,
     title    = xi.title.PILGRIM_TO_MEA,
 }
 
@@ -28,8 +23,8 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getFameLevel(xi.quest.fame_area.WINDURST) >= 4 and
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getFameLevel(xi.fameArea.WINDURST) >= 4 and
                 player:getMainLvl() >= 10
         end,
 
@@ -41,7 +36,7 @@ quest.sections =
             {
                 [10019] = function(player, csid, option, npc)
                     if option == 0 then
-                        npcUtil.giveKeyItem(xi.ki.SPIRIT_INCENSE)
+                        npcUtil.giveKeyItem(player, xi.ki.SPIRIT_INCENSE)
                         quest:begin(player)
                     end
                 end,
@@ -51,7 +46,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.WINDURST_WATERS] =
@@ -121,7 +116,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.WINDURST_WATERS] =

@@ -4,8 +4,7 @@
 -- Spawns Alfard
 -- !pos 309 -33 158 254
 -----------------------------------
-local ID = require('scripts/zones/Abyssea-Grauberg/IDs')
-require('scripts/globals/abyssea')
+local ID = zones[xi.zone.ABYSSEA_GRAUBERG]
 -----------------------------------
 local entity = {}
 
@@ -13,7 +12,7 @@ entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
-    xi.abyssea.qmOnTrigger(player, npc, ID.mob.ALFARD_2, { xi.ki.VENOMOUS_HYDRA_FANG })
+    xi.abyssea.qmOnTrigger(player, npc, ID.mob.ALFARD_OFFSET + 4, { xi.ki.VENOMOUS_HYDRA_FANG })
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)

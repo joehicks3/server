@@ -3,13 +3,12 @@
 --  Mob: Gurfurlur the Menacing
 -- !pos -59.000 -23.000 3.000 62
 -----------------------------------
-mixins = { require("scripts/mixins/job_special") }
-local ID = require("scripts/zones/Halvung/IDs")
-require("scripts/globals/titles")
+mixins = { require('scripts/mixins/job_special') }
+local ID = zones[xi.zone.HALVUNG]
 -----------------------------------
 local entity = {}
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     for i = ID.mob.GURFURLUR_THE_MENACING + 1, ID.mob.GURFURLUR_THE_MENACING + 4 do
         SpawnMob(i):updateEnmity(target)
     end

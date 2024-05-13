@@ -5,11 +5,6 @@
 -- !addmission 12 11
 -- Masad : !pos -28.182 -0.650 -91.991 256
 -----------------------------------
-require('scripts/globals/missions')
-require('scripts/globals/quests')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.SOA, xi.mission.id.soa.BUDDING_PROSPECTS)
 
@@ -35,11 +30,11 @@ mission.sections =
                     local waitTimer = mission:getVar(player, 'Timer')
 
                     if
-                        player:hasCompletedQuest(xi.quest.log_id.ADOULIN, xi.quest.id.adoulin.FLAVORS_OF_OUR_LIVES) or
+                        player:hasCompletedQuest(xi.questLog.ADOULIN, xi.quest.id.adoulin.FLAVORS_OF_OUR_LIVES) or
                         (
                             waitTimer ~= 0 and
                             waitTimer <= VanadielUniqueDay() and
-                            xi.quest.getVar(player, xi.quest.log_id.ADOULIN, xi.quest.id.adoulin.FLAVORS_OF_OUR_LIVES, 'Prog') >= 2
+                            xi.quest.getVar(player, xi.questLog.ADOULIN, xi.quest.id.adoulin.FLAVORS_OF_OUR_LIVES, 'Prog') >= 2
                         )
                     then
                         return mission:progressEvent(8)

@@ -5,20 +5,14 @@
 -- Hilda   : !pos -163 -8 13 236
 -- Raibaht : !pos -27 -10 -1 237
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.THE_USUAL)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.THE_USUAL)
 
 quest.reward =
 {
     fame     = 30,
-    fameArea = xi.quest.fame_area.BASTOK,
-    item     = xi.items.SPEED_BOW,
+    fameArea = xi.fameArea.BASTOK,
+    item     = xi.item.SPEED_BOW,
     title    = xi.title.STEAMING_SHEEP_REGULAR,
 }
 
@@ -26,9 +20,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.BASTOK, xi.quest.id.bastok.CIDS_SECRET) and
-                player:getFameLevel(xi.quest.fame_area.BASTOK) >= 5
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.BASTOK, xi.quest.id.bastok.CIDS_SECRET) and
+                player:getFameLevel(xi.fameArea.BASTOK) >= 5
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -48,7 +42,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -57,7 +51,7 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.items.KING_TRUFFLE) and
+                        npcUtil.tradeHasExactly(trade, xi.item.KING_TRUFFLE) and
                         not player:hasKeyItem(xi.ki.STEAMING_SHEEP_INVITATION)
                     then
                         return quest:progressEvent(135)

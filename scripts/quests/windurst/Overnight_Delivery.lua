@@ -5,28 +5,23 @@
 -- Kenapa-Keppa  : !pos 27 -6 -199 238
 -- Kotan-Purutan : !pos 40.32 -9 44.24 249
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.WINDURST, xi.quest.id.windurst.OVERNIGHT_DELIVERY)
+local quest = Quest:new(xi.questLog.WINDURST, xi.quest.id.windurst.OVERNIGHT_DELIVERY)
 
 quest.reward =
 {
     fame = 100,
-    fameArea = xi.quest.fame_area.WINDURST,
-    item = xi.items.POWER_GI,
+    fameArea = xi.fameArea.WINDURST,
+    item = xi.item.POWER_GI,
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.FOOD_FOR_THOUGHT) and
-                player:getFameLevel(xi.quest.fame_area.WINDURST) >= 2 and
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.WINDURST, xi.quest.id.windurst.FOOD_FOR_THOUGHT) and
+                player:getFameLevel(xi.fameArea.WINDURST) >= 2 and
                 player:getLocalVar('Quest[2][14]mustZone') == 0
         end,
 
@@ -89,7 +84,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.MHAURA] =
@@ -189,8 +184,8 @@ quest.sections =
                 [346] = function(player, csid, option, npc)
                     player:delQuest(quest.areaId, quest.questId)
                     player:delKeyItem(xi.ki.SMALL_BAG)
-                    quest:setVar("dueDate", 0)
-                    quest:setVar(player, "Prog", 256)
+                    quest:setVar('dueDate', 0)
+                    quest:setVar(player, 'Prog', 256)
                 end,
 
                 [348] = function(player, csid, option, npc)
@@ -205,7 +200,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.MHAURA] =
@@ -215,7 +210,7 @@ quest.sections =
             ['Ohbiru-Dohbiru'] =
             {
                 onTrigger = function(player, npc)
-                    if player:getFameLevel(xi.quest.fame_area.WINDURST) < 6 then
+                    if player:getFameLevel(xi.fameArea.WINDURST) < 6 then
                         return quest:event(351):replaceDefault()
                     end
                 end,

@@ -3,16 +3,20 @@
 --  Mob: Lou Carcolh
 -- Note: PH for Nommo
 -----------------------------------
-local ID = require("scripts/zones/Pashhow_Marshlands_[S]/IDs")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.PASHHOW_MARSHLANDS_S]
 -----------------------------------
 local entity = {}
+
+local nommoPHTable =
+{
+    [ID.mob.NOMMO - 5] = ID.mob.NOMMO, -- -168.292 24.499 396.933
+}
 
 entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.NOMMO_PH, 5, 3600) -- 1 hour
+    xi.mob.phOnDespawn(mob, nommoPHTable, 10, 3600) -- 1 hour
 end
 
 return entity

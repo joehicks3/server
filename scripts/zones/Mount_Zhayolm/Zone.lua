@@ -1,16 +1,14 @@
 -----------------------------------
 -- Zone: Mount_Zhayolm (61)
 -----------------------------------
-local ID = require('scripts/zones/Mount_Zhayolm/IDs')
-require('scripts/globals/helm')
-require('scripts/globals/zone')
+local ID = zones[xi.zone.MOUNT_ZHAYOLM]
 -----------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
     GetMobByID(ID.mob.CERBERUS):setRespawnTime(math.random(12, 36) * 3600)
 
-    xi.helm.initZone(zone, xi.helm.type.MINING)
+    xi.helm.initZone(zone, xi.helmType.MINING)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -30,8 +28,8 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.afterZoneIn = function(player)
-    player:entityVisualPacket("1pb1")
-    player:entityVisualPacket("2pb1")
+    player:entityVisualPacket('1pb1')
+    player:entityVisualPacket('2pb1')
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

@@ -1,4 +1,3 @@
-require("scripts/globals/zone")
 
 xi = xi or {}
 xi.quest = xi.quest or {}
@@ -9,65 +8,19 @@ xi.quest = xi.quest or {}
 --
 -----------------------------------
 
-QUEST_AVAILABLE = 0
-QUEST_ACCEPTED  = 1
-QUEST_COMPLETED = 2
-
--- Log IDs defined as "enums" here to tie into quest_rewrite
--- branch that will be merged in at a later date. Used
--- as keys for the quest ID tables below.
-
-xi.quest.log_id =
-{
-    SANDORIA    =  0,
-    BASTOK      =  1,
-    WINDURST    =  2,
-    JEUNO       =  3,
-    OTHER_AREAS =  4,
-    OUTLANDS    =  5,
-    AHT_URHGAN  =  6,
-    CRYSTAL_WAR =  7,
-    ABYSSEA     =  8,
-    ADOULIN     =  9,
-    COALITION   = 10,
-}
-
 xi.quest.area =
 {
-    [xi.quest.log_id.SANDORIA]    = 'sandoria',
-    [xi.quest.log_id.BASTOK]      = 'bastok',
-    [xi.quest.log_id.WINDURST]    = 'windurst',
-    [xi.quest.log_id.JEUNO]       = 'jeuno',
-    [xi.quest.log_id.OTHER_AREAS] = 'otherAreas',
-    [xi.quest.log_id.OUTLANDS]    = 'outlands',
-    [xi.quest.log_id.AHT_URHGAN]  = 'ahtUrhgan',
-    [xi.quest.log_id.CRYSTAL_WAR] = 'crystalWar',
-    [xi.quest.log_id.ABYSSEA]     = 'abyssea',
-    [xi.quest.log_id.ADOULIN]     = 'adoulin',
-    [xi.quest.log_id.COALITION]   = 'coalition',
-}
-
--- NOTE: Duplicated areas should not be used here.  For example,
--- Mhaura and Kazham fame use WINDURST fame area.  This table
--- follows mapping of CLuaBaseEntity::addFame()
-xi.quest.fame_area =
-{
-    SANDORIA           =  0,
-    BASTOK             =  1,
-    WINDURST           =  2, -- Mhaura, Kazham
-    JEUNO              =  3,
-    SELBINA_RABAO      =  4,
-    NORG               =  5,
-    ABYSSEA_KONSCHTAT  =  6,
-    ABYSSEA_TAHRONGI   =  7,
-    ABYSSEA_LATHEINE   =  8,
-    ABYSSEA_MISAREAUX  =  9,
-    ABYSSEA_VUNKERL    = 10,
-    ABYSSEA_ATTOHWA    = 11,
-    ABYSSEA_ALTEPA     = 12,
-    ABYSSEA_GRAUBERG   = 13,
-    ABYSSEA_ULEGUERAND = 14,
-    ADOULIN            = 15,
+    [xi.questLog.SANDORIA]    = 'sandoria',
+    [xi.questLog.BASTOK]      = 'bastok',
+    [xi.questLog.WINDURST]    = 'windurst',
+    [xi.questLog.JEUNO]       = 'jeuno',
+    [xi.questLog.OTHER_AREAS] = 'otherAreas',
+    [xi.questLog.OUTLANDS]    = 'outlands',
+    [xi.questLog.AHT_URHGAN]  = 'ahtUrhgan',
+    [xi.questLog.CRYSTAL_WAR] = 'crystalWar',
+    [xi.questLog.ABYSSEA]     = 'abyssea',
+    [xi.questLog.ADOULIN]     = 'adoulin',
+    [xi.questLog.COALITION]   = 'coalition',
 }
 
 xi.quest.id =
@@ -75,7 +28,7 @@ xi.quest.id =
     -----------------------------------
     --  San d'Oria - 0
     -----------------------------------
-    [xi.quest.area[xi.quest.log_id.SANDORIA]] =
+    [xi.quest.area[xi.questLog.SANDORIA]] =
     {
         A_SENTRYS_PERIL                 = 0,  -- + Converted
         WATERS_OF_THE_CHEVAL            = 1,  -- + Converted
@@ -164,7 +117,7 @@ xi.quest.id =
     -----------------------------------
     --  Bastok - 1
     -----------------------------------
-    [xi.quest.area[xi.quest.log_id.BASTOK]] =
+    [xi.quest.area[xi.questLog.BASTOK]] =
     {
         THE_SIRENS_TEAR                 = 0,  -- ± Converted
         BEAUTY_AND_THE_GALKA            = 1,  -- ± Converted
@@ -264,7 +217,7 @@ xi.quest.id =
     -----------------------------------
     --  Windurst - 2
     -----------------------------------
-    [xi.quest.area[xi.quest.log_id.WINDURST]] =
+    [xi.quest.area[xi.questLog.WINDURST]] =
     {
         HAT_IN_HAND                     = 0,  -- +
         A_FEATHER_IN_ONE_S_CAP          = 1,  -- +
@@ -361,7 +314,7 @@ xi.quest.id =
     -----------------------------------
     --  Jeuno - 3
     -----------------------------------
-    [xi.quest.area[xi.quest.log_id.JEUNO]] =
+    [xi.quest.area[xi.questLog.JEUNO]] =
     {
         CREST_OF_DAVOI                  = 0,  -- + Converted
         SAVE_MY_SISTER                  = 1,  -- + Converted
@@ -516,7 +469,7 @@ xi.quest.id =
     -----------------------------------
     --  Other Areas - 4
     -----------------------------------
-    [xi.quest.area[xi.quest.log_id.OTHER_AREAS]] =
+    [xi.quest.area[xi.questLog.OTHER_AREAS]] =
     {
         RYCHARDE_THE_CHEF               = 0,  -- + Converted
         WAY_OF_THE_COOK                 = 1,  -- + Converted
@@ -539,7 +492,7 @@ xi.quest.id =
         THE_REAL_GIFT                   = 22, -- +
         THE_RESCUE                      = 23, -- +
         ELDER_MEMORIES                  = 24, -- +
-        TEST_MY_METTLE                  = 25,
+        TEST_MY_METTLE                  = 25, -- + Converted
         INSIDE_THE_BELLY                = 26, -- ±
         TRIAL_BY_LIGHTNING              = 27, -- ±
         TRIAL_SIZE_TRIAL_BY_LIGHTNING   = 28, -- +
@@ -548,6 +501,7 @@ xi.quest.id =
         PICTURE_PERFECT                 = 31,
         WAKING_THE_BEAST                = 32,
         SURVIVAL_OF_THE_WISEST          = 33,
+        MONSTROSITY                     = 34, -- + Converted
         A_HARD_DAYS_KNIGHT              = 64, -- + Converted
         X_MARKS_THE_SPOT                = 65,
         A_BITTER_PAST                   = 66,
@@ -589,7 +543,7 @@ xi.quest.id =
     -----------------------------------
     --  Outlands - 5
     -----------------------------------
-    [xi.quest.area[xi.quest.log_id.OUTLANDS]] =
+    [xi.quest.area[xi.questLog.OUTLANDS]] =
     {
         -- Kazham (1-15)
         THE_FIREBLOOM_TREE              = 1,
@@ -622,8 +576,8 @@ xi.quest.id =
         STOP_YOUR_WHINING               = 132, -- + Converted
         TRIAL_BY_WATER                  = 133, -- +
         EVERYONES_GRUDGE                = 134,
-        SECRET_OF_THE_DAMP_SCROLL       = 135, -- ±
-        THE_SAHAGINS_STASH              = 136, -- +
+        SECRET_OF_THE_DAMP_SCROLL       = 135, -- ± Converted
+        THE_SAHAGINS_STASH              = 136, -- + Converted
         ITS_NOT_YOUR_VAULT              = 137, -- +
         LIKE_A_SHINING_SUBLIGAR         = 138, -- +
         LIKE_A_SHINING_LEGGINGS         = 139, -- +
@@ -661,7 +615,7 @@ xi.quest.id =
     -----------------------------------
     --  Aht Urhgan - 6
     -----------------------------------
-    [xi.quest.area[xi.quest.log_id.AHT_URHGAN]] =
+    [xi.quest.area[xi.questLog.AHT_URHGAN]] =
     {
         KEEPING_NOTES                    = 0, -- + Converted
         ARTS_AND_CRAFTS                  = 1, -- + Converted
@@ -745,7 +699,7 @@ xi.quest.id =
     -----------------------------------
     --  Crystal War - 7
     -----------------------------------
-    [xi.quest.area[xi.quest.log_id.CRYSTAL_WAR]] =
+    [xi.quest.area[xi.questLog.CRYSTAL_WAR]] =
     {
         LOST_IN_TRANSLOCATION            = 0,  -- + Converted
         MESSAGE_ON_THE_WINDS             = 1,  -- + Converted
@@ -847,7 +801,7 @@ xi.quest.id =
     -----------------------------------
     --  Abyssea - 8
     -----------------------------------
-    [xi.quest.area[xi.quest.log_id.ABYSSEA]] =
+    [xi.quest.area[xi.questLog.ABYSSEA]] =
     {
         -- For some reason these did not match dat file order,
         -- had to adjust IDs >120 after using @addquest
@@ -938,43 +892,43 @@ xi.quest.id =
         THE_UNMARKED_TOMB               = 84,
         PROOF_OF_THE_LION               = 85,
         BRYGID_THE_STYLIST_STRIKES_BACK = 86,
-        DOMINION_OP_01_ALTEPA           = 87,
-        DOMINION_OP_02_ALTEPA           = 88,
-        DOMINION_OP_03_ALTEPA           = 89,
-        DOMINION_OP_04_ALTEPA           = 90,
-        DOMINION_OP_05_ALTEPA           = 91,
-        DOMINION_OP_06_ALTEPA           = 92,
-        DOMINION_OP_07_ALTEPA           = 93,
-        DOMINION_OP_08_ALTEPA           = 94,
-        DOMINION_OP_09_ALTEPA           = 95,
-        DOMINION_OP_10_ALTEPA           = 96,
-        DOMINION_OP_11_ALTEPA           = 97,
-        DOMINION_OP_12_ALTEPA           = 98,
-        DOMINION_OP_13_ALTEPA           = 99,
-        DOMINION_OP_14_ALTEPA           = 100,
-        DOMINION_OP_01_ULEGUERAND       = 101,
-        DOMINION_OP_02_ULEGUERAND       = 102,
-        DOMINION_OP_03_ULEGUERAND       = 103,
-        DOMINION_OP_04_ULEGUERAND       = 104,
-        DOMINION_OP_05_ULEGUERAND       = 105,
-        DOMINION_OP_06_ULEGUERAND       = 106,
-        DOMINION_OP_07_ULEGUERAND       = 107,
-        DOMINION_OP_08_ULEGUERAND       = 108,
-        DOMINION_OP_09_ULEGUERAND       = 109,
-        DOMINION_OP_10_ULEGUERAND       = 110,
-        DOMINION_OP_11_ULEGUERAND       = 111,
-        DOMINION_OP_12_ULEGUERAND       = 112,
-        DOMINION_OP_13_ULEGUERAND       = 113,
-        DOMINION_OP_14_ULEGUERAND       = 114,
-        DOMINION_OP_01_GRAUBERG         = 115,
-        DOMINION_OP_02_GRAUBERG         = 116,
-        DOMINION_OP_03_GRAUBERG         = 117,
-        DOMINION_OP_04_GRAUBERG         = 118,
-        DOMINION_OP_05_GRAUBERG         = 119,
-        DOMINION_OP_06_GRAUBERG         = 120,
-        DOMINION_OP_07_GRAUBERG         = 121,
-        DOMINION_OP_08_GRAUBERG         = 122,
-        DOMINION_OP_09_GRAUBERG         = 123,
+        DOMINION_OP_01_ALTEPA           = 87,  -- + Converted
+        DOMINION_OP_02_ALTEPA           = 88,  -- + Converted
+        DOMINION_OP_03_ALTEPA           = 89,  -- + Converted
+        DOMINION_OP_04_ALTEPA           = 90,  -- + Converted
+        DOMINION_OP_05_ALTEPA           = 91,  -- + Converted
+        DOMINION_OP_06_ALTEPA           = 92,  -- + Converted
+        DOMINION_OP_07_ALTEPA           = 93,  -- + Converted
+        DOMINION_OP_08_ALTEPA           = 94,  -- + Converted
+        DOMINION_OP_09_ALTEPA           = 95,  -- + Converted
+        DOMINION_OP_10_ALTEPA           = 96,  -- + Converted
+        DOMINION_OP_11_ALTEPA           = 97,  -- + Converted
+        DOMINION_OP_12_ALTEPA           = 98,  -- + Converted
+        DOMINION_OP_13_ALTEPA           = 99,  -- + Converted
+        DOMINION_OP_14_ALTEPA           = 100, -- + Converted
+        DOMINION_OP_01_ULEGUERAND       = 101, -- + Converted
+        DOMINION_OP_02_ULEGUERAND       = 102, -- + Converted
+        DOMINION_OP_03_ULEGUERAND       = 103, -- + Converted
+        DOMINION_OP_04_ULEGUERAND       = 104, -- + Converted
+        DOMINION_OP_05_ULEGUERAND       = 105, -- + Converted
+        DOMINION_OP_06_ULEGUERAND       = 106, -- + Converted
+        DOMINION_OP_07_ULEGUERAND       = 107, -- + Converted
+        DOMINION_OP_08_ULEGUERAND       = 108, -- + Converted
+        DOMINION_OP_09_ULEGUERAND       = 109, -- + Converted
+        DOMINION_OP_10_ULEGUERAND       = 110, -- + Converted
+        DOMINION_OP_11_ULEGUERAND       = 111, -- + Converted
+        DOMINION_OP_12_ULEGUERAND       = 112, -- + Converted
+        DOMINION_OP_13_ULEGUERAND       = 113, -- + Converted
+        DOMINION_OP_14_ULEGUERAND       = 114, -- + Converted
+        DOMINION_OP_01_GRAUBERG         = 115, -- + Converted
+        DOMINION_OP_02_GRAUBERG         = 116, -- + Converted
+        DOMINION_OP_03_GRAUBERG         = 117, -- + Converted
+        DOMINION_OP_04_GRAUBERG         = 118, -- + Converted
+        DOMINION_OP_05_GRAUBERG         = 119, -- + Converted
+        DOMINION_OP_06_GRAUBERG         = 120, -- + Converted
+        DOMINION_OP_07_GRAUBERG         = 121, -- + Converted
+        DOMINION_OP_08_GRAUBERG         = 122, -- + Converted
+        DOMINION_OP_09_GRAUBERG         = 123, -- + Converted
         WARD_WARDEN_I_ATTOHWA           = 124,
         WARD_WARDEN_I_MISAREAUX         = 125,
         WARD_WARDEN_I_VUNKERL           = 126,
@@ -1038,17 +992,17 @@ xi.quest.id =
         THE_WYRM_GOD                    = 184,
         MEANWHILE_BACK_ON_ABYSSEA       = 185,
         A_MOONLIGHT_REQUITE             = 186,
-        DOMINION_OP_10_GRAUBERG         = 187,
-        DOMINION_OP_11_GRAUBERG         = 188,
-        DOMINION_OP_12_GRAUBERG         = 189,
-        DOMINION_OP_13_GRAUBERG         = 190,
-        DOMINION_OP_14_GRAUBERG         = 191,
+        DOMINION_OP_10_GRAUBERG         = 187, -- + Converted
+        DOMINION_OP_11_GRAUBERG         = 188, -- + Converted
+        DOMINION_OP_12_GRAUBERG         = 189, -- + Converted
+        DOMINION_OP_13_GRAUBERG         = 190, -- + Converted
+        DOMINION_OP_14_GRAUBERG         = 191, -- + Converted
     },
 
     -----------------------------------
     --  Adoulin - 9
     -----------------------------------
-    [xi.quest.area[xi.quest.log_id.ADOULIN]] =
+    [xi.quest.area[xi.questLog.ADOULIN]] =
     {
         -- These also do not match the DAT file order, had
         -- discrepencies and swapped orders from the start.
@@ -1154,7 +1108,7 @@ xi.quest.id =
     -----------------------------------
     --  Coalition - 10
     -----------------------------------
-    [xi.quest.area[xi.quest.log_id.COALITION]] =
+    [xi.quest.area[xi.questLog.COALITION]] =
     {
         -- Also slightly incongruent with DAT file order
         PROCURE_CEIZAK_BATTLEGROUNDS    = 0,
@@ -1257,7 +1211,7 @@ xi.quest.id =
 }
 
 local function getVarPrefix(areaId, questId)
-    return string.format("Quest[%d][%d]", areaId, questId)
+    return string.format('Quest[%d][%d]', areaId, questId)
 end
 
 -- Interaction Framework Helper Functions
@@ -1269,8 +1223,12 @@ xi.quest.getVar = function(player, areaId, questId, name)
     return player:getVar(getVarPrefix(areaId, questId) .. name)
 end
 
-xi.quest.setVar = function(player, areaId, questId, name, value)
-    return player:setVar(getVarPrefix(areaId, questId) .. name, value)
+xi.quest.setVar = function(player, areaId, questId, name, value, expiry)
+    return player:setVar(getVarPrefix(areaId, questId) .. name, value, expiry)
+end
+
+xi.quest.setVarExpiration = function(player, areaId, questId, name, expiry)
+    return player:setCharVarExpiration(getVarPrefix(areaId, questId) .. name, expiry)
 end
 
 xi.quest.getLocalVar = function(player, areaId, questId, name)
@@ -1282,9 +1240,9 @@ xi.quest.setLocalVar = function(player, areaId, questId, name, value)
 end
 
 xi.quest.getMustZone = function(player, areaId, questId)
-    return player:getLocalVar(getVarPrefix(areaId, questId) .. "mustZone") == 1 and true or false
+    return player:getLocalVar(getVarPrefix(areaId, questId) .. 'mustZone') == 1 and true or false
 end
 
 xi.quest.setMustZone = function(player, areaId, questId)
-    player:setLocalVar(getVarPrefix(areaId, questId) .. "mustZone", 1)
+    player:setLocalVar(getVarPrefix(areaId, questId) .. 'mustZone', 1)
 end

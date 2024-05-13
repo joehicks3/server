@@ -29,7 +29,6 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include <string.h>
 #include <vector>
 
-struct Sql_t;
 struct search_req;
 
 struct ahItem
@@ -70,6 +69,8 @@ struct SearchEntity
     bool        mentor         = false;
     uint8       seacom_type    = 0;
     uint8       languages      = 0;
+    bool        gmHidden       = false;
+    bool        disconnecting  = false;
 };
 
 /************************************************************************
@@ -77,8 +78,6 @@ struct SearchEntity
  *                                                                       *
  *                                                                       *
  ************************************************************************/
-
-class SqlConnection;
 
 class CDataLoader
 {
@@ -88,17 +87,14 @@ public:
 
     uint32 GetPlayersCount(const search_req& sr);
 
-    std::vector<ahHistory*>  GetAHItemHystory(uint16 ItemID, bool stack);
+    std::vector<ahHistory*>  GetAHItemHistory(uint16 ItemID, bool stack);
     std::list<SearchEntity*> GetPartyList(uint32 PartyID, uint32 AllianceID);
     std::list<SearchEntity*> GetLinkshellList(uint32 LinkshellID);
     std::list<SearchEntity*> GetPlayersList(search_req sr, int* count);
     std::string              GetSearchComment(uint32 playerId);
-    std::vector<ahItem*>     GetAHItemsToCategory(uint8 AHCategoryID, int8* OrderByString);
+    std::vector<ahItem*>     GetAHItemsToCategory(uint8 AHCategoryID, const char* OrderByString);
     ahItem                   GetAHItemFromItemID(uint16 ItemID);
     void                     ExpireAHItems(uint16 expireAgeInDays);
-
-private:
-    std::unique_ptr<SqlConnection> sql;
 };
 
 #endif

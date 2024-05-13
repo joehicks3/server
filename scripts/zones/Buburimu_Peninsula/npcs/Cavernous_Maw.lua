@@ -4,9 +4,7 @@
 -- !pos -334 -24 52
 -- Teleports Players to Abyssea - Attohwa
 -----------------------------------
-local ID = require("scripts/zones/Buburimu_Peninsula/IDs")
-require("scripts/globals/quests")
-require("scripts/globals/abyssea")
+local ID = zones[xi.zone.BUBURIMU_PENINSULA]
 -----------------------------------
 local entity = {}
 
@@ -18,8 +16,8 @@ entity.onTrigger = function(player, npc)
         local hasStone = xi.abyssea.getHeldTraverserStones(player)
         if
             hasStone >= 1 and
-            player:getQuestStatus(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.DAWN_OF_DEATH) == QUEST_ACCEPTED and
-            player:getQuestStatus(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.A_FLUTTERY_FIEND) == QUEST_AVAILABLE
+            player:getQuestStatus(xi.questLog.ABYSSEA, xi.quest.id.abyssea.DAWN_OF_DEATH) == xi.questStatus.QUEST_ACCEPTED and
+            player:getQuestStatus(xi.questLog.ABYSSEA, xi.quest.id.abyssea.A_FLUTTERY_FIEND) == xi.questStatus.QUEST_AVAILABLE
         then
             player:startEvent(62)
         else
@@ -35,7 +33,7 @@ end
 
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 62 then
-        player:addQuest(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.A_FLUTTERY_FIEND)
+        player:addQuest(xi.questLog.ABYSSEA, xi.quest.id.abyssea.A_FLUTTERY_FIEND)
     elseif csid == 63 then
         -- Killed Itzpapalotl
     elseif csid == 61 and option == 1 then

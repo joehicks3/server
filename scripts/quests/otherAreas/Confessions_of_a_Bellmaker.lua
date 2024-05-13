@@ -4,24 +4,19 @@
 -- Reinberta !pos -190 -7 -59 235
 -- Mevreauche !pos -193 11 148 231
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/quests')
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.CONFESSIONS_OF_A_BELLMAKER)
+local quest = Quest:new(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.CONFESSIONS_OF_A_BELLMAKER)
 
 quest.reward =
 {
-    item = xi.items.MINSTRELS_DAGGER,
+    item = xi.item.MINSTRELS_DAGGER,
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.RIVERNE_SITE_A01] =
@@ -45,7 +40,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.RIVERNE_SITE_A01] =

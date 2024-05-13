@@ -3,11 +3,9 @@
 --  Mob: Overlord's Tombstone
 -- Note: Mega Boss
 -----------------------------------
-require("scripts/globals/dynamis")
------------------------------------
 local entity = {}
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     local mobId = mob:getID()
     for i = mobId + 1, mobId + 2 do
         if not GetMobByID(i):isSpawned() then
@@ -27,6 +25,8 @@ entity.onMobDeath = function(mob, player, optParams)
             end
         end
     end
+
+    xi.magian.onMobDeath(mob, player, optParams, set{ 4402 })
 end
 
 return entity

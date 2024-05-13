@@ -1,11 +1,10 @@
 -----------------------------------
 -- Trust
 -----------------------------------
-require("scripts/globals/bcnm")
-require("scripts/globals/magic")
-require("scripts/globals/roe")
+require('scripts/globals/bcnm')
+require('scripts/globals/magic')
+require('scripts/globals/roe')
 -----------------------------------
-
 xi = xi or {}
 xi.trust = xi.trust or {}
 
@@ -252,7 +251,7 @@ xi.trust.onTradeCipher = function(player, trade, csid, rovCs, arkAngelCs)
         not player:hasSpell(spellId)
     then
 
-        player:setLocalVar("TradingTrustCipher", spellId)
+        player:setLocalVar('TradingTrustCipher', spellId)
 
         -- TODO Blocking for ROV ciphers
         local rovBlock = false
@@ -275,7 +274,7 @@ xi.trust.canCast = function(caster, spell, notAllowedTrustIds)
     end
 
     -- GMs can do what they want (as long as ENABLE_TRUST_CASTING is enabled)
-    if caster:getGMLevel() > 0 and caster:checkNameFlags(0x04000000) then
+    if caster:getGMLevel() > 0 and caster:getVisibleGMLevel() >= 3 then
         return 0
     end
 
@@ -327,14 +326,14 @@ xi.trust.canCast = function(caster, spell, notAllowedTrustIds)
                 caster:messageSystem(xi.msg.system.TRUST_ALREADY_CALLED)
                 return -1
             -- Check not allowed trust combinations (Shantotto I vs Shantotto II)
-            elseif type(notAllowedTrustIds) == "number" then
+            elseif type(notAllowedTrustIds) == 'number' then
                 if member:getTrustID() == notAllowedTrustIds then
                     caster:messageSystem(xi.msg.system.TRUST_ALREADY_CALLED)
                     return -1
                 end
-            elseif type(notAllowedTrustIds) == "table" then
+            elseif type(notAllowedTrustIds) == 'table' then
                 for _, v in pairs(notAllowedTrustIds) do
-                    if type(v) == "number" then
+                    if type(v) == 'number' then
                         if member:getTrustID() == v then
                             caster:messageSystem(xi.msg.system.TRUST_ALREADY_CALLED)
                             return -1
@@ -399,12 +398,12 @@ xi.trust.message = function(mob, messageOffset)
     local pageOffset = poolIDToMessagePageOffset[poolID]
 
     if pageOffset == nil then
-        print("trust.lua: pageOffset not set for Trust poolID: " .. poolID)
+        print('trust.lua: pageOffset not set for Trust poolID: ' .. poolID)
         return
     end
 
     if pageOffset > maxMessagePage then
-        print("trust.lua: maxMessagePage exceeded!")
+        print('trust.lua: maxMessagePage exceeded!')
         return
     end
 
@@ -439,7 +438,7 @@ end
 -- For debugging and lining up teamwork messages
 xi.trust.dumpMessages = function(mob, pageOffset)
     for i = 0, 20 do
-        xi.trust.message(mob, pageOffset, i)
+        xi.trust.message(mob, pageOffset)
     end
 end
 

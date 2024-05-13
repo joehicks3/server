@@ -1,12 +1,9 @@
 -----------------------------------
 -- Area: Western Adoulin
 --  NPC: Pagnelle
--- Type: Standard NPC and Quest NPC
--- Starts, Involved with, and Finishes Quest: 'Raptor Rapture'
 -- !pos -8 0 -100 256
 -----------------------------------
-require("scripts/globals/quests")
-local ID = require("scripts/zones/Western_Adoulin/IDs")
+local ID = zones[xi.zone.WESTERN_ADOULIN]
 -----------------------------------
 local entity = {}
 
@@ -14,21 +11,21 @@ entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
-    local raptorRapture = player:getQuestStatus(xi.quest.log_id.ADOULIN, xi.quest.id.adoulin.RAPTOR_RAPTURE)
-    local raptorRaptureStatus = player:getCharVar("Raptor_Rapture_Status")
+    local raptorRapture = player:getQuestStatus(xi.questLog.ADOULIN, xi.quest.id.adoulin.RAPTOR_RAPTURE)
+    local raptorRaptureStatus = player:getCharVar('Raptor_Rapture_Status')
 
-    if raptorRapture == QUEST_AVAILABLE then
+    if raptorRapture == xi.questStatus.QUEST_AVAILABLE then
         if raptorRaptureStatus < 3 then
             -- Starts chain of events for the introduction CS for Quest: 'Raptor Rapture'.
             -- If player somehow doesn't finish the chain of events, they can just talk to Pagnelle again to retry.
-            player:setCharVar("Raptor_Rapture_Status", 1)
+            player:setCharVar('Raptor_Rapture_Status', 1)
             player:startEvent(5032)
         else
             -- Player has finished introductory CS event chain, but didn't accept the quest.
             -- Offers Quest: 'Raptor Rapture' if player has yet to accept it.
             player:startEvent(5061)
         end
-    elseif raptorRapture == QUEST_ACCEPTED then
+    elseif raptorRapture == xi.questStatus.QUEST_ACCEPTED then
         if raptorRaptureStatus == 4 then
             -- Reminder during Quest: 'Raptor Rapture', speak to Ilney.
             player:startEvent(5033)
@@ -71,24 +68,24 @@ entity.onEventFinish = function(player, csid, option, npc)
         player:setPos(0, 0, 0, 0, 258)
     elseif csid == 5061 and option == 1 then
         -- Starts Quest: 'Raptor Rapture'
-        player:addQuest(xi.quest.log_id.ADOULIN, xi.quest.id.adoulin.RAPTOR_RAPTURE)
-        player:setCharVar("Raptor_Rapture_Status", 4)
+        player:addQuest(xi.questLog.ADOULIN, xi.quest.id.adoulin.RAPTOR_RAPTURE)
+        player:setCharVar('Raptor_Rapture_Status', 4)
     elseif csid == 5035 then
         -- Progresses Quest: 'Raptor Rapture', spoke to Ilney, now need rockberries.
-        player:setCharVar("Raptor_Rapture_Status", 6)
+        player:setCharVar('Raptor_Rapture_Status', 6)
     elseif csid == 5037 then
         -- Progresses Quest: 'Raptor Rapture', brought rockberries, now need to go to Rala.
         player:delKeyItem(xi.ki.ROCKBERRY1)
         player:delKeyItem(xi.ki.ROCKBERRY2)
         player:delKeyItem(xi.ki.ROCKBERRY3)
-        player:setCharVar("Raptor_Rapture_Status", 7)
+        player:setCharVar('Raptor_Rapture_Status', 7)
     elseif csid == 5039 then
         -- Finishing Quest: 'Raptor Rapture'
-        player:setCharVar("Raptor_Rapture_Status", 0)
-        player:completeQuest(xi.quest.log_id.ADOULIN, xi.quest.id.adoulin.RAPTOR_RAPTURE)
+        player:setCharVar('Raptor_Rapture_Status', 0)
+        player:completeQuest(xi.questLog.ADOULIN, xi.quest.id.adoulin.RAPTOR_RAPTURE)
         player:addCurrency('bayld', 1000 * xi.settings.main.BAYLD_RATE)
         player:messageSpecial(ID.text.BAYLD_OBTAINED, 1000 * xi.settings.main.BAYLD_RATE)
-        player:addFame(xi.quest.fame_area.ADOULIN)
+        player:addFame(xi.fameArea.ADOULIN)
         player:needToZone(true)
     end
 end

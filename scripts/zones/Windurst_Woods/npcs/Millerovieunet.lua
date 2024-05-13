@@ -4,15 +4,12 @@
 -- Only sells when Windurst controlls Qufim Region
 -- Confirmed shop stock, August 2013
 -----------------------------------
-local ID = require("scripts/zones/Windurst_Woods/IDs")
-require("scripts/globals/events/harvest_festivals")
-require("scripts/globals/shop")
-require("scripts/globals/zone")
+local ID = zones[xi.zone.WINDURST_WOODS]
 -----------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
-    onHalloweenTrade(player, trade, npc)
+    xi.events.harvestFestival.onHalloweenTrade(player, trade, npc)
 end
 
 entity.onTrigger = function(player, npc)
@@ -25,7 +22,7 @@ entity.onTrigger = function(player, npc)
         }
 
         player:showText(npc, ID.text.MILLEROVIEUNET_OPEN_DIALOG)
-        xi.shop.general(player, stock, xi.quest.fame_area.WINDURST)
+        xi.shop.general(player, stock, xi.fameArea.WINDURST)
     end
 end
 

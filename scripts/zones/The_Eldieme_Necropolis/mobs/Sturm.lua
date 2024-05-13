@@ -3,8 +3,7 @@
 --  Mob: Sturm
 -- Involved in Quest: A New Dawn (BST AF3)
 -----------------------------------
-local ID = require("scripts/zones/The_Eldieme_Necropolis/IDs")
-require("scripts/globals/quests")
+local ID = zones[xi.zone.THE_ELDIEME_NECROPOLIS]
 -----------------------------------
 local entity = {}
 
@@ -14,10 +13,10 @@ end
 
 entity.onMobDeath = function(mob, player, optParams)
     if
-        player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.A_NEW_DAWN) == QUEST_ACCEPTED and
-        player:getCharVar("ANewDawn_Event") == 4
+        player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.A_NEW_DAWN) == xi.questStatus.QUEST_ACCEPTED and
+        player:getCharVar('ANewDawn_Event') == 4
     then
-        player:setCharVar("ANewDawn_Event", 5)
+        player:setCharVar('ANewDawn_Event', 5)
     end
 
     if optParams.isKiller then

@@ -5,19 +5,13 @@
 -- Antreneau : !pos -71 -5 -39 232
 -- Thierride : !pos -67 -5 -28 232
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.A_TASTE_FOR_MEAT)
+local quest = Quest:new(xi.questLog.SANDORIA, xi.quest.id.sandoria.A_TASTE_FOR_MEAT)
 
 quest.reward =
 {
     fame = 30,
-    fameArea = xi.quest.fame_area.SANDORIA,
+    fameArea = xi.fameArea.SANDORIA,
     gil = 150,
     title = xi.title.RABBITER,
 }
@@ -26,7 +20,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         -- This entire quest is not flagged; however, the quest is accepted and
@@ -38,11 +32,11 @@ quest.sections =
                 onTrade = function(player, npc, trade)
                     if
                         quest:getVar(player, 'Prog') == 1 and
-                        npcUtil.tradeHas(trade, xi.items.SLICE_OF_HARE_MEAT)
+                        npcUtil.tradeHas(trade, xi.item.SLICE_OF_HARE_MEAT)
                     then
                         return quest:progressEvent(531)
                     else
-                        return quest:progressEvent(532)
+                        return quest:event(532)
                     end
                 end,
 
@@ -50,7 +44,7 @@ quest.sections =
                     if quest:getVar(player, 'Prog') == 0 then
                         return quest:progressEvent(527)
                     else
-                        return quest:progressEvent(525)
+                        return quest:event(525)
                     end
                 end,
             },
@@ -60,11 +54,11 @@ quest.sections =
                 onTrade = function(player, npc, trade)
                     if
                         quest:getVar(player, 'Prog') == 1 and
-                        npcUtil.tradeHasExactly(trade, { { xi.items.SLICE_OF_HARE_MEAT, 5 } })
+                        npcUtil.tradeHasExactly(trade, { { xi.item.SLICE_OF_HARE_MEAT, 5 } })
                     then
                         return quest:progressEvent(528)
                     else
-                        return quest:progressEvent(529)
+                        return quest:event(529)
                     end
                 end,
 
@@ -97,7 +91,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.PORT_SAN_DORIA] =
@@ -116,10 +110,10 @@ quest.sections =
             onEventFinish =
             {
                 [530] = function(player, csid, option, npc)
-                    if npcUtil.giveItem(player, xi.items.SLICE_OF_GRILLED_HARE) then
+                    if npcUtil.giveItem(player, xi.item.SLICE_OF_GRILLED_HARE) then
                         quest:setVar(player, 'Option', 0)
                     else
-                        return quest:progressEvent(538)
+                        player:startEvent(538)
                     end
                 end,
             },

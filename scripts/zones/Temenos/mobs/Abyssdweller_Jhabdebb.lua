@@ -2,12 +2,12 @@
 -- Area: Temenos
 --  Mob: Abyssdweller Jhabdebb
 -----------------------------------
-mixins = { require("scripts/mixins/job_special") }
-local ID = require("scripts/zones/Temenos/IDs")
+mixins = { require('scripts/mixins/job_special') }
+local ID = zones[xi.zone.TEMENOS]
 -----------------------------------
 local entity = {}
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     if
         GetMobByID(ID.mob.TEMENOS_C_MOB[3] + 5):isDead() and GetMobByID(ID.mob.TEMENOS_C_MOB[3] + 6):isDead() and
         GetMobByID(ID.mob.TEMENOS_C_MOB[3] + 7):isDead() and GetMobByID(ID.mob.TEMENOS_C_MOB[3] + 8):isDead() and

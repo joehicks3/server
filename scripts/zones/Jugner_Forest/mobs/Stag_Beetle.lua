@@ -3,11 +3,15 @@
 --  Mob: Stag Beetle
 -- Note: PH for Panzer Percival
 -----------------------------------
-local ID = require("scripts/zones/Jugner_Forest/IDs")
-require("scripts/globals/regimes")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.JUGNER_FOREST]
 -----------------------------------
 local entity = {}
+
+local panzerPHTable =
+{
+    [ID.mob.PANZER_PERCIVAL[1] - 4] = ID.mob.PANZER_PERCIVAL[1], -- 535.504 -1.517 152.171 (southeast)
+    [ID.mob.PANZER_PERCIVAL[2] - 5] = ID.mob.PANZER_PERCIVAL[2], -- 239.541 -0.365 559.722 (northwest)
+}
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 12, 1, xi.regime.type.FIELDS)
@@ -15,7 +19,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.PANZER_PERCIVAL_PH, 10, 1) -- No minimum respawn
+    xi.mob.phOnDespawn(mob, panzerPHTable, 10, 1) -- No minimum respawn
 end
 
 return entity

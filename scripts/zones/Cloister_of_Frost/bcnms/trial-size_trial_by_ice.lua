@@ -2,9 +2,7 @@
 -- Area: Cloister of Frost
 -- BCNM: Trial-size Trial by Ice
 -----------------------------------
-local ID = require("scripts/zones/Cloister_of_Frost/IDs")
-require("scripts/globals/battlefield")
-require("scripts/globals/quests")
+local ID = zones[xi.zone.CLOISTER_OF_FROST]
 -----------------------------------
 local battlefieldObject = {}
 
@@ -21,8 +19,8 @@ end
 battlefieldObject.onBattlefieldLeave = function(player, battlefield, leavecode)
     if leavecode == xi.battlefield.leaveCode.WON then
         local _, clearTime, partySize = battlefield:getRecord()
-        local arg8 = (player:getQuestStatus(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.TRIAL_SIZE_TRIAL_BY_ICE) == QUEST_COMPLETED) and 1 or 0
-        player:startEvent(32001, battlefield:getArea(), clearTime, partySize, battlefield:getTimeInside(), 1, battlefield:getLocalVar("[cs]bit"), arg8)
+        local arg8 = (player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.TRIAL_SIZE_TRIAL_BY_ICE) == xi.questStatus.QUEST_COMPLETED) and 1 or 0
+        player:startEvent(32001, battlefield:getArea(), clearTime, partySize, battlefield:getTimeInside(), 1, battlefield:getLocalVar('[cs]bit'), arg8)
     elseif leavecode == xi.battlefield.leaveCode.LOST then
         player:startEvent(32002)
     end
@@ -38,13 +36,13 @@ battlefieldObject.onEventFinish = function(player, csid, option, npc)
             player:messageSpecial(ID.text.SHIVA_UNLOCKED, 0, 0, 4)
         end
 
-        if not player:hasItem(xi.items.SCROLL_OF_INSTANT_WARP) then
-            player:addItem(xi.items.SCROLL_OF_INSTANT_WARP)
-            player:messageSpecial(ID.text.ITEM_OBTAINED, xi.items.SCROLL_OF_INSTANT_WARP)
+        if not player:hasItem(xi.item.SCROLL_OF_INSTANT_WARP) then
+            player:addItem(xi.item.SCROLL_OF_INSTANT_WARP)
+            player:messageSpecial(ID.text.ITEM_OBTAINED, xi.item.SCROLL_OF_INSTANT_WARP)
         end
 
-        player:addFame(xi.quest.fame_area.SANDORIA, 30)
-        player:completeQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.TRIAL_SIZE_TRIAL_BY_ICE)
+        player:addFame(xi.fameArea.SANDORIA, 30)
+        player:completeQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.TRIAL_SIZE_TRIAL_BY_ICE)
     end
 end
 

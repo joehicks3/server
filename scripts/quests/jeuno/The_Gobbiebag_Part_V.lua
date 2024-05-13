@@ -4,10 +4,9 @@
 --  Log ID: 3, Quest ID: 27
 --  NPC: Bluffnix:  !pos -43 6 -115 245
 -----------------------------------
-require('scripts/globals/titles')
 require('scripts/quests/jeuno/helpers')
 -----------------------------------
-local lowerJeunoID = require('scripts/zones/Lower_Jeuno/IDs')
+local lowerJeunoID = zones[xi.zone.LOWER_JEUNO]
 -----------------------------------
 
 local params =
@@ -17,20 +16,20 @@ local params =
     message            = lowerJeunoID.text.INVENTORY_INCREASED,
     startInventorySize = 50,
     fame               = 3,
-    tradeStew          = xi.items.BOWL_OF_GOBLIN_STEW_880,
+    tradeStew          = xi.item.BOWL_OF_GOBLIN_STEW_880,
 
     tradeItems =
     {
-        xi.items.RHODONITE,
-        xi.items.PAKTONG_INGOT,
-        xi.items.SQUARE_OF_MOBLINWEAVE,
-        xi.items.SQUARE_OF_BUGARD_LEATHER,
+        xi.item.RHODONITE,
+        xi.item.PAKTONG_INGOT,
+        xi.item.SQUARE_OF_MOBLINWEAVE,
+        xi.item.SQUARE_OF_BUGARD_LEATHER,
     },
 
     reward =
     {
         fame = 30,
-        fameArea = xi.quest.fame_area.JEUNO,
+        fameArea = xi.fameArea.JEUNO,
         title = xi.title.GREEDALOX,
     },
 }

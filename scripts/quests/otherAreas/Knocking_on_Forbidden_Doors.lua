@@ -6,19 +6,12 @@
 -- Fyi_Chalmwoh    : !pos -39.273 -16.000 70.126 249
 -- Mire Incense KI : 709
 -----------------------------------
-require('scripts/globals/mannequins')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local mhauraID = require('scripts/zones/Mhaura/IDs')
-local phomiunaID = require('scripts/zones/Phomiuna_Aqueducts/IDs')
-local misareauxID = require('scripts/zones/Misareaux_Coast/IDs')
+local mhauraID    = zones[xi.zone.MHAURA]
+local phomiunaID  = zones[xi.zone.PHOMIUNA_AQUEDUCTS]
+local misareauxID = zones[xi.zone.MISAREAUX_COAST]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.KNOCKING_ON_FORBIDDEN_DOORS)
+local quest = Quest:new(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.KNOCKING_ON_FORBIDDEN_DOORS)
 
 quest.sections =
 {
@@ -26,8 +19,8 @@ quest.sections =
     -- QUEST AVAILABLE
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.BEHIND_THE_SMILE)
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.BEHIND_THE_SMILE)
         end,
 
         [xi.zone.TAVNAZIAN_SAFEHOLD] =
@@ -46,7 +39,7 @@ quest.sections =
     -- QUEST ACCEPTED
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.TAVNAZIAN_SAFEHOLD] =
@@ -55,7 +48,7 @@ quest.sections =
             {
                 onTrigger = function(player, csid, option, npc)
                     if quest:getVar(player, 'Prog') == 0 then
-                        return quest:event(536)
+                        return quest:progressEvent(536)
                     end
                 end,
             },
@@ -122,7 +115,7 @@ quest.sections =
 
                     -- Clicking on the ??? after killing NM
                     elseif progressVar == 4 then
-                        return quest:event(558)
+                        return quest:progressEvent(558)
                     end
                 end,
             },
@@ -145,7 +138,7 @@ quest.sections =
                 [557] = function(player, csid, option, npc)
                     if
                         quest:getVar(player, 'Prog') == 3 and
-                        npcUtil.popFromQM(player, npc, ID.mob.ALSHA, { claim = true, hide = 0 })
+                        npcUtil.popFromQM(player, npc, misareauxID.mob.ALSHA, { claim = true, hide = 0 })
                     then
                         return quest:messageSpecial(misareauxID.text.FOUL_STENCH)
                     end
@@ -181,14 +174,13 @@ quest.sections =
                     quest:complete(player)
                 end,
             },
-
         }
     },
 
     -- Quest complete
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED and
+            return status == xi.questStatus.QUEST_COMPLETED and
                 player:hasKeyItem(xi.ki.BETTER_HUMES_AND_MANNEQUINS)
         end,
 
@@ -197,7 +189,7 @@ quest.sections =
             ['Fyi_Chalmwoh'] =
             {
                 onTrigger = function(player, csid, option, npc)
-                    return quest:event(321, { [1] = xi.mannequin.getMannequins(player),
+                    return quest:progressEvent(321, { [1] = xi.mannequin.getMannequins(player),
                         [2] = xi.mannequin.cost.PURCHASE,
                         [3] = xi.mannequin.cost.TRADE,
                         [4] = xi.mannequin.cost.POSE,
@@ -209,7 +201,7 @@ quest.sections =
                     -- Trade exactly one mannequin without gil.  Gil taken separately.
                     local tradedMannequin = 0
 
-                    for itemId = xi.items.HUME_M_MANNEQUIN, xi.items.GALKA_MANNEQUIN do
+                    for itemId = xi.item.HUME_M_MANNEQUIN, xi.item.GALKA_MANNEQUIN do
                         if npcUtil.tradeHasExactly(trade, itemId) then
                             tradedMannequin = itemId
                         end
@@ -265,7 +257,7 @@ quest.sections =
                         player:delGil(xi.mannequin.cost.TRADE)
                     then
                         player:confirmTrade()
-                        npcUtil.giveItem(player, xi.items.HUME_M_MANNEQUIN + option - 1)
+                        npcUtil.giveItem(player, xi.item.HUME_M_MANNEQUIN + option - 1)
                     end
                 end,
 
@@ -277,8 +269,8 @@ quest.sections =
                         option <= 8 and
                         player:delGil(xi.mannequin.cost.PURCHASE)
                     then
-                        player:messageSpecial(mhauraID.text.ITEM_OBTAINED, xi.items.HUME_M_MANNEQUIN + option - 1)
-                        player:addItem(xi.items.HUME_M_MANNEQUIN + option - 1)
+                        player:messageSpecial(mhauraID.text.ITEM_OBTAINED, xi.item.HUME_M_MANNEQUIN + option - 1)
+                        player:addItem(xi.item.HUME_M_MANNEQUIN + option - 1)
                     elseif
                         option >= 10 and
                         player:delGil(xi.mannequin.cost.POSE)

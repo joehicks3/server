@@ -5,30 +5,25 @@
 -- Tami   : !pos 62.617 0 -68.222 234
 -- Zelman : !pos 17.095 7.704 -52.995 172
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local bastokMinesID = require('scripts/zones/Bastok_Mines/IDs')
-local zeruhnMinesID = require('scripts/zones/Zeruhn_Mines/IDs')
+local bastokMinesID = zones[xi.zone.BASTOK_MINES]
+local zeruhnMinesID = zones[xi.zone.ZERUHN_MINES]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.GROCERIES)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.GROCERIES)
 
 quest.reward =
 {
     fame     = 75,
-    fameArea = xi.quest.fame_area.BASTOK,
-    item     = xi.items.RABBIT_MANTLE,
+    fameArea = xi.fameArea.BASTOK,
+    item     = xi.item.RABBIT_MANTLE,
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE or
-                (status == QUEST_ACCEPTED and vars.Prog == 0)
+            return status == xi.questStatus.QUEST_AVAILABLE or
+                (status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 0)
         end,
 
         [xi.zone.BASTOK_MINES] =
@@ -49,7 +44,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.BASTOK_MINES] =
@@ -58,7 +53,7 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.items.STRIP_OF_MEAT_JERKY) and
+                        npcUtil.tradeHasExactly(trade, xi.item.STRIP_OF_MEAT_JERKY) and
                         quest:getVar(player, 'Prog') == 3
                     then
                         return quest:progressEvent(113)
@@ -81,7 +76,7 @@ quest.sections =
             onEventFinish =
             {
                 [112] = function(player, csid, option, npc)
-                    player:addFame(xi.quest.fame_area.BASTOK, 8)
+                    player:addFame(xi.fameArea.BASTOK, 8)
                     npcUtil.giveCurrency(player, 'gil', 10)
 
                     quest:setVar(player, 'Prog', 0)

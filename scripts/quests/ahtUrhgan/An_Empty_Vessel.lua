@@ -4,14 +4,10 @@
 -- Log ID: 6, Quest ID: 5
 -- Waoud : !pos 65 -6 -78 50
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
------------------------------------
-local whitegateID = require("scripts/zones/Aht_Urhgan_Whitegate/IDs")
+local whitegateID = zones[xi.zone.AHT_URHGAN_WHITEGATE]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.AHT_URHGAN, xi.quest.id.ahtUrhgan.AN_EMPTY_VESSEL)
+local quest = Quest:new(xi.questLog.AHT_URHGAN, xi.quest.id.ahtUrhgan.AN_EMPTY_VESSEL)
 
 quest.reward =
 {
@@ -20,16 +16,16 @@ quest.reward =
 
 local requiredItemList =
 {
-    xi.items.SIRENS_TEAR,
-    xi.items.PINCH_OF_VALKURM_SUNSAND,
-    xi.items.DANGRUF_STONE,
+    xi.item.SIRENS_TEAR,
+    xi.item.PINCH_OF_VALKURM_SUNSAND,
+    xi.item.DANGRUF_STONE,
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 player:getMainLvl() >= xi.settings.main.ADVANCED_JOB_LEVEL
         end,
 
@@ -104,7 +100,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.AHT_URHGAN_WHITEGATE] =
@@ -203,7 +199,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.AHT_URHGAN_WHITEGATE] =
@@ -241,7 +237,7 @@ quest.sections =
                         quest:setVar(player, 'completeEvent', 0)
 
                         quest:setVar(player, 'Timer', VanadielUniqueDay() + 1)
-                        xi.quest.setMustZone(player, xi.quest.log_id.AHT_URHGAN, xi.quest.id.ahtUrhgan.BEGINNINGS)
+                        xi.quest.setMustZone(player, xi.questLog.AHT_URHGAN, xi.quest.id.ahtUrhgan.BEGINNINGS)
                     end
                 end,
 

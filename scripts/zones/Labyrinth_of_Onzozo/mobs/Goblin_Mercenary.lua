@@ -3,11 +3,14 @@
 --  Mob: Goblin Mercenary
 -- Note: Place holder Soulstealer Skullnix
 -----------------------------------
-local ID = require("scripts/zones/Labyrinth_of_Onzozo/IDs")
-require("scripts/globals/regimes")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.LABYRINTH_OF_ONZOZO]
 -----------------------------------
 local entity = {}
+
+local soulstealerPHTable =
+{
+    [ID.mob.SOULSTEALER_SKULLNIX + 16] = ID.mob.SOULSTEALER_SKULLNIX, -- 43.103 5.677 181.977
+}
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 771, 2, xi.regime.type.GROUNDS)
@@ -16,7 +19,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.SOULSTEALER_SKULLNIX_PH, 5, math.random(7200, 10800)) -- 2 to 3 hours
+    xi.mob.phOnDespawn(mob, soulstealerPHTable, 5, math.random(7200, 10800)) -- 2 to 3 hours
 end
 
 return entity

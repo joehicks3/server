@@ -5,14 +5,8 @@
 -- Rosel    : !pos 69.895 0 41.073 230
 -- Guilerme : !pos -4.5 0 99 231
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.ROSEL_THE_ARMORER)
+local quest = Quest:new(xi.questLog.SANDORIA, xi.quest.id.sandoria.ROSEL_THE_ARMORER)
 
 quest.reward =
 {
@@ -24,7 +18,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -77,7 +71,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -104,7 +98,7 @@ quest.sections =
                         gilReward = 200
                     end
 
-                    npcUtil.giveCurrency(player, "gil", gilReward)
+                    npcUtil.giveCurrency(player, 'gil', gilReward)
                     quest:complete(player)
                 end,
             },

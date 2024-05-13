@@ -4,19 +4,15 @@
 -- Tsetseroon !pos -13 -6 69 53
 -- Qm9 !pos -406 6.5 -440 68
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/npc_util')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.AHT_URHGAN, xi.quest.id.ahtUrhgan.WHAT_FRIENDS_ARE_FOR)
+local quest = Quest:new(xi.questLog.AHT_URHGAN, xi.quest.id.ahtUrhgan.WHAT_FRIENDS_ARE_FOR)
 
 quest.sections =
 {
     -- Section: Quest available
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and vars.Prog == 0
+            return status == xi.questStatus.QUEST_AVAILABLE and vars.Prog == 0
         end,
 
         [xi.zone.AYDEEWA_SUBTERRANE] =
@@ -50,7 +46,7 @@ quest.sections =
     -- Section: Quest available, step 2
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and vars.Prog == 1
+            return status == xi.questStatus.QUEST_AVAILABLE and vars.Prog == 1
         end,
 
         [xi.zone.NASHMAU] =
@@ -75,7 +71,7 @@ quest.sections =
     -- Section: Quest accepted
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.NASHMAU] =
@@ -95,7 +91,7 @@ quest.sections =
                 onTrade = function(player, npc, trade)
                     if
                         quest:getVar(player, 'Prog') == 2 and
-                        npcUtil.tradeHasExactly(trade, { xi.items.CHUNK_OF_TIN_ORE, xi.items.COBALT_JELLYFISH })
+                        npcUtil.tradeHasExactly(trade, { xi.item.CHUNK_OF_TIN_ORE, xi.item.COBALT_JELLYFISH })
                     then
                         return quest:progressEvent(18)
                     end
@@ -112,7 +108,7 @@ quest.sections =
 
                 [20] = function(player, csid, option, npc)
                     if player:hasKeyItem(xi.ki.MAP_OF_AYDEEWA_SUBTERRANE) then
-                        if npcUtil.giveItem(player, xi.items.IMPERIAL_BRONZE_PIECE) then
+                        if npcUtil.giveItem(player, xi.item.IMPERIAL_BRONZE_PIECE) then
                             quest:complete(player)
                         end
                     else
@@ -154,7 +150,7 @@ quest.sections =
     -- Section: Quest completed
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.NASHMAU] =

@@ -4,19 +4,14 @@
 -- Log ID: 1, Quest ID: 35
 -- Kurando : !pos -23.887 3.898 0.870 236
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.FEAR_OF_FLYING)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.FEAR_OF_FLYING)
 
 quest.reward =
 {
     fame     = 30,
-    fameArea = xi.quest.fame_area.BASTOK,
-    item     = xi.items.BLACK_SILK_NECKERCHIEF,
+    fameArea = xi.fameArea.BASTOK,
+    item     = xi.item.BLACK_SILK_NECKERCHIEF,
     title    = xi.title.AIRSHIP_DENOUNCER,
 }
 
@@ -24,8 +19,8 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getFameLevel(xi.quest.fame_area.BASTOK) >= 3
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getFameLevel(xi.fameArea.BASTOK) >= 3
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -43,7 +38,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -51,7 +46,7 @@ quest.sections =
             ['Kurando'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.SILKWORM_EGG) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.SILKWORM_EGG) then
                         return quest:progressEvent(171)
                     end
                 end,
@@ -72,7 +67,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.PORT_BASTOK] =

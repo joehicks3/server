@@ -3,12 +3,15 @@
 --  Mob: Tonberry Cutter
 -- Note: PH for Sozu Sarberry
 -----------------------------------
-local ID = require("scripts/zones/Temple_of_Uggalepih/IDs")
-mixins = { require("scripts/mixins/families/tonberry") }
-require("scripts/globals/regimes")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.TEMPLE_OF_UGGALEPIH]
+mixins = { require('scripts/mixins/families/tonberry') }
 -----------------------------------
 local entity = {}
+
+local sarberryPHTable =
+{
+    [ID.mob.SOZU_SARBERRY - 3] = ID.mob.SOZU_SARBERRY, -- 89 0.499 -23
+}
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 790, 1, xi.regime.type.GROUNDS)
@@ -20,7 +23,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.SOZU_SARBERRY_PH, 10, 3600) -- 1 hour
+    xi.mob.phOnDespawn(mob, sarberryPHTable, 10, 3600) -- 1 hour
 end
 
 return entity

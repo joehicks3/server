@@ -3,8 +3,6 @@
 --  NPC: Laityn
 -- Involved In Quest: Recollections
 -----------------------------------
-require("scripts/globals/quests")
------------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -12,8 +10,8 @@ end
 
 entity.onTrigger = function(player, npc)
     if
-        player:getQuestStatus(xi.quest.log_id.WINDURST, xi.quest.id.windurst.RECOLLECTIONS) == QUEST_ACCEPTED and
-        player:getCharVar("recollectionsQuest") == 0
+        player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.RECOLLECTIONS) == xi.questStatus.QUEST_ACCEPTED and
+        player:getCharVar('recollectionsQuest') == 0
     then
         player:startEvent(10003) -- Option CS for "Recollections"
     else
@@ -26,7 +24,7 @@ end
 
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 10003 then
-        player:setCharVar("recollectionsQuest", 1)
+        player:setCharVar('recollectionsQuest', 1)
     end
 end
 

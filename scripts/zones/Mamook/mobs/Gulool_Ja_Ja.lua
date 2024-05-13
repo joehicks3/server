@@ -2,9 +2,8 @@
 -- Area: Mamook
 --  Mob: Gulool Ja Ja
 -----------------------------------
-require("scripts/globals/titles")
-local ID = require("scripts/zones/Mamook/IDs")
-mixins = { require("scripts/mixins/job_special") }
+local ID = zones[xi.zone.MAMOOK]
+mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
 local entity = {}
 
@@ -13,7 +12,7 @@ entity.onMobSpawn = function(mob)
     mob:setMobMod(xi.mobMod.DRAW_IN, 2)
 end
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     for i = ID.mob.GULOOL_JA_JA + 1, ID.mob.GULOOL_JA_JA + 4 do
         SpawnMob(i):updateEnmity(target)
     end

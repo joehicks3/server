@@ -1,10 +1,7 @@
 -----------------------------------
 -- Zone: Bhaflau_Thickets (52)
 -----------------------------------
-local ID = require('scripts/zones/Bhaflau_Thickets/IDs')
-require('scripts/globals/chocobo_digging')
-require('scripts/globals/helm')
-require('scripts/globals/zone')
+local ID = zones[xi.zone.BHAFLAU_THICKETS]
 -----------------------------------
 local zoneObject = {}
 
@@ -16,7 +13,7 @@ zoneObject.onInitialize = function(zone)
     UpdateNMSpawnPoint(ID.mob.HARVESTMAN)
     GetMobByID(ID.mob.HARVESTMAN):setRespawnTime(math.random(900, 10800))
 
-    xi.helm.initZone(zone, xi.helm.type.HARVESTING)
+    xi.helm.initZone(zone, xi.helmType.HARVESTING)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -38,8 +35,8 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.afterZoneIn = function(player)
-    player:entityVisualPacket("1pb1")
-    player:entityVisualPacket("2pb1")
+    player:entityVisualPacket('1pb1')
+    player:entityVisualPacket('2pb1')
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

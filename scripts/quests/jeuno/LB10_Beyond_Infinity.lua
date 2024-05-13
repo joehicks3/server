@@ -4,22 +4,39 @@
 -- Log ID: 3, Quest ID: 137
 -- Nomad Moogle : !pos 10.012 1.453 121.883 243
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local ruludeID = require('scripts/zones/RuLude_Gardens/IDs')
+local ruludeID = zones[xi.zone.RULUDE_GARDENS]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.BEYOND_INFINITY)
+local quest = Quest:new(xi.questLog.JEUNO, xi.quest.id.jeuno.BEYOND_INFINITY)
 
 quest.reward =
 {
     fame = 50,
-    fameArea = xi.quest.fame_area.JEUNO,
+    fameArea = xi.fameArea.JEUNO,
     title = xi.title.BUSHIN_ASPIRANT,
+}
+
+local atoriBattlefieldIds =
+{
+    [xi.zone.BALGAS_DAIS]      = xi.battlefield.id.BEYOND_INFINITY_BALGAS_DAIS,
+    [xi.zone.HORLAIS_PEAK]     = xi.battlefield.id.BEYOND_INFINITY_HORLAIS_PEAK,
+    [xi.zone.QUBIA_ARENA]      = xi.battlefield.id.BEYOND_INFINITY,
+    [xi.zone.WAUGHROON_SHRINE] = xi.battlefield.id.BEYOND_INFINITY_WAUGHROON_SHRINE,
+}
+
+local atoriBattlefieldZone =
+{
+    onEventFinish =
+    {
+        [32001] = function(player, csid, option, npc)
+            local battlefieldWin = player:getLocalVar('battlefieldWin')
+
+            if battlefieldWin == atoriBattlefieldIds[player:getZoneID()] then
+                npcUtil.giveItem(player, xi.item.SCROLL_OF_INSTANT_WARP)
+                quest:setVar(player, 'Prog', 1)
+            end
+        end,
+    },
 }
 
 quest.sections =
@@ -29,8 +46,8 @@ quest.sections =
     -- In most cases, the quest will already be accepted.
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.PRELUDE_TO_PUISSANCE)
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.JEUNO, xi.quest.id.jeuno.PRELUDE_TO_PUISSANCE)
         end,
 
         [xi.zone.RULUDE_GARDENS] =
@@ -74,7 +91,7 @@ quest.sections =
     -- Section: Quest accepted.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 0 and
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 0 and
                 player:hasKeyItem(xi.ki.SOUL_GEM_CLASP)
         end,
 
@@ -111,10 +128,23 @@ quest.sections =
         },
     },
 
+    -- BCNM Win Events.  Soul Gem Clasp is required for entry, and removed
+    -- after.  Separate section to not confuse with the failed event.
+    {
+        check = function(player, status, vars)
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 0
+        end,
+
+        [xi.zone.BALGAS_DAIS]      = atoriBattlefieldZone,
+        [xi.zone.HORLAIS_PEAK]     = atoriBattlefieldZone,
+        [xi.zone.QUBIA_ARENA]      = atoriBattlefieldZone,
+        [xi.zone.WAUGHROON_SHRINE] = atoriBattlefieldZone,
+    },
+
     -- Section: Quest accepted. We failed BCNM.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and
+            return status == xi.questStatus.QUEST_ACCEPTED and
                 vars.Prog == 0 and
                 not player:hasKeyItem(xi.ki.SOUL_GEM_CLASP)
         end,
@@ -132,7 +162,7 @@ quest.sections =
                 end,
 
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, { { xi.items.HIGH_KINDREDS_CREST, 5 } }) then
+                    if npcUtil.tradeHasExactly(trade, { { xi.item.HIGH_KINDREDS_CREST, 5 } }) then
                         return quest:progressEvent(10195, 1)
                     end
                 end,
@@ -190,7 +220,7 @@ quest.sections =
     -- Section: Quest accepted. We beated the BCNM.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and
+            return status == xi.questStatus.QUEST_ACCEPTED and
                 vars.Prog == 1
         end,
 
@@ -218,7 +248,7 @@ quest.sections =
     -- Section: Quest completed.
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.RULUDE_GARDENS] =

@@ -121,7 +121,7 @@ void CAttackState::UpdateTarget(uint16 targid)
         {
             newTargid          = 0;
             CCharEntity* PChar = dynamic_cast<CCharEntity*>(m_PEntity);
-            if (PChar && PChar->m_hasAutoTarget) // Auto-Target
+            if (PChar && PChar->hasAutoTargetEnabled())
             {
                 for (auto&& PPotentialTarget : PChar->SpawnMOBList)
                 {
@@ -170,5 +170,5 @@ bool CAttackState::CanAttack(CBattleEntity* PTarget)
 
 bool CAttackState::AttackReady()
 {
-    return m_attackTime < 0ms;
+    return m_attackTime < 0ms && m_PEntity->isAlive();
 }

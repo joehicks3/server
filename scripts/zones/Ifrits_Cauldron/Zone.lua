@@ -1,10 +1,7 @@
 -----------------------------------
 -- Zone: Ifrits_Cauldron (205)
 -----------------------------------
-local ID = require('scripts/zones/Ifrits_Cauldron/IDs')
-require('scripts/globals/conquest')
-require('scripts/globals/treasure')
-require('scripts/globals/helm')
+local ID = zones[xi.zone.IFRITS_CAULDRON]
 -----------------------------------
 local zoneObject = {}
 
@@ -13,7 +10,7 @@ zoneObject.onInitialize = function(zone)
     GetMobByID(ID.mob.ASH_DRAGON):setRespawnTime(math.random(900, 10800))
 
     xi.treasure.initZone(zone)
-    xi.helm.initZone(zone, xi.helm.type.MINING)
+    xi.helm.initZone(zone, xi.helmType.MINING)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)

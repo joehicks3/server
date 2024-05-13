@@ -3,8 +3,6 @@
 --  Mob: Eald'narche (Phase 1)
 -- Zilart Mission 16 BCNM Fight
 -----------------------------------
-require("scripts/globals/titles")
------------------------------------
 local entity = {}
 
 entity.onMobInitialize = function(mob)
@@ -21,7 +19,7 @@ entity.onMobSpawn = function(mob)
     mob:addStatusEffectEx(xi.effect.MAGIC_SHIELD, 0, 1, 0, 0)
 end
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     mob:addStatusEffectEx(xi.effect.SILENCE, 0, 1, 0, 5)
     GetMobByID(mob:getID() + 1):updateEnmity(target)
 end

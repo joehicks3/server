@@ -3,7 +3,7 @@
 -- Door: Heavy Iron Gate
 -- !pos 5 -9 579 54
 -----------------------------------
-local ID = require("scripts/zones/Arrapago_Reef/IDs")
+local ID = zones[xi.zone.ARRAPAGO_REEF]
 -----------------------------------
 local entity = {}
 
@@ -15,7 +15,7 @@ entity.onTrigger = function(player, npc)
         if player:getXPos() < 8 then
             player:messageSpecial(ID.text.STAGING_GATE_ILRUSI)
             player:messageSpecial(ID.text.STAGING_GATE_INTERACT)
-            player:startEvent(106)
+            player:startOptionalCutscene(106)
         elseif not player:hasKeyItem(xi.ki.ILRUSI_ASSAULT_ORDERS) then
             player:messageSpecial(ID.text.STAGING_GATE_ILRUSI)
             player:messageSpecial(ID.text.STAGING_GATE_INTERACT)

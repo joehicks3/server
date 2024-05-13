@@ -15,7 +15,7 @@ xi.msg.channel =
     TELL           = 3,
     PARTY          = 4,
     LINKSHELL      = 5,
-    SYSTEM_1       = 6, -- Standard "PrintToPlayer" default if no type specified
+    SYSTEM_1       = 6, -- Standard "printToPlayer" default if no type specified
     SYSTEM_2       = 7, -- Login / world announcement messages
     EMOTION        = 8,
     -- 9 / 10 / 11 = Does not work / nothing
@@ -45,7 +45,7 @@ xi.msg.channel =
     NA_ASSIST      = 35,
 }
 
--- used by PrintToArea
+-- used by player:printToArea
 xi.msg.area =
 {
     SYSTEM      = 0, -- Server wide like the purple stuff :)
@@ -95,10 +95,11 @@ xi.msg.basic =
     MAGIC_ABSORB_MND       = 334, -- <caster> casts <spell>. <target>'s MND is drained.
     MAGIC_ABSORB_CHR       = 335, -- <caster> casts <spell>. <target>'s CHR is drained.
     MAGIC_ERASE            = 341, -- <caster> casts <spell>. <target>'s <status> effect disappears!
-    MAGIC_STEAL            = 430, -- <caster> casts <spell>. 1 of <target>'s effects is drained.
+    MAGIC_STEAL            = 430, -- <caster> casts <spell>. <number> of <target>'s effects is drained.
     MAGIC_TP_REDUCE        = 431, -- <caster> casts <spell>. <target>'s TP is reduced.
     MAGIC_ABSORB_TP        = 454, -- <caster> casts <spell>. <amount> TP drained from <target>.
     MAGIC_ABSORB_ACC       = 533, -- <caster> casts <spell>. <target>'s Accuracy is drained.
+    MAGIC_REMOVE_EFFECT_2  = 571, -- <number> of <target>'s status ailments disappear!
     MAGIC_ABSORB_AILMENT   = 572, -- <caster> casts <spell>. <caster> absorbs <number> of <target>'s status ailments.
     MAGIC_MUST_ASTRAL_FLOW = 581, -- Unable to cast <spell>. Astral Flow must be in effect to cast this spell.
 
@@ -119,6 +120,7 @@ xi.msg.basic =
     SKILL_ENFEEB           = 243, -- <user> uses <skill>. <target> receives the effect of <status>.
     SELF_HEAL_SECONDARY    = 263, -- <target> recovers <amount> HP.
     DAMAGE_SECONDARY       = 264, -- <target> takes <amount> points of damage.
+    SKILL_GAIN_EFFECT_2    = 319, -- <user> uses <skill>. <target> gains the effect of <status>.
     RANGED_ATTACK_HIT      = 352, -- <user> ranged attack hits <target> for <amount> points of damage.
     RANGED_ATTACK_MISS     = 354, -- <user> ranged attack misses.
     AOE_REGAIN_HP          = 357, -- <target> regains <amount> HP.
@@ -129,6 +131,9 @@ xi.msg.basic =
     USES_JA                = 100, -- The <player> uses ..
     USES                   = 101, -- The <entity> uses ..
     JA_RECOVERS_HP         = 102, -- The <player> uses .. <target> recovers .. HP.
+    ACC_EVA_DOWN           = 144, -- <user> uses <ability>. <target> receives the effect of Accuracy Down and Evasion Down.
+    ACC_EVA_BOOST          = 146, -- <user> uses <ability>. <target> receives the effect of Accuracy Boost and Evasion Boost.
+    ACC_EVA_BOOST_2        = 147, -- <target> receives the effect of Accuracy Boost and Evasion Boost.
     JA_RECOVERS_HP_2       = 318, -- <user> uses ability. <target> recovers <amount> HP. -- Observed on healing breath.
     JA_DAMAGE              = 110, -- <user> uses <ability>. <target> takes <amount> damage.
     JA_REMOVE_EFFECT       = 123, -- <user> uses <ability>. <user> successfully removes <target>'s <status>.
@@ -137,12 +142,21 @@ xi.msg.basic =
     JA_MISS                = 158, -- <user> uses <ability>, but misses. (no name included)
     USES_JA_TAKE_DAMAGE    = 317, -- The <player> uses .. <target> takes .. points of damage.
     JA_GAIN_EFFECT         = 266, -- <target> gains the effect of <ability>.
+    JA_RECEIVES_EFFECT     = 267, -- <target> receives the effect of <status>.
+    JA_GAIN_EFFECT_2       = 316, -- <user> uses <ability>. <target> gains the effect of <effect>.
+    JA_RECEIVES_EFFECT_2   = 320, -- <user> uses <ability>. <target> receives the effect of <status>.
+    JA_RECEIVES_MAB_MDB    = 415, -- <user> uses <ability>. <target> receives the effect of Magic Attack Boost and Magic Defense Boost.
+    JA_RECEIVES_MAB_MDB_2  = 414, -- <target> receives the effect of Magic Attack Boost and Magic Defense Boost.
     JA_REMOVE_EFFECT_2     = 321, -- <user> uses <ability>. <target>'s <status> wears off.
     JA_NO_EFFECT_2         = 323, -- <user> uses <ability>. No effect on <target>. (2 line msg)
     JA_MISS_2              = 324, -- <user> uses <ability>, but misses <target>. (includes target name)
+    JA_RECEIVES_EFFECT_3   = 441, -- <user> receives the effect of <ability>.
     JA_RECOVERS_MP         = 451, -- <user> uses <ability>. <target> regains <amount> MP.
     JA_ATK_ENHANCED        = 285, -- <target>'s attacks are enhanced.
+    STATUS_BOOST           = 364, -- <user> uses <ability>. All of <target>'s status parameters are boosted.
+    STATUS_BOOST_2         = 365, -- All of <target>'s status parameters are boosted.
     JA_MAGIC_BURST         = 379, -- <user> uses <ability>. Magic Burst! the <target> takes <amount> damage.
+    JA_ENMITY_DECREASE     = 743, -- <user> uses <ability>. <target>'s enmity decreases.
 
     -- Misc Other
     DEFEATS_TARG           = 6,   -- The <player> defeats <target>.
@@ -258,8 +272,9 @@ xi.msg.basic =
     ADD_EFFECT_HP_HEAL     = 167, -- Additional effect: The <player> recovers <number> HP.
     ADD_EFFECT_DISPEL      = 168, -- Additional effect: <target>'s <Status Effect> effect disappears!
     ADD_EFFECT_WARP        = 169, -- Additional effect: Warp! (used by Halloween staves)
-    STATUS_SPIKES          = 374, -- Striking <Defender>'s armor causes <Attacker> to become <status effect>.
-    SPIKES_EFFECT_HEAL     = 383, -- <?>'s spikes restore <number> HP to the <?>.
+    SPIKES_EFFECT_RECOVER  = 373, -- <defender> recovers <number> hit points!
+    STATUS_SPIKES          = 374, -- Striking <defender>'s armor causes <attacker> to become <status effect>.
+    SPIKES_EFFECT_HEAL     = 383, -- <defenders>'s spikes restore <number> HP to the <attacker>.  (element absorbed)
     ADD_EFFECT_HEAL        = 384, -- Additional effect: <target> recovers <number> HP.
 
     -- Status
@@ -375,6 +390,9 @@ xi.msg.basic =
     -- TRUST & ALTER EGO
     TRUST_NO_CAST_TRUST     = 700,  -- You are unable to use Trust magic at this time.
     TRUST_NO_CALL_AE        = 717,  -- You cannot call forth alter egos here.
+
+    -- Monstrosity
+    FERETORY_COUNTDOWN = 679, -- <actor> will return to the Feretory in <n>
 }
 
 -- Used to modify certain basic messages.

@@ -2,16 +2,14 @@
 -- Area: Ifrits Cauldron
 --  NPC: Mining Point
 -----------------------------------
-require("scripts/globals/helm")
------------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
-    xi.helm.onTrade(player, npc, trade, xi.helm.type.MINING, 20)
+    xi.helm.onTrade(player, npc, trade, xi.helmType.MINING, 20)
 end
 
 entity.onTrigger = function(player, npc)
-    xi.helm.onTrigger(player, xi.helm.type.MINING)
+    xi.helm.onTrigger(player, xi.helmType.MINING)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)

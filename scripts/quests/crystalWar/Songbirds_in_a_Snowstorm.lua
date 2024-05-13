@@ -9,19 +9,14 @@
 -- Charred Firewood   : !pos 83.296 -58.472 175.2 136
 -- Compressed Snow    : !pos 46.437 -0.762 -370.178 136
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 local pastBeaucedineID = zones[xi.zone.BEAUCEDINE_GLACIER_S]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.SONGBIRDS_IN_A_SNOWSTORM)
+local quest = Quest:new(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.SONGBIRDS_IN_A_SNOWSTORM)
 
 quest.reward =
 {
-    item  = xi.items.ICARUS_WING,
+    item  = xi.item.ICARUS_WING,
 }
 
 -- NOTE: For fishing up the required Key Items, capture was accomplished with 0 skill, and the
@@ -35,8 +30,8 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.BONDS_THAT_NEVER_DIE) and
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.BONDS_THAT_NEVER_DIE) and
                 player:hasCompletedMission(xi.mission.log_id.WOTG, xi.mission.id.wotg.THE_WILL_OF_THE_WORLD)
         end,
 
@@ -96,7 +91,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA_S] =
@@ -110,7 +105,7 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.items.FLINT_STONE) and
+                        npcUtil.tradeHasExactly(trade, xi.item.FLINT_STONE) and
                         quest:getVar(player, 'Prog') == 4
                     then
                         return quest:progressEvent(4)
@@ -166,7 +161,7 @@ quest.sections =
                 onTrigger = function(player, npc)
                     if quest:getVar(player, 'Prog') == 3 then
                         player:messageSpecial(pastBeaucedineID.text.NONDESCRIPT_MASS)
-                        npcUtil.giveItem(player, xi.items.GOLIATH_WORM)
+                        npcUtil.giveItem(player, xi.item.GOLIATH_WORM)
 
                         return quest:noAction()
                     end

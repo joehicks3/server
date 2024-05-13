@@ -4,21 +4,15 @@
 -- Log ID: 0, Quest ID: 15
 -- Hanaa Punaa : !pos -179.726 -8.8 27.574 230
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.LIZARD_SKINS)
+local quest = Quest:new(xi.questLog.SANDORIA, xi.quest.id.sandoria.LIZARD_SKINS)
 
 quest.reward =
 {
     fame = 30,
-    fameArea = xi.quest.fame_area.SANDORIA,
+    fameArea = xi.fameArea.SANDORIA,
     -- Repeatable Items handled within the Trigger:
-    -- item = xi.items.LIZARD_GLOVES,
+    -- item = xi.item.LIZARD_GLOVES,
     -- title = xi.title.LIZARD_SKINNER,
 }
 
@@ -26,9 +20,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getFameLevel(xi.quest.fame_area.SANDORIA) >= 2 and
-                player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.THE_SEAMSTRESS)
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getFameLevel(xi.fameArea.SANDORIA) >= 2 and
+                player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.THE_SEAMSTRESS)
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -67,7 +61,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -76,11 +70,11 @@ quest.sections =
         },
     },
 
-    -- These functions check the status of ~= QUEST_AVAILABLE to support repeating
+    -- These functions check the status of ~= xi.questStatus.QUEST_AVAILABLE to support repeating
     -- the quest.  Does not have to be flagged again to complete an additional time.
     {
         check = function(player, status, vars)
-            return status ~= QUEST_AVAILABLE
+            return status ~= xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -88,7 +82,7 @@ quest.sections =
             ['Hanaa_Punaa'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, { { xi.items.LIZARD_SKIN, 3 } }) then
+                    if npcUtil.tradeHasExactly(trade, { { xi.item.LIZARD_SKIN, 3 } }) then
                         return quest:progressEvent(561)
                     end
                 end,
@@ -97,13 +91,13 @@ quest.sections =
             onEventFinish =
             {
                 [561] = function(player, csid, option, npc)
-                    if npcUtil.giveItem(player, xi.items.LIZARD_GLOVES, { fromTrade = true }) then
+                    if npcUtil.giveItem(player, xi.item.LIZARD_GLOVES, { fromTrade = true }) then
                         player:confirmTrade()
                         player:addTitle(xi.title.LIZARD_SKINNER)
                         if not player:hasCompletedQuest(quest.areaId, quest.questId) then
                             quest:complete(player)
                         else
-                            player:addFame(xi.quest.fame_area.SANDORIA, 5)
+                            player:addFame(xi.fameArea.SANDORIA, 5)
                         end
                     end
                 end,
@@ -113,7 +107,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED and player:getFameLevel(xi.quest.fame_area.SANDORIA) < 3
+            return status == xi.questStatus.QUEST_COMPLETED and player:getFameLevel(xi.fameArea.SANDORIA) < 3
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =

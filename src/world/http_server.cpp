@@ -21,10 +21,12 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 
 #include "http_server.h"
 
+#include "common/database.h"
 #include "common/logging.h"
 #include "common/settings.h"
-#include "common/sql.h"
 #include "common/utils.h"
+
+#include <unordered_set>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -94,17 +96,58 @@ HTTPServer::HTTPServer()
         m_httpServer.Get("/api/settings", [&](httplib::Request const& req, httplib::Response& res)
         {
             // TODO: Cache these
-            json j;
-            j["SERVER_NAME"]          = settings::get<std::string>("main.SERVER_NAME");
-            j["EXP_RATE"]             = settings::get<float>("main.EXP_RATE");
-            j["ENABLE_TRUST_CASTING"] = settings::get<bool>("main.ENABLE_TRUST_CASTING");
-            j["MAX_LEVEL"]            = settings::get<uint8>("main.MAX_LEVEL");
+            json j{};
+
+            // Filter out settings we don't want to expose
+            std::unordered_set<std::string> textToOmit{
+                "logging.",
+                "network.",
+                "password", // Just in case
+            };
+
+            settings::visit([&](auto const& key, auto const& variant)
+            {
+                for (auto const& text : textToOmit)
+                {
+                    // NOTE: Remember that keys are stored as uppercase
+                    if (key.find(to_upper(text)) != std::string::npos)
+                    {
+                        return;
+                    }
+                }
+
+                std::visit(
+                settings::overloaded
+                {
+                    [&](bool const& arg)
+                    {
+                        j[key] = arg;
+                    },
+                    [&](double const& arg)
+                    {
+                        j[key] = arg;
+                    },
+                    [&](std::string const& arg)
+                    {
+                        // JSON can't handle non-ASCII characters, so strip them out
+                        j[key] = utils::toASCII(arg, '?');
+                    },
+                }, variant);
+            });
+
             res.set_content(j.dump(), "application/json");
         });
 
         m_httpServer.set_error_handler([](httplib::Request const& /*req*/, httplib::Response& res)
         {
-            auto str = fmt::format("<p>Error Status: <span style='color:red;'>{} ({})</span></p>", res.status, httplib::detail::status_message(res.status));
+            auto str = fmt::format("<p>Error Status: <span style='color:red;'>{} ({})</span></p>",
+                res.status, httplib::detail::status_message(res.status));
+
+            for (auto const& [key, val] : res.headers)
+            {
+                str += fmt::format("<p>{}: {}</p>", key, val);
+            }
+
             res.set_content(str, "text/html");
         });
 
@@ -143,31 +186,30 @@ void HTTPServer::LockingUpdate()
     {
         ShowInfo("API data is stale. Updating...");
 
-        auto sql  = std::make_unique<SqlConnection>();
         auto data = APIDataCache{};
 
         // Total active sessions
         {
-            auto ret = sql->Query("SELECT COUNT(*) FROM accounts_sessions;");
-            if (ret != SQL_ERROR && sql->NumRows() && sql->NextRow() == SQL_SUCCESS)
+            auto rset = db::query("SELECT COUNT(*) AS `count` FROM accounts_sessions");
+            if (rset && rset->next())
             {
-                data.activeSessionCount = sql->GetUIntData(0);
+                data.activeSessionCount = rset->getUInt("count");
             }
         }
 
         // Chars per zone
         {
-            auto ret = sql->Query("SELECT chars.pos_zone, COUNT(*) AS `count` "
+            auto rset = db::query("SELECT chars.pos_zone, COUNT(*) AS `count` "
                                   "FROM chars "
-                                  "LEFT JOIN accounts_sessions "
+                                  "INNER JOIN accounts_sessions "
                                   "ON chars.charid = accounts_sessions.charid "
-                                  "GROUP BY pos_zone;");
-            if (ret != SQL_ERROR && sql->NumRows())
+                                  "GROUP BY pos_zone");
+            if (rset && rset->rowsCount())
             {
-                while (sql->NextRow() == SQL_SUCCESS)
+                while (rset->next())
                 {
-                    auto zoneId = sql->GetUIntData(0);
-                    auto count  = sql->GetUIntData(1);
+                    auto zoneId = rset->getUInt("pos_zone");
+                    auto count  = rset->getUInt("count");
 
                     data.zonePlayerCounts[zoneId] = count;
                 }

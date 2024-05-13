@@ -11,23 +11,17 @@
 -- mannequin_legs  : !additem 1604
 -- mannequin_feet  : !additem 1605
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local mhauraID = require('scripts/zones/Mhaura/IDs')
+local mhauraID = zones[xi.zone.MHAURA]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.ITS_RAINING_MANNEQUINS)
+local quest = Quest:new(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.ITS_RAINING_MANNEQUINS)
 
 quest.sections =
 {
     -- Speak to Fyi Chalmwoh at G-8 in Mhaura (in the Goldsmithing shop).
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.MHAURA] =
@@ -46,7 +40,7 @@ quest.sections =
     -- Now go to Selbina and talk to Ramona at H-9 in the Weaver's shop. She'll give you Key Item Ye Olde Mannequin Catalogue.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 0
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 0
         end,
 
         [xi.zone.MHAURA] =
@@ -73,7 +67,7 @@ quest.sections =
     -- Now go to Northern San d'Oria and talk to Cheupirudaux at F-3 in front of the Woodworking Guild. He'll give you Key Item Mannequin Joint Diagrams.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 1
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 1
         end,
 
         [xi.zone.MHAURA] =
@@ -99,7 +93,7 @@ quest.sections =
     -- Now go back to Mhaura and trade all 5 pieces to Fyi Chalmwoh.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 2
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 2
         end,
 
         [xi.zone.MHAURA] =
@@ -113,11 +107,11 @@ quest.sections =
                 onTrade = function(player, npc, trade)
                     if
                         npcUtil.tradeHasExactly(trade, {
-                            xi.items.MANNEQUIN_HEAD,
-                            xi.items.MANNEQUIN_BODY,
-                            xi.items.MANNEQUIN_HANDS,
-                            xi.items.MANNEQUIN_LEGS,
-                            xi.items.MANNEQUIN_FEET
+                            xi.item.MANNEQUIN_HEAD,
+                            xi.item.MANNEQUIN_BODY,
+                            xi.item.MANNEQUIN_HANDS,
+                            xi.item.MANNEQUIN_LEGS,
+                            xi.item.MANNEQUIN_FEET
                         })
                     then
                         return quest:progressEvent(309)
@@ -140,7 +134,7 @@ quest.sections =
     -- You have to wait about one earth minute to get your reward.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 3
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 3
         end,
 
         [xi.zone.MHAURA] =
@@ -148,7 +142,7 @@ quest.sections =
             ['Fyi_Chalmwoh'] =
             {
                 onTrigger = function(player, npc)
-                    local wait = quest:getVar(player, "Wait")
+                    local wait = quest:getVar(player, 'Wait')
                     if os.time() >= wait + 60 then
                         return quest:progressEvent(311)
                     else
@@ -161,7 +155,7 @@ quest.sections =
             {
                 [311] = function(player, csid, option, npc)
                     local race = player:getRace()
-                    local chosenMannequin = xi.items.HUME_M_MANNEQUIN + race - 1
+                    local chosenMannequin = xi.item.HUME_M_MANNEQUIN + race - 1
                     if player:getFreeSlotsCount() > 0 and not player:hasItem(chosenMannequin) then
                         if quest:complete(player) then
                             player:tradeComplete()

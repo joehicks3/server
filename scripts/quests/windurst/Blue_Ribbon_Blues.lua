@@ -6,21 +6,15 @@
 -- Roberta    : !pos 21 -4 -157 241
 -- Hume Bones : !pos 299 0.1 19 195
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
------------------------------------
-local eldiemeID = require("scripts/zones/The_Eldieme_Necropolis/IDs")
+local eldiemeID = zones[xi.zone.THE_ELDIEME_NECROPOLIS]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.WINDURST, xi.quest.id.windurst.BLUE_RIBBON_BLUES)
+local quest = Quest:new(xi.questLog.WINDURST, xi.quest.id.windurst.BLUE_RIBBON_BLUES)
 
 quest.reward =
 {
     fame  = 140,
-    fameArea = xi.quest.fame_area.WINDURST,
+    fameArea = xi.fameArea.WINDURST,
     title = xi.title.GHOSTIE_BUSTER,
 }
 
@@ -28,9 +22,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.WATER_WAY_TO_GO) and
-                player:getFameLevel(xi.quest.fame_area.WINDURST) >= 5 and
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.WINDURST, xi.quest.id.windurst.WATER_WAY_TO_GO) and
+                player:getFameLevel(xi.fameArea.WINDURST) >= 5 and
                 not quest:getMustZone(player)
         end,
 
@@ -39,7 +33,7 @@ quest.sections =
             ['Kerutoto'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.PURPLE_RIBBON) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.PURPLE_RIBBON) then
                         return quest:progressEvent(358, 3600)
                     end
                 end,
@@ -72,13 +66,13 @@ quest.sections =
             ['Roberta'] =
             {
                 onTrigger = function(player, npc)
-                    if not player:findItem(xi.items.PURPLE_RIBBON) then
+                    if not player:findItem(xi.item.PURPLE_RIBBON) then
                         local questProgress = quest:getVar(player, 'Prog')
 
                         if questProgress == 1 then
-                            return quest:progressEvent(376, 0, xi.items.PURPLE_RIBBON)
+                            return quest:progressEvent(376, 0, xi.item.PURPLE_RIBBON)
                         else
-                            return quest:progressEvent(377, 0, xi.items.PURPLE_RIBBON)
+                            return quest:progressEvent(377, 0, xi.item.PURPLE_RIBBON)
                         end
                     else
                         return quest:progressEvent(379)
@@ -90,13 +84,13 @@ quest.sections =
             {
                 [376] = function(player, csid, option, npc)
                     if option == 1 then
-                        npcUtil.giveItem(player, xi.items.PURPLE_RIBBON)
+                        npcUtil.giveItem(player, xi.item.PURPLE_RIBBON)
                     end
                 end,
 
                 [377] = function(player, csid, option, npc)
                     if option == 1 then
-                        npcUtil.giveItem(player, xi.items.PURPLE_RIBBON)
+                        npcUtil.giveItem(player, xi.item.PURPLE_RIBBON)
                     end
                 end,
             },
@@ -107,7 +101,7 @@ quest.sections =
     -- to accepting, the Prog variable is reset to 0 when transitioning to this block.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.THE_ELDIEME_NECROPOLIS] =
@@ -116,7 +110,7 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.items.PURPLE_RIBBON) and
+                        npcUtil.tradeHasExactly(trade, xi.item.PURPLE_RIBBON) and
                         quest:getVar(player, 'Prog') == 1 and
                         npcUtil.popFromQM(player, npc, eldiemeID.mob.LICH_C_MAGNUS, { hide = 0 })
                     then
@@ -130,11 +124,11 @@ quest.sections =
                         -- For onTrigger, there must be a quest function returned to avoid hitting the
                         -- default action.  Handle the item obtained messageSpecials here.
 
-                        if npcUtil.giveItem(player, xi.items.BLUE_RIBBON, { silent = true }) then
+                        if npcUtil.giveItem(player, xi.item.BLUE_RIBBON, { silent = true }) then
                             quest:setVar(player, 'Prog', 3)
-                            return quest:messageSpecial(eldiemeID.text.ITEM_OBTAINED, xi.items.BLUE_RIBBON)
+                            return quest:messageSpecial(eldiemeID.text.ITEM_OBTAINED, xi.item.BLUE_RIBBON)
                         else
-                            return quest:messageSpecial(eldiemeID.text.ITEM_CANNOT_BE_OBTAINED, xi.items.BLUE_RIBBON)
+                            return quest:messageSpecial(eldiemeID.text.ITEM_CANNOT_BE_OBTAINED, xi.item.BLUE_RIBBON)
                         end
                     end
                 end,
@@ -158,7 +152,7 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.items.PURPLE_RIBBON) and
+                        npcUtil.tradeHasExactly(trade, xi.item.PURPLE_RIBBON) and
                         quest:getVar(player, 'Prog') == 1
                     then
                         return quest:progressEvent(365)
@@ -175,10 +169,10 @@ quest.sections =
                             return quest:progressEvent(360)
                         end
                     elseif questProgress == 1 then
-                        if not player:findItem(xi.items.PURPLE_RIBBON) then
-                            return quest:progressEvent(366, 0, xi.items.PURPLE_RIBBON)
+                        if not player:findItem(xi.item.PURPLE_RIBBON) then
+                            return quest:progressEvent(366, 0, xi.item.PURPLE_RIBBON)
                         else
-                            return quest:progressEvent(361, 0, xi.items.PURPLE_RIBBON)
+                            return quest:progressEvent(361, 0, xi.item.PURPLE_RIBBON)
                         end
                     elseif questProgress == 3 then
                         return quest:progressEvent(362)
@@ -189,7 +183,7 @@ quest.sections =
             onEventFinish =
             {
                 [360] = function(player, csid, option, npc)
-                    if npcUtil.giveItem(player, xi.items.PURPLE_RIBBON) then
+                    if npcUtil.giveItem(player, xi.item.PURPLE_RIBBON) then
                         quest:setVar(player, 'Prog', 1)
                     end
                 end,
@@ -215,9 +209,9 @@ quest.sections =
                 onTrigger = function(player, npc)
                     if
                         quest:getVar(player, 'Prog') < 3 and
-                        not player:findItem(xi.items.PURPLE_RIBBON)
+                        not player:findItem(xi.item.PURPLE_RIBBON)
                     then
-                        return quest:progressEvent(377, 0, xi.items.PURPLE_RIBBON)
+                        return quest:progressEvent(377, 0, xi.item.PURPLE_RIBBON)
                     else
                         return quest:progressEvent(380)
                     end
@@ -228,7 +222,7 @@ quest.sections =
             {
                 [377] = function(player, csid, option, npc)
                     if option == 1 then
-                        npcUtil.giveItem(player, xi.items.PURPLE_RIBBON)
+                        npcUtil.giveItem(player, xi.item.PURPLE_RIBBON)
                     end
                 end,
             },
@@ -237,7 +231,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED and
+            return status == xi.questStatus.QUEST_COMPLETED and
                 quest:getMustZone(player)
         end,
 

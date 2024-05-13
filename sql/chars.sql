@@ -41,11 +41,12 @@ CREATE TABLE `chars` (
   `job_master` tinyint(1) unsigned NOT NULL DEFAULT '1',
   `campaign_allegiance` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `isstylelocked` tinyint(1) NOT NULL DEFAULT '0',
-  `nnameflags` int(10) UNSIGNED NOT NULL DEFAULT '0',
-  `chatfilters` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `settings` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `chatfilters_1` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `chatfilters_2` bigint(20) unsigned NOT NULL DEFAULT '0',
   `moghancement` smallint(4) unsigned NOT NULL DEFAULT '0',
   `timecreated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastupdate` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`charid`),
   FULLTEXT KEY `charname` (`charname`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

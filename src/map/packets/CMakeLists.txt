@@ -34,6 +34,8 @@ set(PACKET_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/char_appearance.h
     ${CMAKE_CURRENT_SOURCE_DIR}/char_check.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/char_check.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/char_emote_list.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/char_emote_list.h
     ${CMAKE_CURRENT_SOURCE_DIR}/char_emotion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/char_emotion.h
     ${CMAKE_CURRENT_SOURCE_DIR}/char_emotion_jump.cpp
@@ -224,8 +226,8 @@ set(PACKET_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/synth_result.h
     ${CMAKE_CURRENT_SOURCE_DIR}/synth_suggestion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/synth_suggestion.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/timer_bar_util.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/timer_bar_util.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/objective_utility.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/objective_utility.h
     ${CMAKE_CURRENT_SOURCE_DIR}/trade_action.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/trade_action.h
     ${CMAKE_CURRENT_SOURCE_DIR}/trade_item.cpp

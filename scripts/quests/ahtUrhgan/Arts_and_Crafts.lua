@@ -9,16 +9,12 @@
 -- Mathlouq !pos -93 -7 129 50
 -- Mhasbaf !pos 54 -7 11 50
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/interaction/quest')
-require('scripts/globals/npc_util')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.AHT_URHGAN, xi.quest.id.ahtUrhgan.ARTS_AND_CRAFTS)
+local quest = Quest:new(xi.questLog.AHT_URHGAN, xi.quest.id.ahtUrhgan.ARTS_AND_CRAFTS)
 
 quest.reward =
 {
-    item = xi.items.IMPERIAL_SILVER_PIECE,
+    item = xi.item.IMPERIAL_SILVER_PIECE,
 }
 
 quest.sections =
@@ -26,7 +22,7 @@ quest.sections =
     -- Section: Begin quest
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.AHT_URHGAN_WHITEGATE] =
@@ -47,7 +43,7 @@ quest.sections =
     -- Section: Questing
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.AHT_URHGAN_WHITEGATE] =
@@ -65,7 +61,7 @@ quest.sections =
                 onTrade = function(player, npc, trade)
                     if
                         quest:getVar(player, 'Stage') == 1 and
-                        npcUtil.tradeHasExactly(trade, xi.items.BOWL_OF_SUTLAC)
+                        npcUtil.tradeHasExactly(trade, xi.item.BOWL_OF_SUTLAC)
                     then
                         return quest:progressEvent(573)
                     end
@@ -166,7 +162,7 @@ quest.sections =
                 end,
 
                 [517] = function(player, csid, option, npc)
-                    if npcUtil.giveItem(player, xi.items.BOWL_OF_SUTLAC) then
+                    if npcUtil.giveItem(player, xi.item.BOWL_OF_SUTLAC) then
                         quest:setVar(player, 'Prog', 0)
                         quest:setVar(player, 'Stage', 1)
                     end

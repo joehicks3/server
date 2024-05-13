@@ -7,13 +7,8 @@
 -- Gravestone  : !pos 254.428 -32.999 20.001 175
 -- Sarcophagus : !pos 336.594 -33.500 -56.728 175
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.LOST_IN_TRANSLOCATION)
+local quest = Quest:new(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.LOST_IN_TRANSLOCATION)
 
 quest.reward =
 {
@@ -45,7 +40,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.BATALLIA_DOWNS_S] =
@@ -63,7 +58,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.BATALLIA_DOWNS_S] =

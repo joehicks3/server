@@ -11,7 +11,7 @@ xi.settings = xi.settings or {}
 
 xi.settings.search =
 {
-    -- Omit items with no buy history from auction house results
+    -- Omit items with no listing history from auction house results
     OMIT_NO_HISTORY = false,
 
     -- After EXPIRE_DAYS, will listed auctions expire?
@@ -22,4 +22,14 @@ xi.settings.search =
 
     -- Interval is in seconds, default is one hour
     EXPIRE_INTERVAL = 3600,
+
+    -- IP address strings in this list won't be subject to 'IPAddressesInUse' rate limiting
+    ACCESS_WHITELIST =
+    {
+        "127.0.0.1",   -- Example, not actually needed
+        "192.168.0.1", -- Example, not actually needed
+    },
+
+    -- true/false: Enable/disable logging the content of packets being sent to the client (required Debug mode)
+    DEBUG_OUT_PACKETS = false,
 }

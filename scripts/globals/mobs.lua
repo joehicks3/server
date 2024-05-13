@@ -1,20 +1,16 @@
 -----------------------------------
 -- Global version of onMobDeath
 -----------------------------------
-require("scripts/globals/magiantrials")
-require("scripts/globals/missions")
-require("scripts/globals/quests")
-require("scripts/globals/magic")
-require("scripts/globals/utils")
-require("scripts/globals/zone")
+require('scripts/globals/missions')
+require('scripts/globals/quests')
+require('scripts/globals/magic')
+require('scripts/globals/utils')
 -----------------------------------
-
 xi = xi or {}
 xi.mob = xi.mob or {}
 
 -- onMobDeathEx is called from the core
 xi.mob.onMobDeathEx = function(mob, player, isKiller, isWeaponSkillKill)
-    xi.magian.checkMagianTrial(player, { ['mob'] = mob, ['triggerWs'] = false })
 end
 
 -----------------------------------
@@ -36,9 +32,24 @@ local function lotteryPrimed(phList)
 end
 
 -- potential lottery placeholder was killed
-xi.mob.phOnDespawn = function(ph, phList, chance, cooldown, immediate)
-    if type(immediate) ~= "boolean" then
-        immediate = false
+xi.mob.phOnDespawn = function(ph, phList, chance, cooldown, params)
+    params = params or {}
+    --[[
+        params.immediate   = true    pop NM without waiting for next PH pop time
+        params.nightOnly   = true    spawn NM only at night time
+        params.noPosUpdate = true    do not run UpdateNMSpawnPoint()
+    ]]
+
+    if type(params.immediate) ~= 'boolean' then
+        params.immediate = false
+    end
+
+    if type(params.nightOnly) ~= 'boolean' then
+        params.nightOnly = false
+    end
+
+    if type(params.noPosUpdate) ~= 'boolean' then
+        params.noPosUpdate = false
     end
 
     if xi.settings.main.NM_LOTTERY_CHANCE then
@@ -55,28 +66,52 @@ xi.mob.phOnDespawn = function(ph, phList, chance, cooldown, immediate)
     if nmId ~= nil then
         local nm = GetMobByID(nmId)
         if nm ~= nil then
-            local pop = nm:getLocalVar("pop")
+            local pop = nm:getLocalVar('pop')
 
             chance = math.ceil(chance * 10) -- chance / 1000.
+
             if
                 os.time() > pop and
                 not lotteryPrimed(phList) and
                 math.random(1, 1000) <= chance
             then
+                local nextRepopTime = os.time() + GetMobRespawnTime(phId)
+                -- That's earth time, subtract SE epoch to get Vanatime
+                nextRepopTime = nextRepopTime - 1009810800
+                -- The enum bakes in a multiplication of 2.4, gotta reverse that to get accurate hour
+                local nextRepopDate = (nextRepopTime / 60 * 25) + 886 * (xi.vanaTime.YEAR / 2.4)
+                local nextRepopHour = (nextRepopDate % (xi.vanaTime.DAY / 2.4)) / (xi.vanaTime.HOUR / 2.4)
+                -- If the NM is night only and spawn would happen during the day, bail out
+                if
+                    params.nightOnly and
+                    nextRepopHour >= 4 and
+                    nextRepopHour < 20
+                then
+                    return false
+                end
 
                 -- on PH death, replace PH repop with NM repop
                 DisallowRespawn(phId, true)
                 DisallowRespawn(nmId, false)
-                UpdateNMSpawnPoint(nmId)
-                nm:setRespawnTime(immediate and 1 or GetMobRespawnTime(phId)) -- if immediate is true, spawn the nm immediately (1ms) else use placeholder's timer
 
-                nm:addListener("DESPAWN", "DESPAWN_" .. nmId, function(m)
+                if not params.noPosUpdate then
+                    UpdateNMSpawnPoint(nmId)
+                end
+
+                -- if params.immediate is true, spawn the nm params.immediately (1ms) else use placeholder's timer
+                nm:setRespawnTime(params.immediate and 1 or GetMobRespawnTime(phId))
+
+                nm:addListener('DESPAWN', 'DESPAWN_' .. nmId, function(m)
                     -- on NM death, replace NM repop with PH repop
                     DisallowRespawn(nmId, true)
                     DisallowRespawn(phId, false)
                     GetMobByID(phId):setRespawnTime(GetMobRespawnTime(phId))
-                    m:setLocalVar("pop", os.time() + cooldown)
-                    m:removeListener("DESPAWN_" .. nmId)
+
+                    if m:getLocalVar('doNotInvokeCooldown') == 0 then
+                        m:setLocalVar('pop', os.time() + cooldown)
+                    end
+
+                    m:removeListener('DESPAWN_' .. nmId)
                 end)
 
                 return true
@@ -126,6 +161,7 @@ xi.mob.additionalEffect =
     TERROR     = 20,
     TP_DRAIN   = 21,
     WEIGHT     = 22,
+    ENAMNESIA  = 23,
 }
 xi.mob.ae = xi.mob.additionalEffect
 
@@ -134,7 +170,7 @@ local additionalEffects =
     [xi.mob.ae.BLIND] =
     {
         chance = 25,
-        ele         = xi.magic.ele.DARK,
+        ele         = xi.element.DARK,
         sub         = xi.subEffect.BLIND,
         msg         = xi.msg.basic.ADD_EFFECT_STATUS,
         applyEffect = true,
@@ -148,7 +184,7 @@ local additionalEffects =
     [xi.mob.ae.CURSE] =
     {
         chance      = 20,
-        ele         = xi.magic.ele.DARK,
+        ele         = xi.element.DARK,
         sub         = xi.subEffect.CURSE,
         msg         = xi.msg.basic.ADD_EFFECT_STATUS,
         applyEffect = true,
@@ -161,7 +197,7 @@ local additionalEffects =
 
     [xi.mob.ae.ENAERO] =
     {
-        ele                = xi.magic.ele.WIND,
+        ele                = xi.element.WIND,
         sub                = xi.subEffect.WIND_DAMAGE,
         msg                = xi.msg.basic.ADD_EFFECT_DMG,
         negMsg             = xi.msg.basic.ADD_EFFECT_HEAL,
@@ -171,7 +207,7 @@ local additionalEffects =
 
     [xi.mob.ae.ENBLIZZARD] =
     {
-        ele                = xi.magic.ele.ICE,
+        ele                = xi.element.ICE,
         sub                = xi.subEffect.ICE_DAMAGE,
         msg                = xi.msg.basic.ADD_EFFECT_DMG,
         negMsg             = xi.msg.basic.ADD_EFFECT_HEAL,
@@ -181,7 +217,7 @@ local additionalEffects =
 
     [xi.mob.ae.ENDARK] =
     {
-        ele                = xi.magic.ele.DARK,
+        ele                = xi.element.DARK,
         sub                = xi.subEffect.DARKNESS_DAMAGE,
         msg                = xi.msg.basic.ADD_EFFECT_DMG,
         negMsg             = xi.msg.basic.ADD_EFFECT_HEAL,
@@ -191,7 +227,7 @@ local additionalEffects =
 
     [xi.mob.ae.ENFIRE] =
     {
-        ele                = xi.magic.ele.FIRE,
+        ele                = xi.element.FIRE,
         sub                = xi.subEffect.FIRE_DAMAGE,
         msg                = xi.msg.basic.ADD_EFFECT_DMG,
         negMsg             = xi.msg.basic.ADD_EFFECT_HEAL,
@@ -201,7 +237,7 @@ local additionalEffects =
 
     [xi.mob.ae.ENLIGHT] =
     {
-        ele                = xi.magic.ele.LIGHT,
+        ele                = xi.element.LIGHT,
         sub                = xi.subEffect.LIGHT_DAMAGE,
         msg                = xi.msg.basic.ADD_EFFECT_DMG,
         negMsg             = xi.msg.basic.ADD_EFFECT_HEAL,
@@ -211,7 +247,7 @@ local additionalEffects =
 
     [xi.mob.ae.ENSTONE] =
     {
-        ele                = xi.magic.ele.EARTH,
+        ele                = xi.element.EARTH,
         sub                = xi.subEffect.EARTH_DAMAGE,
         msg                = xi.msg.basic.ADD_EFFECT_DMG,
         negMsg             = xi.msg.basic.ADD_EFFECT_HEAL,
@@ -221,7 +257,7 @@ local additionalEffects =
 
     [xi.mob.ae.ENTHUNDER] =
     {
-        ele                = xi.magic.ele.LIGHTNING,
+        ele                = xi.element.THUNDER,
         sub                = xi.subEffect.LIGHTNING_DAMAGE,
         msg                = xi.msg.basic.ADD_EFFECT_DMG,
         negMsg             = xi.msg.basic.ADD_EFFECT_HEAL,
@@ -231,7 +267,7 @@ local additionalEffects =
 
     [xi.mob.ae.ENWATER] =
     {
-        ele                = xi.magic.ele.WATER,
+        ele                = xi.element.WATER,
         sub                = xi.subEffect.WATER_DAMAGE,
         msg                = xi.msg.basic.ADD_EFFECT_DMG,
         negMsg             = xi.msg.basic.ADD_EFFECT_HEAL,
@@ -242,7 +278,7 @@ local additionalEffects =
     [xi.mob.ae.EVA_DOWN] =
     {
         chance      = 25,
-        ele         = xi.magic.ele.ICE,
+        ele         = xi.element.ICE,
         sub         = xi.subEffect.EVASION_DOWN,
         msg         = xi.msg.basic.ADD_EFFECT_STATUS,
         applyEffect = true,
@@ -256,7 +292,7 @@ local additionalEffects =
     [xi.mob.ae.HP_DRAIN] =
     {
         chance             = 10,
-        ele                = xi.magic.ele.DARK,
+        ele                = xi.element.DARK,
         sub                = xi.subEffect.HP_DRAIN,
         msg                = xi.msg.basic.ADD_EFFECT_HP_DRAIN,
         mod                = xi.mod.INT,
@@ -269,7 +305,7 @@ local additionalEffects =
     [xi.mob.ae.MP_DRAIN] =
     {
         chance             = 10,
-        ele                = xi.magic.ele.DARK,
+        ele                = xi.element.DARK,
         sub                = xi.subEffect.MP_DRAIN,
         msg                = xi.msg.basic.ADD_EFFECT_MP_DRAIN,
         mod                = xi.mod.INT,
@@ -284,7 +320,7 @@ local additionalEffects =
     [xi.mob.ae.PARALYZE] =
     {
         chance      = 25,
-        ele         = xi.magic.ele.ICE,
+        ele         = xi.element.ICE,
         sub         = xi.subEffect.PARALYSIS,
         msg         = xi.msg.basic.ADD_EFFECT_STATUS,
         applyEffect = true,
@@ -298,7 +334,7 @@ local additionalEffects =
     [xi.mob.ae.PETRIFY] =
     {
         chance      = 20,
-        ele         = xi.magic.ele.EARTH,
+        ele         = xi.element.EARTH,
         sub         = xi.subEffect.PETRIFY,
         msg         = xi.msg.basic.ADD_EFFECT_STATUS,
         applyEffect = true,
@@ -312,7 +348,7 @@ local additionalEffects =
     [xi.mob.ae.PLAGUE] =
     {
         chance      = 25,
-        ele         = xi.magic.ele.WATER,
+        ele         = xi.element.WATER,
         sub         = xi.subEffect.PLAGUE,
         msg         = xi.msg.basic.ADD_EFFECT_STATUS,
         applyEffect = true,
@@ -326,7 +362,7 @@ local additionalEffects =
     [xi.mob.ae.POISON] =
     {
         chance      = 25,
-        ele         = xi.magic.ele.WATER,
+        ele         = xi.element.WATER,
         sub         = xi.subEffect.POISON,
         msg         = xi.msg.basic.ADD_EFFECT_STATUS,
         applyEffect = true,
@@ -341,7 +377,7 @@ local additionalEffects =
     [xi.mob.ae.SILENCE] =
     {
         chance      = 25,
-        ele         = xi.magic.ele.WIND,
+        ele         = xi.element.WIND,
         sub         = xi.subEffect.SILENCE,
         msg         = xi.msg.basic.ADD_EFFECT_STATUS,
         applyEffect = true,
@@ -352,10 +388,24 @@ local additionalEffects =
         maxDuration = 30,
     },
 
+    [xi.mob.ae.ENAMNESIA] =
+    {
+        chance      = 25,
+        ele         = xi.element.FIRE,
+        sub         = xi.subEffect.AMNESIA,
+        msg         = xi.msg.basic.ADD_EFFECT_STATUS,
+        applyEffect = true,
+        eff         = xi.effect.AMNESIA,
+        power       = 1,
+        duration    = 30,
+        minDuration = 1,
+        maxDuration = 30,
+    },
+
     [xi.mob.ae.SLOW] =
     {
         chance      = 25,
-        ele         = xi.magic.ele.EARTH,
+        ele         = xi.element.EARTH,
         sub         = xi.subEffect.DEFENSE_DOWN,
         msg         = xi.msg.basic.ADD_EFFECT_STATUS,
         applyEffect = true,
@@ -369,7 +419,7 @@ local additionalEffects =
     [xi.mob.ae.STUN] =
     {
         chance      = 20,
-        ele         = xi.magic.ele.LIGHTNING,
+        ele         = xi.element.THUNDER,
         sub         = xi.subEffect.STUN,
         msg         = xi.msg.basic.ADD_EFFECT_STATUS,
         applyEffect = true,
@@ -393,7 +443,7 @@ local additionalEffects =
     [xi.mob.ae.TP_DRAIN] =
     {
         chance             = 25,
-        ele                = xi.magic.ele.DARK,
+        ele                = xi.element.DARK,
         sub                = xi.subEffect.TP_DRAIN,
         msg                = xi.msg.basic.ADD_EFFECT_TP_DRAIN,
         mod                = xi.mod.INT,
@@ -408,7 +458,7 @@ local additionalEffects =
     [xi.mob.ae.WEIGHT] =
     {
         chance      = 25,
-        ele         = xi.magic.ele.WIND,
+        ele         = xi.element.WIND,
         sub         = xi.subEffect.BLIND, -- TODO
         msg         = xi.msg.basic.ADD_EFFECT_STATUS,
         applyEffect = true,
@@ -431,7 +481,7 @@ local additionalEffects =
     params will override effect's default settings
 --]]
 xi.mob.onAddEffect = function(mob, target, damage, effect, params)
-    if type(params) ~= "table" then
+    if type(params) ~= 'table' then
         params = {}
     end
 
@@ -446,7 +496,7 @@ xi.mob.onAddEffect = function(mob, target, damage, effect, params)
             chance = utils.clamp(chance, 5, 95)
         end
 
-        -- target:PrintToPlayer(string.format("Chance: %i", chance)) -- DEBUG
+        -- target:printToPlayer(string.format('Chance: %i', chance)) -- DEBUG
 
         if math.random(1, 100) <= chance then
 
@@ -491,7 +541,7 @@ xi.mob.onAddEffect = function(mob, target, damage, effect, params)
                     power = dMod + target:getMainLvl() - mob:getMainLvl() + damage / 2
                 end
 
-                -- target:PrintToPlayer(string.format("Initial Power: %f", power)) -- DEBUG
+                -- target:printToPlayer(string.format('Initial Power: %f', power)) -- DEBUG
 
                 power = addBonusesAbility(mob, ae.ele, target, power, ae.bonusAbilityParams)
                 power = power * applyResistanceAddEffect(mob, target, ae.ele, 0)
@@ -501,7 +551,7 @@ xi.mob.onAddEffect = function(mob, target, damage, effect, params)
                     power = finalMagicNonSpellAdjustments(mob, target, ae.ele, power)
                 end
 
-                -- target:PrintToPlayer(string.format("Adjusted Power: %f", power)) -- DEBUG
+                -- target:printToPlayer(string.format('Adjusted Power: %f', power)) -- DEBUG
 
                 local message = ae.msg
                 if power < 0 then
@@ -524,7 +574,7 @@ xi.mob.onAddEffect = function(mob, target, damage, effect, params)
             end
         end
     else
-        printf("invalid additional effect for mobId %i", mob:getID())
+        printf('invalid additional effect for mobId %i', mob:getID())
     end
 
     return 0, 0, 0

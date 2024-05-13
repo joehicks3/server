@@ -1,8 +1,7 @@
 -----------------------------------
 -- Helper file for "One to be Feared" Battlefield
 -----------------------------------
-local ID = require("scripts/zones/Sealions_Den/IDs")
-require("scripts/globals/titles")
+local ID = zones[xi.zone.SEALIONS_DEN]
 -----------------------------------
 local oneToBeFeared = {}
 -- Note:
@@ -11,9 +10,18 @@ local oneToBeFeared = {}
 -- Not to be confused with an actual instance.
 
 local function healCharacter(player)
-    player:setHP(player:getMaxHP())
-    player:setMP(player:getMaxMP())
-    player:setTP(0)
+    -- only heal players if alive otherwise bugs out player
+    if player:isAlive() then
+        player:setHP(player:getMaxHP())
+        player:setMP(player:getMaxMP())
+        player:setTP(0)
+        if player:getPet() ~= nil then
+            local pet = player:getPet()
+            pet:setHP(pet:getMaxHP())
+            pet:setMP(pet:getMaxMP())
+            pet:setTP(0)
+        end
+    end
 end
 
 local function returnToAirship(player)
@@ -26,6 +34,12 @@ local function returnToAirship(player)
         player:setPos(-140.029, -23.348, -446.376, 193)
     elseif instance == 3 then
         player:setPos(499.969, 56.652, -806.132, 193)
+    end
+
+    -- allow resending raise/reraise prompt since we moved player
+    -- which removes the prompt from player screen
+    if player:isDead() then
+        player:allowSendRaisePrompt()
     end
 end
 
@@ -50,9 +64,9 @@ oneToBeFeared.handleMammetDeath = function(mob, player, optParams)
     if
         mammetDeathCount == 5 and
         player:hasStatusEffect(xi.effect.BATTLEFIELD) and
-        player:getLocalVar("[OTBF]MammetCS") == 0
+        player:getLocalVar('[OTBF]MammetCS') == 0
     then
-        player:setLocalVar("[OTBF]MammetCS", 1) -- Safety check to not trigger CS more than once when killing multile Mammets at the same time.
+        player:setLocalVar('[OTBF]MammetCS', 1) -- Safety check to not trigger CS more than once when killing multile Mammets at the same time.
         player:startEvent(10)
     end
 end
@@ -64,7 +78,7 @@ oneToBeFeared.handleMammetBattleEnding = function(player, csid, option, npc)
         healCharacter(player)
 
         -- Move player to instance start. End battle 1.
-        player:setLocalVar("[OTBF]battleCompleted", 1)
+        player:setLocalVar('[OTBF]battleCompleted', 1)
         returnToAirship(player)
     end
 end
@@ -85,7 +99,7 @@ oneToBeFeared.handleOmegaBattleEnding = function(player, csid, option, npc)
         healCharacter(player)
 
         -- Move player to instance start. End battle 2.
-        player:setLocalVar("[OTBF]battleCompleted", 2)
+        player:setLocalVar('[OTBF]battleCompleted', 2)
         returnToAirship(player)
     end
 end
@@ -95,14 +109,14 @@ end
 -----------------------------------
 oneToBeFeared.handleUltimaDeath = function(mob, player, optParams)
     player:addTitle(xi.title.ULTIMA_UNDERTAKER)
-    player:setLocalVar("[OTBF]battleCompleted", 0)
+    player:setLocalVar('[OTBF]battleCompleted', 0)
 end
 
 -----------------------------------
 -- While on Airship
 -----------------------------------
 oneToBeFeared.handleAirshipDoorTrigger = function(player, npc)
-    player:startEvent(32003, npc:getID() - ID.npc.AIRSHIP_DOOR_OFFSET + 1, player:getLocalVar("[OTBF]battleCompleted") * 2)
+    player:startEvent(32003, npc:getID() - ID.npc.AIRSHIP_DOOR_OFFSET + 1, player:getLocalVar('[OTBF]battleCompleted') * 2)
 end
 
 oneToBeFeared.handleOnEventUpdate = function(player, csid, option, npc)
@@ -120,7 +134,7 @@ oneToBeFeared.handleOnEventUpdate = function(player, csid, option, npc)
         local ultimaId = ID.mob.ONE_TO_BE_FEARED_OFFSET + (7 * (battlefield:getArea() - 1)) + 6
         if not GetMobByID(ultimaId):isSpawned() then
             SpawnMob(ultimaId)
-            battlefield:setLocalVar("phaseChange", 0)
+            battlefield:setLocalVar('phaseChange', 0)
         end
     end
 end
@@ -133,19 +147,19 @@ oneToBeFeared.handleOnEventFinish = function(player, csid, option, npc)
             if party ~= nil then
                 for _, v in pairs(party) do
                     if v:hasStatusEffect(xi.effect.BATTLEFIELD) then
-                        v:startEvent(v:getLocalVar("[OTBF]battleCompleted"), option - 99)
+                        v:startEvent(v:getLocalVar('[OTBF]battleCompleted'), option - 99)
                     end
                 end
             else
-                player:startEvent(player:getLocalVar("[OTBF]battleCompleted"), option - 99)
+                player:startEvent(player:getLocalVar('[OTBF]battleCompleted'), option - 99)
             end
 
         -- Leave battlefield.
         elseif option == 4 then
             if player:getBattlefield() then
                 player:leaveBattlefield(1)
-                player:setLocalVar("[OTBF]battleCompleted", 0)
-                player:setLocalVar("[OTBF]MammetCS", 0)
+                player:setLocalVar('[OTBF]battleCompleted', 0)
+                player:setLocalVar('[OTBF]MammetCS', 0)
             end
         end
     end

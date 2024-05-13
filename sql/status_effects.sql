@@ -29,7 +29,7 @@ CREATE TABLE `status_effects` (
   `min_duration` smallint(5) unsigned NOT NULL DEFAULT 0,
   `sort_key` smallint(5) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+) ENGINE=Aria TRANSACTIONAL=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -147,7 +147,7 @@ INSERT INTO `status_effects` VALUES (109,'barblind',41,106,0,0,0,0,7,0,500);
 INSERT INTO `status_effects` VALUES (110,'barsilence',41,106,0,0,0,0,2,0,500);
 INSERT INTO `status_effects` VALUES (111,'barpetrify',41,106,0,0,0,0,3,0,500);
 INSERT INTO `status_effects` VALUES (112,'barvirus',41,106,0,0,0,0,6,0,500);
-INSERT INTO `status_effects` VALUES (113,'reraise',41,0,0,0,0,0,7,0,900);
+INSERT INTO `status_effects` VALUES (113,'reraise',4194344,0,0,0,0,0,7,0,900);
 INSERT INTO `status_effects` VALUES (114,'cover',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (115,'unlimited_shot',4194336,73,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (116,'phalanx',33,0,0,0,0,0,7,0,1050);
@@ -210,7 +210,7 @@ INSERT INTO `status_effects` VALUES (172,'intension',40,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (173,'dread_spikes',41,34,0,0,0,0,0,0,800);
 INSERT INTO `status_effects` VALUES (174,'magic_acc_down',16418,0,0,0,0,0,1,0,0);
 INSERT INTO `status_effects` VALUES (175,'magic_atk_down',16418,0,0,0,0,0,4,0,0);
-INSERT INTO `status_effects` VALUES (176,'quickening',4194476,0,0,0,0,0,0,0,0);
+INSERT INTO `status_effects` VALUES (176,'quickening',4194348,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (177,'encumbrance',8388608,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (178,'firestorm',4194336,0,0,0,0,0,0,0,0);
 INSERT INTO `status_effects` VALUES (179,'hailstorm',4194336,0,0,0,0,0,0,0,0);

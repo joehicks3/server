@@ -27,23 +27,14 @@
 #include "common/tracy.h"
 #include "common/utils.h"
 
-CTaskMgr* CTaskMgr::_instance = nullptr;
-
-CTaskMgr* CTaskMgr::getInstance()
+CTaskMgr::~CTaskMgr()
 {
-    TracyZoneScoped;
-    if (_instance == nullptr)
+    while (!m_TaskList.empty())
     {
-        _instance = new CTaskMgr();
-    }
-    return _instance;
-}
+        CTask* PTask = m_TaskList.top();
+        m_TaskList.pop();
 
-void CTaskMgr::delInstance()
-{
-    if (_instance)
-    {
-        destroy(_instance);
+        destroy(PTask);
     }
 }
 
@@ -76,6 +67,7 @@ void CTaskMgr::RemoveTask(std::string const& TaskName)
         m_TaskList.pop();
 
         // Don't add tasks we're trying to remove to the new pq
+        // FIXME: duplicate task names AREN'T checked on insert!
         if (PTask->m_name != TaskName)
         {
             newPq.push(PTask);
@@ -83,6 +75,7 @@ void CTaskMgr::RemoveTask(std::string const& TaskName)
         else
         {
             ++tasksRemoved;
+            destroy(PTask);
         }
     }
 

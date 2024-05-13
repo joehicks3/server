@@ -5,20 +5,14 @@
 -- Gumbah : !pos 52 0 -36 234
 -- qm2    : !pos 206 -60 -101 196
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.BLADE_OF_DEATH)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.BLADE_OF_DEATH)
 
 quest.reward =
 {
     fame     = 30,
-    fameArea = xi.quest.fame_area.BASTOK,
-    item     = xi.items.DEATHBRINGER,
+    fameArea = xi.fameArea.BASTOK,
+    item     = xi.item.DEATHBRINGER,
     title    = xi.title.BLACK_DEATH,
 }
 
@@ -26,9 +20,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.BASTOK, xi.quest.id.bastok.BLADE_OF_DARKNESS) and
-                player:getFameLevel(xi.quest.fame_area.BASTOK) >= 3
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.BASTOK, xi.quest.id.bastok.BLADE_OF_DARKNESS) and
+                player:getFameLevel(xi.fameArea.BASTOK) >= 3
         end,
 
         [xi.zone.BASTOK_MINES] =
@@ -47,7 +41,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.ZERUHN_MINES] =
@@ -57,7 +51,7 @@ quest.sections =
                 function(player, prevZone)
                     if
                         prevZone == xi.zone.PALBOROUGH_MINES and
-                        not player:hasItem(xi.items.CHAOSBRINGER)
+                        not player:hasItem(xi.item.CHAOSBRINGER)
                     then
                         return 131
                     end
@@ -67,7 +61,7 @@ quest.sections =
             onEventFinish =
             {
                 [131] = function(player, csid, option, npc)
-                    npcUtil.giveItem(player, xi.items.CHAOSBRINGER)
+                    npcUtil.giveItem(player, xi.item.CHAOSBRINGER)
                 end,
             },
         },
@@ -78,8 +72,8 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.items.CHAOSBRINGER) and
-                        player:getCharVar("ChaosbringerKills") >= 200
+                        npcUtil.tradeHasExactly(trade, xi.item.CHAOSBRINGER) and
+                        player:getCharVar('ChaosbringerKills') >= 200
                     then
                         return quest:progressEvent(10)
                     end

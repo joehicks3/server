@@ -4,25 +4,21 @@
 -- Log ID: 1, Quest ID: 1
 -- Talib : !pos -101.133 4.649 28.803 236
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.BEAUTY_AND_THE_GALKA)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.BEAUTY_AND_THE_GALKA)
 
 quest.reward =
 {
     fame     = 75,
-    fameArea = xi.quest.fame_area.BASTOK,
-    item     = xi.items.BRONZE_KNIFE,
+    fameArea = xi.fameArea.BASTOK,
+    item     = xi.item.BRONZE_KNIFE,
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -74,7 +70,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -87,7 +83,7 @@ quest.sections =
 
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.items.CHUNK_OF_ZINC_ORE) and
+                        npcUtil.tradeHasExactly(trade, xi.item.CHUNK_OF_ZINC_ORE) and
                         not player:hasKeyItem(xi.ki.PALBOROUGH_MINES_LOGS)
                     then
                         return quest:progressEvent(3)
@@ -132,7 +128,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.BASTOK_MINES] =

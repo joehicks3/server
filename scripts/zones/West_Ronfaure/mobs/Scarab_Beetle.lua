@@ -3,11 +3,14 @@
 --  Mob: Scarab Beetle
 -- Note: Place holder for Fungus Beetle
 -----------------------------------
-local ID = require("scripts/zones/West_Ronfaure/IDs")
-require("scripts/globals/regimes")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.WEST_RONFAURE]
 -----------------------------------
 local entity = {}
+
+local fungusPHTable =
+{
+    [ID.mob.FUNGUS_BEETLE - 21] = ID.mob.FUNGUS_BEETLE, -- -332.722 -21.032 -112.044
+}
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 3, 1, xi.regime.type.FIELDS)
@@ -15,7 +18,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.FUNGUS_BEETLE_PH, 10, 900) -- 15 minute minimum
+    xi.mob.phOnDespawn(mob, fungusPHTable, 10, 900) -- 15 minute minimum
 end
 
 return entity

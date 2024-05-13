@@ -4,8 +4,6 @@
 -- Title Change NPC
 -- !pos -129 2 -20 50
 -----------------------------------
-require("scripts/globals/titles")
------------------------------------
 local entity = {}
 
 local eventId = 644
@@ -90,6 +88,7 @@ local titleInfo =
             xi.title.MOON_CHARIOTEER,
             xi.title.BLOODY_BERSERKER,
             xi.title.THE_SIXTH_SERPENT,
+            xi.title.PANDEMONIUM_QUELLER,
             xi.title.OUPIRE_IMPALER,
             xi.title.HEIR_OF_THE_BLESSED_RADIANCE,
             xi.title.HEIR_OF_THE_BLIGHTED_GLOOM,
@@ -112,14 +111,14 @@ entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
-    xi.title.changerOnTrigger(player, eventId, titleInfo)
+    xi.titleChanger.onTrigger(player, eventId, titleInfo)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
-    xi.title.changerOnEventFinish(player, csid, option, eventId, titleInfo)
+    xi.titleChanger.onEventFinish(player, csid, option, eventId, titleInfo)
 end
 
 return entity

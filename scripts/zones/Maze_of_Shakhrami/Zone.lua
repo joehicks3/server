@@ -1,10 +1,7 @@
 -----------------------------------
 -- Zone: Maze of Shakhrami (198)
 -----------------------------------
-local ID = require('scripts/zones/Maze_of_Shakhrami/IDs')
-require('scripts/globals/conquest')
-require('scripts/globals/treasure')
-require('scripts/globals/helm')
+local ID = zones[xi.zone.MAZE_OF_SHAKHRAMI]
 -----------------------------------
 local zoneObject = {}
 
@@ -22,7 +19,7 @@ zoneObject.onInitialize = function(zone)
     end
 
     xi.treasure.initZone(zone)
-    xi.helm.initZone(zone, xi.helm.type.EXCAVATION)
+    xi.helm.initZone(zone, xi.helmType.EXCAVATION)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)

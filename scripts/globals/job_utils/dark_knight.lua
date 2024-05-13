@@ -1,7 +1,7 @@
 -----------------------------------
 -- Dark Knight Job Utilities
 -----------------------------------
-require("scripts/globals/utils")
+require('scripts/globals/utils')
 -----------------------------------
 xi = xi or {}
 xi.job_utils = xi.job_utils or {}
@@ -21,13 +21,13 @@ xi.job_utils.dark_knight.checkArcaneCrest = function(player, target, ability)
 end
 
 xi.job_utils.dark_knight.checkBloodWeapon = function(player, target, ability)
-    ability:setRecast(ability:getRecast() - player:getMod(xi.mod.ONE_HOUR_RECAST))
+    ability:setRecast(math.max(0, ability:getRecast() - player:getMod(xi.mod.ONE_HOUR_RECAST) * 60))
 
     return 0, 0
 end
 
 xi.job_utils.dark_knight.checkSoulEnslavement = function(player, target, ability)
-    ability:setRecast(ability:getRecast() - player:getMod(xi.mod.ONE_HOUR_RECAST))
+    ability:setRecast(math.max(0, ability:getRecast() - player:getMod(xi.mod.ONE_HOUR_RECAST) * 60))
 
     return 0, 0
 end

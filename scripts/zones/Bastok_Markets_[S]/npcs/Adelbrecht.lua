@@ -14,10 +14,7 @@
 -- 361 = 361 = After asking in CS 359
 -- Todo: medal loss from nation switching. Since there is no rank-up yet, this isn't so important for now.
 -----------------------------------
-local ID = require("scripts/zones/Bastok_Markets_[S]/IDs")
-require("scripts/globals/titles")
-require("scripts/globals/quests")
-require("scripts/globals/missions")
+local ID = zones[xi.zone.BASTOK_MARKETS_S]
 -----------------------------------
 local entity = {}
 
@@ -28,40 +25,40 @@ entity.onTrigger = function(player, npc)
     local allegiance = player:getCampaignAllegiance()
     -- 0 = none, 1 = San d'Oria Iron Rams, 2 = Bastok Fighting Fourth, 3 = Windurst Cobras
 
-    local theFightingFourth = player:getQuestStatus(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
+    local theFightingFourth = player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
 
     if
-        theFightingFourth == QUEST_AVAILABLE and
+        theFightingFourth == xi.questStatus.QUEST_AVAILABLE and
         player:hasKeyItem(xi.ki.BLUE_RECOMMENDATION_LETTER)
     then
         player:startEvent(139)
     elseif
-        theFightingFourth == QUEST_AVAILABLE and
-        player:getCharVar("BLUE_R_LETTER_USED") == 1
+        theFightingFourth == xi.questStatus.QUEST_AVAILABLE and
+        player:getCharVar('BLUE_R_LETTER_USED') == 1
     then
         player:startEvent(139)
     elseif
-        theFightingFourth == QUEST_ACCEPTED and
+        theFightingFourth == xi.questStatus.QUEST_ACCEPTED and
         player:hasKeyItem(xi.ki.BATTLE_RATIONS)
     then
         player:startEvent(140)
     elseif
-        theFightingFourth == QUEST_ACCEPTED and
-        player:getCharVar("THE_FIGHTING_FOURTH") == 1
+        theFightingFourth == xi.questStatus.QUEST_ACCEPTED and
+        player:getCharVar('THE_FIGHTING_FOURTH') == 1
     then
         player:startEvent(141)
     elseif
-        theFightingFourth == QUEST_ACCEPTED and
-        player:getCharVar("THE_FIGHTING_FOURTH") == 2
+        theFightingFourth == xi.questStatus.QUEST_ACCEPTED and
+        player:getCharVar('THE_FIGHTING_FOURTH') == 2
     then
         player:startEvent(142)
     elseif
-        theFightingFourth == QUEST_ACCEPTED and
-        player:getCharVar("THE_FIGHTING_FOURTH") == 3
+        theFightingFourth == xi.questStatus.QUEST_ACCEPTED and
+        player:getCharVar('THE_FIGHTING_FOURTH') == 3
     then
         player:startEvent(143)
     elseif
-        theFightingFourth == QUEST_COMPLETED and
+        theFightingFourth == xi.questStatus.QUEST_COMPLETED and
         allegiance == 1
     then
         player:startEvent(162)
@@ -75,34 +72,34 @@ entity.onEventFinish = function(player, csid, option, npc)
     if csid == 139 and option == 1 then
         player:addKeyItem(xi.ki.BATTLE_RATIONS)
         player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.BATTLE_RATIONS)
-        player:addQuest(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
-        player:setCharVar("BLUE_R_LETTER_USED", 1)
+        player:addQuest(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
+        player:setCharVar('BLUE_R_LETTER_USED', 1)
         player:delKeyItem(xi.ki.BLUE_RECOMMENDATION_LETTER)
     elseif csid == 140 and option == 1 then
         player:delKeyItem(xi.ki.BATTLE_RATIONS)
-        player:delQuest(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
+        player:delQuest(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
     elseif csid == 141 or csid == 142 and option == 1 then
-        player:delQuest(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
+        player:delQuest(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
     elseif csid == 143 then
         -- Is first join, so add Sprinter's Shoes and bronze medal
-        if player:getCharVar("Campaign_Nation") == 0 then
+        if player:getCharVar('Campaign_Nation') == 0 then
             if player:getFreeSlotsCount() >= 1 then
                 player:setCampaignAllegiance(2)
-                player:setCharVar("BLUE_R_LETTER_USED", 0)
+                player:setCharVar('BLUE_R_LETTER_USED', 0)
                 player:addTitle(xi.title.FOURTH_DIVISION_SOLDIER)
                 player:addKeyItem(xi.ki.BRONZE_RIBBON_OF_SERVICE)
-                player:addItem(xi.items.SPRINTERS_SHOES)
-                player:completeQuest(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
+                player:addItem(xi.item.SPRINTERS_SHOES)
+                player:completeQuest(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
                 player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.BRONZE_RIBBON_OF_SERVICE)
-                player:messageSpecial(ID.text.ITEM_OBTAINED, xi.items.SPRINTERS_SHOES)
+                player:messageSpecial(ID.text.ITEM_OBTAINED, xi.item.SPRINTERS_SHOES)
             else
-                player:messageSpecial(ID.text.ITEM_CANNOT_BE_OBTAINED, xi.items.SPRINTERS_SHOES)
+                player:messageSpecial(ID.text.ITEM_CANNOT_BE_OBTAINED, xi.item.SPRINTERS_SHOES)
             end
         else
             player:setCampaignAllegiance(2)
-            player:setCharVar("BLUE_R_LETTER_USED", 0)
+            player:setCharVar('BLUE_R_LETTER_USED', 0)
             player:addTitle(xi.title.FOURTH_DIVISION_SOLDIER)
-            player:completeQuest(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
+            player:completeQuest(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH)
         end
     end
 end

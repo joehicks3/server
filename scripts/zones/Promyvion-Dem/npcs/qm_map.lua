@@ -6,25 +6,26 @@
 -- !pos 319.996 -2.330 -80.000 18
 -- !pos 159.998 -2.327 0.000 18
 -----------------------------------
-local ID = require("scripts/zones/Promyvion-Dem/IDs")
-require("scripts/globals/npc_util")
+local ID = zones[xi.zone.PROMYVION_DEM]
 -----------------------------------
 local entity = {}
 
-entity.onTrigger = function(player, npc)
-    player:messageSpecial(ID.text.NOTHING_OUT_OF_ORDINARY)
-    -- TODO: The sphere is emitting an erie green glow. occurred when in posession of item, but not
-    -- with map, with map received nothing out of the ordinary.  Assumption: Glow is present until obtaining.
-end
-
 entity.onTrade = function(player, npc, trade)
     if
-        npcUtil.tradeHas(trade, xi.items.BERYL_MEMOSPHERE) and
+        npcUtil.tradeHas(trade, xi.item.BERYL_MEMOSPHERE) and
         not player:hasKeyItem(xi.ki.MAP_OF_PROMYVION_DEM)
     then
         player:startEvent(49)
     else
         player:messageSpecial(ID.text.NOTHING_HAPPENS)
+    end
+end
+
+entity.onTrigger = function(player, npc)
+    if not player:hasKeyItem(xi.ki.MAP_OF_PROMYVION_DEM) then
+        player:messageSpecial(ID.text.EERIE_GREEN_GLOW)
+    else
+        player:messageSpecial(ID.text.NOTHING_OUT_OF_ORDINARY)
     end
 end
 

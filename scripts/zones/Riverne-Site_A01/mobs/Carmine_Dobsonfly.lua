@@ -2,7 +2,7 @@
 -- Area: Riverne - Site A01
 --  Mob: Carmine Dobsonfly
 -----------------------------------
-local ID = require("scripts/zones/Riverne-Site_A01/IDs")
+local ID = zones[xi.zone.RIVERNE_SITE_A01]
 -----------------------------------
 local entity = {}
 
@@ -11,7 +11,7 @@ entity.onMobSpawn = function(mob)
     mob:setMagicCastingEnabled(false) -- does not cast spells while idle
 end
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     mob:setMagicCastingEnabled(true)
 end
 

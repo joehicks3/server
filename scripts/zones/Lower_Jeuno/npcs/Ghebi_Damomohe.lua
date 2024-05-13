@@ -5,28 +5,30 @@
 -- Starts and Finishes Quest: Tenshodo Membership
 -- !pos 16 0 -5 245
 -----------------------------------
-local ID = require("scripts/zones/Lower_Jeuno/IDs")
-require("scripts/globals/npc_util")
-require("scripts/globals/titles")
-require("scripts/globals/quests")
-require("scripts/globals/shop")
+local lowerJeunoID = zones[xi.zone.LOWER_JEUNO]
 -----------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
     if
-        player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.TENSHODO_MEMBERSHIP) ~= QUEST_COMPLETED and
-        npcUtil.tradeHas(trade, xi.items.TENSHODO_INVITE)
+        trade:getItemQty(xi.item.TENSHODO_INVITE) > 0 and
+        player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.TENSHODO_MEMBERSHIP) ~= xi.questStatus.QUEST_COMPLETED
     then
-        -- Finish Quest: Tenshodo Membership (Invitation)
-        player:startEvent(108)
+        if player:getFreeSlotsCount() > 0 then
+            if npcUtil.tradeHas(trade, xi.item.TENSHODO_INVITE) then
+                -- Finish Quest: Tenshodo Membership (Invitation)
+                player:startEvent(108)
+            end
+        else
+            player:messageSpecial(lowerJeunoID.text.ITEM_CANNOT_BE_OBTAINED, xi.item.TENSHODO_INVITE)
+        end
     end
 end
 
 entity.onTrigger = function(player, npc)
     if
-        player:getFameLevel(xi.quest.fame_area.JEUNO) >= 2 and
-        player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.TENSHODO_MEMBERSHIP) == QUEST_AVAILABLE
+        player:getFameLevel(xi.fameArea.JEUNO) >= 2 and
+        player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.TENSHODO_MEMBERSHIP) == xi.questStatus.QUEST_AVAILABLE
     then
         -- Start Quest: Tenshodo Membership
         player:startEvent(106, 8)
@@ -50,20 +52,20 @@ entity.onEventFinish = function(player, csid, option, npc)
             4467,    3, -- Garlic Cracker
         }
 
-        xi.shop.general(player, stock, xi.quest.fame_area.NORG)
+        xi.shop.general(player, stock, xi.fameArea.NORG)
 
     elseif csid == 106 and option == 2 then
-        player:addQuest(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.TENSHODO_MEMBERSHIP)
+        player:addQuest(xi.questLog.JEUNO, xi.quest.id.jeuno.TENSHODO_MEMBERSHIP)
 
     elseif csid == 107 then
         -- Finish Quest: Tenshodo Membership (Application Form)
-        if npcUtil.completeQuest(player, xi.quest.log_id.JEUNO, xi.quest.id.jeuno.TENSHODO_MEMBERSHIP, { item = 548, title = xi.title.TENSHODO_MEMBER, ki = xi.ki.TENSHODO_MEMBERS_CARD }) then
+        if npcUtil.completeQuest(player, xi.questLog.JEUNO, xi.quest.id.jeuno.TENSHODO_MEMBERSHIP, { item = 548, title = xi.title.TENSHODO_MEMBER, ki = xi.ki.TENSHODO_MEMBERS_CARD }) then
             player:delKeyItem(xi.ki.TENSHODO_APPLICATION_FORM)
         end
 
     elseif csid == 108 then
         -- Finish Quest: Tenshodo Membership (Invitation)
-        if npcUtil.completeQuest(player, xi.quest.log_id.JEUNO, xi.quest.id.jeuno.TENSHODO_MEMBERSHIP, { item = 548, title = xi.title.TENSHODO_MEMBER, ki = xi.ki.TENSHODO_MEMBERS_CARD }) then
+        if npcUtil.completeQuest(player, xi.questLog.JEUNO, xi.quest.id.jeuno.TENSHODO_MEMBERSHIP, { item = 548, title = xi.title.TENSHODO_MEMBER, ki = xi.ki.TENSHODO_MEMBERS_CARD }) then
             player:confirmTrade()
             player:delKeyItem(xi.ki.TENSHODO_APPLICATION_FORM)
         end

@@ -1,13 +1,17 @@
 -----------------------------------
 -- Zone: Fort_Karugo-Narugo_[S] (96)
 -----------------------------------
-local ID = require('scripts/zones/Fort_Karugo-Narugo_[S]/IDs')
-require('scripts/globals/helm')
+require('scripts/globals/dark_ixion')
 -----------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    xi.helm.initZone(zone, xi.helm.type.LOGGING)
+    xi.helm.initZone(zone, xi.helmType.LOGGING)
+    xi.darkixion.zoneOnInit(zone)
+end
+
+zoneObject.onGameHour = function(zone)
+    xi.darkixion.zoneOnGameHour(zone)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -28,18 +32,6 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
 zoneObject.onZoneWeatherChange = function(weather)
-    local npc = GetNPCByID(ID.npc.INDESCRIPT_MARKINGS)
-
-    if npc ~= nil then
-        if
-            weather == xi.weather.DUST_STORM or
-            weather == xi.weather.SAND_STORM
-        then
-            npc:setStatus(xi.status.DISAPPEAR)
-        else
-            npc:setStatus(xi.status.NORMAL)
-        end
-    end
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)

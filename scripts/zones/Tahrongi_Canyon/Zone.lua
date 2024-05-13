@@ -1,14 +1,8 @@
 -----------------------------------
 -- Zone: Tahrongi_Canyon (117)
 -----------------------------------
-local ID = require('scripts/zones/Tahrongi_Canyon/IDs')
+local ID = zones[xi.zone.TAHRONGI_CANYON]
 require('scripts/quests/i_can_hear_a_rainbow')
-require('scripts/globals/chocobo_digging')
-require('scripts/globals/conquest')
-require('scripts/globals/missions')
-require('scripts/globals/chocobo')
-require('scripts/globals/helm')
-require('scripts/globals/zone')
 require('scripts/missions/amk/helpers')
 -----------------------------------
 local zoneObject = {}
@@ -18,7 +12,7 @@ zoneObject.onChocoboDig = function(player, precheck)
 end
 
 zoneObject.onInitialize = function(zone)
-    xi.helm.initZone(zone, xi.helm.type.EXCAVATION)
+    xi.helm.initZone(zone, xi.helmType.EXCAVATION)
     xi.chocobo.initZone(zone)
     xi.voidwalker.zoneOnInit(zone)
 end
@@ -77,7 +71,7 @@ zoneObject.onZoneWeatherChange = function(weather)
     elseif
         not habrok:isSpawned() and
         isHabrokWeather(weather) and
-        os.time() > habrok:getLocalVar("pop")
+        os.time() > habrok:getLocalVar('pop')
     then
         SpawnMob(ID.mob.HABROK)
     end

@@ -4,16 +4,10 @@
 -- !addquest 3 167
 -- Nomad Moogle : !pos 10.012 1.453 121.883 243
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
------------------------------------
-local ruLudeID = require('scripts/zones/RuLude_Gardens/IDs')
+local ruLudeID = zones[xi.zone.RULUDE_GARDENS]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.MARTIAL_MASTERY)
+local quest = Quest:new(xi.questLog.JEUNO, xi.quest.id.jeuno.MARTIAL_MASTERY)
 
 quest.reward =
 {
@@ -53,7 +47,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 player:getMainLvl() >= 96 and
                 hasRequiredCombatSkill(player)
         end,
@@ -74,7 +68,7 @@ quest.sections =
     {
         check = function(player, status, vars)
             -- TODO: Confirm that the player must be on a valid job to complete
-            return status == QUEST_ACCEPTED and
+            return status == xi.questStatus.QUEST_ACCEPTED and
                 player:getMainLvl() >= 96 and
                 hasRequiredCombatSkill(player) and
                 player:getMeritCount() >= 15

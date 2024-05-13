@@ -4,18 +4,13 @@
 -- !addquest 3 23
 -- Karl : !pos -60 0.1 -8 246
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.CHILDS_PLAY)
+local quest = Quest:new(xi.questLog.JEUNO, xi.quest.id.jeuno.CHILDS_PLAY)
 
 quest.reward =
 {
     fame     = 30,
-    fameArea = xi.quest.fame_area.JEUNO,
+    fameArea = xi.fameArea.JEUNO,
     keyItem  = xi.ki.WONDER_MAGIC_SET,
     title    = xi.title.TRADER_OF_MYSTERIES,
 }
@@ -24,8 +19,8 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.THE_WONDER_MAGIC_SET) == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.THE_WONDER_MAGIC_SET) == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.PORT_JEUNO] =
@@ -43,7 +38,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.PORT_JEUNO] =
@@ -51,7 +46,7 @@ quest.sections =
             ['Karl'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.WHITE_ROCK) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.WHITE_ROCK) then
                         return quest:progressEvent(1)
                     end
                 end,

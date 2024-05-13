@@ -4,9 +4,7 @@
 -- !pos 368.980, -0.443, -119.874 103
 -- Teleports Players to Abyssea Misareaux
 -----------------------------------
-local ID = require("scripts/zones/Valkurm_Dunes/IDs")
-require("scripts/globals/quests")
-require("scripts/globals/abyssea")
+local ID = zones[xi.zone.VALKURM_DUNES]
 -----------------------------------
 local entity = {}
 
@@ -19,8 +17,8 @@ entity.onTrigger = function(player, npc)
 
         if
             hasStone >= 1 and
-            player:getQuestStatus(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.DAWN_OF_DEATH) == QUEST_ACCEPTED and
-            player:getQuestStatus(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.A_DELECTABLE_DEMON) == QUEST_AVAILABLE
+            player:getQuestStatus(xi.questLog.ABYSSEA, xi.quest.id.abyssea.DAWN_OF_DEATH) == xi.questStatus.QUEST_ACCEPTED and
+            player:getQuestStatus(xi.questLog.ABYSSEA, xi.quest.id.abyssea.A_DELECTABLE_DEMON) == xi.questStatus.QUEST_AVAILABLE
         then
             player:startEvent(56)
         else
@@ -36,7 +34,7 @@ end
 
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 56 then
-        player:addQuest(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.A_DELECTABLE_DEMON)
+        player:addQuest(xi.questLog.ABYSSEA, xi.quest.id.abyssea.A_DELECTABLE_DEMON)
     elseif csid == 57 then
         -- Killed Cirein-croin
     elseif csid == 55 and option == 1 then

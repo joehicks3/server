@@ -1,18 +1,12 @@
 -----------------------------------
 -- Zone: Oldton_Movalpolos (11)
 -----------------------------------
-local ID = require('scripts/zones/Oldton_Movalpolos/IDs')
-require('scripts/globals/conquest')
-require('scripts/globals/missions')
-require('scripts/globals/treasure')
-require('scripts/globals/helm')
------------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
     xi.conq.setRegionalConquestOverseers(zone:getRegionID())
     xi.treasure.initZone(zone)
-    xi.helm.initZone(zone, xi.helm.type.MINING)
+    xi.helm.initZone(zone, xi.helmType.MINING)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
@@ -32,9 +26,9 @@ zoneObject.onZoneIn = function(player, prevZone)
 
     if
         player:getCurrentMission(xi.mission.log_id.COP) == xi.mission.id.cop.DAWN and
-        player:getCharVar("PromathiaStatus") == 3 and
-        player:getCharVar("Promathia_kill_day") < os.time() and
-        player:getCharVar("COP_jabbos_story") == 0
+        player:getCharVar('PromathiaStatus') == 3 and
+        player:getCharVar('Promathia_kill_day') < os.time() and
+        player:getCharVar('COP_jabbos_story') == 0
     then
         cs = 57
     end
@@ -50,7 +44,7 @@ end
 
 zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 57 then
-        player:setCharVar("COP_jabbos_story", 1)
+        player:setCharVar('COP_jabbos_story', 1)
     end
 end
 

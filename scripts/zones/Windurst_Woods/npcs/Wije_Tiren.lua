@@ -4,8 +4,7 @@
 -- Standard Merchant NPC
 -- Confirmed shop stock, August 2013
 -----------------------------------
-local ID = require("scripts/zones/Windurst_Woods/IDs")
-require("scripts/globals/shop")
+local ID = zones[xi.zone.WINDURST_WOODS]
 -----------------------------------
 local entity = {}
 
@@ -26,7 +25,7 @@ entity.onTrigger = function(player, npc)
         5014,    98,       --Scroll of Herb Pastoral
         2864,  9200        --Federation Waystone
     }
-    xi.shop.general(player, stock, xi.quest.fame_area.WINDURST)
+    xi.shop.general(player, stock, xi.fameArea.WINDURST)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)

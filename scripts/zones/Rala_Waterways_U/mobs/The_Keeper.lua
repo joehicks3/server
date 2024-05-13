@@ -3,9 +3,9 @@
 -----------------------------------
 local entity = {}
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     local instance = mob:getInstance()
-    instance:setLocalVar("FIGHT_STARTED", 1)
+    instance:setLocalVar('FIGHT_STARTED', 1)
 end
 
 entity.onMobDeath = function(mob, player, optParams)

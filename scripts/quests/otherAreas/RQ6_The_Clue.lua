@@ -5,18 +5,13 @@
 -- ZONE,   NPC,      POS
 -- Mhaura, Rycharde, !pos 17.451 -16.000 88.815 249
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/npc_util')
-require('scripts/globals/interaction/quest')
------------------------------------
-local quest = Quest:new(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.THE_CLUE)
+local quest = Quest:new(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.THE_CLUE)
 -----------------------------------
 
 quest.reward =
 {
     fame     = 120,
-    fameArea = xi.quest.fame_area.WINDURST,
+    fameArea = xi.fameArea.WINDURST,
     title    = xi.title.FOUR_STAR_PURVEYOR,
     gil      = 3000,
 }
@@ -26,8 +21,8 @@ quest.sections =
     -- Section: Quest is available and never interacted.
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and player:getFameLevel(xi.quest.fame_area.WINDURST) > 4 and
-                player:getQuestStatus(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.EXPERTISE) == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_AVAILABLE and player:getFameLevel(xi.fameArea.WINDURST) > 4 and
+                player:getQuestStatus(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.EXPERTISE) == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.MHAURA] =
@@ -35,11 +30,11 @@ quest.sections =
             ['Rycharde'] =
             {
                 onTrigger = function(player, npc)
-                    if player:getCharVar("Quest[4][4]DayCompleted") + 7 < VanadielUniqueDay() then
+                    if player:getCharVar('Quest[4][4]DayCompleted') + 7 < VanadielUniqueDay() then
                         if quest:getVar(player, 'Prog') == 0 then
-                            return quest:progressEvent(90, xi.items.CRAWLER_EGG) -- Starting event.
+                            return quest:progressEvent(90, xi.item.CRAWLER_EGG) -- Starting event.
                         else
-                            return quest:progressEvent(91, xi.items.CRAWLER_EGG) -- Starting event after rejecting.
+                            return quest:progressEvent(91, xi.item.CRAWLER_EGG) -- Starting event after rejecting.
                         end
                     end
                 end,
@@ -56,7 +51,7 @@ quest.sections =
             {
                 [90] = function(player, csid, option, npc)
                     quest:setVar(player, 'Prog', 1)
-                    player:setCharVar("Quest[4][4]DayCompleted", 0)  -- Delete previous quest (Rycharde the Chef) variables
+                    player:setCharVar('Quest[4][4]DayCompleted', 0)  -- Delete previous quest (Rycharde the Chef) variables
                     if option == 83 then -- Accept quest option.
                         quest:begin(player)
                     end
@@ -84,7 +79,7 @@ quest.sections =
     -- Section: Quest accepted.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.MHAURA] =
@@ -103,11 +98,11 @@ quest.sections =
                 end,
 
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, { { xi.items.CRAWLER_EGG, 4 } }) then
+                    if npcUtil.tradeHasExactly(trade, { { xi.item.CRAWLER_EGG, 4 } }) then
                         return quest:progressEvent(92) -- Quest completed.
                     else
                         local count      = trade:getItemCount()
-                        local crawlerEgg = trade:hasItemQty(xi.items.CRAWLER_EGG, trade:getItemCount())
+                        local crawlerEgg = trade:hasItemQty(xi.item.CRAWLER_EGG, trade:getItemCount())
 
                         if crawlerEgg and count < 4 then
                             return quest:event(93)

@@ -34,18 +34,22 @@
  ************************************************************************/
 
 CNpcEntity::CNpcEntity()
+: m_flags(0)
+, name_prefix(0)
+, widescan(1)
 {
-    objtype     = TYPE_NPC;
-    look.face   = 0x32;
-    widescan    = 1;
-    allegiance  = ALLEGIANCE_TYPE::MOB;
-    m_flags     = 0;
-    name_prefix = 0;
+    TracyZoneScoped;
+    objtype    = TYPE_NPC;
+    look.face  = 0x32;
+    allegiance = ALLEGIANCE_TYPE::MOB;
 
     PAI = std::make_unique<CAIContainer>(this);
 }
 
-CNpcEntity::~CNpcEntity() = default;
+CNpcEntity::~CNpcEntity()
+{
+    TracyZoneScoped;
+}
 
 uint32 CNpcEntity::getEntityFlags() const
 {

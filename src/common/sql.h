@@ -5,8 +5,8 @@
 #define _COMMON_SQL_H
 
 #include "cbasetypes.h"
-#include "sql_prepared_stmt.h"
 
+#include <string>
 #include <thread>
 #include <unordered_map>
 
@@ -17,6 +17,9 @@
 #endif
 
 #include "logging.h"
+
+// NOTE: This is just a shim to allow easy adoption of database.h
+#include "database.h"
 
 // Return codes
 #define SQL_ERROR   -1
@@ -72,8 +75,6 @@ enum SqlDataType
     SQLDT_BLOB,
     SQLDT_LASTID
 };
-
-class SqlPreparedStatement;
 
 class SqlConnection
 {
@@ -143,6 +144,18 @@ public:
         return QueryStr(query_v.c_str());
     }
 
+    /// Executes a query.
+    /// Any previous result is freed.
+    /// The query is constructed as if it was fmtlib.
+    ///
+    /// @return SQL_SUCCESS or SQL_ERROR
+    template <typename... Args>
+    int32 QueryFmt(const char* query, Args... args)
+    {
+        std::string query_v = fmt::format(query, args...);
+        return QueryStr(query_v.c_str());
+    }
+
     uint64 AffectedRows();
 
     /// Returns the number of the AUTO_INCREMENT column of the last INSERT/UPDATE query.
@@ -185,6 +198,27 @@ public:
 
     std::string GetStringData(size_t col);
 
+    template <typename T>
+    void GetBlobData(size_t col, T* destination)
+    {
+        size_t length = 0;
+        char*  buffer = nullptr;
+        GetData(col, &buffer, &length);
+        std::memcpy(destination, buffer, (length > sizeof(T) ? sizeof(T) : length));
+    }
+
+    template <typename T>
+    std::string ObjectToBlobString(T* destination)
+    {
+        char buffer[sizeof(T) * 2 + 1];
+        {
+            char dataBlob[sizeof(T)];
+            std::memcpy(dataBlob, destination, sizeof(dataBlob));
+            EscapeStringLen(buffer, dataBlob, sizeof(dataBlob));
+        }
+        return std::string(buffer);
+    }
+
     /// Frees the result of the query.
     void FreeResult();
 
@@ -198,10 +232,9 @@ public:
     void StartProfiling();
     void FinishProfiling();
 
-    std::shared_ptr<SqlPreparedStatement> GetPreparedStatement(std::string const& name);
-
 private:
-    Sql_t*      self;
+    Sql_t* self;
+
     const char* m_User;
     const char* m_Passwd;
     const char* m_Host;
@@ -211,10 +244,6 @@ private:
     uint32 m_PingInterval;
     uint32 m_LastPing;
     bool   m_LatencyWarning;
-
-    void InitPreparedStatements();
-
-    std::unordered_map<std::string, std::shared_ptr<SqlPreparedStatement>> m_PreparedStatements;
 
     std::thread::id m_ThreadId;
 };

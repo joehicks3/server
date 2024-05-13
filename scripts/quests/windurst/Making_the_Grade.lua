@@ -6,29 +6,24 @@
 -- Koru-Moru       : !pos -120 -6 124 239
 -- Chomoro-Kyotoro : !pos 133 -5 167 238
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.WINDURST, xi.quest.id.windurst.MAKING_THE_GRADE)
+local quest = Quest:new(xi.questLog.WINDURST, xi.quest.id.windurst.MAKING_THE_GRADE)
 
 quest.reward =
 {
     fame     = 75,
-    fameArea = xi.quest.fame_area.WINDURST,
-    item     = xi.items.SCROLL_OF_ASPIR,
+    fameArea = xi.fameArea.WINDURST,
+    item     = xi.item.SCROLL_OF_ASPIR,
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.TEACHERS_PET) and
-                player:getQuestStatus(xi.quest.log_id.WINDURST, xi.quest.id.windurst.LET_SLEEPING_DOGS_LIE) ~= QUEST_ACCEPTED and
-                player:getFameLevel(xi.quest.fame_area.WINDURST) >= 3
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.WINDURST, xi.quest.id.windurst.TEACHERS_PET) and
+                player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.LET_SLEEPING_DOGS_LIE) ~= xi.questStatus.QUEST_ACCEPTED and
+                player:getFameLevel(xi.fameArea.WINDURST) >= 3
         end,
 
         [xi.zone.WINDURST_WATERS] =
@@ -48,7 +43,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.WINDURST_WATERS] =
@@ -74,7 +69,7 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.items.PILE_OF_ANSWER_SHEETS) and
+                        npcUtil.tradeHasExactly(trade, xi.item.PILE_OF_ANSWER_SHEETS) and
                         quest:getVar(player, 'Prog') == 0
                     then
                         return quest:progressEvent(455)
@@ -129,7 +124,7 @@ quest.sections =
             ['Koru-Moru'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.PILE_OF_ANSWER_SHEETS) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.PILE_OF_ANSWER_SHEETS) then
                         if quest:getVar(player, 'Prog') == 1 then
                             return quest:progressEvent(285)
                         else
@@ -143,7 +138,7 @@ quest.sections =
 
                     if
                         questProgress == 0 and
-                        player:hasItem(xi.items.PILE_OF_ANSWER_SHEETS)
+                        player:hasItem(xi.item.PILE_OF_ANSWER_SHEETS)
                     then
                         return quest:event(287)
                     elseif questProgress >= 2 then
@@ -166,7 +161,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED and
+            return status == xi.questStatus.QUEST_COMPLETED and
                 not quest:getMustZone(player)
         end,
 

@@ -38,6 +38,7 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include "latent_effect_container.h"
 #include "map.h"
 #include "mob_spell_list.h"
+#include "notoriety_container.h"
 #include "petutils.h"
 #include "puppetutils.h"
 #include "status_effect_container.h"
@@ -62,11 +63,6 @@ std::vector<Pet_t*> g_PPetList;
 
 namespace petutils
 {
-    /************************************************************************
-     *                                                                      *
-     *  Загружаем список прототипов питомцев                                    *
-     *                                                                      *
-     ************************************************************************/
 
     void LoadPetList()
     {
@@ -103,95 +99,90 @@ namespace petutils
                 slash_sdt, pierce_sdt, h2h_sdt, impact_sdt, \
                 magical_sdt, fire_sdt, ice_sdt, wind_sdt, earth_sdt, lightning_sdt, water_sdt, light_sdt, dark_sdt, \
                 fire_res_rank, ice_res_rank, wind_res_rank, earth_res_rank, lightning_res_rank, water_res_rank, light_res_rank, dark_res_rank, \
-                cmbDelay, name_prefix, mob_pools.skill_list_id \
+                cmbDelay, name_prefix, mob_pools.skill_list_id, damageType \
                 FROM pet_list, mob_pools, mob_resistances, mob_family_system \
                 WHERE pet_list.poolid = mob_pools.poolid AND mob_resistances.resist_id = mob_pools.resist_id AND mob_pools.familyid = mob_family_system.familyID";
 
-        if (sql->Query(Query) != SQL_ERROR && sql->NumRows() != 0)
+        if (_sql->Query(Query) != SQL_ERROR && _sql->NumRows() != 0)
         {
-            while (sql->NextRow() == SQL_SUCCESS)
+            while (_sql->NextRow() == SQL_SUCCESS)
             {
                 Pet_t* Pet = new Pet_t();
 
-                Pet->PetID = (uint16)sql->GetIntData(0);
-                Pet->name.insert(0, (const char*)sql->GetData(1));
+                Pet->PetID = (uint16)_sql->GetIntData(0);
+                Pet->name.insert(0, (const char*)_sql->GetData(1));
 
                 uint16 sqlModelID[10];
-                memcpy(&sqlModelID, sql->GetData(2), 20);
+                memcpy(&sqlModelID, _sql->GetData(2), 20);
                 Pet->look = look_t(sqlModelID);
 
-                Pet->minLevel  = (uint8)sql->GetIntData(3);
-                Pet->maxLevel  = (uint8)sql->GetIntData(4);
-                Pet->time      = sql->GetUIntData(5);
-                Pet->radius    = sql->GetUIntData(6);
-                Pet->EcoSystem = (ECOSYSTEM)sql->GetIntData(7);
-                Pet->m_Family  = (uint16)sql->GetIntData(8);
-                Pet->mJob      = (uint8)sql->GetIntData(9);
-                Pet->sJob      = (uint8)sql->GetIntData(10);
-                Pet->m_Element = (uint8)sql->GetIntData(11);
+                Pet->minLevel  = (uint8)_sql->GetIntData(3);
+                Pet->maxLevel  = (uint8)_sql->GetIntData(4);
+                Pet->time      = _sql->GetUIntData(5);
+                Pet->radius    = _sql->GetUIntData(6);
+                Pet->EcoSystem = (ECOSYSTEM)_sql->GetIntData(7);
+                Pet->m_Family  = (uint16)_sql->GetIntData(8);
+                Pet->mJob      = (uint8)_sql->GetIntData(9);
+                Pet->sJob      = (uint8)_sql->GetIntData(10);
+                Pet->m_Element = (uint8)_sql->GetIntData(11);
 
-                Pet->HPscale = sql->GetFloatData(12);
-                Pet->MPscale = sql->GetFloatData(13);
+                Pet->HPscale = _sql->GetFloatData(12);
+                Pet->MPscale = _sql->GetFloatData(13);
 
-                Pet->speed = (uint8)sql->GetIntData(14);
+                Pet->speed = (uint8)_sql->GetIntData(14);
 
-                Pet->strRank = (uint8)sql->GetIntData(15);
-                Pet->dexRank = (uint8)sql->GetIntData(16);
-                Pet->vitRank = (uint8)sql->GetIntData(17);
-                Pet->agiRank = (uint8)sql->GetIntData(18);
-                Pet->intRank = (uint8)sql->GetIntData(19);
-                Pet->mndRank = (uint8)sql->GetIntData(20);
-                Pet->chrRank = (uint8)sql->GetIntData(21);
-                Pet->defRank = (uint8)sql->GetIntData(22);
-                Pet->attRank = (uint8)sql->GetIntData(23);
-                Pet->accRank = (uint8)sql->GetIntData(24);
-                Pet->evaRank = (uint8)sql->GetIntData(25);
+                Pet->strRank = (uint8)_sql->GetIntData(15);
+                Pet->dexRank = (uint8)_sql->GetIntData(16);
+                Pet->vitRank = (uint8)_sql->GetIntData(17);
+                Pet->agiRank = (uint8)_sql->GetIntData(18);
+                Pet->intRank = (uint8)_sql->GetIntData(19);
+                Pet->mndRank = (uint8)_sql->GetIntData(20);
+                Pet->chrRank = (uint8)_sql->GetIntData(21);
+                Pet->defRank = (uint8)_sql->GetIntData(22);
+                Pet->attRank = (uint8)_sql->GetIntData(23);
+                Pet->accRank = (uint8)_sql->GetIntData(24);
+                Pet->evaRank = (uint8)_sql->GetIntData(25);
 
-                Pet->hasSpellScript = (bool)sql->GetIntData(26);
+                Pet->hasSpellScript = (bool)_sql->GetIntData(26);
 
-                Pet->spellList = (uint8)sql->GetIntData(27);
+                Pet->spellList = (uint8)_sql->GetIntData(27);
 
                 // Specific Dmage Taken, as a %
-                Pet->slash_sdt  = (uint16)(sql->GetFloatData(28) * 1000);
-                Pet->pierce_sdt = (uint16)(sql->GetFloatData(29) * 1000);
-                Pet->hth_sdt    = (uint16)(sql->GetFloatData(30) * 1000);
-                Pet->impact_sdt = (uint16)(sql->GetFloatData(31) * 1000);
+                Pet->slash_sdt  = (uint16)(_sql->GetFloatData(28) * 1000);
+                Pet->pierce_sdt = (uint16)(_sql->GetFloatData(29) * 1000);
+                Pet->hth_sdt    = (uint16)(_sql->GetFloatData(30) * 1000);
+                Pet->impact_sdt = (uint16)(_sql->GetFloatData(31) * 1000);
 
-                Pet->magical_sdt = (int16)sql->GetIntData(32); // Modifier 389, base 10000 stored as signed integer. Positives signify less damage.
+                Pet->magical_sdt = (int16)_sql->GetIntData(32); // Modifier 389, base 10000 stored as signed integer. Positives signify less damage.
 
-                Pet->fire_sdt    = (int16)sql->GetIntData(33); // Modifier 54, base 10000 stored as signed integer. Positives signify less damage.
-                Pet->ice_sdt     = (int16)sql->GetIntData(34); // Modifier 55, base 10000 stored as signed integer. Positives signify less damage.
-                Pet->wind_sdt    = (int16)sql->GetIntData(35); // Modifier 56, base 10000 stored as signed integer. Positives signify less damage.
-                Pet->earth_sdt   = (int16)sql->GetIntData(36); // Modifier 57, base 10000 stored as signed integer. Positives signify less damage.
-                Pet->thunder_sdt = (int16)sql->GetIntData(37); // Modifier 58, base 10000 stored as signed integer. Positives signify less damage.
-                Pet->water_sdt   = (int16)sql->GetIntData(38); // Modifier 59, base 10000 stored as signed integer. Positives signify less damage.
-                Pet->light_sdt   = (int16)sql->GetIntData(39); // Modifier 60, base 10000 stored as signed integer. Positives signify less damage.
-                Pet->dark_sdt    = (int16)sql->GetIntData(40); // Modifier 61, base 10000 stored as signed integer. Positives signify less damage.
+                Pet->fire_sdt    = (int16)_sql->GetIntData(33); // Modifier 54, base 10000 stored as signed integer. Positives signify less damage.
+                Pet->ice_sdt     = (int16)_sql->GetIntData(34); // Modifier 55, base 10000 stored as signed integer. Positives signify less damage.
+                Pet->wind_sdt    = (int16)_sql->GetIntData(35); // Modifier 56, base 10000 stored as signed integer. Positives signify less damage.
+                Pet->earth_sdt   = (int16)_sql->GetIntData(36); // Modifier 57, base 10000 stored as signed integer. Positives signify less damage.
+                Pet->thunder_sdt = (int16)_sql->GetIntData(37); // Modifier 58, base 10000 stored as signed integer. Positives signify less damage.
+                Pet->water_sdt   = (int16)_sql->GetIntData(38); // Modifier 59, base 10000 stored as signed integer. Positives signify less damage.
+                Pet->light_sdt   = (int16)_sql->GetIntData(39); // Modifier 60, base 10000 stored as signed integer. Positives signify less damage.
+                Pet->dark_sdt    = (int16)_sql->GetIntData(40); // Modifier 61, base 10000 stored as signed integer. Positives signify less damage.
 
                 // resistances
-                Pet->fire_res_rank    = (int8)sql->GetIntData(41);
-                Pet->ice_res_rank     = (int8)sql->GetIntData(42);
-                Pet->wind_res_rank    = (int8)sql->GetIntData(43);
-                Pet->earth_res_rank   = (int8)sql->GetIntData(44);
-                Pet->thunder_res_rank = (int8)sql->GetIntData(45);
-                Pet->water_res_rank   = (int8)sql->GetIntData(46);
-                Pet->light_res_rank   = (int8)sql->GetIntData(47);
-                Pet->dark_res_rank    = (int8)sql->GetIntData(48);
+                Pet->fire_res_rank    = (int8)_sql->GetIntData(41);
+                Pet->ice_res_rank     = (int8)_sql->GetIntData(42);
+                Pet->wind_res_rank    = (int8)_sql->GetIntData(43);
+                Pet->earth_res_rank   = (int8)_sql->GetIntData(44);
+                Pet->thunder_res_rank = (int8)_sql->GetIntData(45);
+                Pet->water_res_rank   = (int8)_sql->GetIntData(46);
+                Pet->light_res_rank   = (int8)_sql->GetIntData(47);
+                Pet->dark_res_rank    = (int8)_sql->GetIntData(48);
 
-                Pet->cmbDelay       = (uint16)sql->GetIntData(49);
-                Pet->name_prefix    = (uint8)sql->GetUIntData(50);
-                Pet->m_MobSkillList = (uint16)sql->GetUIntData(51);
+                Pet->cmbDelay       = (uint16)_sql->GetIntData(49);
+                Pet->name_prefix    = (uint8)_sql->GetUIntData(50);
+                Pet->m_MobSkillList = (uint16)_sql->GetUIntData(51);
+                Pet->m_dmgType      = (DAMAGE_TYPE)_sql->GetUIntData(52);
 
                 g_PPetList.emplace_back(Pet);
             }
         }
     }
-
-    /************************************************************************
-     *                                                                      *
-     *  Освобождаем список прототипов питомцев                              *
-     *                                                                      *
-     ************************************************************************/
 
     void FreePetList()
     {
@@ -560,6 +551,7 @@ namespace petutils
 
         static_cast<CItemWeapon*>(PPet->m_Weapons[SLOT_RANGED])->setSkillType(SKILL_AUTOMATON_RANGED);
         static_cast<CItemWeapon*>(PPet->m_Weapons[SLOT_RANGED])->setDamage((PPet->GetSkill(SKILL_AUTOMATON_RANGED) / 9) * 2 + 3);
+        static_cast<CItemWeapon*>(PPet->m_Weapons[SLOT_RANGED])->setDmgType(DAMAGE_TYPE::PIERCING);
 
         CAutomatonEntity* PAutomaton = static_cast<CAutomatonEntity*>(PPet);
 
@@ -652,7 +644,7 @@ namespace petutils
                   (grade::GetHPScale(grade, scaleOver30Column) * mainLevelOver30) + (grade::GetHPScale(grade, scaleOver60Column) * mainLevelOver60To75) +
                   (grade::GetHPScale(grade, scaleOver75Column) * mainLevelOver75);
 
-        // Расчет бонусных HP
+        // Bonus HP calculation
         bonusStat = (mainLevelOver10 + mainLevelOver50andUnder60) * 2;
         if (PPet->m_PetID == PETID_ODIN || PPet->m_PetID == PETID_ALEXANDER)
         {
@@ -751,11 +743,19 @@ namespace petutils
         uint32 petID = PPet->m_PetID;
 
         // clang-format off
-        Pet_t* PPetData = *std::find_if(g_PPetList.begin(), g_PPetList.end(), [petID](Pet_t* t)
+        auto maybePetData = std::find_if(g_PPetList.begin(), g_PPetList.end(), [petID](Pet_t* t)
         {
             return t->PetID == petID;
         });
         // clang-format on
+
+        if (maybePetData == g_PPetList.end())
+        {
+            ShowError(fmt::format("Could not look up pet data for id: {}", petID));
+            return;
+        }
+
+        auto* PPetData = *maybePetData;
 
         uint8 mLvl = PMaster->GetMLevel();
 
@@ -779,7 +779,7 @@ namespace petutils
         }
         else
         { // should never happen
-            ShowDebug("%s summoned an avatar but is not SMN main or SMN sub! Please report. ", PMaster->GetName());
+            ShowDebug("%s summoned an avatar but is not SMN main or SMN sub! Please report. ", PMaster->getName());
             PPet->SetMLevel(1);
         }
 
@@ -931,11 +931,19 @@ namespace petutils
         uint32 petID = PPet->m_PetID;
 
         // clang-format off
-        Pet_t* PPetData = *std::find_if(g_PPetList.begin(), g_PPetList.end(), [petID](Pet_t* t)
+        auto maybePetData = std::find_if(g_PPetList.begin(), g_PPetList.end(), [petID](Pet_t* t)
         {
             return t->PetID == petID;
         });
         // clang-format on
+
+        if (maybePetData == g_PPetList.end())
+        {
+            ShowError(fmt::format("Could not look up pet data for id: {}", petID));
+            return;
+        }
+
+        auto* PPetData = *maybePetData;
 
         static_cast<CItemWeapon*>(PPet->m_Weapons[SLOT_MAIN])->setDelay((uint16)(floor(1000.0f * (240.0f / 60.0f))));
         static_cast<CItemWeapon*>(PPet->m_Weapons[SLOT_MAIN])->setBaseDelay((uint16)(floor(1000.0f * (240.0f / 60.0f))));
@@ -1094,17 +1102,11 @@ namespace petutils
         }
     }
 
-    /************************************************************************
-     *                                                                      *
-     *                                                                      *
-     *                                                                      *
-     ************************************************************************/
-
     void SpawnPet(CBattleEntity* PMaster, uint32 PetID, bool spawningFromZone)
     {
         if (PMaster->PPet != nullptr)
         {
-            ShowWarning("Pet was not null for %s.", PMaster->GetName());
+            ShowWarning("Pet was not null for %s.", PMaster->getName());
             return;
         }
 
@@ -1235,13 +1237,13 @@ namespace petutils
 
         if (PMaster->PPet == nullptr)
         {
-            ShowWarning("Pet is null for %s.", PMaster->GetName());
+            ShowWarning("Pet is null for %s.", PMaster->getName());
             return;
         }
 
         if (PMaster->objtype != TYPE_PC)
         {
-            ShowWarning("Non-PC passed into function (%s)", PMaster->GetName());
+            ShowWarning("Non-PC passed into function (%s)", PMaster->getName());
             return;
         }
 
@@ -1260,6 +1262,8 @@ namespace petutils
                 if (PMob->PEnmityContainer->IsWithinEnmityRange(PMob->PMaster))
                 {
                     PMob->PEnmityContainer->UpdateEnmity(PChar, 0, 0);
+                    // need to set battle target to prevent mob enmity clear if in attack state when uncharming
+                    PMob->SetBattleTargetID(PChar->targid);
                 }
                 else
                 {
@@ -1291,6 +1295,24 @@ namespace petutils
             PMob->PMaster    = nullptr;
 
             PMob->PAI->SetController(std::make_unique<CMobController>(PMob));
+
+            // clear all enmity towards a charmed mob when it is released
+            // use two loops to avoid modifying the container while iterating over it
+            std::list<CMobEntity*> mobsToPacify;
+
+            // first collect the mobs with hate towards the formerly charmed mob
+            for (auto* entityWithEnmity : *PMob->PNotorietyContainer)
+            {
+                if (auto* mobToPacify = dynamic_cast<CMobEntity*>(entityWithEnmity))
+                {
+                    mobsToPacify.emplace_back(mobToPacify);
+                }
+            }
+            // then remove the formerly charmed mob from those mobs enmity containers
+            for (const auto* mobToPacify : mobsToPacify)
+            {
+                mobToPacify->PEnmityContainer->Clear(PMob->id);
+            }
         }
         else if (PPet->objtype == TYPE_PET)
         {
@@ -1333,12 +1355,6 @@ namespace petutils
         PChar->pushPacket(new CPetSyncPacket(PChar));
     }
 
-    /************************************************************************
-     *                                                                      *
-     *                                                                      *
-     *                                                                      *
-     ************************************************************************/
-
     void DespawnPet(CBattleEntity* PMaster)
     {
         if (PMaster == nullptr)
@@ -1349,7 +1365,7 @@ namespace petutils
 
         if (PMaster->PPet == nullptr)
         {
-            ShowWarning("Pet is null for %s.", PMaster->GetName());
+            ShowWarning("Pet is null for %s.", PMaster->getName());
             return;
         }
 
@@ -1392,7 +1408,7 @@ namespace petutils
                 cost = 7;
             }
         }
-        else if (id == PETID_CARBUNCLE)
+        else if (id == PETID_CARBUNCLE || id == PETID_CAIT_SITH)
         {
             if (level < 10)
             {
@@ -1604,11 +1620,19 @@ namespace petutils
         }
 
         // clang-format off
-        Pet_t* PPetData = *std::find_if(g_PPetList.begin(), g_PPetList.end(), [PetID](Pet_t* t)
+        auto maybePetData = std::find_if(g_PPetList.begin(), g_PPetList.end(), [PetID](Pet_t* t)
         {
             return t->PetID == PetID;
         });
         // clang-format on
+
+        if (maybePetData == g_PPetList.end())
+        {
+            ShowError(fmt::format("Could not look up pet data for id: {}", PetID));
+            return;
+        }
+
+        auto* PPetData = *maybePetData;
 
         if (PMaster->GetMJob() != JOB_DRG && PetID == PETID_WYVERN)
         {
@@ -1638,16 +1662,16 @@ namespace petutils
                 WHERE pet_name.id = char_pet.wyvernid AND \
                 char_pet.charid = %u";
 
-            if (sql->Query(Query, PMaster->id) != SQL_ERROR && sql->NumRows() != 0)
+            if (_sql->Query(Query, PMaster->id) != SQL_ERROR && _sql->NumRows() != 0)
             {
-                while (sql->NextRow() == SQL_SUCCESS)
+                while (_sql->NextRow() == SQL_SUCCESS)
                 {
-                    uint16 wyvernid = (uint16)sql->GetIntData(1);
+                    uint16 wyvernid = (uint16)_sql->GetIntData(1);
 
                     if (wyvernid != 0)
                     {
                         PPetData->name.clear();
-                        PPetData->name.insert(0, (const char*)sql->GetData(0));
+                        PPetData->name.insert(0, (const char*)_sql->GetData(0));
                     }
                 }
             }
@@ -1661,11 +1685,11 @@ namespace petutils
                 FROM char_pet\
                 char_pet.charid = %u";
 
-            if (sql->Query(Query, PMaster->id) != SQL_ERROR && sql->NumRows() != 0)
+            if (_sql->Query(Query, PMaster->id) != SQL_ERROR && _sql->NumRows() != 0)
             {
-                while (sql->NextRow() == SQL_SUCCESS)
+                while (_sql->NextRow() == SQL_SUCCESS)
                 {
-                    uint32 chocoboid = (uint32)sql->GetIntData(0);
+                    uint32 chocoboid = (uint32)_sql->GetIntData(0);
 
                     if (chocoboid != 0)
                     {
@@ -1679,13 +1703,13 @@ namespace petutils
                             FROM pet_name\
                             WHERE pet_name.id = %u OR pet_name.id = %u";
 
-                        if (sql->Query(Query, chocoboname1, chocoboname2) != SQL_ERROR && sql->NumRows() != 0)
+                        if (_sql->Query(Query, chocoboname1, chocoboname2) != SQL_ERROR && _sql->NumRows() != 0)
                         {
-                            while (sql->NextRow() == SQL_SUCCESS)
+                            while (_sql->NextRow() == SQL_SUCCESS)
                             {
                                 if (chocoboname1 != 0 && chocoboname2 != 0)
                                 {
-                                    PPetData->name.insert(0, (const char*)sql->GetData(0));
+                                    PPetData->name.insert(0, (const char*)_sql->GetData(0));
                                 }
                             }
                         }
@@ -1786,6 +1810,8 @@ namespace petutils
         PPet->status        = STATUS_TYPE::NORMAL;
         PPet->m_ModelRadius = PPetData->radius;
         PPet->m_EcoSystem   = PPetData->EcoSystem;
+        // set the damage type of the pet
+        static_cast<CItemWeapon*>(PPet->m_Weapons[SLOT_MAIN])->setDmgType(PPetData->m_dmgType);
 
         PMaster->PPet = PPet;
     }

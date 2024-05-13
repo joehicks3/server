@@ -5,18 +5,13 @@
 -- Baldric : !pos -50.858 1.777 -31.141 237
 -- qm1     : !pos 238.524 2.661 -148.784 103
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.STARDUST)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.STARDUST)
 
 quest.reward =
 {
     fame     = 110,
-    fameArea = xi.quest.fame_area.BASTOK,
+    fameArea = xi.fameArea.BASTOK,
     gil      = 300,
 }
 
@@ -24,8 +19,8 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getFameLevel(xi.quest.fame_area.BASTOK) >= 2
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getFameLevel(xi.fameArea.BASTOK) >= 2
         end,
 
         [xi.zone.METALWORKS] =
@@ -43,7 +38,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status ~= QUEST_AVAILABLE
+            return status ~= xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.METALWORKS] =
@@ -51,7 +46,7 @@ quest.sections =
             ['Baldric'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.PINCH_OF_VALKURM_SUNSAND) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.PINCH_OF_VALKURM_SUNSAND) then
                         return quest:progressEvent(555)
                     end
                 end,

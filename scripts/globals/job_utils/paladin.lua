@@ -24,7 +24,7 @@ xi.job_utils.paladin.checkIntervene = function(player, target, ability)
     if player:getShieldSize() == 0 then
         return xi.msg.basic.REQUIRES_SHIELD, 0
     else
-        ability:setRecast(ability:getRecast() - player:getMod(xi.mod.ONE_HOUR_RECAST))
+        ability:setRecast(math.max(0, ability:getRecast() - player:getMod(xi.mod.ONE_HOUR_RECAST) * 60))
 
         return 0, 0
     end
@@ -34,7 +34,7 @@ xi.job_utils.paladin.checkInvincible = function(player, target, ability)
     local jpValue = player:getJobPointLevel(xi.jp.INVINCIBLE_EFFECT)
 
     ability:setVE(ability:getVE() + 100 * jpValue)
-    ability:setRecast(ability:getRecast() - player:getMod(xi.mod.ONE_HOUR_RECAST))
+    ability:setRecast(math.max(0, ability:getRecast() - player:getMod(xi.mod.ONE_HOUR_RECAST) * 60))
 
     return 0, 0
 end
@@ -77,7 +77,7 @@ xi.job_utils.paladin.useCover = function(player, target, ability)
     local duration     = baseDuration + bonusTime + player:getMerit(xi.merit.COVER_EFFECT_LENGTH) + player:getMod(xi.mod.COVER_DURATION) + jpValue
 
     player:addStatusEffect(xi.effect.COVER, player:getMod(xi.mod.COVER_TO_MP), 0, duration)
-    player:setLocalVar("COVER_ABILITY_TARGET", target:getID())
+    player:setLocalVar('COVER_ABILITY_TARGET', target:getID())
     ability:setMsg(xi.msg.basic.COVER_SUCCESS)
 end
 

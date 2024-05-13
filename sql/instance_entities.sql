@@ -20,7 +20,7 @@ CREATE TABLE `instance_entities` (
   `instanceid` smallint(3) unsigned NOT NULL DEFAULT '0',
   `id` int(10) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`instanceid`, `id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+) ENGINE=Aria TRANSACTIONAL=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -29,6 +29,10 @@ CREATE TABLE `instance_entities` (
 
 LOCK TABLES `instance_entities` WRITE;
 /*!40000 ALTER TABLE `instance_entities` DISABLE KEYS */;
+
+-- -----------------------------------------------------------
+-- Ilrusi Atoll (Zone 55)
+-- -----------------------------------------------------------
 
 -- Golden Salvage
 -- mobs
@@ -72,10 +76,10 @@ INSERT INTO `instance_entities` VALUES (5501,17002520);
 -- npc
 INSERT INTO `instance_entities` VALUES (5501,17002654);
 INSERT INTO `instance_entities` VALUES (5501,17002655);
-INSERT INTO `instance_entities` VALUES (5501,17002718);
 INSERT INTO `instance_entities` VALUES (5501,17002719);
-INSERT INTO `instance_entities` VALUES (5501,17002743);
+INSERT INTO `instance_entities` VALUES (5501,17002720);
 INSERT INTO `instance_entities` VALUES (5501,17002744);
+INSERT INTO `instance_entities` VALUES (5501,17002745);
 
 -- Extermination
 -- mobs
@@ -106,14 +110,18 @@ INSERT INTO `instance_entities` VALUES (5502,17002544);
 -- npcs
 INSERT INTO `instance_entities` VALUES (5502,17002654);
 INSERT INTO `instance_entities` VALUES (5502,17002655);
-INSERT INTO `instance_entities` VALUES (5502,17002718);
-INSERT INTO `instance_entities` VALUES (5502,17002725);
-INSERT INTO `instance_entities` VALUES (5502,17002730);
-INSERT INTO `instance_entities` VALUES (5502,17002732);
+INSERT INTO `instance_entities` VALUES (5502,17002719);
+INSERT INTO `instance_entities` VALUES (5502,17002726);
+INSERT INTO `instance_entities` VALUES (5502,17002731);
 INSERT INTO `instance_entities` VALUES (5502,17002733);
-INSERT INTO `instance_entities` VALUES (5502,17002745);
-INSERT INTO `instance_entities` VALUES (5502,17002747);
-INSERT INTO `instance_entities` VALUES (5502,17002754);
+INSERT INTO `instance_entities` VALUES (5502,17002734);
+INSERT INTO `instance_entities` VALUES (5502,17002746);
+INSERT INTO `instance_entities` VALUES (5502,17002748);
+INSERT INTO `instance_entities` VALUES (5502,17002755);
+
+-- ------------------------------------------------------------
+-- Periqia (Zone 56)
+-- ------------------------------------------------------------
 
 -- Shades of Vengeance
 -- mobs
@@ -151,20 +159,20 @@ INSERT INTO `instance_entities` VALUES (5601,17006611);
 -- npcs
 INSERT INTO `instance_entities` VALUES (5601,17006809);
 INSERT INTO `instance_entities` VALUES (5601,17006810);
-INSERT INTO `instance_entities` VALUES (5601,17006836);
-INSERT INTO `instance_entities` VALUES (5601,17006841);
+INSERT INTO `instance_entities` VALUES (5601,17006837);
 INSERT INTO `instance_entities` VALUES (5601,17006842);
 INSERT INTO `instance_entities` VALUES (5601,17006843);
-INSERT INTO `instance_entities` VALUES (5601,17006845);
+INSERT INTO `instance_entities` VALUES (5601,17006844);
 INSERT INTO `instance_entities` VALUES (5601,17006846);
-INSERT INTO `instance_entities` VALUES (5601,17006848);
-INSERT INTO `instance_entities` VALUES (5601,17006852);
-INSERT INTO `instance_entities` VALUES (5601,17006868);
-INSERT INTO `instance_entities` VALUES (5601,17006870);
-INSERT INTO `instance_entities` VALUES (5601,17006872);
-INSERT INTO `instance_entities` VALUES (5601,17006874);
-INSERT INTO `instance_entities` VALUES (5601,17006876);
-INSERT INTO `instance_entities` VALUES (5601,17006878);
+INSERT INTO `instance_entities` VALUES (5601,17006847);
+INSERT INTO `instance_entities` VALUES (5601,17006849);
+INSERT INTO `instance_entities` VALUES (5601,17006853);
+INSERT INTO `instance_entities` VALUES (5601,17006869);
+INSERT INTO `instance_entities` VALUES (5601,17006871);
+INSERT INTO `instance_entities` VALUES (5601,17006873);
+INSERT INTO `instance_entities` VALUES (5601,17006875);
+INSERT INTO `instance_entities` VALUES (5601,17006877);
+INSERT INTO `instance_entities` VALUES (5601,17006879);
 
 -- Requiem
 -- mobs
@@ -194,13 +202,20 @@ INSERT INTO `instance_entities` VALUES (5602,17006634);
 -- npcs
 INSERT INTO `instance_entities` VALUES (5602,17006809);
 INSERT INTO `instance_entities` VALUES (5602,17006810);
-INSERT INTO `instance_entities` VALUES (5602,17006856);
-INSERT INTO `instance_entities` VALUES (5602,17006868);
-INSERT INTO `instance_entities` VALUES (5602,17006880);
+INSERT INTO `instance_entities` VALUES (5602,17006857);
+INSERT INTO `instance_entities` VALUES (5602,17006869);
 INSERT INTO `instance_entities` VALUES (5602,17006881);
 INSERT INTO `instance_entities` VALUES (5602,17006882);
-INSERT INTO `instance_entities` VALUES (5602,17006892);
+INSERT INTO `instance_entities` VALUES (5602,17006883);
+INSERT INTO `instance_entities` VALUES (5602,17006893);
+
+-- ------------------------------------------------------------
+-- The Ashu Talif (Zone 60)
+-- ------------------------------------------------------------
+
 -- The Black Coffin
+-- npcs
+INSERT INTO `instance_entities` VALUES (6000,17022979);
 -- mobs
 INSERT INTO `instance_entities` VALUES (6000,17022980);
 INSERT INTO `instance_entities` VALUES (6000,17022981);
@@ -212,12 +227,14 @@ INSERT INTO `instance_entities` VALUES (6000,17022986);
 INSERT INTO `instance_entities` VALUES (6000,17022987);
 INSERT INTO `instance_entities` VALUES (6000,17022988);
 INSERT INTO `instance_entities` VALUES (6000,17022989);
--- npcs
-INSERT INTO `instance_entities` VALUES (6000,17022979);
 
 -- Against All Odds COR AF2
 INSERT INTO `instance_entities` VALUES (6001,17022977);
 INSERT INTO `instance_entities` VALUES (6001,17022978);
+
+-- ------------------------------------------------------------
+-- Lebros Cavern (Zone 63)
+-- ------------------------------------------------------------
 
 -- Excavation Duty
 -- mobs
@@ -251,11 +268,11 @@ INSERT INTO `instance_entities` VALUES (6300,17035291);
 -- npcs
 INSERT INTO `instance_entities` VALUES (6300,17035478);
 INSERT INTO `instance_entities` VALUES (6300,17035479);
-INSERT INTO `instance_entities` VALUES (6300,17035537);
 INSERT INTO `instance_entities` VALUES (6300,17035538);
 INSERT INTO `instance_entities` VALUES (6300,17035539);
 INSERT INTO `instance_entities` VALUES (6300,17035540);
 INSERT INTO `instance_entities` VALUES (6300,17035541);
+INSERT INTO `instance_entities` VALUES (6300,17035542);
 
 -- Lebros Supplies
 -- mobs
@@ -281,8 +298,8 @@ INSERT INTO `instance_entities` VALUES (6301,17035309);
 INSERT INTO `instance_entities` VALUES (6301,17035478);
 INSERT INTO `instance_entities` VALUES (6301,17035479);
 INSERT INTO `instance_entities` VALUES (6301,17035480);
-INSERT INTO `instance_entities` VALUES (6301,17035522);
-INSERT INTO `instance_entities` VALUES (6301,17035529);
+INSERT INTO `instance_entities` VALUES (6301,17035523);
+INSERT INTO `instance_entities` VALUES (6301,17035530);
 
 -- Troll Fugitives
 -- mobs
@@ -304,10 +321,10 @@ INSERT INTO `instance_entities` VALUES (6302,17035324);
 -- npcs
 INSERT INTO `instance_entities` VALUES (6302,17035478);
 INSERT INTO `instance_entities` VALUES (6302,17035479);
-INSERT INTO `instance_entities` VALUES (6302,17035508);
-INSERT INTO `instance_entities` VALUES (6302,17035513);
-INSERT INTO `instance_entities` VALUES (6302,17035518);
-INSERT INTO `instance_entities` VALUES (6302,17035521);
+INSERT INTO `instance_entities` VALUES (6302,17035509);
+INSERT INTO `instance_entities` VALUES (6302,17035514);
+INSERT INTO `instance_entities` VALUES (6302,17035519);
+INSERT INTO `instance_entities` VALUES (6302,17035522);
 
 -- Wamoura Farm Raid
 -- mobs
@@ -328,88 +345,96 @@ INSERT INTO `instance_entities` VALUES (6306,17035377);
 INSERT INTO `instance_entities` VALUES (6306,17035378);
 INSERT INTO `instance_entities` VALUES (6306,17035478);
 INSERT INTO `instance_entities` VALUES (6306,17035479);
-INSERT INTO `instance_entities` VALUES (6306,17035508);
-INSERT INTO `instance_entities` VALUES (6306,17035538);
+INSERT INTO `instance_entities` VALUES (6306,17035509);
 INSERT INTO `instance_entities` VALUES (6306,17035539);
-INSERT INTO `instance_entities` VALUES (6306,17035541);
+INSERT INTO `instance_entities` VALUES (6306,17035540);
 INSERT INTO `instance_entities` VALUES (6306,17035542);
 INSERT INTO `instance_entities` VALUES (6306,17035543);
 INSERT INTO `instance_entities` VALUES (6306,17035544);
 INSERT INTO `instance_entities` VALUES (6306,17035545);
 INSERT INTO `instance_entities` VALUES (6306,17035546);
+INSERT INTO `instance_entities` VALUES (6306,17035547);
+
+-- ------------------------------------------------------------
+-- Mamool Ja Training Grounds (Zone 66)
+-- ------------------------------------------------------------
 
 -- Imperial Agent Rescue
 -- mobs
-INSERT INTO `instance_entities` VALUES (6600, 17047553);
-INSERT INTO `instance_entities` VALUES (6600, 17047554);
-INSERT INTO `instance_entities` VALUES (6600, 17047555);
-INSERT INTO `instance_entities` VALUES (6600, 17047556);
-INSERT INTO `instance_entities` VALUES (6600, 17047557);
-INSERT INTO `instance_entities` VALUES (6600, 17047558);
-INSERT INTO `instance_entities` VALUES (6600, 17047559);
-INSERT INTO `instance_entities` VALUES (6600, 17047560);
-INSERT INTO `instance_entities` VALUES (6600, 17047561);
-INSERT INTO `instance_entities` VALUES (6600, 17047562);
-INSERT INTO `instance_entities` VALUES (6600, 17047563);
-INSERT INTO `instance_entities` VALUES (6600, 17047564);
-INSERT INTO `instance_entities` VALUES (6600, 17047565);
-INSERT INTO `instance_entities` VALUES (6600, 17047566);
-INSERT INTO `instance_entities` VALUES (6600, 17047567);
-INSERT INTO `instance_entities` VALUES (6600, 17047568);
-INSERT INTO `instance_entities` VALUES (6600, 17047569);
+INSERT INTO `instance_entities` VALUES (6600,17047553);
+INSERT INTO `instance_entities` VALUES (6600,17047554);
+INSERT INTO `instance_entities` VALUES (6600,17047555);
+INSERT INTO `instance_entities` VALUES (6600,17047556);
+INSERT INTO `instance_entities` VALUES (6600,17047557);
+INSERT INTO `instance_entities` VALUES (6600,17047558);
+INSERT INTO `instance_entities` VALUES (6600,17047559);
+INSERT INTO `instance_entities` VALUES (6600,17047560);
+INSERT INTO `instance_entities` VALUES (6600,17047561);
+INSERT INTO `instance_entities` VALUES (6600,17047562);
+INSERT INTO `instance_entities` VALUES (6600,17047563);
+INSERT INTO `instance_entities` VALUES (6600,17047564);
+INSERT INTO `instance_entities` VALUES (6600,17047565);
+INSERT INTO `instance_entities` VALUES (6600,17047566);
+INSERT INTO `instance_entities` VALUES (6600,17047567);
+INSERT INTO `instance_entities` VALUES (6600,17047568);
+INSERT INTO `instance_entities` VALUES (6600,17047569);
 -- npcs
-INSERT INTO `instance_entities` VALUES (6600, 17047808);
-INSERT INTO `instance_entities` VALUES (6600, 17047809);
-INSERT INTO `instance_entities` VALUES (6600, 17047810);
-INSERT INTO `instance_entities` VALUES (6600, 17047815);
-INSERT INTO `instance_entities` VALUES (6600, 17047832);
-INSERT INTO `instance_entities` VALUES (6600, 17047863);
-INSERT INTO `instance_entities` VALUES (6600, 17047864);
-INSERT INTO `instance_entities` VALUES (6600, 17047865);
-INSERT INTO `instance_entities` VALUES (6600, 17047866);
-INSERT INTO `instance_entities` VALUES (6600, 17047895);
-INSERT INTO `instance_entities` VALUES (6600, 17047896);
-INSERT INTO `instance_entities` VALUES (6600, 17047897);
-INSERT INTO `instance_entities` VALUES (6600, 17047898);
-INSERT INTO `instance_entities` VALUES (6600, 17047899);
-INSERT INTO `instance_entities` VALUES (6600, 17047900);
-INSERT INTO `instance_entities` VALUES (6600, 17047901);
-INSERT INTO `instance_entities` VALUES (6600, 17047902);
-INSERT INTO `instance_entities` VALUES (6600, 17047916);
-INSERT INTO `instance_entities` VALUES (6600, 17047917);
-INSERT INTO `instance_entities` VALUES (6600, 17047918);
+INSERT INTO `instance_entities` VALUES (6600,17047808);
+INSERT INTO `instance_entities` VALUES (6600,17047809);
+INSERT INTO `instance_entities` VALUES (6600,17047810);
+INSERT INTO `instance_entities` VALUES (6600,17047815);
+INSERT INTO `instance_entities` VALUES (6600,17047832);
+INSERT INTO `instance_entities` VALUES (6600,17047864);
+INSERT INTO `instance_entities` VALUES (6600,17047865);
+INSERT INTO `instance_entities` VALUES (6600,17047866);
+INSERT INTO `instance_entities` VALUES (6600,17047867);
+INSERT INTO `instance_entities` VALUES (6600,17047896);
+INSERT INTO `instance_entities` VALUES (6600,17047897);
+INSERT INTO `instance_entities` VALUES (6600,17047898);
+INSERT INTO `instance_entities` VALUES (6600,17047899);
+INSERT INTO `instance_entities` VALUES (6600,17047900);
+INSERT INTO `instance_entities` VALUES (6600,17047901);
+INSERT INTO `instance_entities` VALUES (6600,17047902);
+INSERT INTO `instance_entities` VALUES (6600,17047903);
+INSERT INTO `instance_entities` VALUES (6600,17047917);
+INSERT INTO `instance_entities` VALUES (6600,17047918);
+INSERT INTO `instance_entities` VALUES (6600,17047919);
 
 -- Preemtive Strike
 -- mobs
-INSERT INTO `instance_entities` VALUES (6601, 17047570);
-INSERT INTO `instance_entities` VALUES (6601, 17047571);
-INSERT INTO `instance_entities` VALUES (6601, 17047572);
-INSERT INTO `instance_entities` VALUES (6601, 17047573);
-INSERT INTO `instance_entities` VALUES (6601, 17047574);
-INSERT INTO `instance_entities` VALUES (6601, 17047575);
-INSERT INTO `instance_entities` VALUES (6601, 17047576);
-INSERT INTO `instance_entities` VALUES (6601, 17047577);
-INSERT INTO `instance_entities` VALUES (6601, 17047578);
-INSERT INTO `instance_entities` VALUES (6601, 17047579);
-INSERT INTO `instance_entities` VALUES (6601, 17047580);
-INSERT INTO `instance_entities` VALUES (6601, 17047581);
-INSERT INTO `instance_entities` VALUES (6601, 17047582);
-INSERT INTO `instance_entities` VALUES (6601, 17047583);
-INSERT INTO `instance_entities` VALUES (6601, 17047584);
-INSERT INTO `instance_entities` VALUES (6601, 17047585);
-INSERT INTO `instance_entities` VALUES (6601, 17047586);
-INSERT INTO `instance_entities` VALUES (6601, 17047587);
-INSERT INTO `instance_entities` VALUES (6601, 17047588);
-INSERT INTO `instance_entities` VALUES (6601, 17047589);
+INSERT INTO `instance_entities` VALUES (6601,17047570);
+INSERT INTO `instance_entities` VALUES (6601,17047571);
+INSERT INTO `instance_entities` VALUES (6601,17047572);
+INSERT INTO `instance_entities` VALUES (6601,17047573);
+INSERT INTO `instance_entities` VALUES (6601,17047574);
+INSERT INTO `instance_entities` VALUES (6601,17047575);
+INSERT INTO `instance_entities` VALUES (6601,17047576);
+INSERT INTO `instance_entities` VALUES (6601,17047577);
+INSERT INTO `instance_entities` VALUES (6601,17047578);
+INSERT INTO `instance_entities` VALUES (6601,17047579);
+INSERT INTO `instance_entities` VALUES (6601,17047580);
+INSERT INTO `instance_entities` VALUES (6601,17047581);
+INSERT INTO `instance_entities` VALUES (6601,17047582);
+INSERT INTO `instance_entities` VALUES (6601,17047583);
+INSERT INTO `instance_entities` VALUES (6601,17047584);
+INSERT INTO `instance_entities` VALUES (6601,17047585);
+INSERT INTO `instance_entities` VALUES (6601,17047586);
+INSERT INTO `instance_entities` VALUES (6601,17047587);
+INSERT INTO `instance_entities` VALUES (6601,17047588);
+INSERT INTO `instance_entities` VALUES (6601,17047589);
 -- npcs
-INSERT INTO `instance_entities` VALUES (6601, 17047808);
-INSERT INTO `instance_entities` VALUES (6601, 17047809);
-INSERT INTO `instance_entities` VALUES (6601, 17047836);
-INSERT INTO `instance_entities` VALUES (6601, 17047868);
-INSERT INTO `instance_entities` VALUES (6601, 17047869);
-INSERT INTO `instance_entities` VALUES (6601, 17047870);
-INSERT INTO `instance_entities` VALUES (6601, 17047874);
-INSERT INTO `instance_entities` VALUES (6601, 17047875);
+INSERT INTO `instance_entities` VALUES (6601,17047808);
+INSERT INTO `instance_entities` VALUES (6601,17047809);
+INSERT INTO `instance_entities` VALUES (6601,17047836);
+INSERT INTO `instance_entities` VALUES (6601,17047869);
+INSERT INTO `instance_entities` VALUES (6601,17047870);
+INSERT INTO `instance_entities` VALUES (6601,17047871);
+INSERT INTO `instance_entities` VALUES (6601,17047875);
+INSERT INTO `instance_entities` VALUES (6601,17047876);
+
+-- ------------------------------------------------------------
+-- Leujaoam Sanctum (Zone 69)
+-- ------------------------------------------------------------
 
 -- Leujaoam Cleansing
 -- mobs
@@ -431,10 +456,10 @@ INSERT INTO `instance_entities` VALUES (6900,17059855);
 -- npcs
 INSERT INTO `instance_entities` VALUES (6900,17060014);
 INSERT INTO `instance_entities` VALUES (6900,17060015);
-INSERT INTO `instance_entities` VALUES (6900,17060138);
-INSERT INTO `instance_entities` VALUES (6900,17060142);
-INSERT INTO `instance_entities` VALUES (6900,17060146);
+INSERT INTO `instance_entities` VALUES (6900,17060139);
+INSERT INTO `instance_entities` VALUES (6900,17060143);
 INSERT INTO `instance_entities` VALUES (6900,17060147);
+INSERT INTO `instance_entities` VALUES (6900,17060148);
 
 -- Orichalcum Survey
 -- mobs
@@ -470,8 +495,12 @@ INSERT INTO `instance_entities` VALUES (6901,17060023);
 INSERT INTO `instance_entities` VALUES (6901,17060024);
 INSERT INTO `instance_entities` VALUES (6901,17060025);
 INSERT INTO `instance_entities` VALUES (6901,17060026);
-INSERT INTO `instance_entities` VALUES (6901,17060129);
-INSERT INTO `instance_entities` VALUES (6901,17060139);
+INSERT INTO `instance_entities` VALUES (6901,17060130);
+INSERT INTO `instance_entities` VALUES (6901,17060140);
+
+-- ------------------------------------------------------------
+-- Arrapago Remnants (Zone 74)
+-- ------------------------------------------------------------
 
 -- Arrapago Remnants
 -- mobs
@@ -741,7 +770,7 @@ INSERT INTO `instance_entities` VALUES (7400,17080596);
 INSERT INTO `instance_entities` VALUES (7400,17080597);
 -- npcs
 INSERT INTO `instance_entities` VALUES (7400,17080598);
-INSERT INTO `instance_entities` VALUES (7400,17080970);
+
 INSERT INTO `instance_entities` VALUES (7400,17080971);
 INSERT INTO `instance_entities` VALUES (7400,17080972);
 INSERT INTO `instance_entities` VALUES (7400,17080973);
@@ -765,6 +794,11 @@ INSERT INTO `instance_entities` VALUES (7400,17080990);
 INSERT INTO `instance_entities` VALUES (7400,17080991);
 INSERT INTO `instance_entities` VALUES (7400,17080992);
 INSERT INTO `instance_entities` VALUES (7400,17080993);
+INSERT INTO `instance_entities` VALUES (7400,17080994);
+
+-- ------------------------------------------------------------
+-- Nyzul Isle (Zone 77)
+-- ------------------------------------------------------------
 
 -- Path of Darkness
 -- mobs
@@ -776,9 +810,9 @@ INSERT INTO `instance_entities` VALUES (7700,17093136);
 INSERT INTO `instance_entities` VALUES (7700,17093137);
 INSERT INTO `instance_entities` VALUES (7700,17093142);
 -- npcs
-INSERT INTO `instance_entities` VALUES (7700,17093359);
-INSERT INTO `instance_entities` VALUES (7700,17093361);
-INSERT INTO `instance_entities` VALUES (7700,17093423);
+INSERT INTO `instance_entities` VALUES (7700,17093360);
+INSERT INTO `instance_entities` VALUES (7700,17093362);
+INSERT INTO `instance_entities` VALUES (7700,17093424);
 
 -- Nashmeira's Plea
 -- mobs
@@ -786,8 +820,7 @@ INSERT INTO `instance_entities` VALUES (7701,17093143);
 INSERT INTO `instance_entities` VALUES (7701,17093144);
 INSERT INTO `instance_entities` VALUES (7701,17093145);
 -- npcs
-INSERT INTO `instance_entities` VALUES (7701,17093423);
-INSERT INTO `instance_entities` VALUES (7701,17093472);
+INSERT INTO `instance_entities` VALUES (7701,17093424);
 INSERT INTO `instance_entities` VALUES (7701,17093473);
 INSERT INTO `instance_entities` VALUES (7701,17093474);
 INSERT INTO `instance_entities` VALUES (7701,17093475);
@@ -798,6 +831,7 @@ INSERT INTO `instance_entities` VALUES (7701,17093479);
 INSERT INTO `instance_entities` VALUES (7701,17093480);
 INSERT INTO `instance_entities` VALUES (7701,17093481);
 INSERT INTO `instance_entities` VALUES (7701,17093482);
+INSERT INTO `instance_entities` VALUES (7701,17093483);
 
 -- Nyzul Isle Investigation
 -- npcs
@@ -813,17 +847,6 @@ INSERT INTO `instance_entities` VALUES (7704,17092617);
 INSERT INTO `instance_entities` VALUES (7704,17092618);
 INSERT INTO `instance_entities` VALUES (7704,17092619);
 INSERT INTO `instance_entities` VALUES (7704,17092620);
-INSERT INTO `instance_entities` VALUES (7704,17093330); -- Rune of Transfer
-INSERT INTO `instance_entities` VALUES (7704,17093331); -- Rune of Transfer
-INSERT INTO `instance_entities` VALUES (7704,17093332); -- Runic Lamp 1
-INSERT INTO `instance_entities` VALUES (7704,17093333); -- Runic Lamp 2
-INSERT INTO `instance_entities` VALUES (7704,17093334); -- Runic Lamp 3
-INSERT INTO `instance_entities` VALUES (7704,17093335); -- Runic Lamp 4
-INSERT INTO `instance_entities` VALUES (7704,17093336); -- Runic Lamp 5
-INSERT INTO `instance_entities` VALUES (7704,17093353);
-INSERT INTO `instance_entities` VALUES (7704,17093354);
-INSERT INTO `instance_entities` VALUES (7704,17093429); -- Rune of Transfer
-INSERT INTO `instance_entities` VALUES (7704,17093430); -- Vending box
 -- mobs
 INSERT INTO `instance_entities` VALUES (7704,17092629);
 INSERT INTO `instance_entities` VALUES (7704,17092630);
@@ -1299,6 +1322,22 @@ INSERT INTO `instance_entities` VALUES (7704,17093101);
 INSERT INTO `instance_entities` VALUES (7704,17093102);
 INSERT INTO `instance_entities` VALUES (7704,17093103);
 INSERT INTO `instance_entities` VALUES (7704,17093104);
+-- more npcs
+INSERT INTO `instance_entities` VALUES (7704,17093330); -- Rune of Transfer
+INSERT INTO `instance_entities` VALUES (7704,17093331); -- Rune of Transfer
+INSERT INTO `instance_entities` VALUES (7704,17093332); -- Runic Lamp 1
+INSERT INTO `instance_entities` VALUES (7704,17093333); -- Runic Lamp 2
+INSERT INTO `instance_entities` VALUES (7704,17093334); -- Runic Lamp 3
+INSERT INTO `instance_entities` VALUES (7704,17093335); -- Runic Lamp 4
+INSERT INTO `instance_entities` VALUES (7704,17093336); -- Runic Lamp 5
+INSERT INTO `instance_entities` VALUES (7704,17093354);
+INSERT INTO `instance_entities` VALUES (7704,17093355);
+INSERT INTO `instance_entities` VALUES (7704,17093430); -- Rune of Transfer
+INSERT INTO `instance_entities` VALUES (7704,17093431); -- Vending box
+
+-- ------------------------------------------------------------
+-- Ruhotz Silvermines (Zone 93)
+-- ------------------------------------------------------------
 
 -- Light in the Darkness (9300)
 -- mobs
@@ -1313,8 +1352,7 @@ INSERT INTO `instance_entities` VALUES (9300,17158199); -- Sapphirine Quadav
 INSERT INTO `instance_entities` VALUES (9300,17158200); -- Sapphirine Quadav
 INSERT INTO `instance_entities` VALUES (9300,17158201); -- Sapphire Quadav
 -- npcs
-INSERT INTO `instance_entities` VALUES (9300,17158387); -- Volker
-INSERT INTO `instance_entities` VALUES (9300,17158388); -- csnpc
+INSERT INTO `instance_entities` VALUES (9300,17158388); -- Volker
 INSERT INTO `instance_entities` VALUES (9300,17158389); -- csnpc
 INSERT INTO `instance_entities` VALUES (9300,17158390); -- csnpc
 INSERT INTO `instance_entities` VALUES (9300,17158391); -- csnpc
@@ -1324,13 +1362,22 @@ INSERT INTO `instance_entities` VALUES (9300,17158394); -- csnpc
 INSERT INTO `instance_entities` VALUES (9300,17158395); -- csnpc
 INSERT INTO `instance_entities` VALUES (9300,17158396); -- csnpc
 INSERT INTO `instance_entities` VALUES (9300,17158397); -- csnpc
+INSERT INTO `instance_entities` VALUES (9300,17158398); -- csnpc
+
+-- ------------------------------------------------------------
+-- Rala Waterways (Zone 258)
+-- ------------------------------------------------------------
 
 -- Behind the Sluices (25900)
-INSERT INTO `instance_entities` VALUES (25900, 17838146); -- Arciela
-INSERT INTO `instance_entities` VALUES (25900, 17838147); -- The Keeper
-INSERT INTO `instance_entities` VALUES (25900, 17838148); -- Mistdagger
-INSERT INTO `instance_entities` VALUES (25900, 17838149); -- The Briars (elv)
-INSERT INTO `instance_entities` VALUES (25900, 17838150); -- The Briars (gal)
+INSERT INTO `instance_entities` VALUES (25900,17838146); -- Arciela
+INSERT INTO `instance_entities` VALUES (25900,17838147); -- The Keeper
+INSERT INTO `instance_entities` VALUES (25900,17838148); -- Mistdagger
+INSERT INTO `instance_entities` VALUES (25900,17838149); -- The Briars (elv)
+INSERT INTO `instance_entities` VALUES (25900,17838150); -- The Briars (gal)
+
+-- ------------------------------------------------------------
+-- Ambuscade
+-- ------------------------------------------------------------
 
 -- Ambuscade
 -- mobs

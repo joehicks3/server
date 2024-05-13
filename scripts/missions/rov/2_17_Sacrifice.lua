@@ -5,12 +5,7 @@
 -- !addmission 13 83
 -- Ornate Door (_521) : !pos -700 -20.25 -303.398 89
 -----------------------------------
-require('scripts/globals/missions')
-require('scripts/globals/rhapsodies')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/mission')
------------------------------------
-local walkOfEchoesID = require('scripts/zones/Walk_of_Echoes/IDs')
+local walkOfEchoesID = zones[xi.zone.WALK_OF_ECHOES]
 -----------------------------------
 
 local mission = Mission:new(xi.mission.log_id.ROV, xi.mission.id.rov.SACRIFICE)
@@ -40,9 +35,9 @@ mission.sections =
                     if mission:getVar(player, 'Status') <= 1 then
                         if not xi.rhapsodies.charactersAvailable(player) then
                             player:messageSpecial(walkOfEchoesID.text.CANNOT_PROGRESS_MISSION, 0, 2)
-                        elseif player:getQuestStatus(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.A_FORBIDDEN_REUNION) == QUEST_ACCEPTED then
+                        elseif player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.A_FORBIDDEN_REUNION) == xi.questStatus.QUEST_ACCEPTED then
                             player:messageSpecial(walkOfEchoesID.text.CANNOT_PROGRESS_QUEST, 0, 1)
-                        elseif player:getQuestStatus(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.CHAMPION_OF_THE_DAWN) == QUEST_ACCEPTED then
+                        elseif player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.CHAMPION_OF_THE_DAWN) == xi.questStatus.QUEST_ACCEPTED then
                             player:messageSpecial(walkOfEchoesID.text.CANNOT_PROGRESS_QUEST, 0, 0)
                         else
                             -- NOTE: Parameter 1 changes, but no text change was noted in comparisons.  The below event call is not

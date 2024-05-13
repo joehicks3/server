@@ -1,9 +1,6 @@
 -----------------------------------
 -- Area: Castle_Zvahl_Baileys
 -----------------------------------
-require("scripts/globals/zone")
------------------------------------
-
 zones = zones or {}
 
 zones[xi.zone.CASTLE_ZVAHL_BAILEYS] =
@@ -22,8 +19,8 @@ zones[xi.zone.CASTLE_ZVAHL_BAILEYS] =
         LOGIN_CAMPAIGN_UNDERWAY       = 7161, -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
         LOGIN_NUMBER                  = 7162, -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
         MEMBERS_LEVELS_ARE_RESTRICTED = 7182, -- Your party is unable to participate because certain members' levels are restricted.
-        CHEST_UNLOCKED                = 7234, -- You unlock the chest!
-        COMMON_SENSE_SURVIVAL         = 7609, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
+        CHEST_UNLOCKED                = 7238, -- You unlock the chest!
+        COMMON_SENSE_SURVIVAL         = 7613, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
     },
     mob =
     {
@@ -42,9 +39,9 @@ zones[xi.zone.CASTLE_ZVAHL_BAILEYS] =
     },
     npc =
     {
-        TORCH_OFFSET    = 17436984,
-        TREASURE_CHEST  = 17436997,
-        TREASURE_COFFER = 17436998,
+        TORCH_OFFSET    = 17436985,
+        TREASURE_CHEST  = GetFirstID('Treasure_Chest'),
+        TREASURE_COFFER = GetFirstID('Treasure_Coffer'),
     },
 }
 

@@ -2,14 +2,13 @@
 -- Area: Promyvion Dem
 --  NPC: Memory Flux 4th floor
 -----------------------------------
-local ID = require("scripts/zones/Promyvion-Dem/IDs")
-require("scripts/globals/quests")
+local ID = zones[xi.zone.PROMYVION_DEM]
 -----------------------------------
 local entity = {}
 
 entity.onTrigger = function(player, npc)
     if
-        player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.SHADOWS_OF_THE_DEPARTED) == QUEST_ACCEPTED and
+        player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.SHADOWS_OF_THE_DEPARTED) == xi.questStatus.QUEST_ACCEPTED and
         not player:hasKeyItem(xi.ki.PROMYVION_DEM_SLIVER)
     then
         npcUtil.giveKeyItem(player, xi.ki.PROMYVION_DEM_SLIVER)

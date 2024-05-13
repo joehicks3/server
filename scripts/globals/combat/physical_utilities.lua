@@ -25,28 +25,28 @@ xi.combat.physical = xi.combat.physical or {}
 -----------------------------------
 local wsElementalProperties =
 {
--- [Resonance] = { None, Fire, Ice, Wind, Earth, Thunder, Water, Light, Dark },
-    [       0] = {    0,    0,   0,    0,     0,       0,     0,     0,    0 }, -- Lv 0, NONE
-    [       1] = {    0,    0,   0,    0,     0,       0,     0,     1,    0 }, -- Lv 1, Transfixion
-    [       2] = {    0,    0,   0,    0,     0,       0,     0,     0,    1 }, -- Lv 1, Compression
-    [       3] = {    0,    1,   0,    0,     0,       0,     0,     0,    0 }, -- Lv 1, Liquefaction
-    [       4] = {    0,    0,   0,    0,     1,       0,     0,     0,    0 }, -- Lv 1, Scission
-    [       5] = {    0,    0,   0,    0,     0,       0,     1,     0,    0 }, -- Lv 1, Reverberation
-    [       6] = {    0,    0,   0,    1,     0,       0,     0,     0,    0 }, -- Lv 1, Detonation
-    [       7] = {    0,    0,   1,    0,     0,       0,     0,     0,    0 }, -- Lv 1, Induration
-    [       8] = {    0,    0,   0,    0,     0,       1,     0,     0,    0 }, -- Lv 1, Impaction
-    [       9] = {    0,    0,   0,    0,     1,       0,     0,     0,    1 }, -- Lv 2, Gravitation
-    [      10] = {    0,    0,   1,    0,     0,       0,     1,     0,    0 }, -- Lv 2, Distorsion
-    [      11] = {    0,    1,   0,    0,     0,       0,     0,     1,    0 }, -- Lv 2, Fusion
-    [      12] = {    0,    0,   0,    1,     0,       1,     0,     0,    0 }, -- Lv 2, Fragmentation
-    [      13] = {    0,    1,   0,    1,     0,       1,     0,     1,    0 }, -- Lv 3, Light
-    [      14] = {    0,    0,   1,    0,     1,       0,     1,     0,    1 }, -- Lv 3, Darkness
-    [      15] = {    0,    1,   0,    1,     0,       1,     0,     1,    0 }, -- Lv 4, Light
-    [      16] = {    0,    0,   1,    0,     1,       0,     1,     0,    1 }, -- Lv 4, Darkness
+    -- [Skillchain type             ] = { None, Fire, Ice, Wind, Earth, Thunder, Water, Light, Dark },
+    [xi.skillchainType.NONE         ] = {    0,    0,   0,    0,     0,       0,     0,     0,    0 }, -- Lv0 None
+    [xi.skillchainType.TRANSFIXION  ] = {    0,    0,   0,    0,     0,       0,     0,     1,    0 }, -- Lv1 Light
+    [xi.skillchainType.COMPRESSION  ] = {    0,    0,   0,    0,     0,       0,     0,     0,    1 }, -- Lv1 Dark
+    [xi.skillchainType.LIQUEFACTION ] = {    0,    1,   0,    0,     0,       0,     0,     0,    0 }, -- Lv1 Fire
+    [xi.skillchainType.SCISSION     ] = {    0,    0,   0,    0,     1,       0,     0,     0,    0 }, -- Lv1 Earth
+    [xi.skillchainType.REVERBERATION] = {    0,    0,   0,    0,     0,       0,     1,     0,    0 }, -- Lv1 Water
+    [xi.skillchainType.DETONATION   ] = {    0,    0,   0,    1,     0,       0,     0,     0,    0 }, -- Lv1 Wind
+    [xi.skillchainType.INDURATION   ] = {    0,    0,   1,    0,     0,       0,     0,     0,    0 }, -- Lv1 Ice
+    [xi.skillchainType.IMPACTION    ] = {    0,    0,   0,    0,     0,       1,     0,     0,    0 }, -- Lv1 Thunder
+    [xi.skillchainType.GRAVITATION  ] = {    0,    0,   0,    0,     1,       0,     0,     0,    1 }, -- Lv2 Earth & Dark
+    [xi.skillchainType.DISTORTION   ] = {    0,    0,   1,    0,     0,       0,     1,     0,    0 }, -- Lv2 Ice & Water
+    [xi.skillchainType.FUSION       ] = {    0,    1,   0,    0,     0,       0,     0,     1,    0 }, -- Lv2 Fire & Light
+    [xi.skillchainType.FRAGMENTATION] = {    0,    0,   0,    1,     0,       1,     0,     0,    0 }, -- Lv2 Wind & Thunder
+    [xi.skillchainType.LIGHT        ] = {    0,    1,   0,    1,     0,       1,     0,     1,    0 }, -- Lv3 Fire, Wind, Thunder, Light
+    [xi.skillchainType.DARKNESS     ] = {    0,    0,   1,    0,     1,       0,     1,     0,    1 }, -- Lv3 Ice, Earth, Water, Dark
+    [xi.skillchainType.LIGHT_II     ] = {    0,    1,   0,    1,     0,       1,     0,     1,    0 }, -- Lv4 Fire, Wind, Thunder, Light
+    [xi.skillchainType.DARKNESS_II  ] = {    0,    0,   1,    0,     1,       0,     1,     0,    1 }, -- Lv4 Ice, Earth, Water, Dark
 }
 
 -- Table with pDIF caps per weapon/skill type.
-local pDifWeaponCapTable =
+xi.combat.physical.pDifWeaponCapTable =
 {
     -- [Skill/weapon type used] = {pre-randomizer_pDIF_cap}, Values from: https://www.bg-wiki.com/ffxi/PDIF
     [xi.skill.NONE            ] = { 3    }, -- We will use this for mobs.
@@ -72,29 +72,29 @@ local pDifWeaponCapTable =
 
 local elementalGorget = -- Ordered by element.
 {
-    xi.items.FLAME_GORGET,
-    xi.items.SNOW_GORGET,
-    xi.items.BREEZE_GORGET,
-    xi.items.SOIL_GORGET,
-    xi.items.THUNDER_GORGET,
-    xi.items.AQUA_GORGET,
-    xi.items.LIGHT_GORGET,
-    xi.items.SHADOW_GORGET
+    xi.item.FLAME_GORGET,
+    xi.item.SNOW_GORGET,
+    xi.item.BREEZE_GORGET,
+    xi.item.SOIL_GORGET,
+    xi.item.THUNDER_GORGET,
+    xi.item.AQUA_GORGET,
+    xi.item.LIGHT_GORGET,
+    xi.item.SHADOW_GORGET
 }
 
 local elementalBelt = -- Ordered by element.
 {
-    xi.items.FLAME_BELT,
-    xi.items.SNOW_BELT,
-    xi.items.BREEZE_BELT,
-    xi.items.SOIL_BELT,
-    xi.items.THUNDER_BELT,
-    xi.items.AQUA_BELT,
-    xi.items.LIGHT_BELT,
-    xi.items.SHADOW_BELT
+    xi.item.FLAME_BELT,
+    xi.item.SNOW_BELT,
+    xi.item.BREEZE_BELT,
+    xi.item.SOIL_BELT,
+    xi.item.THUNDER_BELT,
+    xi.item.AQUA_BELT,
+    xi.item.LIGHT_BELT,
+    xi.item.SHADOW_BELT
 }
 
--- "fSTR" in English Wikis. "SV function" in JP wiki and Studio Gobli.
+-- 'fSTR' in English Wikis. 'SV function' in JP wiki and Studio Gobli.
 -- BG wiki: https://www.bg-wiki.com/ffxi/FSTR
 -- Gobli Wiki: https://w-atwiki-jp.translate.goog/studiogobli/pages/14.html?_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en&_x_tr_pto=wapp
 xi.combat.physical.calculateMeleeStatFactor = function(actor, target)
@@ -140,7 +140,7 @@ xi.combat.physical.calculateMeleeStatFactor = function(actor, target)
     return fSTR
 end
 
--- "fSTR2" in English Wikis. "SV function" in JP wiki and Studio Gobli.
+-- 'fSTR2' in English Wikis. 'SV function' in JP wiki and Studio Gobli.
 -- BG wiki: https://www.bg-wiki.com/ffxi/FSTR
 -- Gobli Wiki: https://w-atwiki-jp.translate.goog/studiogobli/pages/14.html?_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en&_x_tr_pto=wapp
 xi.combat.physical.calculateRangedStatFactor = function(actor, target)
@@ -183,7 +183,7 @@ xi.combat.physical.calculateRangedStatFactor = function(actor, target)
         fSTRlowerCap = -3
     end
 
-    fSTR = utils.clamp(fSTR2 / 2, fSTRlowerCap, fSTRupperCap)
+    fSTR = utils.clamp(fSTR / 2, fSTRlowerCap, fSTRupperCap)
 
     return fSTR
 end
@@ -206,15 +206,14 @@ xi.combat.physical.calculateWSC = function(actor, wsSTRmod, wsDEXmod, wsVITmod, 
     return finalWSC
 end
 
--- TP factor equation. Used to determine TP modifer across all cases of "X varies with TP"
-xi.combat.physical.calculateTPfactor = function(actor, TP1000, TP2000, TP3000)
-    local tpFactor = 1
-    local actorTP  = actor:getTP()
+-- TP factor equation. Used to determine TP modifer across all cases of 'X varies with TP'
+xi.combat.physical.calculateTPfactor = function(actorTP, tpModifierTable)
+    local tpFactor = 0
 
     if actorTP >= 2000 then
-        tpFactor = TP2000 + (actorTP - 2000) * (TP3000 - TP2000) / 1000
+        tpFactor = tpModifierTable[2] + (actorTP - 2000) * (tpModifierTable[3] - tpModifierTable[2]) / 1000
     elseif actorTP >= 1000 then
-        tpFactor = TP1000 + (actorTP - 1000) * (TP2000 - TP1000) / 1000
+        tpFactor = tpModifierTable[1] + (actorTP - 1000) * (tpModifierTable[2] - tpModifierTable[1]) / 1000
     end
 
     return tpFactor
@@ -234,10 +233,11 @@ xi.combat.physical.calculateFTP = function(actor, tpFactor)
     local scProp1, scProp2, scProp3 = actor:getWSSkillchainProp()
     local dayElement                = VanadielDayElement() + 1
 
-    local neckFtpBonus  = 0
-    local waistFtpBonus = 0
-    local headFtpBonus  = 0
-    local handsFtpBonus = 0
+    local neckFtpBonus   = 0
+    local waistFtpBonus  = 0
+    local headFtpBonus   = 0
+    local handsFtpBonus  = 0
+    local weaponFtpBonus = 0
 
     if actor:getObjType() == xi.objType.PC then
         -- Calculate Neck fTP bonus.
@@ -258,7 +258,7 @@ xi.combat.physical.calculateFTP = function(actor, tpFactor)
             wsElementalProperties[scProp1][neckElement] == 1 or
             wsElementalProperties[scProp2][neckElement] == 1 or
             wsElementalProperties[scProp3][neckElement] == 1 or
-            neckItem == xi.items.FOTIA_GORGET
+            neckItem == xi.item.FOTIA_GORGET
         then
             neckFtpBonus = 0.1
         end
@@ -281,7 +281,7 @@ xi.combat.physical.calculateFTP = function(actor, tpFactor)
             wsElementalProperties[scProp1][waistElement] == 1 or
             wsElementalProperties[scProp2][waistElement] == 1 or
             wsElementalProperties[scProp3][waistElement] == 1 or
-            waistItem == xi.items.FOTIA_BELT
+            waistItem == xi.item.FOTIA_BELT
         then
             waistFtpBonus = 0.1
         end
@@ -295,11 +295,11 @@ xi.combat.physical.calculateFTP = function(actor, tpFactor)
             wsElementalProperties[scProp3][dayElement] == 1
         then
             if
-                headItem == xi.items.MEKIRA_OTO or
-                headItem == xi.items.MEKIRA_OTO_P1
+                headItem == xi.item.MEKIRA_OTO or
+                headItem == xi.item.MEKIRA_OTO_P1
             then
                 headFtpBonus = 0.1
-            elseif headItem == xi.items.GAVIALIS_HELM then
+            elseif headItem == xi.item.GAVIALIS_HELM then
                 headFtpBonus = 0.117
             end
         end
@@ -312,34 +312,50 @@ xi.combat.physical.calculateFTP = function(actor, tpFactor)
             wsElementalProperties[scProp2][dayElement] == 1 or
             wsElementalProperties[scProp3][dayElement] == 1
         then
-            if handsItem == xi.items.ATHOSS_GLOVES then
+            if handsItem == xi.item.ATHOSS_GLOVES then
                 handsFtpBonus = 0.06
             end
+        end
+
+        -- Calculate Weapon fTP bonus.
+        local weaponItem = actor:getEquipID(xi.slot.MAIN)
+
+        if
+            weaponItem == xi.item.PRESTER and
+            (wsElementalProperties[scProp1][xi.element.WIND] == 1 or
+            wsElementalProperties[scProp2][xi.element.WIND] == 1 or
+            wsElementalProperties[scProp3][xi.element.WIND] == 1)
+        then
+            weaponFtpBonus = 0.1
         end
     end
 
     -- Add all bonuses and return.
-    fTP = fTP + neckFtpBonus + waistFtpBonus + headFtpBonus + handsFtpBonus
+    fTP = fTP + neckFtpBonus + waistFtpBonus + headFtpBonus + handsFtpBonus + weaponFtpBonus
 
     return fTP
 end
 
-xi.combat.physical.calculateMeleePDIF = function(actor, target, weaponType, wsAttackMod, isCritical, applyLevelCorrection, tpIgnoresDefense, tpFactor)
+-- WARNING: This function is used in src/utils/battleutils.cpp "GetDamageRatio" function.
+-- If you update this parameters, update them there aswell.
+xi.combat.physical.calculateMeleePDIF = function(actor, target, weaponType, wsAttackMod, isCritical, applyLevelCorrection, tpIgnoresDefense, tpFactor, isWeaponskill, weaponSlot)
     local pDif = 0
 
     ----------------------------------------
     -- Step 1: Attack / Defense Ratio
     ----------------------------------------
     local baseRatio     = 0
-    local actorAttack   = math.floor(actor:getStat(xi.mod.ATT) * wsAttackMod)
-    local targetDefense = target:getStat(xi.mod.DEF)
+    local actorAttack   = math.max(1, math.floor(actor:getStat(xi.mod.ATT, weaponSlot) * wsAttackMod))
+    local targetDefense = math.max(1, target:getStat(xi.mod.DEF))
 
-    -- Actor Attack modifiers.
-    if actor:hasStatusEffect(xi.effect.BUILDING_FLOURISH) then
-        local flourishEffect = actor:getStatusEffect(xi.effect.BUILDING_FLOURISH)
+    -- Actor Weaponskill Specific Attack modifiers.
+    if isWeaponskill then
+        if actor:hasStatusEffect(xi.effect.BUILDING_FLOURISH) then
+            local flourishEffect = actor:getStatusEffect(xi.effect.BUILDING_FLOURISH)
 
-        if flourishEffect:getPower() >= 2 then -- 2 or more Finishing Moves used.
-            actorAttack = actorAttack + 25 + flourishEffect:getSubPower()
+            if flourishEffect:getPower() >= 2 then -- 2 or more Finishing Moves used.
+                actorAttack = math.floor(actorAttack * (125 + flourishEffect:getSubPower()) / 100)
+            end
         end
     end
 
@@ -347,11 +363,12 @@ xi.combat.physical.calculateMeleePDIF = function(actor, target, weaponType, wsAt
     local ignoreDefenseFactor = 1
 
     if tpIgnoresDefense then
-        ignoreDefenseFactor = tpFactor
+        ignoreDefenseFactor = 1 - tpFactor
     end
 
     targetDefense = math.floor(targetDefense * ignoreDefenseFactor)
 
+    -- Actor Attack / Target Defense ratio
     baseRatio = actorAttack / targetDefense
 
     -- Apply cap to baseRatio.
@@ -379,9 +396,12 @@ xi.combat.physical.calculateMeleePDIF = function(actor, target, weaponType, wsAt
     ----------------------------------------
     -- Step 3: wRatio and pDif Caps (Melee)
     ----------------------------------------
-    local wRatio       = cRatio + isCritical
-    local pDifUpperCap = 0
-    local pDifLowerCap = 0
+    local wRatio             = cRatio + (isCritical and 1 or 0)
+    local pDifUpperCap       = 0
+    local pDifLowerCap       = 0
+    local damageLimitPlus    = actor:getMod(xi.mod.DAMAGE_LIMIT) / 100
+    local damageLimitPercent = 1 + actor:getMod(xi.mod.DAMAGE_LIMITP) / 100
+    local pDifFinalCap       = (xi.combat.physical.pDifWeaponCapTable[weaponType][1] + damageLimitPlus) * damageLimitPercent + (isCritical and 1 or 0)
 
     -- pDIF upper cap.
     if wRatio < 0.5 then
@@ -393,7 +413,7 @@ xi.combat.physical.calculateMeleePDIF = function(actor, target, weaponType, wsAt
     elseif wRatio < 1.5 then
         pDifUpperCap = wRatio + wRatio * 0.25
     else
-        pDifUpperCap = utils.clamp(wRatio + 0.375, 1, 3)
+        pDifUpperCap = math.min(wRatio + 0.375, pDifFinalCap)
     end
 
     -- pDIF lower cap.
@@ -414,8 +434,6 @@ xi.combat.physical.calculateMeleePDIF = function(actor, target, weaponType, wsAt
     ----------------------------------------
     -- Step 4: Apply weapon type caps.
     ----------------------------------------
-    local pDifFinalCap = pDifWeaponCapTable[weaponType][1] + isCritical -- TODO: Add "Damage Limit +" Trait here.
-
     pDif = utils.clamp(pDif, 0, pDifFinalCap)
 
     ----------------------------------------
@@ -425,25 +443,35 @@ xi.combat.physical.calculateMeleePDIF = function(actor, target, weaponType, wsAt
 
     pDif = pDif * meleeRandom
 
+    -- Crit damage bonus is a final modifier
+    if isCritical then
+        local critDamageBonus = utils.clamp(actor:getMod(xi.mod.CRIT_DMG_INCREASE) - target:getMod(xi.mod.CRIT_DEF_BONUS), 0, 100)
+        pDif                  = pDif * (100 + critDamageBonus) / 100
+    end
+
     return pDif
 end
 
-xi.combat.physical.calculateRangedPDIF = function(actor, target, weaponType, wsAttackMod, isCritical, applyLevelCorrection, tpIgnoresDefense, tpFactor)
+xi.combat.physical.calculateRangedPDIF = function(actor, target, weaponType, wsAttackMod, isCritical, applyLevelCorrection, tpIgnoresDefense, tpFactor, isWeaponskill)
     local pDif = 0
 
     ----------------------------------------
     -- Step 1: Attack / Defense Ratio
     ----------------------------------------
     local baseRatio     = 0
-    local actorAttack   = math.floor(actor:getStat(xi.mod.RATT) * wsAttackMod)
-    local targetDefense = target:getStat(xi.mod.DEF)
+    local actorAttack   = math.max(1, math.floor(actor:getStat(xi.mod.RATT) * wsAttackMod))
+    local targetDefense = math.max(1, target:getStat(xi.mod.DEF))
 
-    -- Actor Ranged Attack modifiers.
-    if actor:hasStatusEffect(xi.effect.BUILDING_FLOURISH) then
-        local flourishEffect = actor:getStatusEffect(xi.effect.BUILDING_FLOURISH)
+    -- Actor Weaponskill Specific Ranged Attack modifiers.
+    if isWeaponskill then
+        -- TODO: verify this actually works on ranged WS.
+        -- This is a real concern now that RNG/DNC and COR/DNC can actually get level 50 subs through master levels.
+        if actor:hasStatusEffect(xi.effect.BUILDING_FLOURISH) then
+            local flourishEffect = actor:getStatusEffect(xi.effect.BUILDING_FLOURISH)
 
-        if flourishEffect:getPower() >= 2 then -- 2 or more Finishing Moves used.
-            actorAttack = actorAttack + 25 + flourishEffect:getSubPower()
+            if flourishEffect:getPower() >= 2 then -- 2 or more Finishing Moves used.
+                actorAttack = math.floor(actorAttack * (125 + flourishEffect:getSubPower()) / 100)
+            end
         end
     end
 
@@ -451,7 +479,7 @@ xi.combat.physical.calculateRangedPDIF = function(actor, target, weaponType, wsA
     local ignoreDefenseFactor = 1
 
     if tpIgnoresDefense then
-        ignoreDefenseFactor = tpFactor
+        ignoreDefenseFactor = 1.0 - tpFactor
     end
 
     targetDefense = math.floor(targetDefense * ignoreDefenseFactor)
@@ -480,7 +508,7 @@ xi.combat.physical.calculateRangedPDIF = function(actor, target, weaponType, wsA
 
     local cRatio = utils.clamp(baseRatio - levelDifFactor, 0, 10) -- Clamp for the lower limit, mainly.
 
-    -- TODO: Presumably, pets get a Cap here if the target checks as "Too Weak". More info needed.
+    -- TODO: Presumably, pets get a Cap here if the target checks as 'Too Weak'. More info needed.
 
     ----------------------------------------
     -- Step 3: pDif Caps (Ranged)
@@ -505,21 +533,133 @@ xi.combat.physical.calculateRangedPDIF = function(actor, target, weaponType, wsA
     ----------------------------------------
     -- Step 4: Apply weapon type caps.
     ----------------------------------------
-    local pDifFinalCap = pDifWeaponCapTable[weaponType][1] + isCritical -- TODO: Add "Damage Limit +" Trait here.
+    local damageLimitPlus = actor:getMod(xi.mod.DAMAGE_LIMIT) / 100
+    local damageLimitPercent = (100 + actor:getMod(xi.mod.DAMAGE_LIMITP)) / 100
+    local pDifFinalCap = (xi.combat.physical.pDifWeaponCapTable[weaponType][1] + damageLimitPlus) * damageLimitPercent -- Added damage limit bonuses
 
     pDif = utils.clamp(pDif, 0, pDifFinalCap)
 
     ----------------------------------------
     -- Step 5: Ranged critical factor. Bypasses caps.
     ----------------------------------------
-    if isCritical == 1 then
+    if isCritical then
         pDif = pDif * 1.25
     end
 
     -- Step 6: Distance correction and True Shot.
     -- TODO: Implement distance correction and True shot...
 
+    -- Crit damage bonus is a final modifier
+    if isCritical then
+        local critDamageBonus = utils.clamp(actor:getMod(xi.mod.CRIT_DMG_INCREASE) - target:getMod(xi.mod.CRIT_DEF_BONUS), 0, 100)
+        pDif = pDif * (100 + critDamageBonus) / 100
+    end
+
     return pDif
+end
+
+-----------------------------------
+-- Critical hit rate operations
+-----------------------------------
+-- dStat: Critical hit rate bonus from DEX vs AGI difference.
+xi.combat.physical.criticalRateFromStatDiff = function(actor, target)
+    local statBonus = 0
+
+    local dDex = actor:getStat(xi.mod.DEX) - target:getStat(xi.mod.AGI)
+
+    if dDex > 50 then
+        statBonus = 0.15
+    elseif dDex >= 40 then
+        statBonus = (dDex - 35) / 100
+    elseif dDex >= 30 then
+        statBonus = 0.04
+    elseif dDex >= 20 then
+        statBonus = 0.03
+    elseif dDex >= 14 then
+        statBonus = 0.02
+    elseif dDex >= 7 then
+        statBonus = 0.01
+    end
+
+    return statBonus
+end
+
+-- Innin: Critical hit rate bonus when actor is behind target.
+xi.combat.physical.criticalRateFromInnin = function(actor, target)
+    local inninBonus = 0
+
+    if
+        actor:hasStatusEffect(xi.effect.INNIN) and
+        actor:isBehind(target, 23)
+    then
+        inninBonus = actor:getStatusEffect(xi.effect.INNIN):getPower()
+    end
+
+    return inninBonus
+end
+
+-- Fencer: Critical hit rate bonus when actor is only wielding with main hand.
+xi.combat.physical.criticalRateFromFencer = function(actor)
+    local fencerBonus = 0
+    -- TODO: do any Trusts or mobs ever get Fencer bonuses?
+
+    if actor:getObjType() == xi.objType.PC then
+        local mainEquip = actor:getStorageItem(0, 0, xi.slot.MAIN)
+        local subEquip  = actor:getStorageItem(0, 0, xi.slot.SUB)
+        if
+            mainEquip and
+            not mainEquip:isTwoHanded() and                                                      -- No 2 handed weapons.
+            not mainEquip:isHandToHand() and                                                     -- No 2 handed weapons.
+            (subEquip == nil or subEquip:getSkillType() == xi.skill.NONE or subEquip:isShield()) -- Only shields allowed in sub.
+        then
+            fencerBonus = actor:getMod(xi.mod.FENCER_CRITHITRATE) / 100
+        end
+    end
+
+    return fencerBonus
+end
+
+-- Critical rate from Building Flourish.
+-- TODO: Study case were if we can attach modifiers to the effect itself, both this and the effect may need refactoring.
+xi.combat.physical.criticalRateFromFlourish = function(actor)
+    local buildingFlourishBonus = 0
+
+    if actor:hasStatusEffect(xi.effect.BUILDING_FLOURISH) then
+        local effectPower    = actor:getStatusEffect(xi.effect.BUILDING_FLOURISH):getPower()
+        local effectSubPower = actor:getStatusEffect(xi.effect.BUILDING_FLOURISH):getSubPower()
+
+        if effectPower >= 3 then
+            buildingFlourishBonus = (10 + effectSubPower) / 100
+        end
+    end
+
+    return buildingFlourishBonus
+end
+
+-- Critical rate master function.
+xi.combat.physical.calculateSwingCriticalRate = function(actor, target, actorTP, optCritModTable)
+    -- See reference at https://www.bg-wiki.com/ffxi/Critical_Hit_Rate
+    local finalCriticalRate     = 0
+    local baseCriticalRate      = 0.05
+    local statBonus             = xi.combat.physical.criticalRateFromStatDiff(actor, target)
+    local inninBonus            = xi.combat.physical.criticalRateFromInnin(actor, target)
+    local fencerBonus           = xi.combat.physical.criticalRateFromFencer(actor)
+    local buildingFlourishBonus = xi.combat.physical.criticalRateFromFlourish(actor)
+    local modifierBonus         = actor:getMod(xi.mod.CRITHITRATE) / 100
+    local meritBonus            = actor:getMerit(xi.merit.CRIT_HIT_RATE) / 100
+    local targetModifierBonus   = target:getMod(xi.mod.ENEMYCRITRATE) / 100
+    local meritPenalty          = target:getMerit(xi.merit.ENEMY_CRIT_RATE) / 100
+    local tpFactor              = 0
+
+    -- For weaponskills.
+    if optCritModTable then
+        tpFactor = xi.combat.physical.calculateTPfactor(actorTP, optCritModTable)
+    end
+
+    -- Add all different bonuses and clamp.
+    finalCriticalRate = baseCriticalRate + statBonus + inninBonus + fencerBonus + buildingFlourishBonus + modifierBonus + meritBonus + targetModifierBonus - meritPenalty + tpFactor
+
+    return utils.clamp(finalCriticalRate, 0.05, 1) -- TODO: Need confirmation of no upper cap.
 end
 
 xi.combat.physical.calculateNumberOfHits = function(actor, additionalParamsHere)

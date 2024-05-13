@@ -3,19 +3,16 @@
 -----------------------------------
 -- Log ID: 3, Quest ID: 133
 -- Nomad Moogle : !pos 10.012 1.453 121.883 243
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/interaction/quest')
 -----------------------------------
-local ruludeID = require('scripts/zones/RuLude_Gardens/IDs')
+local ruludeID = zones[xi.zone.RULUDE_GARDENS]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.NEW_WORLDS_AWAIT)
+local quest = Quest:new(xi.questLog.JEUNO, xi.quest.id.jeuno.NEW_WORLDS_AWAIT)
 
 quest.reward =
 {
     fame = 50,
-    fameArea = xi.quest.fame_area.JEUNO,
+    fameArea = xi.fameArea.JEUNO,
 }
 
 quest.sections =
@@ -23,7 +20,7 @@ quest.sections =
     -- Section: Quest available. Player doesn't have Limit Breaker KI.
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 xi.settings.main.MAX_LEVEL >= 75 and
                 player:getMainLvl() >= 75 and
                 player:getLevelCap() == 75 and
@@ -67,7 +64,7 @@ quest.sections =
     -- Section: Quest available. Got Limit Breaker KI. Era server section.
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 xi.settings.main.MAX_LEVEL == 75 and
                 player:getMainLvl() >= 75 and
                 player:getLevelCap() == 75 and
@@ -88,7 +85,7 @@ quest.sections =
     -- Section: Quest available. Got Limit Breaker KI. Can actually raise level cap.
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 xi.settings.main.MAX_LEVEL >= 80 and
                 player:getMainLvl() >= 75 and
                 player:getLevelCap() == 75 and
@@ -118,7 +115,7 @@ quest.sections =
     -- Section: Quest accepted.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.RULUDE_GARDENS] =
@@ -131,7 +128,7 @@ quest.sections =
 
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, { { xi.items.KINDREDS_SEAL, 5 } }) and
+                        npcUtil.tradeHasExactly(trade, { { xi.item.KINDREDS_SEAL, 5 } }) and
                         player:getMeritCount() > 2
                     then
                         return quest:progressEvent(10135)

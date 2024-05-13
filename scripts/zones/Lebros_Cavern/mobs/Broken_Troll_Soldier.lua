@@ -3,11 +3,11 @@
 --  Mob: Broken Troll Soldier
 -- Todo: make them spawn at 25-75% hp and stay
 -----------------------------------
-mixins = { require("scripts/mixins/job_special") }
+mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
 local entity = {}
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     local maxHP = mob:getHP()
     local bonus = math.random(2, 6)
     mob:setHP(maxHP / (8 / bonus))

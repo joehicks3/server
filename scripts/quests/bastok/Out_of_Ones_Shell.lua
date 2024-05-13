@@ -4,21 +4,16 @@
 -- Log ID: 1, Quest ID: 5
 -- Ronan : !pos 84.712 -8.772 20.301 236
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local portBastokID = require('scripts/zones/Port_Bastok/IDs')
+local portBastokID = zones[xi.zone.PORT_BASTOK]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.OUT_OF_ONES_SHELL)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.OUT_OF_ONES_SHELL)
 
 quest.reward =
 {
     fame     = 120,
-    fameArea = xi.quest.fame_area.BASTOK,
-    item     = xi.items.MONKS_HEADGEAR,
+    fameArea = xi.fameArea.BASTOK,
+    item     = xi.item.MONKS_HEADGEAR,
     title    = xi.title.SHELL_OUTER,
 }
 
@@ -26,9 +21,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.BASTOK, xi.quest.id.bastok.THE_QUADAVS_CURSE) and
-                player:getFameLevel(xi.quest.fame_area.BASTOK) >= 2
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.BASTOK, xi.quest.id.bastok.THE_QUADAVS_CURSE) and
+                player:getFameLevel(xi.fameArea.BASTOK) >= 2
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -46,7 +41,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -55,7 +50,7 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, { { xi.items.SHELL_BUG, 3 } }) and
+                        npcUtil.tradeHasExactly(trade, { { xi.item.SHELL_BUG, 3 } }) and
                         quest:getVar(player, 'Prog') == 0
                     then
                         return quest:progressEvent(84)
@@ -111,7 +106,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.PORT_BASTOK] =

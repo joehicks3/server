@@ -1,13 +1,10 @@
 -----------------------------------
 -- Zone: Mamook (65)
 -----------------------------------
-local ID = require('scripts/zones/Mamook/IDs')
-require('scripts/globals/helm')
------------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    xi.helm.initZone(zone, xi.helm.type.LOGGING)
+    xi.helm.initZone(zone, xi.helmType.LOGGING)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)

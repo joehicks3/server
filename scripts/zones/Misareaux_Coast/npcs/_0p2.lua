@@ -4,8 +4,7 @@
 -- Entrance to Riverne Site #B01
 -- !pos -259 -30 276 25
 -----------------------------------
-require("scripts/globals/missions")
-local ID = require("scripts/zones/Misareaux_Coast/IDs")
+local ID = zones[xi.zone.MISAREAUX_COAST]
 -----------------------------------
 local entity = {}
 
@@ -18,7 +17,7 @@ entity.onTrigger = function(player, npc)
 
     -- Bahamut Battle (requires COP to be completed)
     if
-        player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.STORMS_OF_FATE) == QUEST_ACCEPTED and
+        player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.STORMS_OF_FATE) == xi.questStatus.QUEST_ACCEPTED and
         player:getCharVar('StormsOfFate') == 0
     then
         player:startEvent(559)

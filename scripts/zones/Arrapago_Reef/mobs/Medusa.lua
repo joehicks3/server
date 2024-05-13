@@ -4,9 +4,8 @@
 -- !pos -458 -20 458
 -- TODO: resists, attack/def boosts
 -----------------------------------
-local ID = require("scripts/zones/Arrapago_Reef/IDs")
-mixins = { require("scripts/mixins/job_special") }
-require("scripts/globals/titles")
+local ID = zones[xi.zone.ARRAPAGO_REEF]
+mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
 local entity = {}
 
@@ -20,7 +19,7 @@ entity.onMobSpawn = function(mob)
     })
 end
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     target:showText(mob, ID.text.MEDUSA_ENGAGE)
     for i = ID.mob.MEDUSA + 1, ID.mob.MEDUSA + 4 do
         SpawnMob(i):updateEnmity(target)

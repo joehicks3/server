@@ -1,9 +1,6 @@
 -----------------------------------
 -- Area: Castle_Zvahl_Keep
 -----------------------------------
-require("scripts/globals/zone")
------------------------------------
-
 zones = zones or {}
 
 zones[xi.zone.CASTLE_ZVAHL_KEEP] =
@@ -21,10 +18,10 @@ zones[xi.zone.CASTLE_ZVAHL_KEEP] =
         LOGIN_CAMPAIGN_UNDERWAY       = 7161, -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
         LOGIN_NUMBER                  = 7162, -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
         MEMBERS_LEVELS_ARE_RESTRICTED = 7182, -- Your party is unable to participate because certain members' levels are restricted.
-        CHEST_UNLOCKED                = 7234, -- You unlock the chest!
-        ITEMS_ITEMS_LA_LA             = 7243, -- You can hear a strange voice... Items, items, la la la la la
-        GOBLIN_SLIPPED_AWAY           = 7249, -- The Goblin slipped away when you were not looking...
-        HOMEPOINT_SET                 = 7292, -- Home point set!
+        CHEST_UNLOCKED                = 7238, -- You unlock the chest!
+        ITEMS_ITEMS_LA_LA             = 7247, -- You can hear a strange voice... Items, items, la la la la la
+        GOBLIN_SLIPPED_AWAY           = 7253, -- The Goblin slipped away when you were not looking...
+        HOMEPOINT_SET                 = 7296, -- Home point set!
     },
     mob =
     {
@@ -49,7 +46,7 @@ zones[xi.zone.CASTLE_ZVAHL_KEEP] =
     },
     npc =
     {
-        TREASURE_CHEST = 17441088,
+        TREASURE_CHEST = GetFirstID('Treasure_Chest'),
     },
 }
 

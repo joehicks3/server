@@ -3,10 +3,8 @@
 --   NM: Tzee Xicu the Manifest
 -- TODO: messages should be zone-wide
 -----------------------------------
-local ID = require("scripts/zones/Castle_Oztroja/IDs")
-mixins = { require("scripts/mixins/job_special") }
-require("scripts/globals/titles")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.CASTLE_OZTROJA]
+mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
 local entity = {}
 
@@ -14,7 +12,7 @@ entity.onMobInitialize = function(mob)
     mob:setMobMod(xi.mobMod.ADD_EFFECT, 1)
 end
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     mob:showText(mob, ID.text.YAGUDO_KING_ENGAGE)
 end
 
@@ -32,8 +30,8 @@ end
 entity.onMobDespawn = function(mob)
     -- reset hqnm system back to the nm placeholder
     local nqId = mob:getID() - 3
-    SetServerVariable("[POP]Tzee_Xicu_the_Manifest", os.time() + 259200) -- 3 days
-    SetServerVariable("[PH]Tzee_Xicu_the_Manifest", 0)
+    SetServerVariable('[POP]Tzee_Xicu_the_Manifest', os.time() + 259200) -- 3 days
+    SetServerVariable('[PH]Tzee_Xicu_the_Manifest', 0)
     DisallowRespawn(mob:getID(), true)
     DisallowRespawn(nqId, false)
     UpdateNMSpawnPoint(nqId)

@@ -4,9 +4,7 @@
 -- Only sells when Windurst controlls Zulkheim Region
 -- Confirmed shop stock, August 2013
 -----------------------------------
-local ID = require("scripts/zones/Windurst_Woods/IDs")
-require("scripts/globals/shop")
-require("scripts/globals/zone")
+local ID = zones[xi.zone.WINDURST_WOODS]
 -----------------------------------
 local entity = {}
 
@@ -38,7 +36,7 @@ entity.onTrigger = function(player, npc)
             table.insert(stock, 1840)
         end
 
-        xi.shop.general(player, stock, xi.quest.fame_area.WINDURST)
+        xi.shop.general(player, stock, xi.fameArea.WINDURST)
     end
 end
 

@@ -1,8 +1,8 @@
 -----------------------------------
 -- Avatar Global Functions
 -----------------------------------
-require("scripts/globals/combat/level_correction")
-require("scripts/globals/combat/physical_utilities")
+require('scripts/globals/combat/level_correction')
+require('scripts/globals/combat/physical_utilities')
 -----------------------------------
 xi = xi or {}
 xi.summon = xi.summon or {}
@@ -42,11 +42,9 @@ local function getDexCritRate(source, target)
 end
 
 local function getRandRatio(wRatio)
-    local qRatio     = wRatio
-    local upperLimit = 0
-    local lowerLimit = 0
     local maxRatio   = 4.25 -- 4.25 for Avatars, they count as 1H but same as mobs don't have a non-crit cap
 
+    local upperLimit = math.min(wRatio + 0.375, maxRatio)
     if wRatio < 0.5 then
         upperLimit = math.max(wRatio + 0.5, 0.5)
     elseif wRatio < 0.7 then
@@ -55,10 +53,9 @@ local function getRandRatio(wRatio)
         upperLimit = wRatio + 0.3
     elseif wRatio < 1.5 then
         upperLimit = wRatio * 1.25
-    else
-        upperLimit = math.min(wRatio + 0.375, maxRatio)
     end
 
+    local lowerLimit = math.min(wRatio - 0.375, maxRatio)
     if wRatio < 0.38 then
         lowerLimit = math.max(wRatio, 0.5)
     elseif wRatio < 1.25 then
@@ -67,12 +64,10 @@ local function getRandRatio(wRatio)
         lowerLimit = 1
     elseif wRatio < 2.44 then
         lowerLimit = (wRatio * (1176 / 1024)) - (755 / 1024)
-    else
-        lowerLimit = math.min(wRatio - 0.375, maxRatio)
     end
 
     -- Randomly pick a value between lower and upper limits for qRatio
-    qRatio = lowerLimit + (math.random() * (upperLimit - lowerLimit))
+    local qRatio = lowerLimit + (math.random() * (upperLimit - lowerLimit))
 
     return qRatio
 end
@@ -132,8 +127,6 @@ xi.summon.avatarPhysicalMove = function(avatar, target, skill, numberofhits, acc
     -- bonuses cap at level diff of 38 based on this testing:
     -- https://www.bluegartr.com/threads/114636-Monster-Avatar-Pet-damage
     -- If there are penalties they seem to be applied differently similarly to monsters.
-    local hitrateFirst      = 0 -- First hit gets a +100 ACC bonus which translates to +50 hit
-    local hitrateSubsequent = 0
     local levelDiff         = math.min(avatar:getMainLvl() - target:getMainLvl(), 38) -- Max level diff is 38
     local levelCorrection   = 0
 
@@ -148,8 +141,8 @@ xi.summon.avatarPhysicalMove = function(avatar, target, skill, numberofhits, acc
     local dAcc = math.floor((acc - eva) / 2)
 
     -- Normal hits computed first
-    hitrateSubsequent = 75 + dAcc + levelCorrection
-    hitrateFirst      = hitrateSubsequent + 50 -- First hit gets bonus hit rate
+    local hitrateSubsequent = 75 + dAcc + levelCorrection
+    local hitrateFirst      = hitrateSubsequent + 50 -- First hit gets a +100 ACC bonus which translates to +50 hit
     hitrateSubsequent = hitrateSubsequent / 100
     hitrateFirst      = hitrateFirst / 100
     hitrateSubsequent = utils.clamp(hitrateSubsequent, minHitRate, maxHitRate)
@@ -268,17 +261,30 @@ local attackTypeShields =
 }
 
 xi.summon.avatarFinalAdjustments = function(dmg, mob, skill, target, skilltype, damagetype, shadowbehav)
+    local missMessage = xi.msg.basic.SKILL_MISS
+    if mob:getCurrentAction() == xi.action.PET_MOBABILITY_FINISH then
+        missMessage = xi.msg.basic.JA_MISS_2
+    end
+
     -- Physical Attack Missed
     if
         skilltype == xi.attackType.PHYSICAL and
         dmg == 0
     then
+        skill:setMsg(missMessage)
+
         return 0
     end
 
     -- set message to damage
     -- this is for AoE because its only set once
-    skill:setMsg(xi.msg.basic.DAMAGE)
+    if mob:getCurrentAction() == xi.action.PET_MOBABILITY_FINISH then
+        if skill:getMsg() ~= xi.msg.basic.JA_MAGIC_BURST then
+            skill:setMsg(xi.msg.basic.USES_JA_TAKE_DAMAGE)
+        end
+    else
+        skill:setMsg(xi.msg.basic.DAMAGE)
+    end
 
     -- Handle shadows depending on shadow behaviour / skilltype
     dmg = utils.takeShadows(target, dmg, shadowbehav)
@@ -332,10 +338,12 @@ xi.summon.avatarFinalAdjustments = function(dmg, mob, skill, target, skilltype, 
 
     -- handle pd
     if
-        target:hasStatusEffect(xi.effect.PERFECT_DODGE) or
-        target:hasStatusEffect(xi.effect.ALL_MISS) and
+        (target:hasStatusEffect(xi.effect.PERFECT_DODGE) or
+        target:hasStatusEffect(xi.effect.ALL_MISS)) and
         skilltype == xi.attackType.PHYSICAL
     then
+        skill:setMsg(missMessage)
+
         return 0
     end
 

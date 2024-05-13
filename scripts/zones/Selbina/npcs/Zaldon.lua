@@ -5,11 +5,6 @@
 -- Starts and Finishes: Inside the Belly
 -- !pos -13 -7 -5 248
 -----------------------------------
-local ID = require("scripts/zones/Selbina/IDs")
-require("scripts/globals/npc_util")
-require("scripts/globals/quests")
-require("scripts/globals/titles")
------------------------------------
 local entity = {}
 
 -- data from http://wiki.ffxiclopedia.org/wiki/Inside_the_Belly
@@ -502,8 +497,8 @@ local fishRewards =
 }
 
 local function tradeFish(player, fishId)
-    player:setCharVar("insideBellyFishId", fishId)
-    player:setCharVar("insideBellyItemIdx", 0)
+    player:setCharVar('insideBellyFishId', fishId)
+    player:setCharVar('insideBellyItemIdx', 0)
 
     local rewards = fishRewards[fishId].items
     local roll    = math.random(1, 1000) / 10
@@ -514,27 +509,27 @@ local function tradeFish(player, fishId)
         sum = sum + rewards[i].chance
         if roll <= sum then
             found = true
-            player:setCharVar("insideBellyItemIdx", i)
+            player:setCharVar('insideBellyItemIdx', i)
 
             -- NOTE: We confirm the trade now, and not at the end of the cutscene as normal
             --     : because the cutscene gives away whether or not the trade was successful
             --     : or not, and it's possible for players to cheese this trade by force-dc-ing.
             player:confirmTrade()
-
             player:startEvent(166, 0, rewards[i].itemId)
             break
         end
     end
 
     if not found then
+        player:confirmTrade()
         player:startEvent(167)
     end
 end
 
 local function giveReward(player, csid)
     if csid == 166 or csid == 167 then
-        local fishId  = player:getCharVar("insideBellyFishId")
-        local itemIdx = player:getCharVar("insideBellyItemIdx")
+        local fishId  = player:getCharVar('insideBellyFishId')
+        local itemIdx = player:getCharVar('insideBellyItemIdx')
         local reward  = fishRewards[fishId]
         local traded  = true
 
@@ -553,10 +548,10 @@ local function giveReward(player, csid)
 
         if traded then
             npcUtil.giveCurrency(player, 'gil', reward.gil)
-            player:setCharVar("insideBellyFishId", 0)
-            player:setCharVar("insideBellyItemIdx", 0)
-            if player:getQuestStatus(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.INSIDE_THE_BELLY) == QUEST_ACCEPTED then
-                player:completeQuest(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.INSIDE_THE_BELLY)
+            player:setCharVar('insideBellyFishId', 0)
+            player:setCharVar('insideBellyItemIdx', 0)
+            if player:getQuestStatus(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.INSIDE_THE_BELLY) == xi.questStatus.QUEST_ACCEPTED then
+                player:completeQuest(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.INSIDE_THE_BELLY)
             end
 
             if reward.title ~= nil then
@@ -567,14 +562,14 @@ local function giveReward(player, csid)
 end
 
 entity.onTrade = function(player, npc, trade)
-    local underTheSea    = player:getQuestStatus(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.UNDER_THE_SEA)
-    local insideTheBelly = player:getQuestStatus(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.INSIDE_THE_BELLY)
+    local underTheSea    = player:getQuestStatus(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.UNDER_THE_SEA)
+    local insideTheBelly = player:getQuestStatus(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.INSIDE_THE_BELLY)
 
     -- UNDER THE SEA
     if
-        underTheSea == QUEST_ACCEPTED and
+        underTheSea == xi.questStatus.QUEST_ACCEPTED and
         not player:hasKeyItem(xi.ki.ETCHED_RING) and
-        npcUtil.tradeHas(trade, xi.items.FAT_GREEDIE)
+        npcUtil.tradeHas(trade, xi.item.FAT_GREEDIE)
     then
         if math.random(1, 100) <= 20 then
             player:startEvent(35) -- Ring found !
@@ -584,13 +579,16 @@ entity.onTrade = function(player, npc, trade)
 
     -- A BOY'S DREAM
     elseif
-        player:getCharVar("aBoysDreamCS") == 5 and
-        npcUtil.tradeHasExactly(trade, xi.items.ODONTOTYRANNUS)
+        player:getCharVar('aBoysDreamCS') == 5 and
+        npcUtil.tradeHasExactly(trade, xi.item.ODONTOTYRANNUS)
     then
         player:startEvent(85)
 
     -- INSIDE THE BELLY
-    elseif insideTheBelly == QUEST_ACCEPTED or insideTheBelly == QUEST_COMPLETED then
+    elseif
+        insideTheBelly == xi.questStatus.QUEST_ACCEPTED or
+        insideTheBelly == xi.questStatus.QUEST_COMPLETED
+    then
         for fish, v in pairs(fishRewards) do
             if npcUtil.tradeHas(trade, fish) then
                 tradeFish(player, fish)
@@ -603,42 +601,42 @@ end
 entity.onTrigger = function(player, npc)
     -- TODO: once fishing skill is implemented, replace all these mLvl checks with player:getSkillLevel(xi.skill.FISHING)
 
-    local theRealGift    = player:getQuestStatus(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.THE_REAL_GIFT)
-    local insideTheBelly = player:getQuestStatus(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.INSIDE_THE_BELLY)
+    local theRealGift    = player:getQuestStatus(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.THE_REAL_GIFT)
+    local insideTheBelly = player:getQuestStatus(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.INSIDE_THE_BELLY)
     local mLvl           = player:getMainLvl()
 
     -- UNDER THE SEA
-    if player:getCharVar("underTheSeaVar") == 3 then
-        player:startEvent(34, 4501) -- During quest "Under the sea" - 3rd dialog
+    if player:getCharVar('underTheSeaVar') == 3 then
+        player:startEvent(34, 4501) -- During quest 'Under the sea' - 3rd dialog
 
     -- INSIDE THE BELLY
     elseif
         mLvl >= 30 and
-        theRealGift == QUEST_COMPLETED and
-        insideTheBelly == QUEST_AVAILABLE
+        theRealGift == xi.questStatus.QUEST_COMPLETED and
+        insideTheBelly == xi.questStatus.QUEST_AVAILABLE
     then
         player:startEvent(161)
     elseif
         mLvl >= 30 and
         mLvl < 39 and
-        (insideTheBelly == QUEST_ACCEPTED or insideTheBelly == QUEST_COMPLETED)
+        (insideTheBelly == xi.questStatus.QUEST_ACCEPTED or insideTheBelly == xi.questStatus.QUEST_COMPLETED)
     then
         player:startEvent(162, 5799, 4481, 5802, 4428)
     elseif
         mLvl >= 40 and
         mLvl < 49 and
-        (insideTheBelly == QUEST_ACCEPTED or insideTheBelly == QUEST_COMPLETED)
+        (insideTheBelly == xi.questStatus.QUEST_ACCEPTED or insideTheBelly == xi.questStatus.QUEST_COMPLETED)
     then
         player:startEvent(163, 5805, 4385, 5800, 5802, 5450) -- 5802(Istavrit) is skill cap 41, and therefore is used in this and the previous csid
     elseif
         mLvl >= 50 and
         mLvl <= 74 and
-        (insideTheBelly == QUEST_ACCEPTED or insideTheBelly == QUEST_COMPLETED)
+        (insideTheBelly == xi.questStatus.QUEST_ACCEPTED or insideTheBelly == xi.questStatus.QUEST_COMPLETED)
     then
         player:startEvent(164, 5806, 5451, 5801, 5804, 5807, 5135)
     elseif
         mLvl >= 75 and
-        (insideTheBelly == QUEST_ACCEPTED or insideTheBelly == QUEST_COMPLETED)
+        (insideTheBelly == xi.questStatus.QUEST_ACCEPTED or insideTheBelly == xi.questStatus.QUEST_COMPLETED)
     then
         player:startEvent(165, 4451, 4477, 5803, 4307, 4478, 5467, 4304, 4474)
 
@@ -654,7 +652,7 @@ end
 entity.onEventFinish = function(player, csid, option, npc)
     -- UNDER THE SEA
     if csid == 34 then
-        player:setCharVar("underTheSeaVar", 4)
+        player:setCharVar('underTheSeaVar', 4)
     elseif csid == 35 then
         npcUtil.giveKeyItem(player, xi.ki.ETCHED_RING)
         player:confirmTrade()
@@ -664,12 +662,12 @@ entity.onEventFinish = function(player, csid, option, npc)
     -- A BOY'S DREAM
     elseif csid == 85 then
         npcUtil.giveKeyItem(player, xi.ki.KNIGHTS_BOOTS)
-        player:setCharVar("aBoysDreamCS", 6)
+        player:setCharVar('aBoysDreamCS', 6)
         player:confirmTrade()
 
     -- INSIDE THE BELLY
     elseif csid == 161 then
-        player:addQuest(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.INSIDE_THE_BELLY)
+        player:addQuest(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.INSIDE_THE_BELLY)
     elseif csid == 166 or csid == 167 then
         giveReward(player, csid)
     end

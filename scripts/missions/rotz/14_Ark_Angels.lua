@@ -12,11 +12,6 @@
 -- qm1_4 : !pos 235.650 -173.572 361.266 180
 -- qm1_5 : !pos 555.998 -38.205 520.627 180
 -----------------------------------
-require('scripts/globals/interaction/mission')
-require('scripts/globals/missions')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
------------------------------------
 
 local mission = Mission:new(xi.mission.log_id.ZILART, xi.mission.id.zilart.ARK_ANGELS)
 
@@ -90,7 +85,7 @@ mission.sections =
                             npcUtil.giveKeyItem(player, keyItemId)
                         end
 
-                        if player:getQuestStatus(xi.quest.log_id.OUTLANDS, xi.quest.id.outlands.DIVINE_MIGHT) == QUEST_ACCEPTED then
+                        if player:getQuestStatus(xi.questLog.OUTLANDS, xi.quest.id.outlands.DIVINE_MIGHT) == xi.questStatus.QUEST_ACCEPTED then
                             player:setCharVar('DivineMight', 2)
                         end
                     end

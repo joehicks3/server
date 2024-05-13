@@ -1,9 +1,6 @@
 -----------------------------------
 -- Area: Cape_Teriggan
 -----------------------------------
-require("scripts/globals/zone")
------------------------------------
-
 zones = zones or {}
 
 zones[xi.zone.CAPE_TERIGGAN] =
@@ -24,28 +21,28 @@ zones[xi.zone.CAPE_TERIGGAN] =
         LOGIN_CAMPAIGN_UNDERWAY       = 7002,  -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
         LOGIN_NUMBER                  = 7003,  -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
         MEMBERS_LEVELS_ARE_RESTRICTED = 7023,  -- Your party is unable to participate because certain members' levels are restricted.
-        CONQUEST_BASE                 = 7060,  -- Tallying conquest results...
-        BEASTMEN_BANNER               = 7141,  -- There is a beastmen's banner.
-        CONQUEST                      = 7228,  -- You've earned conquest points!
-        FISHING_MESSAGE_OFFSET        = 7561,  -- You can't fish here.
-        SOMETHING_BETTER              = 7673,  -- Don't you have something better to do right now?
-        CANNOT_REMOVE_FRAG            = 7676,  -- It is an oddly shaped stone monument. A shining stone is embedded in it, but cannot be removed...
-        ALREADY_OBTAINED_FRAG         = 7677,  -- You have already obtained this monument's <keyitem>. Try searching for another.
-        FOUND_ALL_FRAGS               = 7678,  -- You have obtained all of the fragments. You must hurry to the ruins of the ancient shrine!
-        ZILART_MONUMENT               = 7680,  -- It is an ancient Zilart monument.
-        MUST_BE_A_WAY_TO_SOOTHE       = 7688,  -- There must be a way to soothe the weary soul who once guarded this monument...
-        COLD_WIND_CHILLS_YOU          = 7695,  -- A cold wind chills you to the bone.
-        SENSE_OMINOUS_PRESENCE        = 7697,  -- You sense an ominous presence...
-        GARRISON_BASE                 = 7884,  -- Hm? What is this? %? How do I know this is not some [San d'Orian/Bastokan/Windurstian] trick?
-        PLAYER_OBTAINS_ITEM           = 7931,  -- <name> obtains <item>!
-        UNABLE_TO_OBTAIN_ITEM         = 7932,  -- You were unable to obtain the item.
-        PLAYER_OBTAINS_TEMP_ITEM      = 7933,  -- <name> obtains the temporary item: <item>!
-        ALREADY_POSSESS_TEMP          = 7934,  -- You already possess that temporary item.
-        NO_COMBINATION                = 7939,  -- You were unable to enter a combination.
-        UNITY_WANTED_BATTLE_INTERACT  = 8001,  -- Those who have accepted % must pay # Unity accolades to participate. The content for this Wanted battle is #. [Ready to begin?/You do not have the appropriate object set, so your rewards will be limited.]
-        REGIME_REGISTERED             = 10117, -- New training regime registered!
-        COMMON_SENSE_SURVIVAL         = 11236, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
-        HOMEPOINT_SET                 = 11264, -- Home point set!
+        CONQUEST_BASE                 = 7064,  -- Tallying conquest results...
+        BEASTMEN_BANNER               = 7145,  -- There is a beastmen's banner.
+        CONQUEST                      = 7232,  -- You've earned conquest points!
+        FISHING_MESSAGE_OFFSET        = 7565,  -- You can't fish here.
+        SOMETHING_BETTER              = 7677,  -- Don't you have something better to do right now?
+        CANNOT_REMOVE_FRAG            = 7680,  -- It is an oddly shaped stone monument. A shining stone is embedded in it, but cannot be removed...
+        ALREADY_OBTAINED_FRAG         = 7681,  -- You have already obtained this monument's <keyitem>. Try searching for another.
+        FOUND_ALL_FRAGS               = 7682,  -- You have obtained all of the fragments. You must hurry to the ruins of the ancient shrine!
+        ZILART_MONUMENT               = 7684,  -- It is an ancient Zilart monument.
+        MUST_BE_A_WAY_TO_SOOTHE       = 7692,  -- There must be a way to soothe the weary soul who once guarded this monument...
+        COLD_WIND_CHILLS_YOU          = 7699,  -- A cold wind chills you to the bone.
+        SENSE_OMINOUS_PRESENCE        = 7701,  -- You sense an ominous presence...
+        GARRISON_BASE                 = 7888,  -- Hm? What is this? %? How do I know this is not some [San d'Orian/Bastokan/Windurstian] trick?
+        PLAYER_OBTAINS_ITEM           = 7935,  -- <name> obtains <item>!
+        UNABLE_TO_OBTAIN_ITEM         = 7936,  -- You were unable to obtain the item.
+        PLAYER_OBTAINS_TEMP_ITEM      = 7937,  -- <name> obtains the temporary item: <item>!
+        ALREADY_POSSESS_TEMP          = 7938,  -- You already possess that temporary item.
+        NO_COMBINATION                = 7943,  -- You were unable to enter a combination.
+        UNITY_WANTED_BATTLE_INTERACT  = 8005,  -- Those who have accepted % must pay # Unity accolades to participate. The content for this Wanted battle is #. [Ready to begin?/You do not have the appropriate object set, so your rewards will be limited.]
+        REGIME_REGISTERED             = 10121, -- New training regime registered!
+        COMMON_SENSE_SURVIVAL         = 11240, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
+        HOMEPOINT_SET                 = 11268, -- Home point set!
     },
     mob =
     {
@@ -59,11 +56,12 @@ zones[xi.zone.CAPE_TERIGGAN] =
         KREUTZET               = 17240413,
         AXESARION_THE_WANDERER = 17240414,
         STOLAS                 = 17240424,
+        ZMEY_GORYNYCH          = GetFirstID('Zmey_Gorynych')
     },
     npc =
     {
         OVERSEER_BASE    = GetFirstID('Salimardi_RK'),
-        CERMET_HEADSTONE = 17240497,
+        CERMET_HEADSTONE = 17240498,
     },
 }
 

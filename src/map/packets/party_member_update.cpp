@@ -64,7 +64,7 @@ CPartyMemberUpdatePacket::CPartyMemberUpdatePacket(CCharEntity* PChar, uint8 Mem
         ref<uint8>(0x1D)  = PChar->GetHPP();
         ref<uint8>(0x1E)  = PChar->GetMPP();
 
-        if (!(PChar->nameflags.flags & FLAG_ANON))
+        if (!PChar->isAnon())
         {
             ref<uint8>(0x22) = PChar->GetMJob();
             ref<uint8>(0x23) = PChar->GetMLevel();
@@ -73,7 +73,7 @@ CPartyMemberUpdatePacket::CPartyMemberUpdatePacket(CCharEntity* PChar, uint8 Mem
         }
     }
 
-    memcpy(data + (0x28), PChar->GetName().c_str(), PChar->GetName().size());
+    memcpy(data + (0x28), PChar->getName().c_str(), PChar->getName().size());
 }
 
 CPartyMemberUpdatePacket::CPartyMemberUpdatePacket(CTrustEntity* PTrust, uint8 MemberNumber)

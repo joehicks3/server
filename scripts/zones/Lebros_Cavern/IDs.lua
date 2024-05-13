@@ -1,10 +1,6 @@
 -----------------------------------
 -- Area: Lebros_Cavern
 -----------------------------------
-require("scripts/globals/assault")
-require("scripts/globals/zone")
------------------------------------
-
 zones = zones or {}
 
 zones[xi.zone.LEBROS_CAVERN] =
@@ -24,16 +20,16 @@ zones[xi.zone.LEBROS_CAVERN] =
         LOGIN_CAMPAIGN_UNDERWAY       = 7002, -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
         LOGIN_NUMBER                  = 7003, -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
         MEMBERS_LEVELS_ARE_RESTRICTED = 7023, -- Your party is unable to participate because certain members' levels are restricted.
-        TEMP_ITEM                     = 7218, -- Obtained temporary item: <item>!
-        PLAYER_OBTAINS_ITEM           = 7219, -- <name> obtains <item>!
-        ASSAULT_START_OFFSET          = 7354, -- Max MP Down removed for <name>.
-        TIME_TO_COMPLETE              = 7415, -- You have <number> [minute/minutes] (Earth time) to complete this mission.
-        MISSION_FAILED                = 7416, -- The mission has failed. Leaving area.
-        RUNE_UNLOCKED_POS             = 7417, -- ission objective completed. Unlocking Rune of Release ([A/B/C/D/E/F/G/H/I/J/K/L/M/N/O/P/Q/R/S/T/U/V/W/X/Y/Z]-#).
-        ASSAULT_POINTS_OBTAINED       = 7419, -- You gain <number> [Assault point/Assault points]!
-        TIME_REMAINING_MINUTES        = 7420, -- ime remaining: <number> [minute/minutes] (Earth time).
-        TIME_REMAINING_SECONDS        = 7421, -- ime remaining: <number> [second/seconds] (Earth time).
-        PARTY_FALLEN                  = 7423, -- ll party members have fallen in battle. Mission failure in <number> [minute/minutes].
+        TEMP_ITEM                     = 7222, -- Obtained temporary item: <item>!
+        PLAYER_OBTAINS_ITEM           = 7223, -- <name> obtains <item>!
+        ASSAULT_START_OFFSET          = 7358, -- Max MP Down removed for <name>.
+        TIME_TO_COMPLETE              = 7419, -- You have <number> [minute/minutes] (Earth time) to complete this mission.
+        MISSION_FAILED                = 7420, -- The mission has failed. Leaving area.
+        RUNE_UNLOCKED_POS             = 7421, -- ission objective completed. Unlocking Rune of Release ([A/B/C/D/E/F/G/H/I/J/K/L/M/N/O/P/Q/R/S/T/U/V/W/X/Y/Z]-#).
+        ASSAULT_POINTS_OBTAINED       = 7423, -- You gain <number> [Assault point/Assault points]!
+        TIME_REMAINING_MINUTES        = 7424, -- ime remaining: <number> [minute/minutes] (Earth time).
+        TIME_REMAINING_SECONDS        = 7425, -- ime remaining: <number> [second/seconds] (Earth time).
+        PARTY_FALLEN                  = 7427, -- ll party members have fallen in battle. Mission failure in <number> [minute/minutes].
     },
 
     mob =
@@ -75,13 +71,13 @@ zones[xi.zone.LEBROS_CAVERN] =
 
     npc =
     {
-        ANCIENT_LOCKBOX = 17035478,
-        RUNE_OF_RELEASE = 17035479,
-        _1rx            = 17035537,
-        _1ry            = 17035538,
-        _1rz            = 17035539,
-        _jr0            = 17035540,
-        _jr1            = 17035541,
+        ANCIENT_LOCKBOX = GetFirstID('Ancient_Lockbox'),
+        RUNE_OF_RELEASE = GetFirstID('Rune_of_Release'),
+        _1rx            = GetFirstID('_1rx'),
+        _1ry            = GetFirstID('_1ry'),
+        _1rz            = GetFirstID('_1rz'),
+        _jr0            = GetFirstID('_jr0'),
+        _jr1            = GetFirstID('_jr1'),
     }
 }
 

@@ -3,11 +3,19 @@
 --  Mob: Lagoon Sahagin
 -- Note: PH for Yarr the Pearleyed and Novv the Whitehearted
 -----------------------------------
-local ID = require("scripts/zones/Sea_Serpent_Grotto/IDs")
-require("scripts/globals/regimes")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.SEA_SERPENT_GROTTO]
 -----------------------------------
 local entity = {}
+
+local yarrPHTable =
+{
+    [ID.mob.YARR_THE_PEARLEYED - 2] = ID.mob.YARR_THE_PEARLEYED, -- 1.654 19.914 -113.913
+}
+
+local novvPHTable =
+{
+    [ID.mob.NOVV_THE_WHITEHEARTED - 1] = ID.mob.NOVV_THE_WHITEHEARTED,
+}
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 806, 1, xi.regime.type.GROUNDS)
@@ -16,8 +24,8 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.YARR_THE_PEARLEYED_PH, 10, 3600) -- 1 hour
-    xi.mob.phOnDespawn(mob, ID.mob.NOVV_THE_WHITEHEARTED_PH, 10, 7200) -- 2 hours
+    xi.mob.phOnDespawn(mob, yarrPHTable, 10, 3600) -- 1 hour
+    xi.mob.phOnDespawn(mob, novvPHTable, 10, 7200) -- 2 hours
 end
 
 return entity

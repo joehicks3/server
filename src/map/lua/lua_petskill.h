@@ -52,6 +52,12 @@ public:
     void   setMsg(uint16 message);
     uint16 getMsg();
     uint16 getTotalTargets();
+    uint32 getPrimaryTargetID();
+
+    bool operator==(const CLuaPetSkill& other) const
+    {
+        return this->m_PLuaPetSkill == other.m_PLuaPetSkill;
+    }
 
     static void Register();
 };

@@ -7,20 +7,15 @@
 -- Outpost Gate : !pos 473.566 23.421 413.134 109
 -- qm           : !pos -39.370 -11.093 307.285 105
 -----------------------------------
-require('scripts/globals/missions')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local batalliaID = require('scripts/zones/Batallia_Downs/IDs')
+local batalliaID = zones[xi.zone.BATALLIA_DOWNS]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.A_CHOCOBOS_TALE)
+local quest = Quest:new(xi.questLog.JEUNO, xi.quest.id.jeuno.A_CHOCOBOS_TALE)
 
 quest.reward =
 {
     fame     = 30,
-    fameArea = xi.quest.fame_area.JEUNO,
+    fameArea = xi.fameArea.JEUNO,
     gil      = 5200,
     title    = xi.title.CHOCOBO_LOVE_GURU,
 }
@@ -51,7 +46,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 player:hasCompletedMission(xi.mission.log_id.COP, xi.mission.id.cop.A_VESSEL_WITHOUT_A_CAPTAIN)
         end,
 
@@ -70,7 +65,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.UPPER_JEUNO] =
@@ -108,7 +103,7 @@ quest.sections =
                     elseif questProgress <= 2 then
                         return quest:event(246)
                     elseif questProgress == 3 then
-                        return quest:progressEvent(247, 0, xi.items.BOTTLE_OF_WARDING_OIL)
+                        return quest:progressEvent(247, 0, xi.item.BOTTLE_OF_WARDING_OIL)
                     else
                         return quest:event(248)
                     end
@@ -133,7 +128,7 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, { { xi.items.BOTTLE_OF_WARDING_OIL, 3 } }) and
+                        npcUtil.tradeHasExactly(trade, { { xi.item.BOTTLE_OF_WARDING_OIL, 3 } }) and
                         quest:getVar(player, 'Prog') == 2
                     then
                         return quest:progressEvent(22)
@@ -144,7 +139,7 @@ quest.sections =
                     -- TODO: The followup after CS 21 may be different, and needs capture.
 
                     if quest:getVar(player, 'Prog') == 1 then
-                        return quest:progressEvent(21, 0, xi.items.BOTTLE_OF_WARDING_OIL)
+                        return quest:progressEvent(21, 0, xi.item.BOTTLE_OF_WARDING_OIL)
                     end
                 end,
             },
@@ -201,7 +196,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.UPPER_JEUNO] =

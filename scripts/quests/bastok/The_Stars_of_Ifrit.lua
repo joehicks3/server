@@ -5,19 +5,13 @@
 -- Agapito : !pos -72.093 -3.097 9.309 236
 -- qm1     : !pos -9 -5 -13 223
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.THE_STARS_OF_IFRIT)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.THE_STARS_OF_IFRIT)
 
 quest.reward =
 {
     fame     = 100,
-    fameArea = xi.quest.fame_area.BASTOK,
+    fameArea = xi.fameArea.BASTOK,
     gil      = 2100,
     title    = xi.title.STAR_OF_IFRIT,
 }
@@ -26,9 +20,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 player:hasKeyItem(xi.ki.AIRSHIP_PASS) and
-                player:getFameLevel(xi.quest.fame_area.BASTOK) >= 3
+                player:getFameLevel(xi.fameArea.BASTOK) >= 3
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -46,7 +40,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.PORT_BASTOK] =

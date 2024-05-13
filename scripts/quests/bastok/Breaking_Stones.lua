@@ -5,26 +5,22 @@
 -- Horatius : !pos -158 -6 -117 235
 -- qm2      : !pos -120.041 2.621 415.989 191
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.BREAKING_STONES)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.BREAKING_STONES)
 
 quest.reward =
 {
     gil      = 400,
     fame     = 30,
-    fameArea = xi.quest.fame_area.BASTOK,
+    fameArea = xi.fameArea.BASTOK,
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getFameLevel(xi.quest.fame_area.BASTOK) >= 2
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getFameLevel(xi.fameArea.BASTOK) >= 2
         end,
 
         [xi.zone.BASTOK_MARKETS] =
@@ -44,7 +40,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status >= QUEST_ACCEPTED
+            return status >= xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.BASTOK_MARKETS] =
@@ -52,7 +48,7 @@ quest.sections =
             ['Horatius'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.DANGRUF_STONE) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.DANGRUF_STONE) then
                         return quest:progressEvent(101)
                     end
                 end,

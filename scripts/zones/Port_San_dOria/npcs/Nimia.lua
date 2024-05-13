@@ -3,8 +3,7 @@
 --  NPC: Nimia
 -- Elshimo Lowlands Regional Merchant
 -----------------------------------
-local ID = require("scripts/zones/Port_San_dOria/IDs")
-require("scripts/globals/shop")
+local ID = zones[xi.zone.PORT_SAN_DORIA]
 -----------------------------------
 local entity = {}
 
@@ -27,7 +26,7 @@ entity.onTrigger = function(player, npc)
         }
 
         player:showText(npc, ID.text.NIMIA_OPEN_DIALOG)
-        xi.shop.general(player, stock, xi.quest.fame_area.SANDORIA)
+        xi.shop.general(player, stock, xi.fameArea.SANDORIA)
     end
 end
 

@@ -3,11 +3,14 @@
 --  Mob: Giant Trapper
 -- Note: PH for Slippery Sucker
 -----------------------------------
-local ID = require("scripts/zones/Qufim_Island/IDs")
-require("scripts/globals/regimes")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.QUFIM_ISLAND]
 -----------------------------------
 local entity = {}
+
+local slipperyPHTable =
+{
+    [ID.mob.SLIPPERY_SUCKER - 11] = ID.mob.SLIPPERY_SUCKER, -- trapper
+}
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 44, 1, xi.regime.type.FIELDS)
@@ -15,7 +18,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.SLIPPERY_SUCKER_PH, 10, 600) -- 10 minutes
+    xi.mob.phOnDespawn(mob, slipperyPHTable, 10, 600) -- 10 minutes
 end
 
 return entity

@@ -5,18 +5,13 @@
 -- High Bear    : !pos 25.231 -14.999 4.552 237
 -- qm1 (for KI) : !pos -58.873 1.026 -116.665 147
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.BEADEAUX_SMOG)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.BEADEAUX_SMOG)
 
 quest.reward =
 {
     fame = 30,
-    fameArea = xi.quest.fame_area.BASTOK,
+    fameArea = xi.fameArea.BASTOK,
     title = xi.title.BEADEAUX_SURVEYOR,
 }
 
@@ -25,7 +20,7 @@ quest.sections =
     -- Section: Quest available
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and player:getFameLevel(xi.quest.fame_area.BASTOK) >= 4
+            return status == xi.questStatus.QUEST_AVAILABLE and player:getFameLevel(xi.fameArea.BASTOK) >= 4
         end,
 
         [xi.zone.METALWORKS] =
@@ -44,7 +39,7 @@ quest.sections =
     -- Section: Quest accepted
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and not player:hasKeyItem(xi.keyItem.CORRUPTED_DIRT)
+            return status == xi.questStatus.QUEST_ACCEPTED and not player:hasKeyItem(xi.keyItem.CORRUPTED_DIRT)
         end,
 
         -- While the quest is accepted, High Bear uses his default text
@@ -63,7 +58,7 @@ quest.sections =
     -- Section: Hand in quest
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and player:hasKeyItem(xi.keyItem.CORRUPTED_DIRT)
+            return status == xi.questStatus.QUEST_ACCEPTED and player:hasKeyItem(xi.keyItem.CORRUPTED_DIRT)
         end,
 
         [xi.zone.METALWORKS] =
@@ -73,7 +68,7 @@ quest.sections =
             onEventFinish =
             {
                 [732] = function(player, csid, option, npc)
-                    if npcUtil.giveItem(player, xi.items.CHAKRAM) then
+                    if npcUtil.giveItem(player, xi.item.CHAKRAM) then
                         quest:complete(player)
                     end
                 end,

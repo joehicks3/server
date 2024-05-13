@@ -4,19 +4,13 @@
 -- Log ID: 3, Quest ID: 3
 -- Derrick : !pos -32 -1 -7 245
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.SAVE_THE_CLOCK_TOWER)
+local quest = Quest:new(xi.questLog.JEUNO, xi.quest.id.jeuno.SAVE_THE_CLOCK_TOWER)
 
 quest.reward =
 {
     fame     = 30,
-    fameArea = xi.quest.fame_area.JEUNO,
+    fameArea = xi.fameArea.JEUNO,
     title    = xi.title.CLOCK_TOWER_PRESERVATIONIST,
 }
 
@@ -38,7 +32,7 @@ local petitionOnTrade = function(player, npc, trade)
     local npcData = petitionNpcData[npc:getName()]
 
     if
-        npcUtil.tradeHasExactly(trade, xi.items.CLOCK_TOWER_PETITION) and
+        npcUtil.tradeHasExactly(trade, xi.item.CLOCK_TOWER_PETITION) and
         not quest:isVarBitsSet(player, 'Prog', npcData[1])
     then
         return quest:progressEvent(npcData[2], 9 - utils.mask.countBits(quest:getVar(player, 'Prog')))
@@ -58,9 +52,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.A_CLOCK_MOST_DELICATE) and
-                player:getFameLevel(xi.quest.fame_area.JEUNO) >= 5
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.JEUNO, xi.quest.id.jeuno.A_CLOCK_MOST_DELICATE) and
+                player:getFameLevel(xi.fameArea.JEUNO) >= 5
         end,
 
         [xi.zone.LOWER_JEUNO] =
@@ -79,7 +73,7 @@ quest.sections =
                 [230] = function(player, csid, option, npc)
                     if
                         option == 20 and
-                        npcUtil.giveItem(player, xi.items.CLOCK_TOWER_PETITION)
+                        npcUtil.giveItem(player, xi.item.CLOCK_TOWER_PETITION)
                     then
                         quest:begin(player)
                     end
@@ -95,7 +89,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.LOWER_JEUNO] =
@@ -104,7 +98,7 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.items.CLOCK_TOWER_PETITION) and
+                        npcUtil.tradeHasExactly(trade, xi.item.CLOCK_TOWER_PETITION) and
                         utils.mask.countBits(quest:getVar(player, 'Prog')) == 10
                     then
                         return quest:progressEvent(231)
@@ -132,7 +126,7 @@ quest.sections =
 
                     if
                         option == 30 and
-                        npcUtil.giveItem(player, xi.items.CLOCK_TOWER_PETITION)
+                        npcUtil.giveItem(player, xi.item.CLOCK_TOWER_PETITION)
                     then
                         quest:setVar(player, 'Prog', 0)
                     end
@@ -194,7 +188,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.UPPER_JEUNO] =

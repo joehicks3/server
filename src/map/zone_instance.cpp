@@ -25,13 +25,8 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include "entities/charentity.h"
 #include "lua/luautils.h"
 #include "status_effect_container.h"
+#include "utils/charutils.h"
 #include "utils/zoneutils.h"
-
-/************************************************************************
- *                                                                       *
- *  Класс CZoneInstance                                                  *
- *                                                                       *
- ************************************************************************/
 
 CZoneInstance::CZoneInstance(ZONEID ZoneID, REGION_TYPE RegionID, CONTINENT_TYPE ContinentID, uint8 levelRestriction)
 : CZone(ZoneID, RegionID, ContinentID, levelRestriction)
@@ -196,13 +191,13 @@ void CZoneInstance::IncreaseZoneCounter(CCharEntity* PChar)
 
     if (PChar->loc.zone != nullptr)
     {
-        ShowWarning("Zone was not null for %s.", PChar->GetName());
+        ShowWarning("Zone was not null for %s.", PChar->getName());
         return;
     }
 
     if (PChar->PTreasurePool != nullptr)
     {
-        ShowWarning("PTreasurePool was not empty for %s.", PChar->GetName());
+        ShowWarning("PTreasurePool was not empty for %s.", PChar->getName());
         return;
     }
 
@@ -251,23 +246,34 @@ void CZoneInstance::IncreaseZoneCounter(CCharEntity* PChar)
     else
     {
         ShowWarning(fmt::format("Failed to place {} in {} ({}). Placing them in that zone's instance exit area.",
-                                PChar->name, this->GetName(), this->GetID())
+                                PChar->name, this->getName(), this->GetID())
                         .c_str());
 
         // instance no longer exists: put them outside (at exit)
-        PChar->loc.prevzone = GetID();
-
         uint16 zoneid = luautils::OnInstanceLoadFailed(this);
 
         CZone* PZone = zoneutils::GetZone(zoneid);
+        // At this stage, can only send the player to a zone on this map server
+        // reset position in the case of a zone crash while in an instance
+        PChar->loc.p.x = 0;
+        PChar->loc.p.y = 0;
+        PChar->loc.p.z = 0;
         if (PZone)
         {
             PZone->IncreaseZoneCounter(PChar);
         }
         else
         {
-            zoneutils::GetZone(PChar->loc.prevzone)->IncreaseZoneCounter(PChar);
+            // if we can't get the instance failed destination zone, get their previous zone
+            zoneid = PChar->loc.prevzone;
+            zoneutils::GetZone(zoneid)->IncreaseZoneCounter(PChar);
         }
+
+        // They are properly sent to zone, but bypassed the onZoneIn position fixup, do that now
+        PChar->loc.prevzone    = GetID();
+        PChar->loc.destination = zoneid;
+        luautils::OnZoneIn(PChar);
+        charutils::SaveCharPosition(PChar);
     }
 }
 
@@ -425,6 +431,46 @@ void CZoneInstance::ZoneServer(time_point tick)
             continue;
         }
         ++it;
+    }
+}
+
+void CZoneInstance::CheckTriggerAreas()
+{
+    TracyZoneScoped;
+
+    for (auto& instance : instanceList)
+    {
+        for (auto const& [targid, PEntity] : instance->m_charList)
+        {
+            auto* PChar = static_cast<CCharEntity*>(PEntity);
+
+            // TODO: When we start to use octrees or spatial hashing to split up zones,
+            //     : use them here to make the search domain smaller.
+
+            uint32 triggerAreaID = 0;
+            for (triggerAreaList_t::const_iterator triggerAreaItr = m_triggerAreaList.begin(); triggerAreaItr != m_triggerAreaList.end(); ++triggerAreaItr)
+            {
+                if ((*triggerAreaItr)->isPointInside(PChar->loc.p))
+                {
+                    triggerAreaID = (*triggerAreaItr)->GetTriggerAreaID();
+
+                    if ((*triggerAreaItr)->GetTriggerAreaID() != PChar->m_InsideTriggerAreaID)
+                    {
+                        luautils::OnTriggerAreaEnter(PChar, *triggerAreaItr);
+                    }
+
+                    if (PChar->m_InsideTriggerAreaID == 0)
+                    {
+                        break;
+                    }
+                }
+                else if ((*triggerAreaItr)->GetTriggerAreaID() == PChar->m_InsideTriggerAreaID)
+                {
+                    luautils::OnTriggerAreaLeave(PChar, *triggerAreaItr);
+                }
+            }
+            PChar->m_InsideTriggerAreaID = triggerAreaID;
+        }
     }
 }
 

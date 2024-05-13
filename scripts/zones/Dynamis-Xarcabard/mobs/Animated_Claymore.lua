@@ -2,11 +2,11 @@
 -- Area: Dynamis - Xarcabard
 --  Mob: Animated Claymore
 -----------------------------------
-local ID = require("scripts/zones/Dynamis-Xarcabard/IDs")
+local ID = zones[xi.zone.DYNAMIS_XARCABARD]
 -----------------------------------
 local entity = {}
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     target:showText(mob, ID.text.ANIMATED_CLAYMORE_DIALOG)
 end
 
@@ -20,6 +20,7 @@ end
 
 entity.onMobDeath = function(mob, player, optParams)
     player:showText(mob, ID.text.ANIMATED_CLAYMORE_DIALOG + 1)
+    xi.magian.onMobDeath(mob, player, optParams, set{ 3104 })
 end
 
 return entity

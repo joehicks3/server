@@ -24,6 +24,8 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include "ai/ai_container.h"
 #include "ai/helpers/targetfind.h"
 #include "ai/states/ability_state.h"
+#include "ai/states/attack_state.h"
+#include "ai/states/inactive_state.h"
 #include "ai/states/magic_state.h"
 #include "ai/states/weaponskill_state.h"
 #include "common/utils.h"
@@ -46,7 +48,7 @@ CMobController::CMobController(CMobEntity* PEntity)
 void CMobController::Tick(time_point tick)
 {
     TracyZoneScoped;
-    TracyZoneString(PMob->GetName());
+    TracyZoneString(PMob->getName());
 
     m_Tick = tick;
 
@@ -105,10 +107,10 @@ bool CMobController::CanPursueTarget(CBattleEntity* PTarget)
     if (PMob->getMobMod(MOBMOD_DETECTION) & DETECT_SCENT)
     {
         // if mob is in water it will instant deaggro if target cannot be detected
-        if (!PMob->PAI->PathFind->InWater() && !PTarget->StatusEffectContainer->HasStatusEffect(EFFECT_DEODORIZE))
+        if (!PMob->PAI->PathFind->InWater() && PTarget && !PTarget->StatusEffectContainer->HasStatusEffect(EFFECT_DEODORIZE))
         {
             // certain weather / deodorize will turn on time deaggro
-            return PMob->m_disableScent;
+            return !PMob->m_disableScent;
         }
     }
     return false;
@@ -117,9 +119,9 @@ bool CMobController::CanPursueTarget(CBattleEntity* PTarget)
 bool CMobController::CheckHide(CBattleEntity* PTarget)
 {
     TracyZoneScoped;
-    if (PTarget->GetMJob() == JOB_THF && PTarget->StatusEffectContainer->HasStatusEffect(EFFECT_HIDE))
+    if (PTarget && PTarget->GetMJob() == JOB_THF && PTarget->StatusEffectContainer->HasStatusEffect(EFFECT_HIDE))
     {
-        return !CanPursueTarget(PTarget) && !PMob->m_TrueDetection;
+        return !CanPursueTarget(PTarget) && !PMob->m_TrueDetection && !(PMob->getMobMod(MOBMOD_DETECTION) & DETECT_HEARING);
     }
     return false;
 }
@@ -127,27 +129,30 @@ bool CMobController::CheckHide(CBattleEntity* PTarget)
 bool CMobController::CheckLock(CBattleEntity* PTarget)
 {
     TracyZoneScoped;
-    if (PTarget->objtype == TYPE_PC)
+    if (PTarget)
     {
-        CCharEntity* PChar = dynamic_cast<CCharEntity*>(PTarget);
-        if (PChar->m_Locked)
+        if (PTarget->objtype == TYPE_PC)
         {
-            return !CanPursueTarget(PTarget);
+            CCharEntity* PChar = dynamic_cast<CCharEntity*>(PTarget);
+            if (PChar->m_Locked)
+            {
+                return !CanPursueTarget(PTarget);
+            }
         }
-    }
-    else if (PTarget->objtype == TYPE_PET)
-    {
-        CPetEntity*  PPet  = dynamic_cast<CPetEntity*>(PTarget);
-        CCharEntity* PChar = dynamic_cast<CCharEntity*>(PPet->PMaster);
-
-        if (PChar == nullptr)
+        else if (PTarget->objtype == TYPE_PET)
         {
-            return false;
-        }
+            CPetEntity*  PPet  = dynamic_cast<CPetEntity*>(PTarget);
+            CCharEntity* PChar = dynamic_cast<CCharEntity*>(PPet->PMaster);
 
-        if (PChar->m_Locked)
-        {
-            return !CanPursueTarget(PTarget);
+            if (PChar == nullptr)
+            {
+                return false;
+            }
+
+            if (PChar->m_Locked)
+            {
+                return !CanPursueTarget(PTarget);
+            }
         }
     }
     return false;
@@ -180,14 +185,25 @@ void CMobController::TryLink()
     {
         if (PTarget->PPet->objtype == TYPE_PET && ((CPetEntity*)PTarget->PPet)->getPetType() == PET_TYPE::AVATAR)
         {
-            petutils::AttackTarget(PTarget, PMob);
+            if (PTarget->objtype == TYPE_PC)
+            {
+                auto* PChar = dynamic_cast<CCharEntity*>(PTarget);
+                if (PChar && PChar->IsMobOwner(PMob))
+                {
+                    petutils::AttackTarget(PTarget, PMob);
+                }
+            }
+            else
+            {
+                petutils::AttackTarget(PTarget, PMob);
+            }
         }
     }
 
     // my pet should help as well
     if (PMob->PPet != nullptr && PMob->PPet->PAI->IsRoaming())
     {
-        ((CMobEntity*)PMob->PPet)->PEnmityContainer->AddBaseEnmity(PTarget);
+        PMob->PPet->PAI->Engage(PTarget->id);
     }
 
     // Handle monster linking if they are close enough
@@ -196,21 +212,16 @@ void CMobController::TryLink()
         for (auto& member : PMob->PParty->members)
         {
             CMobEntity* PPartyMember = dynamic_cast<CMobEntity*>(member);
-            if (!PPartyMember)
+            // Note if the mob to link with this one is a pet then do not link
+            // Pets only link with their masters
+            if (!PPartyMember || (PPartyMember && PPartyMember->PMaster))
             {
                 continue;
             }
 
             if (PPartyMember->PAI->IsRoaming() && PPartyMember->CanLink(&PMob->loc.p, PMob->getMobMod(MOBMOD_SUPERLINK)))
             {
-                PPartyMember->PEnmityContainer->AddBaseEnmity(PTarget);
-
-                if (PPartyMember->m_roamFlags & ROAMFLAG_IGNORE)
-                {
-                    // force into attack action
-                    //#TODO
-                    PPartyMember->PAI->Engage(PTarget->targid);
-                }
+                PPartyMember->PAI->Engage(PTarget->targid);
             }
         }
     }
@@ -222,7 +233,7 @@ void CMobController::TryLink()
 
         if (PMaster->PAI->IsRoaming() && PMaster->CanLink(&PMob->loc.p, PMob->getMobMod(MOBMOD_SUPERLINK)))
         {
-            PMaster->PEnmityContainer->AddBaseEnmity(PTarget);
+            PMaster->PAI->Engage(PTarget->targid);
         }
     }
 }
@@ -234,7 +245,7 @@ void CMobController::TryLink()
 bool CMobController::CanDetectTarget(CBattleEntity* PTarget, bool forceSight)
 {
     TracyZoneScoped;
-    if (PTarget->isDead() || PTarget->isMounted())
+    if (!PTarget || PTarget->isDead() || PTarget->isMounted())
     {
         return false;
     }
@@ -302,57 +313,61 @@ bool CMobController::CanDetectTarget(CBattleEntity* PTarget, bool forceSight)
 bool CMobController::MobSkill(int wsList)
 {
     TracyZoneScoped;
-    /* #TODO: mob 2 hours, etc */
-    if (!wsList)
+
+    if (PTarget)
     {
-        wsList = PMob->getMobMod(MOBMOD_SKILL_LIST);
-    }
-
-    auto skillList{ battleutils::GetMobSkillList(wsList) };
-
-    if (auto overrideSkill = luautils::OnMobWeaponSkillPrepare(PMob, PTarget); overrideSkill > 0)
-    {
-        skillList = { overrideSkill };
-    }
-
-    if (skillList.empty())
-    {
-        return false;
-    }
-
-    std::shuffle(skillList.begin(), skillList.end(), xirand::rng());
-    CBattleEntity* PActionTarget{ nullptr };
-
-    for (auto skillid : skillList)
-    {
-        auto* PMobSkill{ battleutils::GetMobSkill(skillid) };
-        if (!PMobSkill)
+        /* #TODO: mob 2 hours, etc */
+        if (!wsList)
         {
-            continue;
+            wsList = PMob->getMobMod(MOBMOD_SKILL_LIST);
         }
 
-        if (PMobSkill->getValidTargets() == TARGET_ENEMY) // enemy
+        auto skillList{ battleutils::GetMobSkillList(wsList) };
+
+        if (auto overrideSkill = luautils::OnMobWeaponSkillPrepare(PMob, PTarget); overrideSkill > 0)
         {
-            PActionTarget = PTarget;
-        }
-        else if (PMobSkill->getValidTargets() == TARGET_SELF) // self
-        {
-            PActionTarget = PMob;
-        }
-        else
-        {
-            continue;
+            skillList = { overrideSkill };
         }
 
-        PActionTarget = luautils::OnMobSkillTarget(PActionTarget, PMob, PMobSkill);
-
-        if (PActionTarget && !PMobSkill->isAstralFlow() && luautils::OnMobSkillCheck(PActionTarget, PMob, PMobSkill) == 0) // A script says that the move in question is valid
+        if (skillList.empty())
         {
-            float currentDistance = distance(PMob->loc.p, PActionTarget->loc.p);
+            return false;
+        }
 
-            if (currentDistance <= PMobSkill->getDistance())
+        std::shuffle(skillList.begin(), skillList.end(), xirand::rng());
+        CBattleEntity* PActionTarget{ nullptr };
+
+        for (auto skillid : skillList)
+        {
+            auto* PMobSkill{ battleutils::GetMobSkill(skillid) };
+            if (!PMobSkill)
             {
-                return MobSkill(PActionTarget->targid, PMobSkill->getID());
+                continue;
+            }
+
+            if (PMobSkill->getValidTargets() == TARGET_ENEMY) // enemy
+            {
+                PActionTarget = PTarget;
+            }
+            else if (PMobSkill->getValidTargets() == TARGET_SELF) // self
+            {
+                PActionTarget = PMob;
+            }
+            else
+            {
+                continue;
+            }
+
+            PActionTarget = luautils::OnMobSkillTarget(PActionTarget, PMob, PMobSkill);
+
+            if (PActionTarget && !PMobSkill->isAstralFlow() && luautils::OnMobSkillCheck(PActionTarget, PMob, PMobSkill) == 0) // A script says that the move in question is valid
+            {
+                float currentDistance = distance(PMob->loc.p, PActionTarget->loc.p);
+
+                if (currentDistance <= PMobSkill->getDistance())
+                {
+                    return MobSkill(PActionTarget->targid, PMobSkill->getID());
+                }
             }
         }
     }
@@ -439,7 +454,8 @@ bool CMobController::TryCastSpell()
     }
 
     // Try to get an override spell from the script (if available)
-    auto possibleOverriddenSpell = luautils::OnMobMagicPrepare(PMob, PTarget, chosenSpellId);
+    auto PSpellTarget            = PTarget ? PTarget : PMob;
+    auto possibleOverriddenSpell = luautils::OnMobMagicPrepare(PMob, PSpellTarget, chosenSpellId);
     if (possibleOverriddenSpell.has_value())
     {
         chosenSpellId = possibleOverriddenSpell;
@@ -471,7 +487,7 @@ bool CMobController::CanCastSpells()
     // smn can only cast spells if it has no pet
     if (PMob->GetMJob() == JOB_SMN)
     {
-        if (PMob->PPet == nullptr || !PMob->PPet->isDead())
+        if (PMob->PPet && !PMob->PPet->isDead())
         {
             return false;
         }
@@ -509,7 +525,7 @@ void CMobController::CastSpell(SpellID spellid)
                 {
                     // chance to target party
                     PMob->PAI->TargetFind->reset();
-                    PMob->PAI->TargetFind->findWithinArea(PMob, AOE_RADIUS::ATTACKER, PSpell->getRange());
+                    PMob->PAI->TargetFind->findWithinArea(PMob, AOE_RADIUS::ATTACKER, PSpell->getRange(), FINDFLAGS_NONE, TARGET_NONE);
 
                     if (!PMob->PAI->TargetFind->m_targets.empty())
                     {
@@ -552,34 +568,40 @@ void CMobController::DoCombatTick(time_point tick)
     HandleEnmity();
     PTarget = static_cast<CBattleEntity*>(PMob->GetEntity(PMob->GetBattleTargetID()));
 
-    if (TryDeaggro())
+    if (PTarget)
     {
-        Disengage();
-        return;
+        if (TryDeaggro())
+        {
+            Disengage();
+            return;
+        }
+
+        TryLink();
+
+        float currentDistance = distance(PMob->loc.p, PTarget->loc.p);
+
+        PMob->PAI->EventHandler.triggerListener("COMBAT_TICK", CLuaBaseEntity(PMob));
+        luautils::OnMobFight(PMob, PTarget);
+
+        if (PMob->PAI->IsCurrentState<CInactiveState>() || !PMob->PAI->CanChangeState())
+        {
+            return;
+        }
+        else if (IsSpecialSkillReady(currentDistance) && TrySpecialSkill())
+        {
+            return;
+        }
+        else if (IsSpellReady(currentDistance) && TryCastSpell()) // Try to spellcast (this is done first so things like Chainspell spam is prioritised over TP moves etc.
+        {
+            return;
+        }
+        else if (m_Tick >= m_LastMobSkillTime && xirand::GetRandomNumber(1, 10000) <= PMob->TPUseChance() && MobSkill())
+        {
+            return;
+        }
+
+        Move();
     }
-
-    TryLink();
-
-    float currentDistance = distance(PMob->loc.p, PTarget->loc.p);
-
-    PMob->PAI->EventHandler.triggerListener("COMBAT_TICK", CLuaBaseEntity(PMob));
-    luautils::OnMobFight(PMob, PTarget);
-
-    // Try to spellcast (this is done first so things like Chainspell spam is prioritised over TP moves etc.
-    if (IsSpecialSkillReady(currentDistance) && TrySpecialSkill())
-    {
-        return;
-    }
-    else if (IsSpellReady(currentDistance) && TryCastSpell())
-    {
-        return;
-    }
-    else if (m_Tick >= m_LastMobSkillTime && xirand::GetRandomNumber(1, 10000) <= PMob->TPUseChance() && MobSkill())
-    {
-        return;
-    }
-
-    Move();
 }
 
 void CMobController::FaceTarget(uint16 targid)
@@ -650,72 +672,82 @@ void CMobController::Move()
         }
     }
 
-    float currentDistance = distance(PMob->loc.p, PTarget->loc.p);
     if (PMob->getMobMod(MOBMOD_SHARE_POS) > 0)
     {
         CMobEntity* posShare = (CMobEntity*)PMob->GetEntity(PMob->getMobMod(MOBMOD_SHARE_POS) + PMob->targid, TYPE_MOB);
-        PMob->loc            = posShare->loc;
-    }
-    else if (((currentDistance > closeDistance) || move) && PMob->PAI->CanFollowPath())
-    {
-        //#TODO: can this be moved to scripts entirely?
-        if (PMob->getMobMod(MOBMOD_DRAW_IN) > 0)
+        if (posShare)
         {
-            if (currentDistance >= PMob->GetMeleeRange() * 2 && battleutils::DrawIn(PTarget, PMob, PMob->GetMeleeRange() - 0.2f))
-            {
-                FaceTarget();
-                return;
-            }
+            PMob->loc = posShare->loc;
         }
-
-        if (PMob->speed != 0 && PMob->getMobMod(MOBMOD_NO_MOVE) == 0 && m_Tick >= m_LastSpecialTime)
+        else
         {
-            // attempt to teleport to target (if in range)
-            if (PMob->getMobMod(MOBMOD_TELEPORT_TYPE) == 2)
-            {
-                CMobSkill* teleportBegin = battleutils::GetMobSkill(PMob->getMobMod(MOBMOD_TELEPORT_START));
+            ShowWarning("CMobController::Move() failed to get mob for MOBMOD_SHARE_POS");
+        }
+    }
+    else if (PTarget)
+    {
+        float currentDistance = distance(PMob->loc.p, PTarget->loc.p);
 
-                if (teleportBegin && currentDistance <= teleportBegin->getDistance())
+        if (((currentDistance > closeDistance) || move) && PMob->PAI->CanFollowPath())
+        {
+            // TODO: can this be moved to scripts entirely?
+            if (PMob->getMobMod(MOBMOD_DRAW_IN) > 0)
+            {
+                if (currentDistance >= PMob->GetMeleeRange() * 2 && battleutils::DrawIn(PTarget, PMob, PMob->GetMeleeRange() - 0.2f))
                 {
-                    MobSkill(PMob->targid, teleportBegin->getID());
-                    m_LastSpecialTime = m_Tick;
+                    FaceTarget();
                     return;
                 }
             }
-            else if (CanMoveForward(currentDistance))
+
+            if (PMob->speed != 0 && PMob->getMobMod(MOBMOD_NO_MOVE) == 0 && m_Tick >= m_LastSpecialTime)
             {
-                if (!PMob->PAI->PathFind->IsFollowingPath())
+                // attempt to teleport to target (if in range)
+                if (PMob->getMobMod(MOBMOD_TELEPORT_TYPE) == 2)
                 {
-                    // out of melee range, try to path towards
-                    if (currentDistance > (offsetMod == 0 ? PMob->GetMeleeRange() : closeDistance))
+                    CMobSkill* teleportBegin = battleutils::GetMobSkill(PMob->getMobMod(MOBMOD_TELEPORT_START));
+
+                    if (teleportBegin && currentDistance <= teleportBegin->getDistance())
+                    {
+                        MobSkill(PMob->targid, teleportBegin->getID());
+                        m_LastSpecialTime = m_Tick;
+                        return;
+                    }
+                }
+                else if (CanMoveForward(currentDistance))
+                {
+                    if (!PMob->PAI->PathFind->IsFollowingPath())
+                    {
+                        // out of melee range, try to path towards
+                        if (currentDistance > (offsetMod == 0 ? PMob->GetMeleeRange() : closeDistance))
+                        {
+                            // try to find path towards target
+                            PMob->PAI->PathFind->PathInRange(PTarget->loc.p, closeDistance, PATHFLAG_WALLHACK | PATHFLAG_RUN);
+                        }
+                    }
+                    else if (distanceSquared(PMob->PAI->PathFind->GetDestination(), PTarget->loc.p) > 10)
                     {
                         // try to find path towards target
                         PMob->PAI->PathFind->PathInRange(PTarget->loc.p, closeDistance, PATHFLAG_WALLHACK | PATHFLAG_RUN);
                     }
-                }
-                else if (distanceSquared(PMob->PAI->PathFind->GetDestination(), PTarget->loc.p) > 10)
-                {
-                    // try to find path towards target
-                    PMob->PAI->PathFind->PathInRange(PTarget->loc.p, closeDistance, PATHFLAG_WALLHACK | PATHFLAG_RUN);
-                }
 
-                PMob->PAI->PathFind->FollowPath(m_Tick);
+                    PMob->PAI->PathFind->FollowPath(m_Tick);
 
-                if (!PMob->PAI->PathFind->IsFollowingPath())
-                {
-                    bool needToMove = false;
-
-                    // arrived at target - move if there is another mob under me
-                    if (PTarget->objtype == TYPE_PC)
+                    if (!PMob->PAI->PathFind->IsFollowingPath())
                     {
-                        for (auto PSpawnedMob : static_cast<CCharEntity*>(PTarget)->SpawnMOBList)
-                        {
-                            if (PSpawnedMob.second != PMob && !PSpawnedMob.second->PAI->PathFind->IsFollowingPath() &&
-                                distance(PSpawnedMob.second->loc.p, PMob->loc.p) < 1.f)
-                            {
-                                auto angle = worldAngle(PMob->loc.p, PTarget->loc.p) + 64;
+                        bool needToMove = false;
 
-                                // clang-format off
+                        // arrived at target - move if there is another mob under me
+                        if (PTarget->objtype == TYPE_PC)
+                        {
+                            for (auto PSpawnedMob : static_cast<CCharEntity*>(PTarget)->SpawnMOBList)
+                            {
+                                if (PSpawnedMob.second != PMob && !PSpawnedMob.second->PAI->PathFind->IsFollowingPath() &&
+                                    distance(PSpawnedMob.second->loc.p, PMob->loc.p) < 1.f)
+                                {
+                                    auto angle = worldAngle(PMob->loc.p, PTarget->loc.p) + 64;
+
+                                    // clang-format off
                                 position_t new_pos
                                 {
                                     PMob->loc.p.x - (cosf(rotationToRadian(angle)) * 1.5f),
@@ -724,30 +756,35 @@ void CMobController::Move()
                                     0,
                                     0
                                 };
-                                // clang-format on
+                                    // clang-format on
 
-                                if (PMob->PAI->PathFind->ValidPosition(new_pos))
-                                {
-                                    PMob->PAI->PathFind->PathTo(new_pos, PATHFLAG_WALLHACK | PATHFLAG_RUN);
-                                    needToMove = true;
+                                    if (PMob->PAI->PathFind->ValidPosition(new_pos))
+                                    {
+                                        PMob->PAI->PathFind->PathTo(new_pos, PATHFLAG_WALLHACK | PATHFLAG_RUN);
+                                        needToMove = true;
+                                    }
+                                    break;
                                 }
-                                break;
                             }
                         }
-                    }
 
-                    // Fix corner case where mob is attacking target at essentially exactly the distance that canMoveForward returns true at.
-                    // where the mob doesn't rotate to face their target.
-                    if (!needToMove)
-                    {
-                        FaceTarget();
+                        // Fix corner case where mob is attacking target at essentially exactly the distance that canMoveForward returns true at.
+                        // where the mob doesn't rotate to face their target.
+                        if (!needToMove)
+                        {
+                            FaceTarget();
+                        }
                     }
                 }
+                else
+                {
+                    FaceTarget();
+                }
             }
-            else
-            {
-                FaceTarget();
-            }
+        }
+        else
+        {
+            FaceTarget();
         }
     }
     else
@@ -760,22 +797,71 @@ void CMobController::HandleEnmity()
 {
     TracyZoneScoped;
     PMob->PEnmityContainer->DecayEnmity();
+    auto* PHighestEnmityTarget{ PMob->PEnmityContainer->GetHighestEnmity() };
+
     if (PMob->getMobMod(MOBMOD_SHARE_TARGET) > 0 && PMob->GetEntity(PMob->getMobMod(MOBMOD_SHARE_TARGET), TYPE_MOB))
     {
         ChangeTarget(static_cast<CMobEntity*>(PMob->GetEntity(PMob->getMobMod(MOBMOD_SHARE_TARGET), TYPE_MOB))->GetBattleTargetID());
 
         if (!PMob->GetBattleTargetID())
         {
-            auto* PTarget{ PMob->PEnmityContainer->GetHighestEnmity() };
-            ChangeTarget(PTarget ? PTarget->targid : 0);
+            if (PHighestEnmityTarget)
+            {
+                ChangeTarget(PHighestEnmityTarget->targid);
+            }
         }
     }
     else
     {
-        auto* PTarget{ PMob->PEnmityContainer->GetHighestEnmity() };
+        if (PHighestEnmityTarget)
+        {
+            ChangeTarget(PHighestEnmityTarget->targid);
+        }
+    }
+
+    // Bind special case
+    // Target the closest person on hate list with enmity
+    // TODO: do mobs with bind attack players *without* enmity if they are in the same party?
+    // TODO: do jug pets do this?
+    // TODO: This code is assuming charmed mobs can do this -- they DO keep an enmity table, after all..
+    if (PMob->objtype == TYPE_MOB && PMob->StatusEffectContainer && PMob->StatusEffectContainer->HasStatusEffect(EFFECT::EFFECT_BIND) && PMob->PAI->IsCurrentState<CAttackState>())
+    {
+        CBattleEntity*                PNewTarget = nullptr;
+        std::unique_ptr<CBasicPacket> m_errorMsg; // Ignored
+        if (PTarget && !PMob->CanAttack(PTarget, m_errorMsg) && PMob->PEnmityContainer)
+        {
+            float minDistance = 999999;
+            int32 totalEnmity = -1;
+
+            auto enmityList = PMob->PEnmityContainer->GetEnmityList();
+            for (auto enmityItem : *enmityList)
+            {
+                const EnmityObject_t& enmityObject = enmityItem.second;
+                CBattleEntity*        PEnmityOwner = enmityObject.PEnmityOwner;
+
+                // Check total enmity first
+                if (PEnmityOwner && (enmityObject.CE + enmityObject.VE) > totalEnmity)
+                {
+                    float targetDistance = distance(PEnmityOwner->loc.p, PMob->loc.p);
+
+                    if (targetDistance < minDistance && PMob->CanAttack(PEnmityOwner, m_errorMsg))
+                    {
+                        minDistance = targetDistance;
+                        totalEnmity = enmityObject.CE + enmityObject.VE;
+                        PNewTarget  = PEnmityOwner;
+                    }
+                }
+            }
+        }
+
+        if (PNewTarget)
+        {
+            ChangeTarget(PNewTarget->targid);
+        }
+
         if (PTarget)
         {
-            ChangeTarget(PTarget->targid);
+            FaceTarget(PTarget->targid);
         }
     }
 }
@@ -791,18 +877,17 @@ void CMobController::DoRoamTick(time_point tick)
     }
     else if (PMob->m_OwnerID.id != 0 && !(PMob->m_roamFlags & ROAMFLAG_IGNORE))
     {
-        // i'm claimed by someone and need hate towards this person
+        // i'm claimed by someone and want to be fighting them
         PTarget = (CBattleEntity*)PMob->GetEntity(PMob->m_OwnerID.targid, TYPE_PC | TYPE_MOB | TYPE_PET | TYPE_TRUST);
 
         if (PTarget != nullptr)
         {
-            PMob->PEnmityContainer->AddBaseEnmity(PTarget);
             Engage(PTarget->targid);
         }
 
         return;
     }
-    //#TODO
+    // TODO
     else if (PMob->GetDespawnTime() > time_point::min() && PMob->GetDespawnTime() < m_Tick)
     {
         Despawn();
@@ -813,6 +898,26 @@ void CMobController::DoRoamTick(time_point tick)
     {
         // don't claim me if I ignore
         PMob->m_OwnerID.clean();
+    }
+
+    if (m_Tick >= m_mobHealTime + 10s && PMob->getMobMod(MOBMOD_NO_REST) == 0 && PMob->CanRest())
+    {
+        // recover 10% health and lose tp
+        if (PMob->Rest(0.1f))
+        {
+            // health updated
+            PMob->updatemask |= UPDATE_HP;
+        }
+
+        if (PMob->GetHPP() == 100)
+        {
+            // at max health undirty exp
+            PMob->m_HiPCLvl     = 0;
+            PMob->m_HiPartySize = 0;
+            PMob->m_giveExp     = true;
+            PMob->m_UsedSkillIds.clear();
+        }
+        m_mobHealTime = m_Tick;
     }
 
     // skip roaming if waiting
@@ -838,32 +943,16 @@ void CMobController::DoRoamTick(time_point tick)
                 PMob->SetCallForHelpFlag(false);
             }
 
-            // can't rest with poison or disease
-            if (PMob->CanRest() && PMob->getMobMod(MOBMOD_NO_REST) == 0)
-            {
-                // recover 10% health
-                if (PMob->Rest(0.1f))
-                {
-                    // health updated
-                    PMob->updatemask |= UPDATE_HP;
-                }
-
-                if (PMob->GetHPP() == 100)
-                {
-                    // at max health undirty exp
-                    PMob->m_HiPCLvl     = 0;
-                    PMob->m_HiPartySize = 0;
-                    PMob->m_giveExp     = true;
-                    PMob->m_UsedSkillIds.clear();
-                }
-            }
-
             // if I just disengaged check if I should despawn
             if (!PMob->getMobMod(MOBMOD_DONT_ROAM_HOME) && PMob->IsFarFromHome())
             {
-                if (PMob->CanRoamHome() && PMob->PAI->PathFind->PathTo(PMob->m_SpawnPoint))
+                if (PMob->CanRoamHome())
                 {
                     // walk back to spawn if too far away
+                    if (!PMob->PAI->PathFind->IsFollowingPath() && !PMob->PAI->PathFind->PathTo(PMob->m_SpawnPoint))
+                    {
+                        PMob->PAI->PathFind->PathInRange(PMob->m_SpawnPoint, PMob->m_maxRoamDistance, PATHFLAG_RUN | PATHFLAG_WALLHACK);
+                    }
 
                     // limit total path to just 10 or
                     // else we'll move straight back to spawn
@@ -917,7 +1006,7 @@ void CMobController::DoRoamTick(time_point tick)
                 else if (PMob->CanRoam() && PMob->PAI->PathFind->RoamAround(PMob->m_SpawnPoint, PMob->GetRoamDistance(),
                                                                             (uint8)PMob->getMobMod(MOBMOD_ROAM_TURNS), PMob->m_roamFlags))
                 {
-                    //#TODO: #AIToScript (event probably)
+                    // TODO: #AIToScript (event probably)
                     if (PMob->m_roamFlags & ROAMFLAG_WORM)
                     {
                         // move down
@@ -1071,7 +1160,7 @@ bool CMobController::Disengage()
     PMob->animation = ANIMATION_NONE;
     // https://www.bluegartr.com/threads/108198-Random-Facts-Thread-Traits-and-Stats-(Player-and-Monster)?p=5670209&viewfull=1#post5670209
     PMob->m_THLvl = 0;
-
+    m_mobHealTime = m_Tick;
     return CController::Disengage();
 }
 
@@ -1095,6 +1184,12 @@ bool CMobController::Engage(uint16 targid)
             m_LastSpecialTime = m_Tick - std::chrono::milliseconds(PMob->getBigMobMod(MOBMOD_SPECIAL_COOL) +
                                                                    xirand::GetRandomNumber(PMob->getBigMobMod(MOBMOD_SPECIAL_DELAY)));
         }
+
+        // Pet should also fight the target if they can
+        if (PMob->PPet && !PMob->PPet->PAI->IsEngaged())
+        {
+            PMob->PPet->PAI->Engage(targid);
+        }
     }
     return ret;
 }
@@ -1102,38 +1197,54 @@ bool CMobController::Engage(uint16 targid)
 bool CMobController::CanAggroTarget(CBattleEntity* PTarget)
 {
     TracyZoneScoped;
-    TracyZoneString(PMob->GetName());
-    TracyZoneString(PTarget->GetName());
-
-    if (PMob->getBattleID() != PTarget->getBattleID())
+    TracyZoneString(PMob->getName());
+    if (PTarget)
     {
-        return false;
+        TracyZoneString(PTarget->getName());
+
+        if (PMob->getBattleID() != PTarget->getBattleID())
+        {
+            return false;
+        }
+
+        // Don't aggro I'm neutral
+        if ((PMob->getMobMod(MOBMOD_ALWAYS_AGGRO) == 0 && !PMob->m_Aggro) || PMob->m_neutral || PMob->isDead())
+        {
+            return false;
+        }
+
+        // Don't aggro I'm special
+        if (PMob->getMobMod(MOBMOD_NO_AGGRO) > 0)
+        {
+            return false;
+        }
+
+        // Do not aggro if a normal CoP Fomor and the player has low enough fomor hate
+        if (PMob->m_Family == 115 && !(PMob->m_Type & MOBTYPE_NOTORIOUS) &&
+            (PMob->getZone() >= ZONE_LUFAISE_MEADOWS && PMob->getZone() <= ZONE_SACRARIUM) &&
+            PTarget->objtype == TYPE_PC)
+        {
+            if (static_cast<CCharEntity*>(PTarget)->getCharVar("FOMOR_HATE") < 8)
+            {
+                return false;
+            }
+        }
+
+        // Don't aggro I'm an underground worm
+        if ((PMob->m_roamFlags & ROAMFLAG_WORM) && PMob->IsNameHidden())
+        {
+            return false;
+        }
+
+        if (PTarget->isDead() || PTarget->isMounted())
+        {
+            return false;
+        }
+
+        return PMob->PMaster == nullptr && PMob->PAI->IsSpawned() && !PMob->PAI->IsEngaged() && CanDetectTarget(PTarget);
     }
 
-    // Don't aggro I'm neutral
-    if ((PMob->getMobMod(MOBMOD_ALWAYS_AGGRO) == 0 && !PMob->m_Aggro) || PMob->m_neutral || PMob->isDead())
-    {
-        return false;
-    }
-
-    // Don't aggro I'm special
-    if (PMob->getMobMod(MOBMOD_NO_AGGRO) > 0)
-    {
-        return false;
-    }
-
-    // Don't aggro I'm an underground worm
-    if ((PMob->m_roamFlags & ROAMFLAG_WORM) && PMob->IsNameHidden())
-    {
-        return false;
-    }
-
-    if (PTarget->isDead() || PTarget->isMounted())
-    {
-        return false;
-    }
-
-    return PMob->PMaster == nullptr && PMob->PAI->IsSpawned() && !PMob->PAI->IsEngaged() && CanDetectTarget(PTarget);
+    return false;
 }
 
 void CMobController::TapDeaggroTime()
@@ -1175,7 +1286,7 @@ bool CMobController::CanMoveForward(float currentDistance)
         return PMob->GetMJob() != JOB_NIN && PMob->SpellContainer->HasSpells() && !CanCastSpells();
     }
 
-    if (!PMob->CanSeeTarget(PTarget))
+    if (PTarget && !PMob->CanSeeTarget(PTarget))
     {
         return true;
     }

@@ -3,18 +3,13 @@
 --
 -- Kohlo-Lakolo, !pos -26.8 -6 190 240
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.WINDURST, xi.quest.id.windurst.CRYING_OVER_ONIONS)
+local quest = Quest:new(xi.questLog.WINDURST, xi.quest.id.windurst.CRYING_OVER_ONIONS)
 
 quest.reward =
 {
     fame     = 120,
-    fameArea = xi.quest.fame_area.WINDURST,
+    fameArea = xi.fameArea.WINDURST,
 }
 
 quest.sections =
@@ -22,8 +17,8 @@ quest.sections =
     -- Section: Quest is available.
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.ONION_RINGS)
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.WINDURST, xi.quest.id.windurst.ONION_RINGS)
         end,
 
         [xi.zone.PORT_WINDURST] =
@@ -34,7 +29,7 @@ quest.sections =
                     if quest:getVar(player, 'Reward') == 1 then
                         if
                             player:getMainLvl() >= 5 and
-                            player:getFameLevel(xi.quest.fame_area.WINDURST) >= 5 and
+                            player:getFameLevel(xi.fameArea.WINDURST) >= 5 and
                             not quest:getMustZone(player)
                         then
                             return quest:progressEvent(496) -- Quest starting event.
@@ -54,7 +49,7 @@ quest.sections =
             onEventFinish =
             {
                 [449] = function(player, csid, option, npc)
-                    if npcUtil.giveItem(player, xi.items.BOUNCER_CLUB) then
+                    if npcUtil.giveItem(player, xi.item.BOUNCER_CLUB) then
                         quest:setVar(player, 'Reward', 1)
                         quest:setMustZone(player)
                     end
@@ -70,7 +65,7 @@ quest.sections =
     -- Section: Quest accepeted in time.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.PORT_WINDURST] =
@@ -156,7 +151,7 @@ quest.sections =
             {
                 onTrigger = function(player, npc)
                     if quest:getVar(player, 'Prog') == 0 then
-                        return quest:progressEvent(774, 0, xi.items.STAR_SPINEL)
+                        return quest:progressEvent(774, 0, xi.item.STAR_SPINEL)
                     elseif quest:getVar(player, 'Prog') == 1 or quest:getVar(player, 'Prog') == 2 then
                         return quest:event(777) -- Reminder text before trade.
                     elseif quest:getVar(player, 'Prog') == 3 then
@@ -169,9 +164,9 @@ quest.sections =
                 onTrade = function(player, npc, trade)
                     if
                         (quest:getVar(player, 'Prog') == 1 or quest:getVar(player, 'Prog') == 2) and
-                        npcUtil.tradeHasExactly(trade, xi.items.STAR_SPINEL)
+                        npcUtil.tradeHasExactly(trade, xi.item.STAR_SPINEL)
                     then
-                        return quest:progressEvent(775, 0, xi.items.STAR_SPINEL)
+                        return quest:progressEvent(775, 0, xi.item.STAR_SPINEL)
                     end
                 end,
             },
@@ -183,7 +178,7 @@ quest.sections =
                 end,
 
                 [775] = function(player, csid, option, npc)
-                    if npcUtil.giveItem(player, xi.items.STAR_NECKLACE) then
+                    if npcUtil.giveItem(player, xi.item.STAR_NECKLACE) then
                         player:confirmTrade()
                         quest:setVar(player, 'Prog', 3)
                     end
@@ -220,8 +215,8 @@ quest.sections =
     -- Section: Quest completed.
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED and
-                player:getQuestStatus(xi.quest.log_id.WINDURST, xi.quest.id.windurst.THE_PROMISE) == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_COMPLETED and
+                player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.THE_PROMISE) == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.PORT_WINDURST] =

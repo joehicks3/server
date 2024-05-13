@@ -1,14 +1,8 @@
 -----------------------------------
 -- Zone: Yhoator_Jungle (124)
 -----------------------------------
-local ID = require('scripts/zones/Yhoator_Jungle/IDs')
+local ID = zones[xi.zone.YHOATOR_JUNGLE]
 require('scripts/quests/i_can_hear_a_rainbow')
-require('scripts/globals/chocobo_digging')
-require('scripts/globals/conquest')
-require('scripts/globals/chocobo')
-require('scripts/globals/helm')
-require('scripts/globals/zone')
-require('scripts/globals/beastmentreasure')
 require('scripts/missions/amk/helpers')
 -----------------------------------
 local zoneObject = {}
@@ -32,8 +26,8 @@ zoneObject.onInitialize = function(zone)
 
     xi.conq.setRegionalConquestOverseers(zone:getRegionID())
 
-    xi.helm.initZone(zone, xi.helm.type.HARVESTING)
-    xi.helm.initZone(zone, xi.helm.type.LOGGING)
+    xi.helm.initZone(zone, xi.helmType.HARVESTING)
+    xi.helm.initZone(zone, xi.helmType.LOGGING)
     xi.chocobo.initZone(zone)
 
     xi.bmt.updatePeddlestox(xi.zone.YUHTUNGA_JUNGLE, ID.npc.PEDDLESTOX)

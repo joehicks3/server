@@ -1,9 +1,7 @@
 -----------------------------------
 -- Zone: Attohwa_Chasm (7)
 -----------------------------------
-local ID = require('scripts/zones/Attohwa_Chasm/IDs')
-require('scripts/globals/helm')
-require('scripts/globals/zone')
+local ID = zones[xi.zone.ATTOHWA_CHASM]
 -----------------------------------
 local zoneObject = {}
 
@@ -43,7 +41,7 @@ zoneObject.onInitialize = function(zone)
     UpdateNMSpawnPoint(ID.mob.TIAMAT)
     GetMobByID(ID.mob.TIAMAT):setRespawnTime(math.random(86400, 259200))
 
-    xi.helm.initZone(zone, xi.helm.type.EXCAVATION)
+    xi.helm.initZone(zone, xi.helmType.EXCAVATION)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)

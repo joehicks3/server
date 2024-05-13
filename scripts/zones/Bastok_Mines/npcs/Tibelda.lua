@@ -3,9 +3,7 @@
 --  NPC: Tibelda
 -- Valdeaunia Regional Merchant
 -----------------------------------
-local ID = require("scripts/zones/Bastok_Mines/IDs")
-require("scripts/globals/conquest")
-require("scripts/globals/shop")
+local ID = zones[xi.zone.BASTOK_MINES]
 -----------------------------------
 local entity = {}
 
@@ -23,7 +21,7 @@ entity.onTrigger = function(player, npc)
         }
 
         player:showText(npc, ID.text.TIBELDA_OPEN_DIALOG)
-        xi.shop.general(player, stock, xi.quest.fame_area.BASTOK)
+        xi.shop.general(player, stock, xi.fameArea.BASTOK)
     end
 end
 

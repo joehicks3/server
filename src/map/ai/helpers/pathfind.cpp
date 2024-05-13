@@ -461,7 +461,7 @@ bool CPathFind::FindPath(const position_t& start, const position_t& end)
 
     if (m_points.empty())
     {
-        DebugNavmesh("CPathFind::FindPath Entity (%s - %d) could not find path", m_POwner->GetName(), m_POwner->id);
+        DebugNavmesh("CPathFind::FindPath Entity (%s - %d) could not find path", m_POwner->getName(), m_POwner->id);
         return false;
     }
 
@@ -580,7 +580,13 @@ float CPathFind::GetRealSpeed()
         }
         else if (m_POwner->animation == ANIMATION_ATTACK)
         {
-            realSpeed = realSpeed + settings::get<int8>("map.MOB_SPEED_MOD");
+            auto speedMod = settings::get<int8>("map.MOB_SPEED_MOD");
+            if (speedMod < -90)
+            {
+                speedMod = -90;
+            }
+
+            realSpeed *= 1.0f + speedMod / 100.0f;
         }
     }
 

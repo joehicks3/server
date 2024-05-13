@@ -4,9 +4,7 @@
 -- Type: Quest NPC
 -- !pos  124.000, -3.000, 222.215 94
 -----------------------------------
-local ID = require("scripts/zones/Windurst_Waters_[S]/IDs")
-require("scripts/globals/missions")
-require("scripts/globals/quests")
+local ID = zones[xi.zone.WINDURST_WATERS_S]
 -----------------------------------
 local entity = {}
 
@@ -15,13 +13,13 @@ end
 
 entity.onTrigger = function(player, npc)
     if
-        player:getQuestStatus(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_TIGRESS_STIRS) == QUEST_ACCEPTED and
+        player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_TIGRESS_STIRS) == xi.questStatus.QUEST_ACCEPTED and
         player:hasKeyItem(xi.ki.SMALL_STARFRUIT)
     then
         player:startEvent(129)
     elseif
-        player:getQuestStatus(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_TIGRESS_STRIKES) == QUEST_COMPLETED and
-        player:getQuestStatus(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.KNOT_QUITE_THERE) == QUEST_AVAILABLE
+        player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_TIGRESS_STRIKES) == xi.questStatus.QUEST_COMPLETED and
+        player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.KNOT_QUITE_THERE) == xi.questStatus.QUEST_AVAILABLE
     then
         if
             player:getCurrentMission(xi.mission.log_id.WOTG) == xi.mission.id.wotg.CAIT_SITH or
@@ -29,7 +27,7 @@ entity.onTrigger = function(player, npc)
         then
             player:startEvent(151)
         end
-    elseif player:getQuestStatus(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.KNOT_QUITE_THERE) == QUEST_ACCEPTED then
+    elseif player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.KNOT_QUITE_THERE) == xi.questStatus.QUEST_ACCEPTED then
         player:startEvent(152)
     else
         player:messageSpecial(ID.text.DOOR_ACOLYTE_HOSTEL_LOCKED)
@@ -41,12 +39,12 @@ end
 
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 129 then
-        player:addItem(xi.items.HI_ELIXIR)
+        player:addItem(xi.item.HI_ELIXIR)
         player:messageSpecial(ID.text.ITEM_OBTAINED, 4144)
         player:delKeyItem(xi.ki.SMALL_STARFRUIT)
-        player:completeQuest(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_TIGRESS_STIRS)
+        player:completeQuest(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_TIGRESS_STIRS)
     elseif csid == 151 then
-        player:addQuest(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.KNOT_QUITE_THERE)
+        player:addQuest(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.KNOT_QUITE_THERE)
     end
 end
 

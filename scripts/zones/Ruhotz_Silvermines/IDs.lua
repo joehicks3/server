@@ -1,9 +1,6 @@
 -----------------------------------
 -- Area: Ruhotz_Silvermines
 -----------------------------------
-require("scripts/globals/zone")
------------------------------------
-
 zones = zones or {}
 
 zones[xi.zone.RUHOTZ_SILVERMINES] =
@@ -21,7 +18,7 @@ zones[xi.zone.RUHOTZ_SILVERMINES] =
     },
     mob =
     {
-        SAPPHIRINE_QUADAV_OFFSET = 17158192,
+        SAPPHIRINE_QUADAV_OFFSET = GetFirstID('Sapphirine_Quadav'),
     },
     npc =
     {

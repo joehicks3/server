@@ -6,20 +6,16 @@
 -- Roh Latteh : !pos -11.823 6.999 -9.249 234
 -- Signpost   : !pos -183 65 599 108
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
+local konschtatID = zones[xi.zone.KONSCHTAT_HIGHLANDS]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.THE_SIGNPOST_MARKS_THE_SPOT)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.THE_SIGNPOST_MARKS_THE_SPOT)
 
 quest.reward =
 {
-    item     = xi.items.LINEN_ROBE,
+    item     = xi.item.LINEN_ROBE,
     fame     = 50,
-    fameArea = xi.quest.fame_area.BASTOK,
+    fameArea = xi.fameArea.BASTOK,
     title    = xi.title.TREASURE_SCAVENGER,
 }
 
@@ -27,9 +23,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getFameLevel(xi.quest.fame_area.BASTOK) >= 2 and
-                player:hasCompletedQuest(xi.quest.log_id.BASTOK, xi.quest.id.bastok.MOM_THE_ADVENTURER)
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getFameLevel(xi.fameArea.BASTOK) >= 2 and
+                player:hasCompletedQuest(xi.questLog.BASTOK, xi.quest.id.bastok.MOM_THE_ADVENTURER)
         end,
 
         [xi.zone.BASTOK_MARKETS] =
@@ -49,7 +45,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.KONSCHTAT_HIGHLANDS] =
@@ -58,7 +54,7 @@ quest.sections =
             {
                 onTrigger = function(player, npc)
                     if not player:hasKeyItem(xi.ki.PAINTING_OF_A_WINDMILL) then
-                        player:messageSpecial(ID.text.SIGNPOST_DIALOG_2)
+                        player:messageSpecial(konschtatID.text.SIGNPOST_DIALOG_2)
 
                         return quest:keyItem(xi.ki.PAINTING_OF_A_WINDMILL)
                     end

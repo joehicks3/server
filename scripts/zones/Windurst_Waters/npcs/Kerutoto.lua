@@ -5,11 +5,7 @@
 -- Involved in Quest: Riding on the Clouds
 -- !pos 13 -5 -157 238
 -----------------------------------
-local ID = require("scripts/zones/Windurst_Waters/IDs")
-require("scripts/globals/missions")
-require("scripts/globals/npc_util")
-require("scripts/globals/quests")
-require("scripts/globals/titles")
+local ID = zones[xi.zone.WINDURST_WATERS]
 -----------------------------------
 local entity = {}
 
@@ -17,27 +13,27 @@ entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
-    local wakingDreams = player:getQuestStatus(xi.quest.log_id.WINDURST, xi.quest.id.windurst.WAKING_DREAMS)
+    local wakingDreams = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.WAKING_DREAMS)
 
     -- WAKING DREAMS
     if player:hasKeyItem(xi.ki.WHISPER_OF_DREAMS) then
         local availRewards = 0
-            + (player:hasItem(xi.items.DIABOLOSS_POLE) and 1 or 0) -- Diabolos's Pole
-            + (player:hasItem(xi.items.DIABOLOSS_EARRING) and 2 or 0) -- Diabolos's Earring
-            + (player:hasItem(xi.items.DIABOLOSS_RING) and 4 or 0) -- Diabolos's Ring
-            + (player:hasItem(xi.items.DIABOLOSS_TORQUE) and 8 or 0) -- Diabolos's Torque
+            + (player:hasItem(xi.item.DIABOLOSS_POLE) and 1 or 0) -- Diabolos's Pole
+            + (player:hasItem(xi.item.DIABOLOSS_EARRING) and 2 or 0) -- Diabolos's Earring
+            + (player:hasItem(xi.item.DIABOLOSS_RING) and 4 or 0) -- Diabolos's Ring
+            + (player:hasItem(xi.item.DIABOLOSS_TORQUE) and 8 or 0) -- Diabolos's Torque
             + (player:hasSpell(xi.magic.spell.DIABOLOS) and 32 or 16) -- Pact or gil
-        player:startEvent(920, xi.items.DIABOLOSS_POLE, xi.items.DIABOLOSS_EARRING, xi.items.DIABOLOSS_RING, xi.items.DIABOLOSS_TORQUE, 0, 0, 0, availRewards)
+        player:startEvent(920, xi.item.DIABOLOSS_POLE, xi.item.DIABOLOSS_EARRING, xi.item.DIABOLOSS_RING, xi.item.DIABOLOSS_TORQUE, 0, 0, 0, availRewards)
     elseif
         not player:hasKeyItem(xi.ki.VIAL_OF_DREAM_INCENSE) and
         (
             player:hasCompletedMission(xi.mission.log_id.COP, xi.mission.id.cop.DARKNESS_NAMED) and
-            wakingDreams == QUEST_AVAILABLE
+            wakingDreams == xi.questStatus.QUEST_AVAILABLE
         )
         or
         (
-            wakingDreams == QUEST_COMPLETED and
-            os.time() > player:getCharVar("Darkness_Named_date")
+            wakingDreams == xi.questStatus.QUEST_COMPLETED and
+            os.time() > player:getCharVar('Darkness_Named_date')
         )
     then
         player:startEvent(918)
@@ -50,19 +46,19 @@ end
 entity.onEventFinish = function(player, csid, option, npc)
     -- WAKING DREAMS
     if csid == 918 then
-        player:addQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.WAKING_DREAMS)
+        player:addQuest(xi.questLog.WINDURST, xi.quest.id.windurst.WAKING_DREAMS)
         npcUtil.giveKeyItem(player, xi.ki.VIAL_OF_DREAM_INCENSE)
     elseif csid == 920 then
         local reward = { fame = 0 }
 
-        if option == 1 and not player:hasItem(xi.items.DIABOLOSS_POLE) then
-            reward.item = xi.items.DIABOLOSS_POLE
-        elseif option == 2 and not player:hasItem(xi.items.DIABOLOSS_EARRING) then
-            reward.item = xi.items.DIABOLOSS_EARRING
-        elseif option == 3 and not player:hasItem(xi.items.DIABOLOSS_RING) then
-            reward.item = xi.items.DIABOLOSS_RING
-        elseif option == 4 and not player:hasItem(xi.items.DIABOLOSS_TORQUE) then
-            reward.item = xi.items.DIABOLOSS_TORQUE
+        if option == 1 and not player:hasItem(xi.item.DIABOLOSS_POLE) then
+            reward.item = xi.item.DIABOLOSS_POLE
+        elseif option == 2 and not player:hasItem(xi.item.DIABOLOSS_EARRING) then
+            reward.item = xi.item.DIABOLOSS_EARRING
+        elseif option == 3 and not player:hasItem(xi.item.DIABOLOSS_RING) then
+            reward.item = xi.item.DIABOLOSS_RING
+        elseif option == 4 and not player:hasItem(xi.item.DIABOLOSS_TORQUE) then
+            reward.item = xi.item.DIABOLOSS_TORQUE
         elseif option == 5 then
             reward.gil = 15000
         elseif option == 6 and not player:hasSpell(xi.magic.spell.DIABOLOS) then
@@ -70,9 +66,9 @@ entity.onEventFinish = function(player, csid, option, npc)
             player:messageSpecial(ID.text.DIABOLOS_UNLOCKED, 0, 0, 0)
         end
 
-        if npcUtil.completeQuest(player, xi.quest.log_id.WINDURST, xi.quest.id.windurst.WAKING_DREAMS, reward) then
+        if npcUtil.completeQuest(player, xi.questLog.WINDURST, xi.quest.id.windurst.WAKING_DREAMS, reward) then
             player:delKeyItem(xi.ki.WHISPER_OF_DREAMS)
-            player:setCharVar("Darkness_Named_date", getMidnight())
+            player:setCharVar('Darkness_Named_date', getMidnight())
         end
     end
 end

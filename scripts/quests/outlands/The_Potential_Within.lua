@@ -3,29 +3,24 @@
 -- Jaucribaix !pos 91 -7 -8 252
 -- qm3 !pos 200 11 99 174
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/weaponskillids')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
------------------------------------
-local norgID = require('scripts/zones/Norg/IDs')
-local kuftalTunnelID = require('scripts/zones/Kuftal_Tunnel/IDs')
+local norgID         = zones[xi.zone.NORG]
+local kuftalTunnelID = zones[xi.zone.KUFTAL_TUNNEL]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.OUTLANDS, xi.quest.id.outlands.THE_POTENTIAL_WITHIN)
+local quest = Quest:new(xi.questLog.OUTLANDS, xi.quest.id.outlands.THE_POTENTIAL_WITHIN)
 
 quest.reward =
 {
     fame = 30,
-    fameArea = xi.quest.fame_area.NORG,
+    fameArea = xi.fameArea.NORG,
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:canEquipItem(xi.items.TACHI_OF_TRIALS, true) and
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:canEquipItem(xi.item.TACHI_OF_TRIALS, true) and
                 player:getCharSkillLevel(xi.skill.GREAT_KATANA) / 10 >= 250 and
                 not player:hasKeyItem(xi.keyItem.WEAPON_TRAINING_GUIDE)
         end,
@@ -44,7 +39,7 @@ quest.sections =
                 [178] = function(player, csid, option, npc)
                     if
                         option == 1 and
-                        (player:hasItem(xi.items.TACHI_OF_TRIALS) or npcUtil.giveItem(player, xi.items.TACHI_OF_TRIALS))
+                        (player:hasItem(xi.item.TACHI_OF_TRIALS) or npcUtil.giveItem(player, xi.item.TACHI_OF_TRIALS))
                     then
                         npcUtil.giveKeyItem(player, xi.keyItem.WEAPON_TRAINING_GUIDE)
                         quest:begin(player)
@@ -56,7 +51,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.NORG] =
@@ -69,12 +64,12 @@ quest.sections =
                     elseif player:hasKeyItem(xi.ki.MAP_TO_THE_ANNALS_OF_TRUTH) then
                         return quest:event(182) -- cont 2
                     else
-                        return quest:event(179, player:hasItem(xi.items.TACHI_OF_TRIALS) and 1 or 0) -- cont 1
+                        return quest:event(179, player:hasItem(xi.item.TACHI_OF_TRIALS) and 1 or 0) -- cont 1
                     end
                 end,
 
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.TACHI_OF_TRIALS) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.TACHI_OF_TRIALS) then
                         local wsPoints = trade:getItem(0):getWeaponskillPoints()
 
                         if wsPoints < 300 then
@@ -90,11 +85,11 @@ quest.sections =
             {
                 [179] = function(player, csid, option, npc)
                     if option == 2 then
-                        player:delQuest(xi.quest.log_id.OUTLANDS, xi.quest.id.outlands.THE_POTENTIAL_WITHIN)
+                        player:delQuest(xi.questLog.OUTLANDS, xi.quest.id.outlands.THE_POTENTIAL_WITHIN)
                         player:delKeyItem(xi.ki.WEAPON_TRAINING_GUIDE)
                         player:delKeyItem(xi.ki.MAP_TO_THE_ANNALS_OF_TRUTH)
-                    elseif not player:hasItem(xi.items.TACHI_OF_TRIALS) then
-                        npcUtil.giveItem(player, xi.items.TACHI_OF_TRIALS)
+                    elseif not player:hasItem(xi.item.TACHI_OF_TRIALS) then
+                        npcUtil.giveItem(player, xi.item.TACHI_OF_TRIALS)
                     end
                 end,
 
@@ -108,7 +103,7 @@ quest.sections =
                         player:delKeyItem(xi.ki.MAP_TO_THE_ANNALS_OF_TRUTH)
                         player:delKeyItem(xi.ki.ANNALS_OF_TRUTH)
                         player:delKeyItem(xi.ki.WEAPON_TRAINING_GUIDE)
-                        player:addLearnedWeaponskill(xi.ws_unlock.TACHI_KASHA)
+                        player:addLearnedWeaponskill(xi.wsUnlock.TACHI_KASHA)
                         player:messageSpecial(norgID.text.TACHI_KASHA_LEARNED)
                     end
                 end,

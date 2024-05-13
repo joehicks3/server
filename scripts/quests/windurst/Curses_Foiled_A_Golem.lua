@@ -6,20 +6,14 @@
 -- Torino-Samarino : !pos 105 -20 140 111
 -- Cermet Door     : !pos -183 0 190 204
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.WINDURST, xi.quest.id.windurst.CURSES_FOILED_A_GOLEM)
+local quest = Quest:new(xi.questLog.WINDURST, xi.quest.id.windurst.CURSES_FOILED_A_GOLEM)
 
 quest.reward =
 {
     fame     = 120,
-    fameArea = xi.quest.fame_area.WINDURST,
-    item     = xi.items.SCROLL_OF_WARP_II,
+    fameArea = xi.fameArea.WINDURST,
+    item     = xi.item.SCROLL_OF_WARP_II,
     title    = xi.title.DOCTOR_SHANTOTTOS_FLAVOR_OF_THE_MONTH,
 }
 
@@ -40,9 +34,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.CURSES_FOILED_AGAIN_2) and
-                player:getFameLevel(xi.quest.fame_area.WINDURST) >= 4 and
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.WINDURST, xi.quest.id.windurst.CURSES_FOILED_AGAIN_2) and
+                player:getFameLevel(xi.fameArea.WINDURST) >= 4 and
                 player:getMainLvl() >= 10 and
                 not quest:getMustZone(player)
         end,
@@ -66,7 +60,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         ['Leigon-Moigon'] =
@@ -196,7 +190,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.WINDURST_WALLS] =

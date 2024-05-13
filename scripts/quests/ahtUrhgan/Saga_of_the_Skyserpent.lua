@@ -5,19 +5,12 @@
 -- qm7:       !pos -11 8 -185 62
 -- Biyaada:   !pos -65.802 -6.999 69.273 48
 -----------------------------------
-require('scripts/globals/common')
-require('scripts/globals/quests')
-require('scripts/globals/interaction/quest')
-require('scripts/globals/npc_util')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.AHT_URHGAN, xi.quest.id.ahtUrhgan.SAGA_OF_THE_SKYSERPENT)
+local quest = Quest:new(xi.questLog.AHT_URHGAN, xi.quest.id.ahtUrhgan.SAGA_OF_THE_SKYSERPENT)
 
 quest.reward =
 {
-    item = xi.items.IMPERIAL_GOLD_PIECE,
+    item = xi.item.IMPERIAL_GOLD_PIECE,
     title = xi.title.SKYSERPENT_AGGRANDIZER
 }
 
@@ -26,7 +19,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.AHT_URHGAN_WHITEGATE] =
@@ -44,7 +37,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 0
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 0
         end,
 
         [xi.zone.AL_ZAHBI] =
@@ -71,7 +64,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 1
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 1
         end,
 
         [xi.zone.AL_ZAHBI] =
@@ -120,7 +113,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 2
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 2
         end,
 
         [xi.zone.AL_ZAHBI] =
@@ -145,7 +138,7 @@ quest.sections =
             {
                 [825] = function(player, csid, option, npc)
                     if quest:complete(player) then
-                        player:addCurrency("imperial_standing", 1000)
+                        player:addCurrency('imperial_standing', 1000)
                         player:messageSpecial(zones[player:getZoneID()].text.BESIEGED_OFFSET)
                     end
                 end,

@@ -7,17 +7,12 @@
 -- Childerich   - !pos -313 16 -515 89
 -- qm3          - !pos 439 -40 79 89
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.MESSAGE_ON_THE_WINDS)
+local quest = Quest:new(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.MESSAGE_ON_THE_WINDS)
 
 quest.reward =
 {
-    item = xi.items.SMART_GRENADE,
+    item = xi.item.SMART_GRENADE,
 }
 
 quest.sections =
@@ -25,7 +20,7 @@ quest.sections =
     -- Section: Talk to Romualdo at the Cannonry in the Metalworks (second floor, K-9).
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 player:getMainLvl() >= 20
         end,
 
@@ -65,7 +60,7 @@ quest.sections =
     -- Section: Speak with Childerich in Grauberg (S) at the west side of the house at (E-12).
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 2
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 2
         end,
 
         [xi.zone.BATALLIA_DOWNS_S] =
@@ -89,7 +84,7 @@ quest.sections =
     -- Check the ??? at J-9.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 3
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 3
         end,
 
         [xi.zone.GRAUBERG_S] =
@@ -110,7 +105,7 @@ quest.sections =
     -- Speak with Childerich.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 4
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 4
         end,
 
         [xi.zone.GRAUBERG_S] =
@@ -129,7 +124,7 @@ quest.sections =
     -- New default text for Childerich
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 5
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 5
         end,
 
         [xi.zone.GRAUBERG_S] =
@@ -155,7 +150,7 @@ quest.sections =
     -- Section: Post quest cutscene with Romualdo
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED and quest:getVar(player, "PostCS") == 1
+            return status == xi.questStatus.QUEST_COMPLETED and quest:getVar(player, 'PostCS') == 1
         end,
 
         [xi.zone.METALWORKS] =
@@ -174,7 +169,7 @@ quest.sections =
     -- Post quest cutscene with Childerich
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED and quest:getVar(player, "PostCS") == 2
+            return status == xi.questStatus.QUEST_COMPLETED and quest:getVar(player, 'PostCS') == 2
         end,
 
         [xi.zone.GRAUBERG_S] =
@@ -194,7 +189,7 @@ quest.sections =
     -- New default text for Romualdo (S)
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.BATALLIA_DOWNS_S] =
@@ -206,7 +201,7 @@ quest.sections =
     -- New default text for Childerich
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED and player:hasTitle(xi.title.WINDTALKER)
+            return status == xi.questStatus.QUEST_COMPLETED and player:hasTitle(xi.title.WINDTALKER)
         end,
 
         [xi.zone.GRAUBERG_S] =

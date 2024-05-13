@@ -4,9 +4,7 @@
 -- !pos 246.318 -0.709 5.706 104
 -- Teleports Players to Abyssea - Vunkerl
 -----------------------------------
-local ID = require("scripts/zones/Jugner_Forest/IDs")
-require("scripts/globals/abyssea")
-require("scripts/globals/quests")
+local ID = zones[xi.zone.JUGNER_FOREST]
 -----------------------------------
 local entity = {}
 
@@ -17,8 +15,8 @@ entity.onTrigger = function(player, npc)
     if xi.settings.main.ENABLE_ABYSSEA == 1 and player:getMainLvl() >= 30 then
         if
             xi.abyssea.getHeldTraverserStones(player) >= 1 and
-            player:getQuestStatus(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.DAWN_OF_DEATH) == QUEST_ACCEPTED and
-            player:getQuestStatus(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.THE_BEAST_OF_BASTORE) == QUEST_AVAILABLE
+            player:getQuestStatus(xi.questLog.ABYSSEA, xi.quest.id.abyssea.DAWN_OF_DEATH) == xi.questStatus.QUEST_ACCEPTED and
+            player:getQuestStatus(xi.questLog.ABYSSEA, xi.quest.id.abyssea.THE_BEAST_OF_BASTORE) == xi.questStatus.QUEST_AVAILABLE
         then
             player:startEvent(48)
         else
@@ -34,7 +32,7 @@ end
 
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 48 then
-        player:addQuest(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.THE_BEAST_OF_BASTORE)
+        player:addQuest(xi.questLog.ABYSSEA, xi.quest.id.abyssea.THE_BEAST_OF_BASTORE)
     elseif csid == 49 then
         -- Killed Sedna
     elseif csid == 47 and option == 1 then

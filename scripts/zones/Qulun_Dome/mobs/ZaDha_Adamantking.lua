@@ -3,10 +3,8 @@
 --   NM: Za'Dha Adamantking
 -- TODO: messages should be zone-wide
 -----------------------------------
-local ID = require("scripts/zones/Qulun_Dome/IDs")
-mixins = { require("scripts/mixins/job_special") }
-require("scripts/globals/titles")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.QULUN_DOME]
+mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
 local entity = {}
 
@@ -14,7 +12,7 @@ entity.onMobInitialize = function(mob)
     mob:setMobMod(xi.mobMod.ADD_EFFECT, 1)
 end
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     mob:showText(mob, ID.text.QUADAV_KING_ENGAGE)
 end
 
@@ -32,8 +30,8 @@ end
 entity.onMobDespawn = function(mob)
     -- reset hqnm system back to the nm placeholder
     local nqId = mob:getID() - 1
-    SetServerVariable("[POP]Za_Dha_Adamantking", os.time() + 259200) -- 3 days
-    SetServerVariable("[PH]Za_Dha_Adamantking", 0)
+    SetServerVariable('[POP]Za_Dha_Adamantking', os.time() + 259200) -- 3 days
+    SetServerVariable('[PH]Za_Dha_Adamantking', 0)
     DisallowRespawn(mob:getID(), true)
     DisallowRespawn(nqId, false)
     UpdateNMSpawnPoint(nqId)

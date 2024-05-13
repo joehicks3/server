@@ -17,8 +17,7 @@
 -- - They have True Hearing.
 -- - Trusts are allowed.
 -----------------------------------
-require("scripts/globals/instance")
-local ID = require("scripts/zones/Ruhotz_Silvermines/IDs")
+local ID = zones[xi.zone.RUHOTZ_SILVERMINES]
 -----------------------------------
 local instanceObject = {}
 
@@ -43,10 +42,10 @@ end
 instanceObject.afterInstanceRegister = function(player)
     player:delKeyItem(xi.ki.MINE_SHAFT_KEY)
 
-    local questStatus = player:getQuestStatus(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.LIGHT_IN_THE_DARKNESS)
-    local questProgVar = player:getCharVar("Quest[7][19]Prog")
+    local questStatus = player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.LIGHT_IN_THE_DARKNESS)
+    local questProgVar = player:getCharVar('Quest[7][19]Prog')
     if
-        questStatus == QUEST_ACCEPTED and
+        questStatus == xi.questStatus.QUEST_ACCEPTED and
         (questProgVar == 4 or questProgVar == 7)
     then
         -- TODO: Player is not locked during this CS and will aggro the mobs
@@ -71,9 +70,9 @@ end
 instanceObject.onInstanceFailure = function(instance)
     local chars = instance:getChars()
     for _, v in ipairs(chars) do
-        local questProgVar = v:getCharVar("Quest[7][19]Prog")
+        local questProgVar = v:getCharVar('Quest[7][19]Prog')
         if questProgVar == 4 then
-            v:setCharVar("Quest[7][19]Prog", 7)
+            v:setCharVar('Quest[7][19]Prog', 7)
         end
 
         v:setPos(-385.602, 21.970, 456.359, 0, 90)
@@ -86,9 +85,9 @@ end
 instanceObject.onInstanceComplete = function(instance)
     local chars = instance:getChars()
     for _, v in ipairs(chars) do
-        local questProgVar = v:getCharVar("Quest[7][19]Prog")
+        local questProgVar = v:getCharVar('Quest[7][19]Prog')
         if questProgVar == 4 or questProgVar == 7 then
-            v:setCharVar("Quest[7][19]Prog", 5)
+            v:setCharVar('Quest[7][19]Prog', 5)
         end
 
         v:startEvent(10000)

@@ -3,14 +3,15 @@
 -- Area: Nyzul Isle
 -- Info: NM
 -----------------------------------
-require('scripts/globals/nyzul')
-require('scripts/globals/additional_effects')
------------------------------------
 local entity = {}
 
 entity.onMobInitialize = function(mob)
+    -- Set Immunities.
+    -- mob:addImmunity(xi.immunity.LIGHT_SLEEP)
+    -- mob:addImmunity(xi.immunity.DARK_SLEEP)
+
+    -- Set Mob Modifiers.
     mob:setMobMod(xi.mobMod.ADD_EFFECT, 1)
-    -- mob:addImmunity(xi.immunity.SLEEP)
 end
 
 entity.onAdditionalEffect = function(mob, target, damage)

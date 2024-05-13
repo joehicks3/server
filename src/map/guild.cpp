@@ -27,9 +27,8 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include "utils/itemutils.h"
 
 CGuild::CGuild(uint8 id, const std::string& _pointsName)
+: m_id(id)
 {
-    m_id = id;
-
     for (size_t i = 0; i < m_GPItemsRank.size(); ++i)
     {
         m_GPItemsRank[i] = (uint8)((CVanaTime::getInstance()->getVanaTime() / (60 * 60 * 24)) % (i + 4));
@@ -58,14 +57,14 @@ void CGuild::updateGuildPointsPattern(uint8 pattern)
 
         std::string query = "SELECT itemid, points, max_points FROM guild_item_points WHERE "
                             "guildid = %u AND pattern = %u AND rank = %u";
-        int         ret   = sql->Query(query.c_str(), m_id, pattern, m_GPItemsRank[i]);
+        int         ret   = _sql->Query(query.c_str(), m_id, pattern, m_GPItemsRank[i]);
 
-        if (ret != SQL_ERROR && sql->NumRows() > 0)
+        if (ret != SQL_ERROR && _sql->NumRows() > 0)
         {
-            while (sql->NextRow() == SQL_SUCCESS)
+            while (_sql->NextRow() == SQL_SUCCESS)
             {
                 m_GPItems[i].emplace_back(
-                    GPItem_t(itemutils::GetItemPointer(sql->GetUIntData(0)), sql->GetUIntData(2), sql->GetUIntData(1)));
+                    GPItem_t(itemutils::GetItemPointer(_sql->GetUIntData(0)), _sql->GetUIntData(2), _sql->GetUIntData(1)));
             }
         }
     }

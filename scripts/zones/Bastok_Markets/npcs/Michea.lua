@@ -5,31 +5,28 @@
 -- Involed in: Distant Loyalties
 -- !pos -298 -16 -157 235
 -----------------------------------
-require("scripts/globals/npc_util")
-require("scripts/globals/quests")
------------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
-    local distantLoyalties = player:getQuestStatus(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.DISTANT_LOYALTIES)
+    local distantLoyalties = player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.DISTANT_LOYALTIES)
 
     -- DISTANT LOYALTIES
     if
-        distantLoyalties == QUEST_ACCEPTED and
-        player:getCharVar("DistantLoyaltiesProgress") == 2 and
-        npcUtil.tradeHas(trade, xi.items.MYTHRIL_INGOT)
+        distantLoyalties == xi.questStatus.QUEST_ACCEPTED and
+        player:getCharVar('DistantLoyaltiesProgress') == 2 and
+        npcUtil.tradeHas(trade, xi.item.MYTHRIL_INGOT)
     then
         player:startEvent(317)
     end
 end
 
 entity.onTrigger = function(player, npc)
-    local distantLoyalties = player:getQuestStatus(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.DISTANT_LOYALTIES)
-    local distantLoyaltiesProgress = player:getCharVar("DistantLoyaltiesProgress")
+    local distantLoyalties = player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.DISTANT_LOYALTIES)
+    local distantLoyaltiesProgress = player:getCharVar('DistantLoyaltiesProgress')
 
     -- DISTANT LOYALTIES
     if
-        distantLoyalties == QUEST_ACCEPTED and
+        distantLoyalties == xi.questStatus.QUEST_ACCEPTED and
         distantLoyaltiesProgress >= 1 and
         distantLoyaltiesProgress <= 3
     then
@@ -55,13 +52,13 @@ entity.onEventFinish = function(player, csid, option, npc)
     -- DISTANT LOYALTIES
     if csid == 315 then
         player:delKeyItem(xi.ki.GOLDSMITHING_ORDER)
-        player:setCharVar("DistantLoyaltiesProgress", 2)
+        player:setCharVar('DistantLoyaltiesProgress', 2)
     elseif csid == 317 then
         player:confirmTrade()
-        player:setCharVar("DistantLoyaltiesProgress", 3)
+        player:setCharVar('DistantLoyaltiesProgress', 3)
         player:needToZone(true)
     elseif csid == 318 then
-        player:setCharVar("DistantLoyaltiesProgress", 4)
+        player:setCharVar('DistantLoyaltiesProgress', 4)
         npcUtil.giveKeyItem(player, xi.ki.MYTHRIL_HEARTS)
     end
 end

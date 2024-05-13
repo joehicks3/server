@@ -10,14 +10,8 @@
 -- Mourices        : !pos -50.646 -0.501 -27.642 241
 -- Savae E Paleade : !pos 23.724 -17.39 -43.360 237
 -----------------------------------
-require('scripts/globals/missions')
-require('scripts/globals/npc_util')
-require('scripts/globals/interaction/mission')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
------------------------------------
-local southernSandoriaID = require('scripts/zones/Southern_San_dOria/IDs')
-local northernSandoriaID = require('scripts/zones/Northern_San_dOria/IDs')
+local southernSandoriaID = zones[xi.zone.SOUTHERN_SAN_DORIA]
+local northernSandoriaID = zones[xi.zone.NORTHERN_SAN_DORIA]
 -----------------------------------
 
 local mission = Mission:new(xi.mission.log_id.SANDORIA, xi.mission.id.sandoria.JOURNEY_ABROAD)
@@ -117,9 +111,13 @@ mission.sections =
                     if missionStatus == 11 then
                         return mission:progressEvent(507)
                     elseif missionStatus == 0 then
-                        local needsHalverTrust = (not player:hasSpell(xi.magic.spell.HALVER) and not player:findItem(xi.items.CIPHER_OF_HALVERS_ALTER_EGO)) and 1 or 0
+                        if xi.settings.main.ENABLE_TRUST_QUESTS == 1 then
+                            local needsHalverTrust = (not player:hasSpell(xi.magic.spell.HALVER) and not player:findItem(xi.item.CIPHER_OF_HALVERS_ALTER_EGO)) and 1 or 0
 
-                        return mission:progressEvent(505, { [7] = needsHalverTrust })
+                            return mission:progressEvent(505, { [7] = needsHalverTrust })
+                        else
+                            return mission:progressEvent(505)
+                        end
                     else
                         return mission:progressEvent(532)
                     end
@@ -133,10 +131,11 @@ mission.sections =
                     npcUtil.giveKeyItem(player, xi.ki.LETTER_TO_THE_CONSULS_SANDORIA)
 
                     if
+                        xi.settings.main.ENABLE_TRUST_QUESTS == 1 and
                         not player:hasSpell(xi.magic.spell.HALVER) and
-                        not player:findItem(xi.items.CIPHER_OF_HALVERS_ALTER_EGO)
+                        not player:findItem(xi.item.CIPHER_OF_HALVERS_ALTER_EGO)
                     then
-                        npcUtil.giveItem(player, xi.items.CIPHER_OF_HALVERS_ALTER_EGO)
+                        npcUtil.giveItem(player, xi.item.CIPHER_OF_HALVERS_ALTER_EGO)
                     end
                 end,
 

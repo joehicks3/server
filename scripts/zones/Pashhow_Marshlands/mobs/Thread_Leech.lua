@@ -3,11 +3,14 @@
 --  Mob: Thread Leech
 -- Note: PH for Bloodpool Vorax
 -----------------------------------
-local ID = require("scripts/zones/Pashhow_Marshlands/IDs")
-require("scripts/globals/regimes")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.PASHHOW_MARSHLANDS]
 -----------------------------------
 local entity = {}
+
+local bloodpoolPHTable =
+{
+    [ID.mob.BLOODPOOL_VORAX - 5] = ID.mob.BLOODPOOL_VORAX, -- -351.884 24.014 513.531
+}
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 22, 1, xi.regime.type.FIELDS)
@@ -15,7 +18,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.BLOODPOOL_VORAX_PH, 5, 600) -- 10 minutes
+    xi.mob.phOnDespawn(mob, bloodpoolPHTable, 5, 600) -- 10 minutes
 end
 
 return entity

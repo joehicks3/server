@@ -3,11 +3,14 @@
 --  Mob: Crawler
 -- Note: PH for Spiny Spipi
 -----------------------------------
-local ID = require("scripts/zones/East_Sarutabaruta/IDs")
-require("scripts/globals/regimes")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.EAST_SARUTABARUTA]
 -----------------------------------
 local entity = {}
+
+local spinySpipiPHTable =
+{
+    [ID.mob.SPINY_SPIPI - 1] = ID.mob.SPINY_SPIPI,
+}
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 92, 2, xi.regime.type.FIELDS)
@@ -15,7 +18,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.SPINY_SPIPI_PH, 10, 2700) -- 45 minute minimum
+    xi.mob.phOnDespawn(mob, spinySpipiPHTable, 10, 2700) -- 45 minute minimum
 end
 
 return entity

@@ -2,9 +2,6 @@
 -- Area: Eastern Altepa Desert
 -- NM  : Cactrot Rapido
 -----------------------------------
-require("scripts/globals/pathfind")
-require("scripts/globals/titles")
------------------------------------
 local entity = {}
 
 local pathNodes =
@@ -126,7 +123,7 @@ entity.onMobDisengage = function(mob)
     mob:setAnimationSub(5)
 end
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     mob:setAnimationSub(0)
 end
 

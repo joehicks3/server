@@ -4,19 +4,14 @@
 -- Log ID: 3, Quest ID: 24
 -- Radeivepart : !pos 5 9 -39 243
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.NORTHWARD)
+local quest = Quest:new(xi.questLog.JEUNO, xi.quest.id.jeuno.NORTHWARD)
 
 quest.reward =
 {
     exp      = 2000,
     fame     = 30,
-    fameArea = xi.quest.fame_area.JEUNO,
+    fameArea = xi.fameArea.JEUNO,
     gil      = 2000,
     keyItem  = xi.ki.MAP_OF_CASTLE_ZVAHL,
     title    = xi.title.ENVOY_TO_THE_NORTH,
@@ -26,8 +21,8 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getFameLevel(xi.quest.fame_area.JEUNO) >= 4
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getFameLevel(xi.fameArea.JEUNO) >= 4
         end,
 
         [xi.zone.RULUDE_GARDENS] =
@@ -47,7 +42,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.RULUDE_GARDENS] =
@@ -55,7 +50,7 @@ quest.sections =
             ['Radeivepart'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.FLAME_DEGEN) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.FLAME_DEGEN) then
                         return quest:progressEvent(61)
                     end
                 end,
@@ -76,7 +71,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.RULUDE_GARDENS] =

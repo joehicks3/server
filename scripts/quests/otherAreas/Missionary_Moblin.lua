@@ -2,12 +2,8 @@
 -- Missionery Moblin
 -- Koblakiq !pos -64.851 21.834 -117.521 11
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/interaction/quest')
-require('scripts/globals/npc_util')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.MISSIONARY_MOBLIN)
+local quest = Quest:new(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.MISSIONARY_MOBLIN)
 
 quest.reward =
 {
@@ -18,7 +14,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.OLDTON_MOVALPOLOS] =
@@ -43,7 +39,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.OLDTON_MOVALPOLOS] =
@@ -51,7 +47,7 @@ quest.sections =
             ['Koblakiq'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.SOILED_LETTER) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.SOILED_LETTER) then
                         return quest:progressCutscene(9)
                     end
                 end,
@@ -71,7 +67,7 @@ quest.sections =
     },
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.OLDTON_MOVALPOLOS] =

@@ -4,22 +4,16 @@
 -- Log ID: 0, Quest ID: 10
 -- Balasiel : !pos -136 -11 64 230
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local southernSandoriaID = require('scripts/zones/Southern_San_dOria/IDs')
+local southernSandoriaID = zones[xi.zone.SOUTHERN_SAN_DORIA]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.A_SQUIRES_TEST)
+local quest = Quest:new(xi.questLog.SANDORIA, xi.quest.id.sandoria.A_SQUIRES_TEST)
 
 quest.reward =
 {
     fame     = 30,
-    fameArea = xi.quest.fame_area.SANDORIA,
-    item     = xi.items.SPATHA,
+    fameArea = xi.fameArea.SANDORIA,
+    item     = xi.item.SPATHA,
     title    = xi.title.KNIGHT_IN_TRAINING,
 }
 
@@ -27,7 +21,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -64,7 +58,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -72,12 +66,12 @@ quest.sections =
             ['Balasiel'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.REVIVAL_TREE_ROOT) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.REVIVAL_TREE_ROOT) then
                         return quest:progressEvent(617)
                     end
                 end,
 
-                onTrigger = quest:messageName(southernSandoriaID.text.GO_TO_KING_RANPERRES, xi.items.REVIVAL_TREE_ROOT),
+                onTrigger = quest:messageName(southernSandoriaID.text.GO_TO_KING_RANPERRES, xi.item.REVIVAL_TREE_ROOT),
             },
 
             onEventFinish =

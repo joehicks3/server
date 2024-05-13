@@ -3,8 +3,7 @@
 --  NPC: ??? Used for Norg quest "It's not your vault"
 -- !pos -173 26 252 176
 -----------------------------------
-local ID = require("scripts/zones/Sea_Serpent_Grotto/IDs")
-require("scripts/globals/quests")
+local ID = zones[xi.zone.SEA_SERPENT_GROTTO]
 -----------------------------------
 local entity = {}
 
@@ -13,7 +12,7 @@ end
 
 entity.onTrigger = function(player, npc)
     if
-        player:getQuestStatus(xi.quest.log_id.OUTLANDS, xi.quest.id.outlands.ITS_NOT_YOUR_VAULT) == QUEST_ACCEPTED and
+        player:getQuestStatus(xi.questLog.OUTLANDS, xi.quest.id.outlands.ITS_NOT_YOUR_VAULT) == xi.questStatus.QUEST_ACCEPTED and
         not player:hasKeyItem(xi.ki.SEALED_IRON_BOX)
     then
         player:addKeyItem(xi.ki.SEALED_IRON_BOX)

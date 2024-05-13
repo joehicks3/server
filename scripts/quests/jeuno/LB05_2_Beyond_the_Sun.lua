@@ -3,19 +3,15 @@
 -----------------------------------
 -- Log ID: 3, Quest ID: 76
 -- Maat : !pos 8 3 118 243
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/interaction/quest')
 -----------------------------------
-local ruludeID = require('scripts/zones/RuLude_Gardens/IDs')
+local ruludeID = zones[xi.zone.RULUDE_GARDENS]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.BEYOND_THE_SUN)
+local quest = Quest:new(xi.questLog.JEUNO, xi.quest.id.jeuno.BEYOND_THE_SUN)
 
 quest.reward =
 {
-    item = xi.items.MAATS_CAP,
+    item = xi.item.MAATS_CAP,
     title = xi.title.ULTIMATE_CHAMPION_OF_THE_WORLD,
 }
 
@@ -24,8 +20,8 @@ quest.sections =
     -- Section: Quest available.
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.SHATTERING_STARS) == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.SHATTERING_STARS) == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.RULUDE_GARDENS] =
@@ -34,7 +30,7 @@ quest.sections =
             {
                 onTrigger = function(player, npc)
                     if player:getMainJob() <= 15 then
-                        if utils.mask.isFull(player:getCharVar("maatsCap"), 15) then -- Defeated maat on 15 jobs
+                        if utils.mask.isFull(player:getCharVar('maatsCap'), 15) then -- Defeated maat on 15 jobs
                             return quest:progressEvent(74)
                         else
                             return quest:event(78, player:getMainJob()) -- Rematch dialog. Job dependant.
@@ -57,7 +53,7 @@ quest.sections =
     -- Section: Quest completed.
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.RULUDE_GARDENS] =

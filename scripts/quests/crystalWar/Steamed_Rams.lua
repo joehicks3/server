@@ -8,16 +8,10 @@
 -- qm4         : !pos 541.425 -49.83 178.563
 -- qm5         : !pos 380.015 -26.5 -22.525
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local southernSandoriaSID = require('scripts/zones/Southern_San_dOria_[S]/IDs')
+local southernSandoriaSID = zones[xi.zone.SOUTHERN_SAN_DORIA_S]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.STEAMED_RAMS)
+local quest = Quest:new(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.STEAMED_RAMS)
 
 quest.reward =
 {
@@ -28,7 +22,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.GARLAIGE_CITADEL_S] =
@@ -65,8 +59,8 @@ quest.sections =
             {
                 onTrigger = function(player, npc)
                     if
-                        player:getQuestStatus(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH) == QUEST_ACCEPTED or
-                        player:getQuestStatus(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.SNAKE_ON_THE_PLAINS) == QUEST_ACCEPTED
+                        player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.THE_FIGHTING_FOURTH) == xi.questStatus.QUEST_ACCEPTED or
+                        player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.SNAKE_ON_THE_PLAINS) == xi.questStatus.QUEST_ACCEPTED
                     then
                         return quest:event(9)
                     elseif
@@ -120,7 +114,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA_S] =
@@ -157,7 +151,7 @@ quest.sections =
                         player:delKeyItem(xi.ki.OXIDIZED_PLATE)
                         player:delKeyItem(xi.ki.PIECE_OF_SHATTERED_LUMBER)
 
-                        npcUtil.giveItem(player, xi.items.SPRINTERS_SHOES)
+                        npcUtil.giveItem(player, xi.item.SPRINTERS_SHOES)
 
                         player:messageSpecial(southernSandoriaSID.text.NOW_ALLIED_WITH, 1)
                     end
@@ -241,7 +235,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA_S] =

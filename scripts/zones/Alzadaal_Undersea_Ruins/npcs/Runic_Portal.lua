@@ -5,11 +5,7 @@
 -- !pos 206.500 -1.220 33.500 72
 -- !pos 206.500 -1.220 6.500 72
 -----------------------------------
-local ID = require("scripts/zones/Alzadaal_Undersea_Ruins/IDs")
------------------------------------
-require("scripts/globals/besieged")
-require("scripts/globals/missions")
-require("scripts/globals/teleports")
+local ID = zones[xi.zone.ALZADAAL_UNDERSEA_RUINS]
 -----------------------------------
 local entity = {}
 
@@ -25,9 +21,9 @@ entity.onTrigger = function(player, npc)
         not player:hasKeyItem(xi.ki.SUPPLIES_PACKAGE)
     then
         if xi.besieged.hasRunicPortal(player, xi.teleport.runic_portal.NYZUL) then
-            event = npcid == ID.npc.RUNIC_PORTAL_NORTH and 117 or 118
+            event = npcid == ID.npc.RUNIC_PORTAL_OFFSET and 117 or 118
         else
-            event = npcid == ID.npc.RUNIC_PORTAL_NORTH and 121 or 122
+            event = npcid == ID.npc.RUNIC_PORTAL_OFFSET and 121 or 122
         end
     else
         player:messageSpecial(ID.text.RESPONSE)

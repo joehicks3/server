@@ -1,9 +1,6 @@
 -----------------------------------
 -- Area: Crawlers_Nest
 -----------------------------------
-require("scripts/globals/zone")
------------------------------------
-
 zones = zones or {}
 
 zones[xi.zone.CRAWLERS_NEST] =
@@ -25,22 +22,22 @@ zones[xi.zone.CRAWLERS_NEST] =
         LOGIN_NUMBER                  = 7193,  -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
         GEOMAGNETRON_ATTUNED          = 7202,  -- Your <keyitem> has been attuned to a geomagnetic fount in the corresponding locale.
         MEMBERS_LEVELS_ARE_RESTRICTED = 7213,  -- Your party is unable to participate because certain members' levels are restricted.
-        CHEST_UNLOCKED                = 7263,  -- You unlock the chest!
-        SOMEONE_HAS_BEEN_DIGGING_HERE = 7271,  -- Someone has been digging here.
-        EQUIPMENT_NOT_PURIFIED        = 7272,  -- Your equipment has not been completely purified.
-        YOU_BURY_THE                  = 7274,  -- You bury the <item> and <item>.
-        NOTHING_WILL_HAPPEN_YET       = 7277,  -- It seems that nothing will happen yet.
-        NOTHING_SEEMS_TO_HAPPEN       = 7278,  -- Nothing seems to happen.
-        COMBINE_INTO_A_CLUMP          = 7348,  -- You combine the % you have accumulated into a single clump.
-        PLAYER_OBTAINS_ITEM           = 7353,  -- <name> obtains <item>!
-        UNABLE_TO_OBTAIN_ITEM         = 7354,  -- You were unable to obtain the item.
-        PLAYER_OBTAINS_TEMP_ITEM      = 7355,  -- <name> obtains the temporary item: <item>!
-        ALREADY_POSSESS_TEMP          = 7356,  -- You already possess that temporary item.
-        NO_COMBINATION                = 7361,  -- You were unable to enter a combination.
-        REGIME_REGISTERED             = 9439,  -- New training regime registered!
-        LEARNS_SPELL                  = 11357, -- <name> learns <spell>!
-        UNCANNY_SENSATION             = 11359, -- You are assaulted by an uncanny sensation.
-        COMMON_SENSE_SURVIVAL         = 11391, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
+        CHEST_UNLOCKED                = 7267,  -- You unlock the chest!
+        SOMEONE_HAS_BEEN_DIGGING_HERE = 7275,  -- Someone has been digging here.
+        EQUIPMENT_NOT_PURIFIED        = 7276,  -- Your equipment has not been completely purified.
+        YOU_BURY_THE                  = 7278,  -- You bury the <item> and <item>.
+        NOTHING_WILL_HAPPEN_YET       = 7281,  -- It seems that nothing will happen yet.
+        NOTHING_SEEMS_TO_HAPPEN       = 7282,  -- Nothing seems to happen.
+        COMBINE_INTO_A_CLUMP          = 7352,  -- You combine the % you have accumulated into a single clump.
+        PLAYER_OBTAINS_ITEM           = 7357,  -- <name> obtains <item>!
+        UNABLE_TO_OBTAIN_ITEM         = 7358,  -- You were unable to obtain the item.
+        PLAYER_OBTAINS_TEMP_ITEM      = 7359,  -- <name> obtains the temporary item: <item>!
+        ALREADY_POSSESS_TEMP          = 7360,  -- You already possess that temporary item.
+        NO_COMBINATION                = 7365,  -- You were unable to enter a combination.
+        REGIME_REGISTERED             = 9443,  -- New training regime registered!
+        LEARNS_SPELL                  = 11361, -- <name> learns <spell>!
+        UNCANNY_SENSATION             = 11363, -- You are assaulted by an uncanny sensation.
+        COMMON_SENSE_SURVIVAL         = 11395, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
     },
     mob =
     {
@@ -59,8 +56,8 @@ zones[xi.zone.CRAWLERS_NEST] =
     },
     npc =
     {
-        TREASURE_CHEST  = 17584475,
-        TREASURE_COFFER = 17584476,
+        TREASURE_CHEST  = GetFirstID('Treasure_Chest'),
+        TREASURE_COFFER = GetFirstID('Treasure_Coffer'),
     },
 }
 

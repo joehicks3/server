@@ -3,16 +3,20 @@
 --  Mob: Nachzehrer
 -- Note: PH for Gwyllgi
 -----------------------------------
-local ID = require("scripts/zones/King_Ranperres_Tomb/IDs")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.KING_RANPERRES_TOMB]
 -----------------------------------
 local entity = {}
+
+local gwyllgiPHTable =
+{
+    [ID.mob.GWYLLGI - 3] = ID.mob.GWYLLGI,
+}
 
 entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.GWYLLGI_PH, 10, 3600) -- 1 hour
+    xi.mob.phOnDespawn(mob, gwyllgiPHTable, 10, 3600) -- 1 hour
 end
 
 return entity

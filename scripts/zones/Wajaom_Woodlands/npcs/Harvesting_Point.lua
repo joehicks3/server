@@ -2,16 +2,14 @@
 -- Area: Wajaom Woodlands
 --  NPC: Harvesting Point
 -----------------------------------
-require("scripts/globals/helm")
------------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
-    xi.helm.onTrade(player, npc, trade, xi.helm.type.HARVESTING, 507)
+    xi.helm.onTrade(player, npc, trade, xi.helmType.HARVESTING, 507)
 end
 
 entity.onTrigger = function(player, npc)
-    xi.helm.onTrigger(player, xi.helm.type.HARVESTING)
+    xi.helm.onTrigger(player, xi.helmType.HARVESTING)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)

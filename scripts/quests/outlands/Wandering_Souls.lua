@@ -4,20 +4,14 @@
 -- Log ID: 5, Quest ID: 161
 -- Cermet Headstone : !pos -107 -8 450 113
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local terigganID = require('scripts/zones/Cape_Teriggan/IDs')
+local terigganID = zones[xi.zone.CAPE_TERIGGAN]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.OUTLANDS, xi.quest.id.outlands.WANDERING_SOULS)
+local quest = Quest:new(xi.questLog.OUTLANDS, xi.quest.id.outlands.WANDERING_SOULS)
 
 quest.reward =
 {
-    item  = xi.items.FLAGELLANTS_ROPE,
+    item  = xi.item.FLAGELLANTS_ROPE,
     title = xi.title.BEARER_OF_BONDS_BEYOND_TIME,
 }
 
@@ -25,7 +19,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.CAPE_TERIGGAN] =
@@ -33,8 +27,8 @@ quest.sections =
             ['Cermet_Headstone'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.RAIN_LILY) then
-                        return quest:progressEvent(202, xi.items.RAIN_LILY)
+                    if npcUtil.tradeHasExactly(trade, xi.item.RAIN_LILY) then
+                        return quest:progressEvent(202, xi.item.RAIN_LILY)
                     end
                 end,
 

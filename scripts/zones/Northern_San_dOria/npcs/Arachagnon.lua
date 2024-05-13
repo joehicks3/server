@@ -3,8 +3,7 @@
 --  NPC: Arachagnon
 -- Standard Merchant NPC
 -----------------------------------
-local ID = require("scripts/zones/Northern_San_dOria/IDs")
-require("scripts/globals/shop")
+local ID = zones[xi.zone.NORTHERN_SAN_DORIA]
 -----------------------------------
 local entity = {}
 
@@ -25,7 +24,7 @@ entity.onTrigger = function(player, npc)
     }
 
     player:showText(npc, ID.text.ARACHAGNON_SHOP_DIALOG)
-    xi.shop.general(player, stock, xi.quest.fame_area.SANDORIA)
+    xi.shop.general(player, stock, xi.fameArea.SANDORIA)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)

@@ -3,21 +3,54 @@
 -----------------------------------
 -- Log ID: 3, Quest ID: 132
 -- Maat : !pos 8 3 118 243
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/interaction/quest')
 -----------------------------------
-local ruludeID = require('scripts/zones/RuLude_Gardens/IDs')
+local ruludeID = zones[xi.zone.RULUDE_GARDENS]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.SHATTERING_STARS)
+local quest = Quest:new(xi.questLog.JEUNO, xi.quest.id.jeuno.SHATTERING_STARS)
 
 quest.reward =
 {
     fame = 80,
-    fameArea = xi.quest.fame_area.JEUNO,
+    fameArea = xi.fameArea.JEUNO,
     title = xi.title.STAR_BREAKER,
+}
+
+local maatBattlefieldIds =
+{
+    [xi.zone.BALGAS_DAIS]        = { 101, 102, 103 },
+    [xi.zone.CHAMBER_OF_ORACLES] = { 194, 195, 196 },
+    [xi.zone.HORLAIS_PEAK]       = {   5,   6,   7 },
+    [xi.zone.QUBIA_ARENA]        = { 517, 518, 519 },
+    [xi.zone.WAUGHROON_SHRINE]   = {  70,  71,  72 },
+}
+
+local maatBattlefieldZone =
+{
+    onEventFinish =
+    {
+        [32001] = function(player, csid, option, npc)
+            local battlefieldWin = player:getLocalVar('battlefieldWin')
+
+            for _, battlefieldId in ipairs(maatBattlefieldIds[player:getZoneID()]) do
+                if battlefieldWin == battlefieldId then
+                    local jobId        = player:getMainJob()
+                    local maatsCapMask = player:getCharVar('maatsCap')
+
+                    if player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.SHATTERING_STARS) == xi.questStatus.QUEST_ACCEPTED then
+                        npcUtil.giveItem(player, xi.item.SCROLL_OF_INSTANT_WARP)
+                        quest:setVar(player, 'Prog', jobId)
+                    end
+
+                    if not utils.mask.getBit(maatsCapMask, jobId - 1) then
+                        player:setCharVar('maatsCap', utils.mask.setBit(maatsCapMask, jobId - 1, true))
+                    end
+
+                    player:addTitle(xi.title.MAAT_MASHER)
+                end
+            end
+        end,
+    },
 }
 
 quest.sections =
@@ -25,7 +58,7 @@ quest.sections =
     -- Section: Quest available.
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 player:getMainJob() <= 15 and -- Only the "old" jobs may start this quest.
                 player:getMainLvl() >= 66 and
                 player:getLevelCap() == 70 and
@@ -53,7 +86,7 @@ quest.sections =
     -- Section: Quest accepted.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and
+            return status == xi.questStatus.QUEST_ACCEPTED and
                 player:getMainJob() <= 15 and
                 player:getMainLvl() >= 66
         end,
@@ -71,7 +104,7 @@ quest.sections =
                 end,
 
                 onTrade = function(player, npc, trade)
-                    local properTestimony = xi.items.WARRIORS_TESTIMONY + player:getMainJob() - 1
+                    local properTestimony = xi.item.WARRIORS_TESTIMONY + player:getMainJob() - 1
 
                     if
                         npcUtil.tradeHasExactly(trade, properTestimony) and
@@ -109,6 +142,20 @@ quest.sections =
                 end,
             },
         },
+    },
+
+    {
+        check = function(player, status, vars)
+            return status >= xi.questStatus.QUEST_ACCEPTED and
+                player:getMainJob() <= 15 and
+                player:getMainLvl() >= 66
+        end,
+
+        [xi.zone.BALGAS_DAIS]        = maatBattlefieldZone,
+        [xi.zone.CHAMBER_OF_ORACLES] = maatBattlefieldZone,
+        [xi.zone.HORLAIS_PEAK]       = maatBattlefieldZone,
+        [xi.zone.QUBIA_ARENA]        = maatBattlefieldZone,
+        [xi.zone.WAUGHROON_SHRINE]   = maatBattlefieldZone,
     },
 }
 

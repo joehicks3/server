@@ -4,20 +4,14 @@
 -- Starts and Finishes Quest: Hat in Hand
 -- !pos -66 -3 -148 238
 -----------------------------------
-local ID = require("scripts/zones/Windurst_Waters/IDs")
-require("scripts/globals/npc_util")
-require("scripts/globals/quests")
-require("scripts/globals/titles")
-require("scripts/globals/utils")
------------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
-    local aFeatherInOnesCap = player:getQuestStatus(xi.quest.log_id.WINDURST, xi.quest.id.windurst.A_FEATHER_IN_ONE_S_CAP)
+    local aFeatherInOnesCap = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.A_FEATHER_IN_ONE_S_CAP)
 
     if
-        (aFeatherInOnesCap == QUEST_ACCEPTED or
-        player:getCharVar("QuestFeatherInOnesCap_var") == 1) and
+        (aFeatherInOnesCap == xi.questStatus.QUEST_ACCEPTED or
+        player:getCharVar('QuestFeatherInOnesCap_var') == 1) and
         npcUtil.tradeHas(trade, { { 842, 3 } })
     then
         player:startEvent(79, 1500) -- Quest Turn In
@@ -25,45 +19,48 @@ entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
-    local hatInHand = player:getQuestStatus(xi.quest.log_id.WINDURST, xi.quest.id.windurst.HAT_IN_HAND)
-    local aFeatherInOnesCap = player:getQuestStatus(xi.quest.log_id.WINDURST, xi.quest.id.windurst.A_FEATHER_IN_ONE_S_CAP)
-    local pfame = player:getFameLevel(xi.quest.fame_area.WINDURST)
+    local hatInHand = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.HAT_IN_HAND)
+    local aFeatherInOnesCap = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.A_FEATHER_IN_ONE_S_CAP)
+    local pfame = player:getFameLevel(xi.fameArea.WINDURST)
 
-    if hatInHand == QUEST_AVAILABLE then
+    if hatInHand == xi.questStatus.QUEST_AVAILABLE then
         player:startEvent(48) -- Quest Offered
     elseif player:hasKeyItem(xi.ki.NEW_MODEL_HAT) then
-        local count = player:getCharVar("QuestHatInHand_count")
+        local count = player:getCharVar('QuestHatInHand_count')
 
         if count >= 8 then
             player:startEvent(52, 80) -- 80 = HAT + FULL REWARD = 8 NPCS
-            player:setLocalVar("hatRewardTier", 5)
+            player:setLocalVar('hatRewardTier', 5)
         elseif count >= 6 then
             player:startEvent(52, 50) -- 50 = HAT + GOOD REWARD >= 6-7 NPCS
-            player:setLocalVar("hatRewardTier", 4)
+            player:setLocalVar('hatRewardTier', 4)
         elseif count >= 4 then
             player:startEvent(52, 30) -- 30 = PARTIAL REWARD >= 4-5 NPCS
-            player:setLocalVar("hatRewardTier", 3)
+            player:setLocalVar('hatRewardTier', 3)
         elseif count >= 2 then
             player:startEvent(52, 20) -- 20 = POOR REWARD >= 2-3 NPCS
-            player:setLocalVar("hatRewardTier", 2)
+            player:setLocalVar('hatRewardTier', 2)
         else
             player:startEvent(52) -- 0 = NO REWARD >= 0-1 NPCS
-            player:setLocalVar("hatRewardTier", 1)
+            player:setLocalVar('hatRewardTier', 1)
         end
     elseif
-        hatInHand == QUEST_COMPLETED and
-        aFeatherInOnesCap == QUEST_AVAILABLE and
+        hatInHand == xi.questStatus.QUEST_COMPLETED and
+        aFeatherInOnesCap == xi.questStatus.QUEST_AVAILABLE and
         pfame >= 3 and
         not player:needToZone()
     then
-        player:startEvent(75, 0, 842) -- Quest "Feather In One's Cap" offered
+        player:startEvent(75, 0, 842) -- Quest 'Feather In One's Cap' offered
     elseif
-        aFeatherInOnesCap == QUEST_ACCEPTED or
-        player:getCharVar("QuestFeatherInOnesCap_var") == 1
+        aFeatherInOnesCap == xi.questStatus.QUEST_ACCEPTED or
+        player:getCharVar('QuestFeatherInOnesCap_var') == 1
     then
         player:startEvent(78, 0, 842) -- Quest Objective Reminder
-    elseif aFeatherInOnesCap == QUEST_COMPLETED and not player:needToZone() then
-        player:startEvent(75, 0, 842) -- Repeatable Quest "A Feather In One's Cap" offered
+    elseif
+        aFeatherInOnesCap == xi.questStatus.QUEST_COMPLETED and
+        not player:needToZone()
+    then
+        player:startEvent(75, 0, 842) -- Repeatable Quest 'A Feather In One's Cap' offered
 
     -- default dialog
     else
@@ -89,14 +86,14 @@ entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
-    local aFeatherInOnesCap = player:getQuestStatus(xi.quest.log_id.WINDURST, xi.quest.id.windurst.A_FEATHER_IN_ONE_S_CAP)
+    local aFeatherInOnesCap = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.A_FEATHER_IN_ONE_S_CAP)
 
     if csid == 48 and option == 1 then
-        player:addQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.HAT_IN_HAND)
+        player:addQuest(xi.questLog.WINDURST, xi.quest.id.windurst.HAT_IN_HAND)
         npcUtil.giveKeyItem(player, xi.ki.NEW_MODEL_HAT)
     elseif csid == 52 and option >= 1 then
-        local rewardTier = player:getLocalVar("hatRewardTier")
-        local rewards = { fame = 75, fameArea = xi.quest.fame_area.WINDURST, var = { "QuestHatInHand_var", "QuestHatInHand_count" } }
+        local rewardTier = player:getLocalVar('hatRewardTier')
+        local rewards = { fame = 75, fameArea = xi.fameArea.WINDURST, var = { 'QuestHatInHand_var', 'QuestHatInHand_count' } }
 
         if rewardTier == 5 then
             rewards.gil = 500
@@ -112,22 +109,22 @@ entity.onEventFinish = function(player, csid, option, npc)
             rewards.gil = 300
         end
 
-        if npcUtil.completeQuest(player, xi.quest.log_id.WINDURST, xi.quest.id.windurst.HAT_IN_HAND, rewards) then
+        if npcUtil.completeQuest(player, xi.questLog.WINDURST, xi.quest.id.windurst.HAT_IN_HAND, rewards) then
             player:delKeyItem(xi.ki.NEW_MODEL_HAT)
             player:needToZone(true)
         end
     elseif csid == 75 and option == 1 then
-        if aFeatherInOnesCap == QUEST_AVAILABLE then
-            player:addQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.A_FEATHER_IN_ONE_S_CAP)
-        elseif aFeatherInOnesCap == QUEST_COMPLETED then
-            player:setCharVar("QuestFeatherInOnesCap_var", 1)
+        if aFeatherInOnesCap == xi.questStatus.QUEST_AVAILABLE then
+            player:addQuest(xi.questLog.WINDURST, xi.quest.id.windurst.A_FEATHER_IN_ONE_S_CAP)
+        elseif aFeatherInOnesCap == xi.questStatus.QUEST_COMPLETED then
+            player:setCharVar('QuestFeatherInOnesCap_var', 1)
         end
     elseif csid == 79 then
-        if aFeatherInOnesCap == QUEST_ACCEPTED then
-            npcUtil.completeQuest(player, xi.quest.log_id.WINDURST, xi.quest.id.windurst.A_FEATHER_IN_ONE_S_CAP, { fame = 75, fameArea = xi.quest.fame_area.WINDURST })
+        if aFeatherInOnesCap == xi.questStatus.QUEST_ACCEPTED then
+            npcUtil.completeQuest(player, xi.questLog.WINDURST, xi.quest.id.windurst.A_FEATHER_IN_ONE_S_CAP, { fame = 75, fameArea = xi.fameArea.WINDURST })
         else
-            player:addFame(xi.quest.fame_area.WINDURST, 8)
-            player:setCharVar("QuestFeatherInOnesCap_var", 0)
+            player:addFame(xi.fameArea.WINDURST, 8)
+            player:setCharVar('QuestFeatherInOnesCap_var', 0)
         end
 
         player:addGil(xi.settings.main.GIL_RATE * 1500)

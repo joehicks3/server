@@ -4,8 +4,7 @@
 -- Regional Marchant NPC
 -- Only sells when San d'Oria controls Vollbow.
 -----------------------------------
-local ID = require("scripts/zones/Northern_San_dOria/IDs")
-require("scripts/globals/shop")
+local ID = zones[xi.zone.NORTHERN_SAN_DORIA]
 -----------------------------------
 local entity = {}
 
@@ -25,7 +24,7 @@ entity.onTrigger = function(player, npc)
         }
 
         player:showText(npc, ID.text.MILLECHUCA_OPEN_DIALOG)
-        xi.shop.general(player, stock, xi.quest.fame_area.SANDORIA)
+        xi.shop.general(player, stock, xi.fameArea.SANDORIA)
     end
 end
 

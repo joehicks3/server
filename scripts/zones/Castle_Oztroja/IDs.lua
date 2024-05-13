@@ -1,9 +1,6 @@
 -----------------------------------
 -- Area: Castle_Oztroja
 -----------------------------------
-require("scripts/globals/zone")
------------------------------------
-
 zones = zones or {}
 
 zones[xi.zone.CASTLE_OZTROJA] =
@@ -33,15 +30,15 @@ zones[xi.zone.CASTLE_OZTROJA] =
         LOGIN_CAMPAIGN_UNDERWAY            = 7187, -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
         LOGIN_NUMBER                       = 7188, -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
         MEMBERS_LEVELS_ARE_RESTRICTED      = 7208, -- Your party is unable to participate because certain members' levels are restricted.
-        FISHING_MESSAGE_OFFSET             = 7264, -- You can't fish here.
-        CHEST_UNLOCKED                     = 7435, -- You unlock the chest!
-        YAGUDO_AVATAR_ENGAGE               = 7456, -- Kahk-ka-ka... You filthy, dim-witted heretics! You have damned yourselves by coming here.
-        YAGUDO_AVATAR_DEATH                = 7457, -- Our lord, Tzee Xicu the Manifest!  Even should our bodies be crushed and broken, may our souls endure into eternity...
-        YAGUDO_KING_ENGAGE                 = 7458, -- You are not here as sacrifices, are you? Could you possibly be committing this affront in the face of a deity?  Very well, I will personally mete out your divine punishment, kyah!
-        YAGUDO_KING_DEATH                  = 7459, -- You have...bested me... However, I...am...a god... I will never die...never rot...never fade...never...
-        LEARNS_SPELL                       = 8298, -- <name> learns <spell>!
-        UNCANNY_SENSATION                  = 8300, -- You are assaulted by an uncanny sensation.
-        COMMON_SENSE_SURVIVAL              = 8307, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
+        FISHING_MESSAGE_OFFSET             = 7268, -- You can't fish here.
+        CHEST_UNLOCKED                     = 7439, -- You unlock the chest!
+        YAGUDO_AVATAR_ENGAGE               = 7460, -- Kahk-ka-ka... You filthy, dim-witted heretics! You have damned yourselves by coming here.
+        YAGUDO_AVATAR_DEATH                = 7461, -- Our lord, Tzee Xicu the Manifest!  Even should our bodies be crushed and broken, may our souls endure into eternity...
+        YAGUDO_KING_ENGAGE                 = 7462, -- You are not here as sacrifices, are you? Could you possibly be committing this affront in the face of a deity?  Very well, I will personally mete out your divine punishment, kyah!
+        YAGUDO_KING_DEATH                  = 7463, -- You have...bested me... However, I...am...a god... I will never die...never rot...never fade...never...
+        LEARNS_SPELL                       = 8302, -- <name> learns <spell>!
+        UNCANNY_SENSATION                  = 8304, -- You are assaulted by an uncanny sensation.
+        COMMON_SENSE_SURVIVAL              = 8311, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
     },
     mob =
     {
@@ -85,16 +82,16 @@ zones[xi.zone.CASTLE_OZTROJA] =
     },
     npc =
     {
-        HANDLE_DOOR_FLOOR_2    = 17396160,
-        FIRST_PASSWORD_STATUE  = 17396168,
-        SECOND_PASSWORD_STATUE = 17396173,
-        THIRD_PASSWORD_STATUE  = 17396178,
-        BRASS_DOOR_FLOOR_4_H7  = 17396185,
-        TRAP_DOOR_FLOOR_4      = 17396191,
-        FINAL_PASSWORD_STATUE  = 17396192,
-        HINT_HANDLE_OFFSET     = 17396196,
-        TREASURE_CHEST         = 17396210,
-        TREASURE_COFFER        = 17396211,
+        HANDLE_DOOR_FLOOR_2    = 17396161,
+        FIRST_PASSWORD_STATUE  = 17396169,
+        SECOND_PASSWORD_STATUE = 17396174,
+        THIRD_PASSWORD_STATUE  = 17396179,
+        BRASS_DOOR_FLOOR_4_H7  = 17396186,
+        TRAP_DOOR_FLOOR_4      = 17396192,
+        FINAL_PASSWORD_STATUE  = 17396193,
+        HINT_HANDLE_OFFSET     = 17396197,
+        TREASURE_CHEST         = GetFirstID('Treasure_Chest'),
+        TREASURE_COFFER        = GetFirstID('Treasure_Coffer'),
     },
 }
 

@@ -4,26 +4,20 @@
 -- Log ID: 1, Quest ID: 9
 -- Gudav : !pos -3.286 1.407 50.591 236
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.A_FOREMANS_BEST_FRIEND)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.A_FOREMANS_BEST_FRIEND)
 
 quest.reward =
 {
-    exp      = 2000,
     fame     = 60,
-    fameArea = xi.quest.fame_area.BASTOK,
-    keyItem  = xi.ki.MAP_OF_THE_GUSGEN_MINES,
+    fameArea = xi.fameArea.BASTOK,
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -41,7 +35,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -51,7 +45,7 @@ quest.sections =
             ['Gudav'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.DOG_COLLAR) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.DOG_COLLAR) then
                         return quest:progressEvent(112)
                     end
                 end,
@@ -62,6 +56,11 @@ quest.sections =
                 [112] = function(player, csid, option, npc)
                     if quest:complete(player) then
                         player:confirmTrade()
+                        if player:hasKeyItem(xi.ki.MAP_OF_THE_GUSGEN_MINES) then
+                            player:addExp(2000)
+                        else
+                            npcUtil.giveKeyItem(player, xi.ki.MAP_OF_THE_GUSGEN_MINES)
+                        end
                     end
                 end,
             },

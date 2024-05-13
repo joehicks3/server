@@ -5,20 +5,14 @@
 -- Carmelo           : !pos -146.476 -7.48 -10.889 236
 -- Mirror Pond (J-8) : !pos -96.165 1.518 -392.700 111
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.LOVE_AND_ICE)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.LOVE_AND_ICE)
 
 quest.reward =
 {
     fame     = 120,
-    fameArea = xi.quest.fame_area.BASTOK,
-    item     = xi.items.LAMIA_HARP,
+    fameArea = xi.fameArea.BASTOK,
+    item     = xi.item.LAMIA_HARP,
     title    = xi.title.SORROW_DROWNER,
 }
 
@@ -26,7 +20,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 player:seenKeyItem(xi.ki.CARRIER_PIGEON_LETTER)
         end,
 
@@ -36,8 +30,8 @@ quest.sections =
             {
                 onTrigger = function(player, npc)
                     if
-                        player:hasCompletedQuest(xi.quest.log_id.BASTOK, xi.quest.id.bastok.THE_SIRENS_TEAR) and
-                        player:getFameLevel(xi.quest.fame_area.BASTOK) >= 5
+                        player:hasCompletedQuest(xi.questLog.BASTOK, xi.quest.id.bastok.THE_SIRENS_TEAR) and
+                        player:getFameLevel(xi.fameArea.BASTOK) >= 5
                     then
                         return quest:progressEvent(185)
                     else
@@ -58,7 +52,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.PORT_BASTOK] =
@@ -76,7 +70,7 @@ quest.sections =
             {
                 [186] = function(player, csid, option, npc)
                     if quest:complete(player) then
-                        xi.quest.setMustZone(player, xi.quest.log_id.BASTOK, xi.quest.id.bastok.A_TEST_OF_TRUE_LOVE)
+                        xi.quest.setMustZone(player, xi.questLog.BASTOK, xi.quest.id.bastok.A_TEST_OF_TRUE_LOVE)
                     end
                 end,
             },

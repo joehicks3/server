@@ -1,10 +1,9 @@
 -----------------------------------
 -- Goblin Footprint NPCs
 -----------------------------------
-require("scripts/globals/quests")
-require("scripts/globals/missions")
-require("scripts/globals/zone")
-require("scripts/globals/utils")
+require('scripts/globals/quests')
+require('scripts/globals/missions')
+require('scripts/globals/utils')
 -----------------------------------
 xi = xi or {}
 xi.goblinfootprint = xi.goblinfootprint or {}
@@ -27,23 +26,23 @@ local csReq = -- add checks to this table
     [xi.zone.LA_THEINE_PLATEAU] =
     {
         [1] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.BASTOK, xi.quest.id.bastok.DARK_PUPPET)
+            return player:hasCompletedQuest(xi.questLog.BASTOK, xi.quest.id.bastok.DARK_PUPPET)
         end,
 
         [2] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.HITTING_THE_MARQUISATE)
+            return player:hasCompletedQuest(xi.questLog.WINDURST, xi.quest.id.windurst.HITTING_THE_MARQUISATE)
         end,
 
         [3] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.I_CAN_HEAR_A_RAINBOW)
+            return player:hasCompletedQuest(xi.questLog.WINDURST, xi.quest.id.windurst.I_CAN_HEAR_A_RAINBOW)
         end,
 
         [4] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.A_TIMELY_VISIT)
+            return player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.A_TIMELY_VISIT)
         end,
 
         [5] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.A_TIMELY_VISIT)
+            return player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.A_TIMELY_VISIT)
         end,
 
         [6] = function(player)
@@ -55,31 +54,31 @@ local csReq = -- add checks to this table
         end,
 
         [8] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.WAKING_THE_BEAST)
+            return player:hasCompletedQuest(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.WAKING_THE_BEAST)
         end,
 
         [9] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.WAKING_THE_BEAST)
+            return player:hasCompletedQuest(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.WAKING_THE_BEAST)
         end,
 
         [10] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.CHOCOBO_ON_THE_LOOSE)
+            return player:hasCompletedQuest(xi.questLog.JEUNO, xi.quest.id.jeuno.CHOCOBO_ON_THE_LOOSE)
         end,
 
         [11] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.A_GOLDSTRUCK_GIGAS)
+            return player:hasCompletedQuest(xi.questLog.ABYSSEA, xi.quest.id.abyssea.A_GOLDSTRUCK_GIGAS)
         end,
 
         [12] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.A_GOLDSTRUCK_GIGAS)
+            return player:hasCompletedQuest(xi.questLog.ABYSSEA, xi.quest.id.abyssea.A_GOLDSTRUCK_GIGAS)
         end,
 
         [13] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.AN_OFFICER_AND_A_PIRATE)
+            return player:hasCompletedQuest(xi.questLog.ABYSSEA, xi.quest.id.abyssea.AN_OFFICER_AND_A_PIRATE)
         end,
 
         [14] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.TENUOUS_EXISTENCE)
+            return player:hasCompletedQuest(xi.questLog.ABYSSEA, xi.quest.id.abyssea.TENUOUS_EXISTENCE)
         end,
 
         -- Not Implemented Below (ROV)
@@ -135,34 +134,34 @@ local csReq = -- add checks to this table
     [xi.zone.NORTH_GUSTABERG] =
     {
         [1] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.AS_THICK_AS_THIEVES)
+            return player:hasCompletedQuest(xi.questLog.WINDURST, xi.quest.id.windurst.AS_THICK_AS_THIEVES)
         end,
 
         [2] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.BASTOK, xi.quest.id.bastok.THE_GUSTABERG_TOUR)
+            return player:hasCompletedQuest(xi.questLog.BASTOK, xi.quest.id.bastok.THE_GUSTABERG_TOUR)
         end,
 
         [3] = function(player)
             -- RELIC: Apocalypse
             -- TODO: Table items and iterate over table for this check
-            return player:hasItem(xi.items.APOCALYPSE) or
-                player:hasItem(xi.items.APOCALYPSE_80) or
-                player:hasItem(xi.items.APOCALYPSE_85) or
-                player:hasItem(xi.items.APOCALYPSE_90) or
-                player:hasItem(xi.items.APOCALYPSE_95) or
-                player:hasItem(xi.items.APOCALYPSE_99) or
-                player:hasItem(xi.items.APOCALYPSE_99_II) or
-                player:hasItem(xi.items.APOCALYPSE_119) or
-                player:hasItem(xi.items.APOCALYPSE_119_II) or
-                player:hasItem(xi.items.APOCALYPSE_119_III)
+            return player:hasItem(xi.item.APOCALYPSE) or
+                player:hasItem(xi.item.APOCALYPSE_80) or
+                player:hasItem(xi.item.APOCALYPSE_85) or
+                player:hasItem(xi.item.APOCALYPSE_90) or
+                player:hasItem(xi.item.APOCALYPSE_95) or
+                player:hasItem(xi.item.APOCALYPSE_99) or
+                player:hasItem(xi.item.APOCALYPSE_99_II) or
+                player:hasItem(xi.item.APOCALYPSE_119) or
+                player:hasItem(xi.item.APOCALYPSE_119_II) or
+                player:hasItem(xi.item.APOCALYPSE_119_III)
         end,
 
         [4] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.AN_ULCEROUS_URAGNITE)
+            return player:hasCompletedQuest(xi.questLog.ABYSSEA, xi.quest.id.abyssea.AN_ULCEROUS_URAGNITE)
         end,
 
         [5] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.AN_ULCEROUS_URAGNITE)
+            return player:hasCompletedQuest(xi.questLog.ABYSSEA, xi.quest.id.abyssea.AN_ULCEROUS_URAGNITE)
         end,
     },
 
@@ -173,18 +172,18 @@ local csReq = -- add checks to this table
         end,
 
         [2] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.A_BEAKED_BLUSTERER)
+            return player:hasCompletedQuest(xi.questLog.ABYSSEA, xi.quest.id.abyssea.A_BEAKED_BLUSTERER)
         end,
 
         [3] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.A_BEAKED_BLUSTERER)
+            return player:hasCompletedQuest(xi.questLog.ABYSSEA, xi.quest.id.abyssea.A_BEAKED_BLUSTERER)
         end,
     },
 
     [xi.zone.MERIPHATAUD_MOUNTAINS] =
     {
         [1] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.THE_HOLY_CREST)
+            return player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.THE_HOLY_CREST)
         end,
     },
 
@@ -199,7 +198,7 @@ local csReq = -- add checks to this table
         end,
 
         [3] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.ZILART, xi.quest.id.outlands.DIVINE_MIGHT)
+            return player:hasCompletedQuest(xi.questLog.ZILART, xi.quest.id.outlands.DIVINE_MIGHT)
         end,
 
         [4] = function(player)
@@ -210,56 +209,56 @@ local csReq = -- add checks to this table
     [xi.zone.CASTLE_ZVAHL_KEEP] =
     {
         [1] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.RECOLLECTIONS)
+            return player:hasCompletedQuest(xi.questLog.WINDURST, xi.quest.id.windurst.RECOLLECTIONS)
         end,
     },
 
     [xi.zone.BOSTAUNIEUX_OUBLIETTE] =
     {
         [1] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.THE_RUMOR)
+            return player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.THE_RUMOR)
         end,
 
         [2] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.THE_RUMOR)
+            return player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.THE_RUMOR)
         end,
 
         [3] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.TROUBLE_AT_THE_SLUICE)
+            return player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.TROUBLE_AT_THE_SLUICE)
         end,
 
         [4] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.THE_HOLY_CREST)
+            return player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.THE_HOLY_CREST)
         end,
 
         [5] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.SOULS_IN_SHADOW)
+            return player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.SOULS_IN_SHADOW)
         end,
 
         [6] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.SOULS_IN_SHADOW)
+            return player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.SOULS_IN_SHADOW)
         end,
 
         [7] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.SOULS_IN_SHADOW)
+            return player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.SOULS_IN_SHADOW)
         end,
     },
 
     [xi.zone.MAZE_OF_SHAKHRAMI] =
     {
         [1] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.AHT_URHGAN, xi.quest.id.ahtUrhgan.EQUIPPED_FOR_ALL_OCCASIONS)
+            return player:hasCompletedQuest(xi.questLog.AHT_URHGAN, xi.quest.id.ahtUrhgan.EQUIPPED_FOR_ALL_OCCASIONS)
         end,
     },
 
     [xi.zone.GARLAIGE_CITADEL] =
     {
         [1] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.ESCORT_FOR_HIRE)
+            return player:hasCompletedQuest(xi.questLog.WINDURST, xi.quest.id.windurst.ESCORT_FOR_HIRE)
         end,
 
         [2] = function(player)
-            return player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.PEACE_FOR_THE_SPIRIT)
+            return player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.PEACE_FOR_THE_SPIRIT)
         end,
     },
 }

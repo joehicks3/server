@@ -7,20 +7,15 @@
 -- INGOT_OF_ROYAL_TREASURY_GOLD !additem 1682
 -- Davoi qm2 !pos 189.201 1.2553 -383.921 149
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
------------------------------------
-local phanauetID = require('scripts/zones/Phanauet_Channel/IDs')
-local davoiID = require('scripts/zones/Davoi/IDs')
+local phanauetID = zones[xi.zone.PHANAUET_CHANNEL]
+local davoiID = zones[xi.zone.DAVOI]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.TEA_WITH_A_TONBERRY)
+local quest = Quest:new(xi.questLog.SANDORIA, xi.quest.id.sandoria.TEA_WITH_A_TONBERRY)
 
 quest.reward =
 {
-    item = xi.items.WILLPOWER_TORQUE,
+    item = xi.item.WILLPOWER_TORQUE,
     title = xi.title.TALKS_WITH_TONBERRIES,
 }
 
@@ -30,9 +25,9 @@ quest.sections =
     -- who may know about it are the tight lipped Tonberries in Carpenters' Landing.
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getQuestStatus(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.SIGNED_IN_BLOOD) == QUEST_COMPLETED and
-                player:getFameLevel(xi.quest.fame_area.SANDORIA) >= 4 and
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.SIGNED_IN_BLOOD) == xi.questStatus.QUEST_COMPLETED and
+                player:getFameLevel(xi.fameArea.SANDORIA) >= 4 and
                 not player:needToZone()
         end,
 
@@ -66,7 +61,7 @@ quest.sections =
     -- Return to Southern San d'Oria and talk to Sobane to complete the quest.
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -98,16 +93,16 @@ quest.sections =
                     local progress = quest:getVar(player, 'Prog')
 
                     if progress == 0 then
-                        return quest:progressEvent(27, 0, xi.items.PIECE_OF_ATTOHWA_GINSENG)
+                        return quest:progressEvent(27, 0, xi.item.PIECE_OF_ATTOHWA_GINSENG)
                     elseif progress == 1 then
-                        return quest:replaceEvent(28, 0, xi.items.PIECE_OF_ATTOHWA_GINSENG)
+                        return quest:replaceEvent(28, 0, xi.item.PIECE_OF_ATTOHWA_GINSENG)
                     end
                 end,
 
                 onTrade = function(player, npc, trade)
                     if
                         quest:getVar(player, 'Prog') == 1 and
-                        npcUtil.tradeHas(trade, xi.items.PIECE_OF_ATTOHWA_GINSENG)
+                        npcUtil.tradeHas(trade, xi.item.PIECE_OF_ATTOHWA_GINSENG)
                     then
                         return quest:progressEvent(29)
                     end
@@ -134,9 +129,9 @@ quest.sections =
             {
                 onTrigger = function(player, npc)
                     if player:hasKeyItem(xi.keyItem.TONBERRY_BLACKBOARD) then
-                        return quest:progressEvent(5, 1, 627, xi.items.INGOT_OF_ROYAL_TREASURY_GOLD, 63, 3, 30, 30, 0)
+                        return quest:progressEvent(5, 1, 627, xi.item.INGOT_OF_ROYAL_TREASURY_GOLD, 63, 3, 30, 30, 0)
                     elseif quest:getVar(player, 'Prog') == 3 then
-                        return quest:messageName(phanauetID.text.RICHE_DAVOI_WATERFALL, 0, 0, xi.items.INGOT_OF_ROYAL_TREASURY_GOLD):replaceDefault()
+                        return quest:messageName(phanauetID.text.RICHE_DAVOI_WATERFALL, 0, 0, xi.item.INGOT_OF_ROYAL_TREASURY_GOLD):replaceDefault()
                     end
                 end,
             },
@@ -158,9 +153,9 @@ quest.sections =
                     local progress = quest:getVar(player, 'Prog')
 
                     if progress == 3 then
-                        return quest:messageSpecial(davoiID.text.WHERE_THE_TONBERRY_TOLD_YOU, 0, xi.items.INGOT_OF_ROYAL_TREASURY_GOLD)
+                        return quest:messageSpecial(davoiID.text.WHERE_THE_TONBERRY_TOLD_YOU, 0, xi.item.INGOT_OF_ROYAL_TREASURY_GOLD)
                     elseif progress == 4 then
-                        return quest:event(126, 149, xi.items.INGOT_OF_ROYAL_TREASURY_GOLD)
+                        return quest:event(126, 149, xi.item.INGOT_OF_ROYAL_TREASURY_GOLD)
                     elseif progress == 5 then
                         return quest:messageSpecial(davoiID.text.NOTHING_TO_DO)
                     end
@@ -169,7 +164,7 @@ quest.sections =
                 onTrade = function(player, npc, trade)
                     if
                         quest:getVar(player, 'Prog') == 3 and
-                        npcUtil.tradeHas(trade, xi.items.INGOT_OF_ROYAL_TREASURY_GOLD) and
+                        npcUtil.tradeHas(trade, xi.item.INGOT_OF_ROYAL_TREASURY_GOLD) and
                         npcUtil.popFromQM(player, npc, davoiID.mob.HEMATIC_CYST, { radius = 1, hide = 0 })
                     then
                         player:confirmTrade()

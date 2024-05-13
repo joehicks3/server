@@ -3,14 +3,8 @@
 -----------------------------------
 -- !addquest 8 176
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/abyssea')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.A_BEAKED_BLUSTERER)
+local quest = Quest:new(xi.questLog.ABYSSEA, xi.quest.id.abyssea.A_BEAKED_BLUSTERER)
 
 quest.reward = {}
 
@@ -18,9 +12,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 xi.abyssea.getHeldTraverserStones(player) >= 1 and
-                player:getQuestStatus(xi.quest.log_id.ABYSSEA, xi.quest.id.abyssea.DAWN_OF_DEATH) >= QUEST_ACCEPTED
+                player:getQuestStatus(xi.questLog.ABYSSEA, xi.quest.id.abyssea.DAWN_OF_DEATH) >= xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.SOUTH_GUSTABERG] =
@@ -43,7 +37,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and player:hasTitle(xi.title.BENNU_DEPLUMER)
+            return status == xi.questStatus.QUEST_ACCEPTED and player:hasTitle(xi.title.BENNU_DEPLUMER)
         end,
 
         [xi.zone.SOUTH_GUSTABERG] =

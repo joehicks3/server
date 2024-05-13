@@ -1,7 +1,7 @@
 -----------------------------------
 -- Assault: Wamoura Farm Raid
 -----------------------------------
-local ID = require("scripts/zones/Lebros_Cavern/IDs")
+local ID = zones[xi.zone.LEBROS_CAVERN]
 -----------------------------------
 local instanceObject = {}
 
@@ -25,7 +25,7 @@ instanceObject.onInstanceCreatedCallback = function(player, instance)
 end
 
 instanceObject.onInstanceTimeUpdate = function(instance, elapsed)
-    xi.instance.updateInstanceTime(instance, elapsed, ID)
+    xi.instance.updateInstanceTime(instance, elapsed, ID.text)
 end
 
 instanceObject.onInstanceFailure = function(instance)

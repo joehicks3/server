@@ -1,9 +1,9 @@
 -----------------------------------
 -- Zone: East_Ronfaure_[S] (81)
 -----------------------------------
-local ID = require('scripts/zones/East_Ronfaure_[S]/IDs')
-require('scripts/globals/helm')
-require('scripts/globals/zone')
+require('scripts/globals/dark_ixion')
+-----------------------------------
+local ID = zones[xi.zone.EAST_RONFAURE_S]
 -----------------------------------
 local zoneObject = {}
 
@@ -11,8 +11,13 @@ zoneObject.onInitialize = function(zone)
     UpdateNMSpawnPoint(ID.mob.MYRADROSH)
     GetMobByID(ID.mob.MYRADROSH):setRespawnTime(math.random(5400, 7200))
 
-    xi.helm.initZone(zone, xi.helm.type.LOGGING)
+    xi.helm.initZone(zone, xi.helmType.LOGGING)
     xi.voidwalker.zoneOnInit(zone)
+    xi.darkixion.zoneOnInit(zone)
+end
+
+zoneObject.onGameHour = function(zone)
+    xi.darkixion.zoneOnGameHour(zone)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)

@@ -67,6 +67,7 @@
 #include "ai/states/ability_state.h"
 #include "ai/states/attack_state.h"
 #include "ai/states/death_state.h"
+#include "ai/states/despawn_state.h"
 #include "ai/states/inactive_state.h"
 #include "ai/states/item_state.h"
 #include "ai/states/magic_state.h"
@@ -141,6 +142,7 @@
 #include "packets/message_text.h"
 #include "packets/monipulator1.h"
 #include "packets/monipulator2.h"
+#include "packets/objective_utility.h"
 #include "packets/position.h"
 #include "packets/quest_mission_log.h"
 #include "packets/release.h"
@@ -148,7 +150,6 @@
 #include "packets/server_ip.h"
 #include "packets/shop_items.h"
 #include "packets/shop_menu.h"
-#include "packets/timer_bar_util.h"
 #include "packets/weather.h"
 
 #include "utils/battleutils.h"
@@ -292,15 +293,15 @@ void CLuaBaseEntity::messageText(CLuaBaseEntity* PLuaBaseEntity, uint16 messageI
 }
 
 /************************************************************************
- *  Function: PrintToPlayer()
+ *  Function: printToPlayer()
  *  Purpose : Displays either standad messages to a PC or custom text
- *  Example : player:PrintToPlayer("Hello!", xi.msg.channel.NS_SAY)
- *          : player:PrintToPlayer(string.format("Hello, %s!", player:getName()), xi.msg.channel.SYSTEM_1)
+ *  Example : player:printToPlayer("Hello!", xi.msg.channel.NS_SAY)
+ *          : player:printToPlayer(string.format("Hello, %s!", player:getName()), xi.msg.channel.SYSTEM_1)
  *  Notes   : see scripts/enum/msg.lua for message channels
  *          : Can modify the name shown through explicit declaration
  ************************************************************************/
 
-void CLuaBaseEntity::PrintToPlayer(std::string const& message, sol::object const& messageTypeObj, sol::object const& nameObj)
+void CLuaBaseEntity::printToPlayer(std::string const& message, sol::object const& messageTypeObj, sol::object const& nameObj)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
@@ -318,13 +319,13 @@ void CLuaBaseEntity::PrintToPlayer(std::string const& message, sol::object const
 }
 
 /************************************************************************
- *  Function: PrintToArea()
- *  Purpose : version of PrintToPlayer that passes to messageserver
- *  Example : player:PrintToArea("Im a real boy!", xi.msg.channel.SHOUT, xi.msg.area.SYSTEM, "Pinocchio");
+ *  Function: printToArea()
+ *  Purpose : Version of printToPlayer that passes to message server
+ *  Example : player:printToArea("Im a real boy!", xi.msg.channel.SHOUT, xi.msg.area.SYSTEM, "Pinocchio");
  *          : would print a shout type message from Pinocchio to the entire server
  ************************************************************************/
 
-void CLuaBaseEntity::PrintToArea(std::string const& message, sol::object const& arg1, sol::object const& arg2, sol::object const& arg3)
+void CLuaBaseEntity::printToArea(std::string const& message, sol::object const& arg1, sol::object const& arg2, sol::object const& arg3)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
@@ -355,8 +356,19 @@ void CLuaBaseEntity::PrintToArea(std::string const& message, sol::object const& 
     }
     else if (messageRange == MESSAGE_AREA_PARTY)
     {
-        message::send(MSG_CHAT_PARTY, nullptr, 0, new CChatMessagePacket(PChar, messageLook, message, name));
-        PChar->loc.zone->PushPacket(PChar, CHAR_INRANGE_SELF, new CChatMessagePacket(PChar, messageLook, message, name));
+        int8 packetData[8]{};
+        if (PChar->PParty->m_PAlliance)
+        {
+            ref<uint32>(packetData, 0) = PChar->PParty->m_PAlliance->m_AllianceID;
+            ref<uint32>(packetData, 4) = 0; // No ID so that the PChar sees the message too
+            message::send(MSG_CHAT_ALLIANCE, packetData, sizeof packetData, new CChatMessagePacket(PChar, messageLook, message, name));
+        }
+        else if (PChar->PParty)
+        {
+            ref<uint32>(packetData, 0) = PChar->PParty->GetPartyID();
+            ref<uint32>(packetData, 4) = 0; // No ID so that the PChar sees the message too
+            message::send(MSG_CHAT_PARTY, packetData, sizeof packetData, new CChatMessagePacket(PChar, messageLook, message, name));
+        }
     }
     else if (messageRange == MESSAGE_AREA_YELL)
     {
@@ -370,7 +382,7 @@ void CLuaBaseEntity::PrintToArea(std::string const& message, sol::object const& 
     }
     else
     {
-        ShowError("CLuaBaseEntity::PrintToArea : invalid message area/messageRange value %u given by script.", messageRange);
+        ShowError("CLuaBaseEntity::printToArea : invalid message area/messageRange value %u given by script.", messageRange);
     }
     /*
     Todo: Assist channels
@@ -483,7 +495,7 @@ void CLuaBaseEntity::messageSpecial(uint16 messageID, sol::variadic_args va)
  *  Notes   :
  ************************************************************************/
 
-void CLuaBaseEntity::messageSystem(uint16 messageID, sol::object const& p0, sol::object const& p1)
+void CLuaBaseEntity::messageSystem(MsgStd messageID, sol::object const& p0, sol::object const& p1)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
@@ -572,14 +584,43 @@ int32 CLuaBaseEntity::getCharVar(std::string const& varName)
  *  Function: setCharVar()
  *  Purpose : Updates PC's variable to an explicit value
  *  Example : player:setCharVar("[ZM]Status", 4)
- *  Notes   : Passing a '0' value will delete the variable
+ *  Notes   : Passing a '0' value will delete the variable.
  ************************************************************************/
 
-void CLuaBaseEntity::setCharVar(std::string const& varName, int32 value)
+void CLuaBaseEntity::setCharVar(std::string const& varName, int32 value, sol::object const& expiry)
 {
     if (auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity))
     {
-        PChar->setCharVar(varName, value);
+        uint32 varTimestamp = expiry.is<uint32>() ? expiry.as<uint32>() : 0;
+
+        if (varTimestamp > 0 && varTimestamp <= CVanaTime::getInstance()->getSysTime())
+        {
+            ShowWarning(fmt::format("Attempting to set variable '{}' with an expired time: {}", varName, varTimestamp));
+            return;
+        }
+
+        PChar->setCharVar(varName, value, varTimestamp);
+    }
+}
+
+/************************************************************************
+ *  Function: setCharVarExpiration()
+ *  Purpose : Updates PC's variable expiration to a specific timestamp
+ *  Example : player:setCharVarExpiration("Timer", VanadielTime() + 3600)
+ *  Notes   : Passing a '0' value will set the variable to not expire.
+ ************************************************************************/
+
+void CLuaBaseEntity::setCharVarExpiration(std::string const& varName, uint32 expiry)
+{
+    if (auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity))
+    {
+        if (expiry > 0 && expiry <= CVanaTime::getInstance()->getSysTime())
+        {
+            ShowWarning(fmt::format("Attempting to set variable '{}' with an expired time: {}", varName, expiry));
+            return;
+        }
+
+        PChar->setCharVar(varName, PChar->getCharVar(varName), expiry);
     }
 }
 
@@ -587,7 +628,8 @@ void CLuaBaseEntity::setCharVar(std::string const& varName, int32 value)
  *  Function: incrementCharVar()
  *  Purpose : Increments PC's variable by an explicit amount
  *  Example : player:incrementCharVar("[ZM]Status", 1) -- if 4, becomes 5
- *  Notes   : Can use values greater than 1 to increment more
+ *  Notes   : Can use values greater than 1 to increment more.  This does
+ *            not handle expiration times.
  ************************************************************************/
 
 void CLuaBaseEntity::incrementCharVar(std::string const& varName, int32 value)
@@ -606,12 +648,42 @@ void CLuaBaseEntity::incrementCharVar(std::string const& varName, int32 value)
  *  Notes   : Passing a '0' value will delete the variable
  ************************************************************************/
 
-void CLuaBaseEntity::setVolatileCharVar(std::string const& varName, int32 value)
+void CLuaBaseEntity::setVolatileCharVar(std::string const& varName, int32 value, sol::object const& expiry)
 {
     if (auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity))
     {
-        PChar->setVolatileCharVar(varName, value);
+        uint32 varTimestamp = expiry.is<uint32>() ? expiry.as<uint32>() : 0;
+
+        if (varTimestamp > 0 && varTimestamp <= CVanaTime::getInstance()->getSysTime())
+        {
+            ShowWarning(fmt::format("Attempting to set variable '{}' with an expired time: {}", varName, varTimestamp));
+            return;
+        }
+
+        PChar->setVolatileCharVar(varName, value, varTimestamp);
     }
+}
+
+/************************************************************************
+ *  Function: getLocalVars()
+ *  Purpose : Returns all variables assigned locally to an entity
+ *  Example : local localVars = KingArthro:getLocalVars()
+ *  Notes   :
+ ************************************************************************/
+
+auto CLuaBaseEntity::getLocalVars() -> sol::table
+{
+    auto  table     = lua.create_table();
+    auto& localVars = m_PBaseEntity->GetLocalVars();
+
+    for (auto const& [varName, value] : localVars)
+    {
+        auto subtable       = lua.create_table();
+        subtable["varname"] = varName;
+        subtable["value"]   = value;
+        table.add(subtable);
+    }
+    return table;
 }
 
 /************************************************************************
@@ -680,7 +752,7 @@ uint32 CLuaBaseEntity::getLastOnline()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -703,7 +775,7 @@ void CLuaBaseEntity::injectPacket(std::string const& filename)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -782,7 +854,7 @@ void CLuaBaseEntity::entityVisualPacket(std::string const& command, sol::object 
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -841,6 +913,11 @@ void CLuaBaseEntity::StartEventHelper(int32 EventID, sol::variadic_args va, EVEN
         return;
     }
 
+    if (PChar->currentEvent->eventId == EventID)
+    {
+        ShowError("CLuaBaseEntity::StartEventHelper: Could not start event, Character Entity already triggered.");
+        return;
+    }
     PChar->StatusEffectContainer->DelStatusEffect(EFFECT_BOOST);
 
     PChar->queueEvent(ParseEvent(EventID, va, PChar->eventPreparation, eventType));
@@ -1019,7 +1096,7 @@ void CLuaBaseEntity::updateEvent(sol::variadic_args va)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -1062,7 +1139,7 @@ void CLuaBaseEntity::updateEventString(sol::variadic_args va)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -1096,14 +1173,14 @@ std::optional<CLuaBaseEntity> CLuaBaseEntity::getEventTarget()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return std::nullopt;
     }
 
     auto* PChar = (CCharEntity*)m_PBaseEntity;
     if (PChar->currentEvent->targetEntity == nullptr)
     {
-        ShowWarning("EventTarget for event %d is empty: %s", PChar->currentEvent->eventId, m_PBaseEntity->GetName());
+        ShowWarning("EventTarget for event %d is empty: %s", PChar->currentEvent->eventId, m_PBaseEntity->getName());
         return std::nullopt;
     }
 
@@ -1138,7 +1215,7 @@ void CLuaBaseEntity::release()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -1150,7 +1227,7 @@ void CLuaBaseEntity::release()
     {
         // Message: Event skipped
         releaseType = RELEASE_TYPE::SKIPPING;
-        PChar->pushPacket(new CMessageSystemPacket(0, 0, 117));
+        PChar->pushPacket(new CMessageSystemPacket(0, 0, MsgStd::EventSkipped));
     }
 
     PChar->inSequence = false;
@@ -1214,25 +1291,6 @@ void CLuaBaseEntity::resetGotMessage()
 }
 
 /************************************************************************
- *  Function: setFlag()
- *  Purpose : Sets a flag for a PC
- *  Example : player:setFlag(FLAG_GM)
- *  Notes   : Also used for Regain and Spike spell effects
- ************************************************************************/
-
-void CLuaBaseEntity::setFlag(uint32 flags)
-{
-    if (m_PBaseEntity->objtype != TYPE_PC)
-    {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
-        return;
-    }
-
-    static_cast<CCharEntity*>(m_PBaseEntity)->nameflags.flags ^= flags;
-    m_PBaseEntity->updatemask |= UPDATE_HP;
-}
-
-/************************************************************************
  *  Function: getMoghouseFlag()
  *  Purpose : Returns exit flag for Mog House
  *  Example :
@@ -1243,7 +1301,7 @@ uint16 CLuaBaseEntity::getMoghouseFlag()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -1266,7 +1324,7 @@ void CLuaBaseEntity::setMoghouseFlag(uint16 flag)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -1400,6 +1458,18 @@ bool CLuaBaseEntity::isPet()
 }
 
 /************************************************************************
+ *  Function: isTrust()
+ *  Purpose : Returns true if entity is of the Trust object type
+ *  Example : if caster:isTrust() then
+ *  Notes   :
+ ************************************************************************/
+
+bool CLuaBaseEntity::isTrust()
+{
+    return m_PBaseEntity->objtype == TYPE_TRUST;
+}
+
+/************************************************************************
  *  Function: isAlly()
  *  Purpose : Returns true if entity is an ally
  *  Example : if mob:isAlly() then table.insert(allies, mob) end
@@ -1422,7 +1492,7 @@ void CLuaBaseEntity::initNpcAi()
 {
     if (m_PBaseEntity->objtype != TYPE_NPC)
     {
-        ShowWarning("Attempting to init NPC AI for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to init NPC AI for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -1471,14 +1541,14 @@ void CLuaBaseEntity::setStatus(uint8 status)
  *  Purpose : Returns the current state of a non-NPC entity
  *  Example : if target:getCurrentAction() ~= xi.act.MOBABILITY_USING then
  *  Notes   : Function name ambiguous, but getCurrentState() in use already
- *          : See globals/status.lua for action definitions
+ *          : See scripts/enum/action.lua for action definitions
  ************************************************************************/
 
 uint8 CLuaBaseEntity::getCurrentAction()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -1486,7 +1556,7 @@ uint8 CLuaBaseEntity::getCurrentAction()
 
     if (m_PBaseEntity->PAI->IsStateStackEmpty())
     {
-        action = 16;
+        action = 16; // For mobs, this means roaming
     }
     else if (m_PBaseEntity->PAI->IsCurrentState<CRespawnState>())
     {
@@ -1524,6 +1594,10 @@ uint8 CLuaBaseEntity::getCurrentAction()
     {
         action = 22;
     }
+    else if (m_PBaseEntity->PAI->IsCurrentState<CDespawnState>())
+    {
+        action = 24;
+    }
     else if (m_PBaseEntity->PAI->IsCurrentState<CRaiseState>())
     {
         action = 37;
@@ -1543,7 +1617,7 @@ uint8 CLuaBaseEntity::getCurrentAction()
     }
     else
     {
-        ShowWarning("getCurrentAction: Unhandled State for %s, defaulting to NONE (0).", m_PBaseEntity->GetName());
+        ShowWarning("getCurrentAction: Unhandled State for %s, defaulting to NONE (0).", m_PBaseEntity->getName());
     }
 
     return action;
@@ -1701,7 +1775,7 @@ void CLuaBaseEntity::pathTo(float x, float y, float z, sol::object const& flags)
 {
     if (m_PBaseEntity->objtype == TYPE_PC)
     {
-        ShowWarning("Invalid entity (Player: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity (Player: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -1896,7 +1970,7 @@ void CLuaBaseEntity::wait(sol::object const& milliseconds)
 {
     if (m_PBaseEntity->objtype == TYPE_PC)
     {
-        ShowWarning("Invalid entity (Player: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity (Player: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -1931,7 +2005,7 @@ void CLuaBaseEntity::openDoor(sol::object const& seconds)
 {
     if (m_PBaseEntity->objtype != TYPE_NPC)
     {
-        ShowWarning("Attempting to open door with invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to open door with invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -1993,7 +2067,7 @@ void CLuaBaseEntity::setElevator(uint8 id, uint32 lowerDoor, uint32 upperDoor, u
     // If giving the elevator ANIMATION_ELEVATOR_UP makes it go down, set this bool to true
     if (m_PBaseEntity->objtype != TYPE_NPC)
     {
-        ShowWarning("Attempting to set elevator with invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to set elevator with invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -2022,7 +2096,6 @@ void CLuaBaseEntity::setElevator(uint8 id, uint32 lowerDoor, uint32 upperDoor, u
 
     elevator.zoneID = m_PBaseEntity->loc.zone->GetID();
 
-    elevator.Elevator->name.resize(10);
     CTransportHandler::getInstance()->insertElevator(elevator);
 }
 
@@ -2042,7 +2115,7 @@ void CLuaBaseEntity::addPeriodicTrigger(uint8 id, uint16 period, uint16 minOffse
 
     if (m_PBaseEntity->objtype != TYPE_NPC)
     {
-        ShowWarning("Attempting to add periodic trigger to invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to add periodic trigger to invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -2074,7 +2147,7 @@ void CLuaBaseEntity::showNPC(sol::object const& seconds)
 {
     if (m_PBaseEntity->objtype != TYPE_NPC)
     {
-        ShowWarning("Attempting to show NPC with invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to show NPC with invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -2100,7 +2173,7 @@ void CLuaBaseEntity::hideNPC(sol::object const& seconds)
 {
     if (m_PBaseEntity->objtype != TYPE_NPC)
     {
-        ShowWarning("Attempting to hide NPC with invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to hide NPC with invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -2129,7 +2202,7 @@ void CLuaBaseEntity::updateNPCHideTime(sol::object const& seconds)
 {
     if (m_PBaseEntity->objtype != TYPE_NPC)
     {
-        ShowWarning("Attempting to update NPC hide time with invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to update NPC hide time with invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -2150,13 +2223,14 @@ void CLuaBaseEntity::updateNPCHideTime(sol::object const& seconds)
  *  Example : if player:getWeather() == xi.weather.WIND then
  ************************************************************************/
 
-uint8 CLuaBaseEntity::getWeather()
+uint8 CLuaBaseEntity::getWeather(sol::object const& ignoreScholar)
 {
     WEATHER weather = WEATHER_NONE;
 
     if (m_PBaseEntity->objtype & TYPE_PC || m_PBaseEntity->objtype & TYPE_MOB)
     {
-        weather = battleutils::GetWeather(static_cast<CBattleEntity*>(m_PBaseEntity), false);
+        bool ignoreScholarWeather = ignoreScholar.is<bool>() ? ignoreScholar.as<bool>() : false;
+        weather                   = battleutils::GetWeather(static_cast<CBattleEntity*>(m_PBaseEntity), ignoreScholarWeather);
     }
     else
     {
@@ -2193,7 +2267,7 @@ void CLuaBaseEntity::changeMusic(uint8 blockID, uint8 musicTrackID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -2211,7 +2285,7 @@ void CLuaBaseEntity::sendMenu(uint32 menu)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -2246,7 +2320,7 @@ bool CLuaBaseEntity::sendGuild(uint16 guildID, uint8 open, uint8 close, uint8 ho
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return GUILD_OPEN;
     }
 
@@ -2312,14 +2386,12 @@ void CLuaBaseEntity::leaveGame()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
     auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
-
-    PChar->status = STATUS_TYPE::SHUTDOWN;
-    charutils::SendToZone(PChar, 1, 0);
+    charutils::ForceLogout(PChar);
 }
 
 /************************************************************************
@@ -2333,7 +2405,7 @@ void CLuaBaseEntity::sendEmote(CLuaBaseEntity* target, uint8 emID, uint8 emMode)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -2522,7 +2594,7 @@ auto CLuaBaseEntity::getZoneName() -> std::string
         return {};
     }
 
-    return m_PBaseEntity->loc.zone->GetName();
+    return m_PBaseEntity->loc.zone->getName();
 }
 
 /************************************************************************
@@ -2536,7 +2608,7 @@ bool CLuaBaseEntity::hasVisitedZone(uint16 zone)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -2591,7 +2663,7 @@ bool CLuaBaseEntity::isInMogHouse()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -2609,7 +2681,7 @@ uint32 CLuaBaseEntity::getPlayerTriggerAreaInZone()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -2628,7 +2700,7 @@ void CLuaBaseEntity::updateToEntireZone(uint8 statusID, uint8 animation, sol::ob
 {
     if (m_PBaseEntity->objtype != TYPE_NPC)
     {
-        ShowWarning("Attempting to update NPC to entire zone with invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to update NPC to entire zone with invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -2641,9 +2713,7 @@ void CLuaBaseEntity::updateToEntireZone(uint8 statusID, uint8 animation, sol::ob
     // If this flag is high, update the NPC's name to match the current time
     if (updateForTime == true)
     {
-        PNpc->name.resize(10);
-        ref<uint32>(&PNpc->name[0], 4) = CVanaTime::getInstance()->getVanaTime();
-        PNpc->name[8]                  = 8;
+        PNpc->SetLocalVar("TransportTimestamp", CVanaTime::getInstance()->getVanaTime());
     }
 
     PNpc->loc.zone->UpdateEntityPacket(PNpc, ENTITY_UPDATE, UPDATE_COMBAT, true);
@@ -2657,6 +2727,22 @@ void CLuaBaseEntity::sendEntityUpdateToPlayer(CLuaBaseEntity* entityToUpdate, ui
         CCharEntity* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
 
         PChar->updateEntityPacket(entityToUpdate->GetBaseEntity(), static_cast<ENTITYUPDATE>(entityUpdate), updateMask);
+    }
+}
+
+void CLuaBaseEntity::forceRezone()
+{
+    if (auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity))
+    {
+        charutils::ForceRezone(PChar);
+    }
+}
+
+void CLuaBaseEntity::forceLogout()
+{
+    if (auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity))
+    {
+        charutils::ForceLogout(PChar);
     }
 }
 
@@ -2690,7 +2776,7 @@ void CLuaBaseEntity::showPosition()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -2843,7 +2929,7 @@ void CLuaBaseEntity::setPos(sol::variadic_args va)
             if (ipp == 0)
             {
                 ShowWarning(fmt::format("Char {} requested zone ({}) returned IPP of 0", PChar->name, zoneid));
-                PChar->pushPacket(new CMessageSystemPacket(0, 0, 2)); // You could not enter the next area.
+                PChar->pushPacket(new CMessageSystemPacket(0, 0, MsgStd::CouldNotEnter)); // You could not enter the next area.
                 return;
             }
 
@@ -2872,7 +2958,7 @@ void CLuaBaseEntity::warp()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -3069,7 +3155,7 @@ sol::table CLuaBaseEntity::getTeleportTable(uint8 type)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return sol::lua_nil;
     }
 
@@ -3095,7 +3181,7 @@ sol::table CLuaBaseEntity::getTeleportTable(uint8 type)
             return teleTable;
             break;
         case TELEPORT_TYPE::WAYPOINT:
-            for (uint8 x = 0; x < 5; x++)
+            for (uint8 x = 0; x < 2; x++)
             {
                 teleTable.add(PChar->teleport.waypoints.access[x]);
             }
@@ -3119,7 +3205,7 @@ bool CLuaBaseEntity::hasTeleport(uint8 tType, uint8 bit, sol::object const& arg2
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -3206,7 +3292,7 @@ void CLuaBaseEntity::setTeleportMenu(uint16 type, sol::object const& teleportObj
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -3271,7 +3357,7 @@ sol::table CLuaBaseEntity::getTeleportMenu(uint8 type)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return sol::lua_nil;
     }
 
@@ -3331,7 +3417,7 @@ void CLuaBaseEntity::setHomePoint()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -3342,10 +3428,10 @@ void CLuaBaseEntity::setHomePoint()
 
     const char* fmtQuery = "UPDATE chars \
                             SET home_zone = %u, home_rot = %u, home_x = %.3f, home_y = %.3f, home_z = %.3f \
-                            WHERE charid = %u;";
+                            WHERE charid = %u";
 
-    sql->Query(fmtQuery, PChar->profile.home_point.destination, PChar->profile.home_point.p.rotation, PChar->profile.home_point.p.x,
-               PChar->profile.home_point.p.y, PChar->profile.home_point.p.z, PChar->id);
+    _sql->Query(fmtQuery, PChar->profile.home_point.destination, PChar->profile.home_point.p.rotation, PChar->profile.home_point.p.x,
+                PChar->profile.home_point.p.y, PChar->profile.home_point.p.z, PChar->id);
 }
 
 /************************************************************************
@@ -3361,13 +3447,13 @@ void CLuaBaseEntity::resetPlayer(const char* charName)
 
     // char will not be logged in so get the id manually
     char escapedCharName[16 * 2 + 1];
-    sql->EscapeString(escapedCharName, charName);
-    const char* Query = "SELECT charid FROM chars WHERE charname = '%s';";
-    int32       ret   = sql->Query(Query, escapedCharName);
+    _sql->EscapeString(escapedCharName, charName);
+    const char* Query = "SELECT charid FROM chars WHERE charname = '%s'";
+    int32       ret   = _sql->Query(Query, escapedCharName);
 
-    if (ret != SQL_ERROR && sql->NumRows() != 0 && sql->NextRow() == SQL_SUCCESS)
+    if (ret != SQL_ERROR && _sql->NumRows() != 0 && _sql->NextRow() == SQL_SUCCESS)
     {
-        id = sql->GetIntData(0);
+        id = _sql->GetIntData(0);
     }
 
     // could not get player from database
@@ -3378,8 +3464,8 @@ void CLuaBaseEntity::resetPlayer(const char* charName)
     }
 
     // delete the account session
-    Query = "DELETE FROM accounts_sessions WHERE charid = %u;";
-    sql->Query(Query, id);
+    Query = "DELETE FROM accounts_sessions WHERE charid = %u";
+    _sql->Query(Query, id);
 
     // send the player to lower jeuno
     Query = "UPDATE chars "
@@ -3392,18 +3478,18 @@ void CLuaBaseEntity::resetPlayer(const char* charName)
             "pos_z = %.3f,"
             "boundary = %u,"
             "moghouse = %u "
-            "WHERE charid = %u;";
+            "WHERE charid = %u";
 
-    sql->Query(Query,
-               245,     // lower jeuno
-               122,     // prev zone
-               86,      // rotation
-               33.464f, // x
-               -5.000f, // y
-               69.162f, // z
-               0,       // boundary,
-               0,       // moghouse,
-               id);
+    _sql->Query(Query,
+                245,     // lower jeuno
+                122,     // prev zone
+                86,      // rotation
+                33.464f, // x
+                -5.000f, // y
+                69.162f, // z
+                0,       // boundary,
+                0,       // moghouse,
+                id);
 
     ShowDebug("Player reset was successful.");
 }
@@ -3419,7 +3505,7 @@ void CLuaBaseEntity::goToEntity(uint32 targetID, sol::object const& option)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -3455,18 +3541,18 @@ bool CLuaBaseEntity::gotoPlayer(std::string const& playerName)
     bool found = false;
 
     char escapedCharName[16 * 2 + 1];
-    sql->EscapeString(escapedCharName, playerName.c_str());
+    _sql->EscapeString(escapedCharName, playerName.c_str());
 
-    const char* fmtQuery = "SELECT charid FROM chars WHERE charname = '%s';";
-    int32       ret      = sql->Query(fmtQuery, escapedCharName);
+    const char* fmtQuery = "SELECT charid FROM chars WHERE charname = '%s'";
+    int32       ret      = _sql->Query(fmtQuery, escapedCharName);
 
-    if (ret != SQL_ERROR && sql->NumRows() != 0 && sql->NextRow() == SQL_SUCCESS)
+    if (ret != SQL_ERROR && _sql->NumRows() != 0 && _sql->NextRow() == SQL_SUCCESS)
     {
         char buf[30];
         memset(&buf[0], 0, sizeof(buf));
 
-        ref<uint32>(&buf, 0) = sql->GetUIntData(0); // target char
-        ref<uint32>(&buf, 4) = m_PBaseEntity->id;   // warping to target char, their server will send us a zoning message with their pos
+        ref<uint32>(&buf, 0) = _sql->GetUIntData(0); // target char
+        ref<uint32>(&buf, 4) = m_PBaseEntity->id;    // warping to target char, their server will send us a zoning message with their pos
 
         message::send(MSG_SEND_TO_ZONE, &buf[0], sizeof(buf), nullptr);
         found = true;
@@ -3487,18 +3573,18 @@ bool CLuaBaseEntity::bringPlayer(std::string const& playerName)
     bool found = false;
 
     char escapedCharName[16 * 2 + 1];
-    sql->EscapeString(escapedCharName, playerName.c_str());
+    _sql->EscapeString(escapedCharName, playerName.c_str());
 
-    const char* fmtQuery = "SELECT charid FROM chars WHERE charname = '%s';";
-    int32       ret      = sql->Query(fmtQuery, escapedCharName);
+    const char* fmtQuery = "SELECT charid FROM chars WHERE charname = '%s'";
+    int32       ret      = _sql->Query(fmtQuery, escapedCharName);
 
-    if (ret != SQL_ERROR && sql->NumRows() != 0 && sql->NextRow() == SQL_SUCCESS)
+    if (ret != SQL_ERROR && _sql->NumRows() != 0 && _sql->NextRow() == SQL_SUCCESS)
     {
         char buf[30];
         memset(&buf[0], 0, sizeof(buf));
 
-        ref<uint32>(&buf, 0)  = sql->GetUIntData(0); // target char
-        ref<uint32>(&buf, 4)  = 0;                   // wanting to bring target char here so wont give our id
+        ref<uint32>(&buf, 0)  = _sql->GetUIntData(0); // target char
+        ref<uint32>(&buf, 4)  = 0;                    // wanting to bring target char here so wont give our id
         ref<uint16>(&buf, 8)  = m_PBaseEntity->getZone();
         ref<uint16>(&buf, 10) = static_cast<uint16>(m_PBaseEntity->loc.p.x);
         ref<uint16>(&buf, 14) = static_cast<uint16>(m_PBaseEntity->loc.p.y);
@@ -3632,7 +3718,7 @@ bool CLuaBaseEntity::addItem(sol::variadic_args va)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -3641,14 +3727,11 @@ bool CLuaBaseEntity::addItem(sol::variadic_args va)
     CCharEntity* PChar = (CCharEntity*)m_PBaseEntity;
 
     /* FORMAT 1:
-    player:addItem({id=itemID, quantity=quantity}) -- add quantity of itemID
-
-    player:addItem({id=itemID, silent=true}) -- silently add 1 of itemID
-
-    player:addItem({id=itemID, signature="Char"}) -- add 1 signed of itemID
-    player:addItem({id=itemID, augments={[4]=5,[10]=10}}) -- add 1 of itemID with augment id 4 and 10,
-        with values of 5 and 10, respectively
-    player:addItem({ id = itemID, exdata = { [10] = 10 } }) -- add 1 item of itemID, with the exdata at index 10 (0-indexed!) set to 10
+    player:addItem({ id = itemID, quantity  = quantity               }) -- add quantity of itemID
+    player:addItem({ id = itemID, silent    = true                   }) -- silently add 1 of itemID
+    player:addItem({ id = itemID, signature = "Char"                 }) -- add 1 signed of itemID
+    player:addItem({ id = itemID, augments  = { [4] = 5, [10] = 10 } }) -- add 1 of itemID with augment id 4 and 10, with values of 5 and 10, respectively
+    player:addItem({ id = itemID, exdata    = { [10] = 10 }          }) -- add 1 item of itemID, with the exdata at index 10 (0-indexed!) set to 10
     */
 
     if (va.get_type(0) == sol::type::table)
@@ -3850,7 +3933,7 @@ bool CLuaBaseEntity::delItem(uint16 itemID, int32 quantity, sol::object const& c
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -3886,7 +3969,7 @@ bool CLuaBaseEntity::addUsedItem(uint16 itemID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -3974,13 +4057,13 @@ uint8 CLuaBaseEntity::incrementItemWear(uint16 itemID)
         ++PItem->m_extra[0];
 
         char extra[sizeof(PItem->m_extra) * 2 + 1];
-        sql->EscapeStringLen(extra, (const char*)PItem->m_extra, sizeof(PItem->m_extra));
+        _sql->EscapeStringLen(extra, (const char*)PItem->m_extra, sizeof(PItem->m_extra));
 
         const char* Query = "UPDATE char_inventory "
                             "SET extra = '%s' "
-                            "WHERE charid = %u AND location = %u AND slot = %u;";
+                            "WHERE charid = %u AND location = %u AND slot = %u";
 
-        sql->Query(Query, extra, PChar->id, PItem->getLocationID(), PItem->getSlotID());
+        _sql->Query(Query, extra, PChar->id, PItem->getLocationID(), PItem->getSlotID());
 
         return PItem->m_extra[0];
     }
@@ -3999,7 +4082,7 @@ bool CLuaBaseEntity::addTempItem(uint16 itemID, sol::object const& arg1)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -4086,7 +4169,7 @@ void CLuaBaseEntity::createShop(uint8 size, sol::object const& arg1)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -4114,7 +4197,7 @@ void CLuaBaseEntity::addShopItem(uint16 itemID, double rawPrice, sol::object con
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -4149,7 +4232,7 @@ auto CLuaBaseEntity::getCurrentGPItem(uint8 guildID) -> std::tuple<uint16, uint1
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return { 0, 0 };
     }
 
@@ -4172,17 +4255,17 @@ bool CLuaBaseEntity::breakLinkshell(std::string const& lsname)
 {
     bool found = false;
 
-    int32 ret = sql->Query("SELECT broken, linkshellid FROM linkshells WHERE name = '%s'", lsname);
-    if (ret != SQL_ERROR && sql->NumRows() != 0 && sql->NextRow() == SQL_SUCCESS)
+    int32 ret = _sql->Query("SELECT broken, linkshellid FROM linkshells WHERE name = '%s'", lsname);
+    if (ret != SQL_ERROR && _sql->NumRows() != 0 && _sql->NextRow() == SQL_SUCCESS)
     {
-        uint8 broken = sql->GetUIntData(0);
+        uint8 broken = _sql->GetUIntData(0);
 
         if (broken)
         {
             return true;
         }
 
-        uint32      lsid       = sql->GetUIntData(1);
+        uint32      lsid       = _sql->GetUIntData(1);
         CLinkshell* PLinkshell = linkshell::GetLinkshell(lsid);
 
         if (!PLinkshell)
@@ -4208,7 +4291,7 @@ bool CLuaBaseEntity::addLinkpearl(std::string const& lsname, bool equip)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -4218,8 +4301,8 @@ bool CLuaBaseEntity::addLinkpearl(std::string const& lsname, bool equip)
     if (PItemLinkPearl != nullptr)
     {
         const char* Query = "SELECT linkshellid, color FROM linkshells WHERE name = '%s' AND broken = 0";
-        int32       ret   = sql->Query(Query, lsname);
-        if (ret != SQL_ERROR && sql->NumRows() != 0 && sql->NextRow() == SQL_SUCCESS)
+        int32       ret   = _sql->Query(Query, lsname);
+        if (ret != SQL_ERROR && _sql->NumRows() != 0 && _sql->NextRow() == SQL_SUCCESS)
         {
             // build linkpearl
             char EncodedString[LinkshellStringLength];
@@ -4227,8 +4310,8 @@ bool CLuaBaseEntity::addLinkpearl(std::string const& lsname, bool equip)
             memset(&EncodedString, 0, sizeof(EncodedString));
             EncodeStringLinkshell(lsname, EncodedString);
             ((CItem*)PItemLinkPearl)->setSignature(EncodedString);
-            PItemLinkPearl->SetLSID(sql->GetUIntData(0));
-            PItemLinkPearl->SetLSColor(sql->GetIntData(1));
+            PItemLinkPearl->SetLSID(_sql->GetUIntData(0));
+            PItemLinkPearl->SetLSColor(_sql->GetIntData(1));
             PItemLinkPearl->SetLSType(lstype);
             PItemLinkPearl->setQuantity(1);
             if (charutils::AddItem(PChar, LOC_INVENTORY, PItemLinkPearl) != ERROR_SLOTID)
@@ -4258,7 +4341,7 @@ auto CLuaBaseEntity::addSoulPlate(std::string const& name, uint16 mobFamily, uin
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return std::nullopt;
     }
 
@@ -4301,7 +4384,7 @@ uint8 CLuaBaseEntity::getContainerSize(uint8 locationID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -4320,7 +4403,7 @@ void CLuaBaseEntity::changeContainerSize(uint8 locationID, int8 newSize)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -4349,7 +4432,7 @@ uint8 CLuaBaseEntity::getFreeSlotsCount(sol::object const& locID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -4368,7 +4451,7 @@ void CLuaBaseEntity::confirmTrade()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -4407,7 +4490,7 @@ void CLuaBaseEntity::tradeComplete()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -4435,7 +4518,7 @@ std::optional<CLuaTradeContainer> CLuaBaseEntity::getTrade()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return std::nullopt;
     }
 
@@ -4454,7 +4537,7 @@ bool CLuaBaseEntity::canEquipItem(uint16 itemID, sol::object const& chkLevel)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Attempt to check equippable item with non-player (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempt to check equippable item with non-player (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -4478,6 +4561,10 @@ bool CLuaBaseEntity::canEquipItem(uint16 itemID, sol::object const& chkLevel)
     {
         return false;
     }
+    if (!PItem->isEquippableByRace(PChar->look.race))
+    {
+        return false;
+    }
     if (checkLevel && (PItem->getReqLvl() > PChar->GetMLevel()))
     {
         return false;
@@ -4497,23 +4584,28 @@ void CLuaBaseEntity::equipItem(uint16 itemID, sol::object const& container)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
-    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    auto*           PChar             = static_cast<CCharEntity*>(m_PBaseEntity);
+    uint8           containerID       = container.is<uint8>() ? container.as<uint8>() : static_cast<uint8>(LOC_INVENTORY);
+    CItemContainer* PStorageContainer = PChar->getStorage(containerID);
 
-    uint8           containerID = (container != sol::lua_nil) ? container.as<uint8>() : (uint8)LOC_INVENTORY;
-    uint8           SLOT        = PChar->getStorage(containerID)->SearchItem(itemID);
-    CItemEquipment* PItem       = nullptr;
-
-    if (SLOT != ERROR_SLOTID)
+    if (PStorageContainer == nullptr)
     {
-        PItem = static_cast<CItemEquipment*>(PChar->getStorage(containerID)->GetItem(SLOT));
+        // getStorage logs for invalid, so just bail out here
+        return;
+    }
 
-        charutils::EquipItem(PChar, SLOT, PItem->getSlotType(), containerID);
-        charutils::SaveCharEquip(PChar);
-        charutils::SaveCharLook(PChar);
+    uint8 slotId = PChar->getStorage(containerID)->SearchItem(itemID);
+    if (slotId != ERROR_SLOTID)
+    {
+        if (auto* PItem = dynamic_cast<CItemEquipment*>(PChar->getStorage(containerID)->GetItem(slotId)))
+        {
+            charutils::EquipItem(PChar, slotId, PItem->getSlotType(), containerID);
+            PChar->RequestPersist(CHAR_PERSIST::EQUIP);
+        }
     }
 }
 
@@ -4561,7 +4653,7 @@ void CLuaBaseEntity::lockEquipSlot(uint8 slot)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -4593,7 +4685,7 @@ void CLuaBaseEntity::unlockEquipSlot(uint8 slot)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -4621,7 +4713,7 @@ int8 CLuaBaseEntity::getShieldSize()
     // TODO: Why is TYPE_PET being checked below, when we only act on TYPE_PC?
     if (m_PBaseEntity->objtype != TYPE_PC && m_PBaseEntity->objtype != TYPE_PET)
     {
-        ShowWarning("Entity is not a Player or Pet type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Entity is not a Player or Pet type (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -4690,7 +4782,7 @@ std::optional<CLuaItem> CLuaBaseEntity::getStorageItem(uint8 container, uint8 sl
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("%s is trying to access their inventory, but is not TYPE_PC, so doesn't have one!", m_PBaseEntity->GetName());
+        ShowWarning("%s is trying to access their inventory, but is not TYPE_PC, so doesn't have one!", m_PBaseEntity->getName());
         return std::nullopt;
     }
 
@@ -4794,13 +4886,13 @@ uint8 CLuaBaseEntity::storeWithPorterMoogle(uint16 slipId, sol::table const& ext
     }
 
     char extra[sizeof(slip->m_extra) * 2 + 1];
-    sql->EscapeStringLen(extra, (const char*)slip->m_extra, sizeof(slip->m_extra));
+    _sql->EscapeStringLen(extra, (const char*)slip->m_extra, sizeof(slip->m_extra));
 
     const char* Query = "UPDATE char_inventory "
                         "SET extra = '%s' "
-                        "WHERE charid = %u AND location = %u AND slot = %u;";
+                        "WHERE charid = %u AND location = %u AND slot = %u";
 
-    sql->Query(Query, extra, PChar->id, slip->getLocationID(), slip->getSlotID());
+    _sql->Query(Query, extra, PChar->id, slip->getLocationID(), slip->getSlotID());
 
     return 0;
 }
@@ -4816,7 +4908,7 @@ sol::table CLuaBaseEntity::getRetrievableItemsForSlip(uint16 slipId)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return {};
     }
 
@@ -4857,7 +4949,7 @@ void CLuaBaseEntity::retrieveItemFromSlip(uint16 slipId, uint16 itemId, uint16 e
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -4880,17 +4972,24 @@ void CLuaBaseEntity::retrieveItemFromSlip(uint16 slipId, uint16 itemId, uint16 e
     slip->m_extra[extraId] &= extraData;
 
     char extra[sizeof(slip->m_extra) * 2 + 1];
-    sql->EscapeStringLen(extra, (const char*)slip->m_extra, sizeof(slip->m_extra));
+    _sql->EscapeStringLen(extra, (const char*)slip->m_extra, sizeof(slip->m_extra));
 
     const char* Query = "UPDATE char_inventory "
                         "SET extra = '%s' "
-                        "WHERE charid = %u AND location = %u AND slot = %u;";
+                        "WHERE charid = %u AND location = %u AND slot = %u";
 
-    sql->Query(Query, extra, PChar->id, slip->getLocationID(), slip->getSlotID());
+    _sql->Query(Query, extra, PChar->id, slip->getLocationID(), slip->getSlotID());
 
     auto* item = itemutils::GetItem(itemId);
-    item->setQuantity(1);
-    charutils::AddItem(PChar, LOC_INVENTORY, item);
+    if (item)
+    {
+        item->setQuantity(1);
+        charutils::AddItem(PChar, LOC_INVENTORY, item);
+    }
+    else
+    {
+        ShowError("Failed to get item from item ID");
+    }
 }
 
 /************************************************************************
@@ -4903,7 +5002,7 @@ uint8 CLuaBaseEntity::getRace()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -4921,7 +5020,7 @@ uint8 CLuaBaseEntity::getGender()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -4993,29 +5092,6 @@ void CLuaBaseEntity::hideName(bool isHidden)
 }
 
 /************************************************************************
- *  Function: checkNameFlags()
- *  Purpose : Returns true if a player has name flags
- ************************************************************************/
-
-bool CLuaBaseEntity::checkNameFlags(uint32 flags)
-{
-    if (m_PBaseEntity->objtype != TYPE_PC)
-    {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
-        return false;
-    }
-
-    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
-
-    if (PChar->nameflags.flags & flags)
-    {
-        return true;
-    }
-
-    return false;
-}
-
-/************************************************************************
  *  Function: getModelId()
  *  Purpose : Returns the integer value of the entity's Model ID
  *  Example : mob:getModelId()
@@ -5031,12 +5107,13 @@ uint16 CLuaBaseEntity::getModelId()
  *  Function: setModelId()
  *  Purpose : Updates the Model ID of the entity
  *  Example : mob:setModelId(1168)
- *  Notes   :
+ *  Notes   : Humanoid entities can be passed a slot to change the modelid of that equipment
+ *              npc:setModelId(47, 5) -- Vermillion cloak
  ************************************************************************/
 
 void CLuaBaseEntity::setModelId(uint16 modelId, sol::object const& slotObj)
 {
-    if (m_PBaseEntity->objtype == TYPE_PC)
+    if (m_PBaseEntity->objtype == TYPE_PC || slotObj.is<uint8>())
     {
         SLOTTYPE slot = slotObj.is<uint8>() ? slotObj.as<SLOTTYPE>() : SLOT_MAIN;
 
@@ -5070,14 +5147,36 @@ void CLuaBaseEntity::setModelId(uint16 modelId, sol::object const& slotObj)
                 break;
         }
 
-        auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
-        PChar->pushPacket(new CCharAppearancePacket(PChar));
+        if (m_PBaseEntity->objtype == TYPE_PC)
+        {
+            auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+            PChar->pushPacket(new CCharAppearancePacket(PChar));
+        }
     }
     else
     {
         m_PBaseEntity->SetModelId(modelId);
     }
     m_PBaseEntity->updatemask |= UPDATE_LOOK;
+}
+
+/************************************************************************
+ *  Function: getCostume()
+ *  Purpose : Returns the PC's appearance
+ *  Example : player:getCostume()
+ ************************************************************************/
+
+uint16 CLuaBaseEntity::getCostume()
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return 0;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    return PChar->m_Costume;
 }
 
 /************************************************************************
@@ -5090,7 +5189,7 @@ void CLuaBaseEntity::setCostume(uint16 costume)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -5105,68 +5204,47 @@ void CLuaBaseEntity::setCostume(uint16 costume)
 }
 
 /************************************************************************
- *  Function: getCostume()
+ *  Function: getCostume2()
  *  Purpose : Returns the PC's appearance
  *  Example : player:getCostume()
- ************************************************************************/
-
-uint16 CLuaBaseEntity::getCostume()
-{
-    if (m_PBaseEntity->objtype != TYPE_PC)
-    {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
-        return 0;
-    }
-
-    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
-
-    return PChar->m_Costume;
-}
-
-/************************************************************************
- *  Function: getCostume2()
- *  Purpose : Sets or returns a monstrosity costume
- *  Example : player:costume2( costumeId )
- *  Notes   : Not currently implemented
  ************************************************************************/
 
 uint16 CLuaBaseEntity::getCostume2()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
     auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
-    return PChar->m_Monstrosity;
+
+    return PChar->m_Costume2;
 }
 
 /************************************************************************
  *  Function: setCostume2()
- *  Purpose : Sets or returns a monstrosity costume
- *  Example : player:costume2( costumeId )
- *  Notes   : Not currently implemented
+ *  Purpose : Updates the PC's appearance
+ *  Example : player:setCostume2( costumeId )
  ************************************************************************/
 
 void CLuaBaseEntity::setCostume2(uint16 costume)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
     auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
 
-    if (PChar->m_Monstrosity != costume && PChar->status != STATUS_TYPE::SHUTDOWN && PChar->status != STATUS_TYPE::DISAPPEAR)
+    if (PChar->m_Costume2 != costume && PChar->status != STATUS_TYPE::SHUTDOWN && PChar->status != STATUS_TYPE::DISAPPEAR)
     {
-        PChar->m_Monstrosity = costume;
+        PChar->m_Costume2 = costume;
         PChar->updatemask |= UPDATE_LOOK;
         PChar->pushPacket(new CCharAppearancePacket(PChar));
     }
 }
-
 /************************************************************************
  *  Function: getAnimation()
  *  Purpose : Returns the assigned default animation of an entity
@@ -5310,7 +5388,7 @@ uint8 CLuaBaseEntity::getNation()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -5328,7 +5406,7 @@ void CLuaBaseEntity::setNation(uint8 nation)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -5372,7 +5450,7 @@ uint8 CLuaBaseEntity::getCampaignAllegiance()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -5389,7 +5467,7 @@ void CLuaBaseEntity::setCampaignAllegiance(uint8 allegiance)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -5409,11 +5487,11 @@ bool CLuaBaseEntity::isSeekingParty()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
-    return (static_cast<CCharEntity*>(m_PBaseEntity)->nameflags.flags & FLAG_INVITE);
+    return (static_cast<CCharEntity*>(m_PBaseEntity)->isSeekingParty());
 }
 
 /************************************************************************
@@ -5426,11 +5504,11 @@ bool CLuaBaseEntity::getNewPlayer()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
-    return (static_cast<CCharEntity*>(m_PBaseEntity)->menuConfigFlags.flags & NFLAG_NEWPLAYER) == 0;
+    return !static_cast<CCharEntity*>(m_PBaseEntity)->playerConfig.NewAdventurerOffFlg;
 }
 
 /************************************************************************
@@ -5449,18 +5527,18 @@ void CLuaBaseEntity::setNewPlayer(bool newplayer)
         return;
     }
 
-    if (newplayer == true)
+    if (newplayer)
     {
-        PChar->menuConfigFlags.flags |= NFLAG_NEWPLAYER;
+        PChar->playerConfig.NewAdventurerOffFlg = false;
     }
     else
     {
-        PChar->menuConfigFlags.flags &= ~NFLAG_NEWPLAYER;
+        PChar->playerConfig.NewAdventurerOffFlg = true;
     }
 
     PChar->updatemask |= UPDATE_HP;
 
-    charutils::SaveMenuConfigFlags(PChar);
+    charutils::SavePlayerSettings(PChar);
 }
 
 /************************************************************************
@@ -5473,7 +5551,7 @@ bool CLuaBaseEntity::getMentor()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -5491,7 +5569,7 @@ void CLuaBaseEntity::setMentor(bool mentor)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -5512,7 +5590,7 @@ uint8 CLuaBaseEntity::getGMLevel()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -5530,7 +5608,7 @@ void CLuaBaseEntity::setGMLevel(uint8 level)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -5538,6 +5616,46 @@ void CLuaBaseEntity::setGMLevel(uint8 level)
 
     PChar->m_GMlevel = level;
     charutils::SaveCharGMLevel(PChar);
+}
+
+/************************************************************************
+ *  Function: setVisibleGMLevel()
+ *  Purpose : Updates a player's visible GM status (0-7), see https://github.com/atom0s/XiPackets/tree/main/world/server/0x0037
+ *  Example : player:setVisibleGMLevel(4)
+ ************************************************************************/
+
+void CLuaBaseEntity::setVisibleGMLevel(uint8 level)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    PChar->visibleGmLevel = level;
+    PChar->updatemask |= UPDATE_HP;
+    charutils::SaveCharGMLevel(PChar);
+}
+
+/************************************************************************
+ *  Function: getVisibleGMLevel()
+ *  Purpose : Returns a players visible GM level
+ *  Example : player:getVisibleGMLevel()
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::getVisibleGMLevel()
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return 0;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    return PChar->visibleGmLevel;
 }
 
 /************************************************************************
@@ -5550,7 +5668,7 @@ bool CLuaBaseEntity::getGMHidden()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -5568,12 +5686,16 @@ void CLuaBaseEntity::setGMHidden(bool isHidden)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
     auto* PChar         = static_cast<CCharEntity*>(m_PBaseEntity);
     PChar->m_isGMHidden = isHidden;
+
+    PChar->updatemask |= UPDATE_HP;
+
+    _sql->Query("UPDATE char_flags SET gmHiddenEnabled = %u WHERE charid = %u", isHidden ? 1 : 0, PChar->id);
 
     if (PChar->loc.zone)
     {
@@ -5589,6 +5711,43 @@ void CLuaBaseEntity::setGMHidden(bool isHidden)
 }
 
 /************************************************************************
+ *  Function: getWallhack()
+ *  Purpose : gets the wallhack variable (true/false) from a target
+ *  Example : player:getWallhack()
+ ************************************************************************/
+
+bool CLuaBaseEntity::getWallhack()
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return false;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    return PChar->wallhackEnabled;
+}
+
+/************************************************************************
+ *  Function: setWallhack()
+ *  Purpose : Sets a GM to have wallhacking enabled/disabled
+ *  Example : player:setWallhack(1)
+ ************************************************************************/
+
+void CLuaBaseEntity::setWallhack(bool enabled)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return;
+    }
+
+    auto* PChar            = static_cast<CCharEntity*>(m_PBaseEntity);
+    PChar->wallhackEnabled = enabled;
+    PChar->updatemask |= UPDATE_HP;
+}
+
+/************************************************************************
  *  Function: isJailed()
  *  Purpose : Returns true if a player is a violent felon
  *  Example : if player:isJailed() then
@@ -5598,7 +5757,7 @@ bool CLuaBaseEntity::isJailed()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -5615,7 +5774,7 @@ void CLuaBaseEntity::jail()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -5690,7 +5849,7 @@ uint32 CLuaBaseEntity::getPlaytime(sol::object const& shouldUpdate)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -5710,7 +5869,7 @@ int32 CLuaBaseEntity::getTimeCreated()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -5730,7 +5889,7 @@ uint8 CLuaBaseEntity::getMainJob()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -5748,7 +5907,7 @@ uint8 CLuaBaseEntity::getSubJob()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -5764,69 +5923,141 @@ uint8 CLuaBaseEntity::getSubJob()
 
 void CLuaBaseEntity::changeJob(uint8 newJob)
 {
-    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
-
-    if (!PChar)
+    if (auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity))
     {
-        ShowWarning("CLuaBaseEntity::changeJob() - m_pBaseEntity is not of type Char.");
+        JOBTYPE prevjob = PChar->GetMJob();
+
+        PChar->resetPetZoningInfo();
+
+        PChar->jobs.unlocked |= (1 << newJob);
+        PChar->SetMJob(newJob);
+
+        if (newJob == JOB_BLU)
+        {
+            if (prevjob != JOB_BLU)
+            {
+                blueutils::LoadSetSpells(PChar);
+            }
+        }
+        else if (PChar->GetSJob() != JOB_BLU)
+        {
+            blueutils::UnequipAllBlueSpells(PChar);
+        }
+        puppetutils::LoadAutomaton(PChar);
+        charutils::SetStyleLock(PChar, false);
+        luautils::CheckForGearSet(PChar); // check for gear set on gear change
+        jobpointutils::RefreshGiftMods(PChar);
+        charutils::BuildingCharSkillsTable(PChar);
+        charutils::CalculateStats(PChar);
+        charutils::CheckValidEquipment(PChar);
+        PChar->PRecastContainer->ChangeJob();
+        charutils::BuildingCharAbilityTable(PChar);
+        charutils::BuildingCharTraitsTable(PChar);
+
+        // clang-format off
+        PChar->ForParty([](CBattleEntity* PMember)
+        {
+            ((CCharEntity*)PMember)->PLatentEffectContainer->CheckLatentsPartyJobs();
+        });
+        // clang-format on
+
+        PChar->UpdateHealth();
+        PChar->health.hp = PChar->GetMaxHP();
+        PChar->health.mp = PChar->GetMaxMP();
+
+        charutils::SaveCharStats(PChar);
+        charutils::SaveCharJob(PChar, PChar->GetMJob());
+        charutils::SaveCharExp(PChar, PChar->GetMJob());
+        PChar->updatemask |= UPDATE_HP;
+
+        PChar->pushPacket(new CCharJobsPacket(PChar));
+        PChar->pushPacket(new CCharStatsPacket(PChar));
+        PChar->pushPacket(new CCharSkillsPacket(PChar));
+        PChar->pushPacket(new CCharRecastPacket(PChar));
+        PChar->pushPacket(new CCharAbilitiesPacket(PChar));
+        PChar->pushPacket(new CCharUpdatePacket(PChar));
+        PChar->pushPacket(new CMenuMeritPacket(PChar));
+        PChar->pushPacket(new CMonipulatorPacket1(PChar));
+        PChar->pushPacket(new CMonipulatorPacket2(PChar));
+        PChar->pushPacket(new CCharSyncPacket(PChar));
+    }
+    else if (auto* PMob = dynamic_cast<CMobEntity*>(m_PBaseEntity))
+    {
+        PMob->SetMJob(newJob);
+
+        // Change weapon type based on new job
+        CItemWeapon* PWeapon = new CItemWeapon(0);
+        PWeapon->setDelay(4000);
+        PWeapon->setBaseDelay(4000);
+
+        switch (newJob)
+        {
+            case JOB_MNK:
+            case JOB_PUP:
+                PWeapon->setSkillType(SKILL_HAND_TO_HAND);
+                PWeapon->setBaseDelay(8000);
+                PWeapon->setDelay(8000);
+                break;
+            case JOB_THF:
+            case JOB_BRD:
+            case JOB_RNG:
+            case JOB_COR:
+                PWeapon->setSkillType(SKILL_DAGGER);
+                break;
+            case JOB_RDM:
+            case JOB_PLD:
+            case JOB_BLU:
+                PWeapon->setSkillType(SKILL_SWORD);
+                break;
+            case JOB_RUN:
+                PWeapon->setSkillType(SKILL_GREAT_SWORD);
+                PWeapon->setDelay(8000);
+                PWeapon->setBaseDelay(8000);
+                break;
+            case JOB_WAR:
+            case JOB_BST:
+                PWeapon->setSkillType(SKILL_AXE);
+                break;
+            case JOB_DRK:
+                PWeapon->setSkillType(SKILL_SCYTHE);
+                PWeapon->setDelay(8000);
+                PWeapon->setBaseDelay(8000);
+                break;
+            case JOB_DRG:
+                PWeapon->setSkillType(SKILL_POLEARM);
+                PWeapon->setDelay(8000);
+                PWeapon->setBaseDelay(8000);
+                break;
+            case JOB_NIN:
+                PWeapon->setSkillType(SKILL_KATANA);
+                break;
+            case JOB_SAM:
+                PWeapon->setSkillType(SKILL_GREAT_KATANA);
+                PWeapon->setDelay(8000);
+                PWeapon->setBaseDelay(8000);
+                break;
+            case JOB_WHM:
+            case JOB_BLM:
+            case JOB_GEO:
+                PWeapon->setSkillType(SKILL_CLUB);
+                break;
+            case JOB_SMN:
+                PWeapon->setSkillType(SKILL_STAFF);
+                PWeapon->setDelay(8000);
+                PWeapon->setBaseDelay(8000);
+                break;
+            default:
+                break;
+        }
+
+        PMob->m_Weapons[SLOT_MAIN] = PWeapon;
+        mobutils::CalculateMobStats(PMob);
+    }
+    else
+    {
+        ShowWarning("CLuaBaseEntity::changeJob() - m_pBaseEntity is not a supported entity.");
         return;
     }
-
-    JOBTYPE prevjob = PChar->GetMJob();
-
-    PChar->resetPetZoningInfo();
-
-    PChar->jobs.unlocked |= (1 << newJob);
-    PChar->SetMJob(newJob);
-
-    if (newJob == JOB_BLU)
-    {
-        if (prevjob != JOB_BLU)
-        {
-            blueutils::LoadSetSpells(PChar);
-        }
-    }
-    else if (PChar->GetSJob() != JOB_BLU)
-    {
-        blueutils::UnequipAllBlueSpells(PChar);
-    }
-    puppetutils::LoadAutomaton(PChar);
-    charutils::SetStyleLock(PChar, false);
-    luautils::CheckForGearSet(PChar); // check for gear set on gear change
-    jobpointutils::RefreshGiftMods(PChar);
-    charutils::BuildingCharSkillsTable(PChar);
-    charutils::CalculateStats(PChar);
-    charutils::CheckValidEquipment(PChar);
-    PChar->PRecastContainer->ChangeJob();
-    charutils::BuildingCharAbilityTable(PChar);
-    charutils::BuildingCharTraitsTable(PChar);
-
-    // clang-format off
-    PChar->ForParty([](CBattleEntity* PMember)
-    {
-        ((CCharEntity*)PMember)->PLatentEffectContainer->CheckLatentsPartyJobs();
-    });
-    // clang-format on
-
-    PChar->UpdateHealth();
-    PChar->health.hp = PChar->GetMaxHP();
-    PChar->health.mp = PChar->GetMaxMP();
-
-    charutils::SaveCharStats(PChar);
-    charutils::SaveCharJob(PChar, PChar->GetMJob());
-    charutils::SaveCharExp(PChar, PChar->GetMJob());
-    PChar->updatemask |= UPDATE_HP;
-
-    PChar->pushPacket(new CCharJobsPacket(PChar));
-    PChar->pushPacket(new CCharStatsPacket(PChar));
-    PChar->pushPacket(new CCharSkillsPacket(PChar));
-    PChar->pushPacket(new CCharRecastPacket(PChar));
-    PChar->pushPacket(new CCharAbilitiesPacket(PChar));
-    PChar->pushPacket(new CCharUpdatePacket(PChar));
-    PChar->pushPacket(new CMenuMeritPacket(PChar));
-    PChar->pushPacket(new CMonipulatorPacket1(PChar));
-    PChar->pushPacket(new CMonipulatorPacket2(PChar));
-    PChar->pushPacket(new CCharSyncPacket(PChar));
 }
 
 /************************************************************************
@@ -5840,7 +6071,7 @@ void CLuaBaseEntity::changesJob(uint8 subJob)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -5927,7 +6158,7 @@ uint8 CLuaBaseEntity::getMainLvl()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -5944,7 +6175,7 @@ uint8 CLuaBaseEntity::getSubLvl()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -5980,7 +6211,7 @@ void CLuaBaseEntity::setLevel(uint8 level)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Attempt to change Main Job level for non-PC (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempt to change Main Job level for non-PC (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6004,6 +6235,7 @@ void CLuaBaseEntity::setLevel(uint8 level)
         jobpointutils::RefreshGiftMods(PChar);
         charutils::BuildingCharSkillsTable(PChar);
         charutils::BuildingCharAbilityTable(PChar);
+        charutils::BuildingCharWeaponSkills(PChar);
         charutils::BuildingCharTraitsTable(PChar);
 
         PChar->UpdateHealth();
@@ -6039,7 +6271,7 @@ void CLuaBaseEntity::setsLevel(uint8 slevel)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6094,7 +6326,7 @@ uint8 CLuaBaseEntity::getLevelCap()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -6112,7 +6344,7 @@ void CLuaBaseEntity::setLevelCap(uint8 cap)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6121,7 +6353,7 @@ void CLuaBaseEntity::setLevelCap(uint8 cap)
     if (PChar->jobs.genkai != cap)
     {
         PChar->jobs.genkai = cap;
-        sql->Query("UPDATE char_jobs SET genkai = %u WHERE charid = %u LIMIT 1", PChar->jobs.genkai, PChar->id);
+        _sql->Query("UPDATE char_jobs SET genkai = %u WHERE charid = %u LIMIT 1", PChar->jobs.genkai, PChar->id);
     }
 }
 
@@ -6282,6 +6514,136 @@ void CLuaBaseEntity::addJobTraits(uint8 jobID, uint8 level)
     }
 }
 
+sol::table CLuaBaseEntity::getMonstrosityData()
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (PChar == nullptr)
+    {
+        return sol::lua_nil;
+    }
+
+    bool startsWithMonstrosityData = PChar->m_PMonstrosity != nullptr;
+    if (!startsWithMonstrosityData)
+    {
+        monstrosity::ReadMonstrosityData(PChar);
+    }
+
+    auto table = luautils::GetMonstrosityLuaTable(PChar);
+
+    // If we didn't start with Monstrosity data, we should wipe it out now so we
+    // don't change modes
+    if (!startsWithMonstrosityData)
+    {
+        PChar->m_PMonstrosity = nullptr;
+    }
+
+    return table;
+}
+
+void CLuaBaseEntity::setMonstrosityData(sol::table table)
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (PChar == nullptr)
+    {
+        return;
+    }
+
+    bool startsWithMonstrosityData = PChar->m_PMonstrosity != nullptr;
+
+    // NOTE: This will populate m_PMonstrosity if it doesn't exist
+    monstrosity::ReadMonstrosityData(PChar);
+
+    luautils::SetMonstrosityLuaTable(PChar, table);
+
+    monstrosity::WriteMonstrosityData(PChar);
+
+    // If we didn't start with Monstrosity data, we should wipe it out now so we
+    // don't change modes
+    if (!startsWithMonstrosityData)
+    {
+        PChar->m_PMonstrosity = nullptr;
+    }
+    else
+    {
+        monstrosity::SendFullMonstrosityUpdate(PChar);
+    }
+}
+
+bool CLuaBaseEntity::getBelligerencyFlag()
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (PChar == nullptr)
+    {
+        return false;
+    }
+
+    if (PChar->m_PMonstrosity == nullptr)
+    {
+        return false;
+    }
+
+    return PChar->m_PMonstrosity->Belligerency;
+}
+
+void CLuaBaseEntity::setBelligerencyFlag(bool flag)
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (PChar == nullptr)
+    {
+        return;
+    }
+
+    monstrosity::SetBelligerencyFlag(PChar, flag);
+}
+
+auto CLuaBaseEntity::getMonstrositySize() -> uint8
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (PChar == nullptr)
+    {
+        return 0;
+    }
+
+    if (PChar->m_PMonstrosity == nullptr)
+    {
+        return 0;
+    }
+
+    return PChar->m_PMonstrosity->Size;
+}
+
+void CLuaBaseEntity::setMonstrosityEntryData(float x, float y, float z, uint8 rot, uint16 zoneId, uint8 mjob, uint8 sjob)
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (PChar == nullptr)
+    {
+        return;
+    }
+
+    bool startsWithMonstrosityData = PChar->m_PMonstrosity != nullptr;
+    if (!startsWithMonstrosityData)
+    {
+        monstrosity::ReadMonstrosityData(PChar);
+    }
+
+    PChar->m_PMonstrosity->EntryPos.x        = x;
+    PChar->m_PMonstrosity->EntryPos.y        = y;
+    PChar->m_PMonstrosity->EntryPos.z        = z;
+    PChar->m_PMonstrosity->EntryPos.rotation = rot;
+    PChar->m_PMonstrosity->EntryZoneId       = zoneId;
+    PChar->m_PMonstrosity->EntryMainJob      = mjob;
+    PChar->m_PMonstrosity->EntrySubJob       = sjob;
+
+    monstrosity::WriteMonstrosityData(PChar);
+
+    // If we didn't start with Monstrosity data, we should wipe it out now so we
+    // don't change modes
+    if (!startsWithMonstrosityData)
+    {
+        PChar->m_PMonstrosity = nullptr;
+    }
+}
+
 /************************************************************************
  *  Function: getTitle()
  *  Purpose : Returns the integer value of the player's current title
@@ -6292,7 +6654,7 @@ uint16 CLuaBaseEntity::getTitle()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -6309,7 +6671,7 @@ bool CLuaBaseEntity::hasTitle(uint16 titleID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -6397,7 +6759,7 @@ uint16 CLuaBaseEntity::getFame(sol::object const& areaObj)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -6461,7 +6823,7 @@ void CLuaBaseEntity::addFame(sol::object const& areaObj, uint16 fame)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6523,7 +6885,7 @@ void CLuaBaseEntity::setFame(sol::object const& areaObj, uint16 fame)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6586,7 +6948,7 @@ uint8 CLuaBaseEntity::getFameLevel(sol::object const& areaObj)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -6653,7 +7015,7 @@ uint8 CLuaBaseEntity::getRank(uint8 nation)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -6672,7 +7034,7 @@ void CLuaBaseEntity::setRank(uint8 rank)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6693,7 +7055,7 @@ uint16 CLuaBaseEntity::getRankPoints()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -6711,7 +7073,7 @@ void CLuaBaseEntity::addRankPoints(uint16 rankPoints)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6733,7 +7095,7 @@ void CLuaBaseEntity::setRankPoints(uint16 rankPoints)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6749,14 +7111,13 @@ void CLuaBaseEntity::setRankPoints(uint16 rankPoints)
  *  Function: addQuest()
  *  Purpose : Adds a new quest to the character's in-progress quest log
  *  Example : player:addQuest(xi.quest.log_id.BASTOK, xi.quest.id.bastok.LURE_OF_THE_WILDCAT)
- *  Notes   :
  ************************************************************************/
 
 void CLuaBaseEntity::addQuest(uint8 questLogID, uint16 questID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6764,10 +7125,9 @@ void CLuaBaseEntity::addQuest(uint8 questLogID, uint16 questID)
 
     if (questLogID < MAX_QUESTAREA && questID < MAX_QUESTID)
     {
-        uint8 current  = PChar->m_questLog[questLogID].current[questID / 8] & (1 << (questID % 8));
-        uint8 complete = PChar->m_questLog[questLogID].complete[questID / 8] & (1 << (questID % 8));
+        uint8 current = PChar->m_questLog[questLogID].current[questID / 8] & (1 << (questID % 8));
 
-        if ((current == 0) && (complete == 0))
+        if (current == 0)
         {
             PChar->m_questLog[questLogID].current[questID / 8] |= (1 << (questID % 8));
             PChar->pushPacket(new CQuestMissionLogPacket(PChar, questLogID, LOG_QUEST_CURRENT));
@@ -6782,8 +7142,44 @@ void CLuaBaseEntity::addQuest(uint8 questLogID, uint16 questID)
 }
 
 /************************************************************************
+ *  Function: delCurrentQuest()
+ *  Purpose : Deletes an accepted quest for the player, but does not remove Completed state
+ *  Notes   : This duplicates delQuest with the above exception
+ ************************************************************************/
+
+void CLuaBaseEntity::delCurrentQuest(uint8 questLogID, uint16 questID)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    if (questLogID < MAX_QUESTAREA && questID < MAX_QUESTID)
+    {
+        uint8 current = PChar->m_questLog[questLogID].current[questID / 8] & (1 << (questID % 8));
+
+        if (current != 0)
+        {
+            PChar->m_questLog[questLogID].current[questID / 8] &= ~(1 << (questID % 8));
+
+            PChar->pushPacket(new CQuestMissionLogPacket(PChar, questLogID, LOG_QUEST_CURRENT));
+            PChar->pushPacket(new CQuestMissionLogPacket(PChar, questLogID, LOG_QUEST_COMPLETE));
+
+            charutils::SaveQuestsList(PChar);
+        }
+    }
+    else
+    {
+        ShowError("Lua::delCurrentQuest: questLogID %i or QuestID %i is invalid", questLogID, questID);
+    }
+}
+
+/************************************************************************
  *  Function: delQuest()
- *  Purpose : Deletes a quest from a character's quest log
+ *  Purpose : Deletes all records of a quest from a character's quest log
  *  Example : player:delQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.LURE_OF_THE_WILDCAT)
  *  Notes   : Doesn't delete any player variables associated with quest
  ************************************************************************/
@@ -6792,7 +7188,7 @@ void CLuaBaseEntity::delQuest(uint8 questLogID, uint16 questID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6830,7 +7226,7 @@ uint8 CLuaBaseEntity::getQuestStatus(uint8 questLogID, uint16 questID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -6859,7 +7255,7 @@ bool CLuaBaseEntity::hasCompletedQuest(uint8 questLogID, uint16 questID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -6885,7 +7281,7 @@ void CLuaBaseEntity::completeQuest(uint8 questLogID, uint16 questID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6958,7 +7354,7 @@ void CLuaBaseEntity::delMission(uint8 missionLogID, uint16 missionID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -6998,7 +7394,7 @@ uint16 CLuaBaseEntity::getCurrentMission(sol::object const& missionLogObj)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -7043,7 +7439,7 @@ bool CLuaBaseEntity::hasCompletedMission(uint8 missionLogID, uint16 missionID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -7074,7 +7470,7 @@ void CLuaBaseEntity::completeMission(uint8 missionLogID, uint16 missionID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7118,7 +7514,7 @@ void CLuaBaseEntity::setMissionStatus(uint8 missionLogID, sol::object const& arg
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7174,7 +7570,7 @@ uint32 CLuaBaseEntity::getMissionStatus(uint8 missionLogID, sol::object const& m
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -7214,7 +7610,7 @@ void CLuaBaseEntity::setEminenceCompleted(uint16 recordID, sol::object const& ar
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7246,7 +7642,7 @@ bool CLuaBaseEntity::getEminenceCompleted(uint16 recordID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -7259,7 +7655,7 @@ uint16 CLuaBaseEntity::getNumEminenceCompleted()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -7279,7 +7675,7 @@ bool CLuaBaseEntity::setEminenceProgress(uint16 recordID, uint32 progress, sol::
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -7317,7 +7713,7 @@ std::optional<uint32> CLuaBaseEntity::getEminenceProgress(uint16 recordID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return std::nullopt;
     }
 
@@ -7342,7 +7738,7 @@ bool CLuaBaseEntity::hasEminenceRecord(uint16 recordID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -7399,7 +7795,7 @@ void CLuaBaseEntity::setUnityLeader(uint8 leaderID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7427,7 +7823,7 @@ uint8 CLuaBaseEntity::getUnityLeader()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -7446,7 +7842,7 @@ std::optional<uint8> CLuaBaseEntity::getUnityRank(sol::object const& unityObj)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return std::nullopt;
     }
 
@@ -7506,11 +7902,11 @@ void CLuaBaseEntity::toggleReceivedDeedRewards()
     // the first bit of the first array index.
     PChar->m_claimedDeeds[0] ^= 1;
 
-    const char* query = "UPDATE char_unlocks SET claimed_deeds = '%s' WHERE charid = %u;";
+    const char* query = "UPDATE char_unlocks SET claimed_deeds = '%s' WHERE charid = %u";
     char        buf[sizeof(PChar->m_claimedDeeds) * 2 + 1];
 
-    sql->EscapeStringLen(buf, (const char*)&PChar->m_claimedDeeds, sizeof(PChar->m_claimedDeeds));
-    sql->Query(query, buf, PChar->id);
+    _sql->EscapeStringLen(buf, (const char*)&PChar->m_claimedDeeds, sizeof(PChar->m_claimedDeeds));
+    _sql->Query(query, buf, PChar->id);
 }
 
 /************************************************************************
@@ -7533,11 +7929,11 @@ void CLuaBaseEntity::setClaimedDeed(uint16 deedBitNum)
 
     PChar->m_claimedDeeds[index] |= (1 << setBit);
 
-    const char* query = "UPDATE char_unlocks SET claimed_deeds = '%s' WHERE charid = %u;";
+    const char* query = "UPDATE char_unlocks SET claimed_deeds = '%s' WHERE charid = %u";
     char        buf[sizeof(PChar->m_claimedDeeds) * 2 + 1];
 
-    sql->EscapeStringLen(buf, (const char*)&PChar->m_claimedDeeds, sizeof(PChar->m_claimedDeeds));
-    sql->Query(query, buf, PChar->id);
+    _sql->EscapeStringLen(buf, (const char*)&PChar->m_claimedDeeds, sizeof(PChar->m_claimedDeeds));
+    _sql->Query(query, buf, PChar->id);
 }
 
 /************************************************************************
@@ -7562,11 +7958,85 @@ void CLuaBaseEntity::resetClaimedDeeds()
     PChar->m_claimedDeeds[3] = PChar->m_claimedDeeds[3] & 0b11;
     PChar->m_claimedDeeds[4] = numResets << 18;
 
-    const char* query = "UPDATE char_unlocks SET claimed_deeds = '%s' WHERE charid = %u;";
+    const char* query = "UPDATE char_unlocks SET claimed_deeds = '%s' WHERE charid = %u";
     char        buf[sizeof(PChar->m_claimedDeeds) * 2 + 1];
 
-    sql->EscapeStringLen(buf, (const char*)&PChar->m_claimedDeeds, sizeof(PChar->m_claimedDeeds));
-    sql->Query(query, buf, PChar->id);
+    _sql->EscapeStringLen(buf, (const char*)&PChar->m_claimedDeeds, sizeof(PChar->m_claimedDeeds));
+    _sql->Query(query, buf, PChar->id);
+}
+
+/************************************************************************
+ *  Function: setUniqueEvent()
+ *  Purpose : Sets and saves unique event tracking value into database
+ *  Example : player:setUniqueEvent(xi.uniqueEvent.TUCKER_INTRO_DIALOGUE)
+ ************************************************************************/
+void CLuaBaseEntity::setUniqueEvent(uint16 uniqueEventId)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Attempt to set Unique Event mask for Non-PC.");
+        return;
+    }
+
+    auto* PChar  = static_cast<CCharEntity*>(m_PBaseEntity);
+    uint8 index  = uniqueEventId / 32;
+    uint8 setBit = uniqueEventId % 32;
+
+    PChar->m_uniqueEvents[index] |= (1 << setBit);
+
+    const char* query = "UPDATE char_unlocks SET unique_event = '%s' WHERE charid = %u";
+    char        buf[sizeof(PChar->m_uniqueEvents) * 2 + 1];
+
+    _sql->EscapeStringLen(buf, (const char*)&PChar->m_uniqueEvents, sizeof(PChar->m_uniqueEvents));
+    _sql->Query(query, buf, PChar->id);
+}
+
+/************************************************************************
+ *  Function: delUniqueEvent()
+ *  Purpose : Removes and saves unique event tracking value into database
+ *  Example : player:delUniqueEvent(xi.uniqueEvent.TUCKER_INTRO_DIALOGUE)
+ *  NOTE    : This should never be used outside of debugging!
+ ************************************************************************/
+void CLuaBaseEntity::delUniqueEvent(uint16 uniqueEventId)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Attempt to del from Unique Event mask for Non-PC.");
+        return;
+    }
+
+    auto* PChar  = static_cast<CCharEntity*>(m_PBaseEntity);
+    uint8 index  = uniqueEventId / 32;
+    uint8 setBit = uniqueEventId % 32;
+
+    PChar->m_uniqueEvents[index] &= ~(1 << setBit);
+
+    const char* query = "UPDATE char_unlocks SET unique_event = '%s' WHERE charid = %u";
+    char        buf[sizeof(PChar->m_uniqueEvents) * 2 + 1];
+
+    _sql->EscapeStringLen(buf, (const char*)&PChar->m_uniqueEvents, sizeof(PChar->m_uniqueEvents));
+    _sql->Query(query, buf, PChar->id);
+}
+
+/************************************************************************
+ *  Function: hasCompletedUniqueEvent()
+ *  Purpose : Returns true if the player has seen his event before
+ *  Example : if player:hasUniqueEvent(xi.uniqueEvent.TUCKER_INTRO_DIALOGUE) then
+ *  NOTE    : This should never be used outside of debugging!
+ ************************************************************************/
+bool CLuaBaseEntity::hasCompletedUniqueEvent(uint16 uniqueEventId)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Attempt to compare Unique Event mask for Non-PC.");
+        return false;
+    }
+
+    auto* PChar  = static_cast<CCharEntity*>(m_PBaseEntity);
+    uint8 index  = uniqueEventId / 32;
+    uint8 setBit = uniqueEventId % 32;
+
+    return PChar->m_uniqueEvents[index] & (1 << setBit);
 }
 
 /************************************************************************
@@ -7580,7 +8050,7 @@ void CLuaBaseEntity::addAssault(uint8 missionID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7607,7 +8077,7 @@ void CLuaBaseEntity::delAssault(uint8 missionID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7634,7 +8104,7 @@ uint8 CLuaBaseEntity::getCurrentAssault()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -7653,7 +8123,7 @@ bool CLuaBaseEntity::hasCompletedAssault(uint8 missionID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -7671,7 +8141,7 @@ void CLuaBaseEntity::completeAssault(uint8 missionID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7701,7 +8171,7 @@ void CLuaBaseEntity::addKeyItem(uint16 keyItemID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7737,7 +8207,7 @@ bool CLuaBaseEntity::hasKeyItem(uint16 keyItemID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -7755,7 +8225,7 @@ void CLuaBaseEntity::delKeyItem(uint16 keyItemID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7786,7 +8256,7 @@ bool CLuaBaseEntity::seenKeyItem(uint16 keyItemID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -7804,7 +8274,7 @@ void CLuaBaseEntity::unseenKeyItem(uint16 keyItemID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7835,7 +8305,7 @@ void CLuaBaseEntity::addExp(uint32 exp)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7874,7 +8344,7 @@ void CLuaBaseEntity::delExp(uint32 exp)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -7932,7 +8402,7 @@ void CLuaBaseEntity::setMerits(uint8 numPoints)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8111,7 +8581,7 @@ void CLuaBaseEntity::addGil(int32 gil)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8138,7 +8608,7 @@ void CLuaBaseEntity::setGil(int32 amount)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8167,7 +8637,7 @@ bool CLuaBaseEntity::delGil(int32 gil)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -8199,7 +8669,7 @@ int32 CLuaBaseEntity::getCurrency(std::string const& currencyType)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8218,7 +8688,7 @@ void CLuaBaseEntity::addCurrency(std::string const& currencyType, int32 amount, 
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8239,7 +8709,7 @@ void CLuaBaseEntity::setCurrency(std::string const& currencyType, int32 amount)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8258,7 +8728,7 @@ void CLuaBaseEntity::delCurrency(std::string const& currencyType, int32 amount)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8277,7 +8747,7 @@ int32 CLuaBaseEntity::getCP()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8296,7 +8766,7 @@ void CLuaBaseEntity::addCP(int32 cp)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8317,7 +8787,7 @@ void CLuaBaseEntity::delCP(int32 cp)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8338,7 +8808,7 @@ int32 CLuaBaseEntity::getSeals(uint8 sealType)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8380,7 +8850,7 @@ void CLuaBaseEntity::addSeals(int32 points, uint8 sealType)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8419,7 +8889,7 @@ void CLuaBaseEntity::delSeals(int32 points, uint8 sealType)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8458,7 +8928,7 @@ int32 CLuaBaseEntity::getAssaultPoint(uint8 region)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8500,7 +8970,7 @@ void CLuaBaseEntity::addAssaultPoint(uint8 region, int32 points)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8539,7 +9009,7 @@ void CLuaBaseEntity::delAssaultPoint(uint8 region, int32 points)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -8578,7 +9048,7 @@ auto CLuaBaseEntity::addGuildPoints(uint8 guildID, uint8 slotID) -> std::tuple<u
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return { 0, 0 };
     }
 
@@ -8601,7 +9071,7 @@ int32 CLuaBaseEntity::getHP()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8619,7 +9089,7 @@ uint8 CLuaBaseEntity::getHPP()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8637,7 +9107,7 @@ int32 CLuaBaseEntity::getMaxHP()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8655,7 +9125,7 @@ int32 CLuaBaseEntity::getBaseHP()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8675,7 +9145,7 @@ int32 CLuaBaseEntity::addHP(int32 hpAdd)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8702,7 +9172,7 @@ int32 CLuaBaseEntity::addHPLeaveSleeping(int32 hpAdd)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8722,7 +9192,7 @@ void CLuaBaseEntity::setHP(int32 value)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -8750,7 +9220,7 @@ int32 CLuaBaseEntity::restoreHP(int32 restoreAmt)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8775,7 +9245,7 @@ void CLuaBaseEntity::delHP(int32 delAmt)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -8792,7 +9262,7 @@ void CLuaBaseEntity::takeDamage(int32 damage, sol::object const& attacker, sol::
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -8835,6 +9305,28 @@ void CLuaBaseEntity::takeDamage(int32 damage, sol::object const& attacker, sol::
         breakBind     = flag_map["breakBind"];
     }
 
+    // Check to see if the target has a nightmare effect active, reset wakeUp accordingly
+    // see mobskills/nightmare.lua for full explanation
+    if (
+        PDefender->StatusEffectContainer->GetStatusEffect(EFFECT_SLEEP) &&
+        PDefender->StatusEffectContainer->GetStatusEffect(EFFECT_SLEEP)->GetTier() > 0)
+    {
+        // Don't break nightmare sleep from any dmg that doesn't break bind (DoT damage)
+        if (breakBind == false)
+        {
+            wakeUp = false;
+        }
+
+        // Diabolos NM/mob ability
+        // "Damage will not wake you up from Nightmare, only Cure and Benediction (Benediction will also remove the Bio effect)."
+        if (
+            wakeUp == true &&
+            PDefender->StatusEffectContainer->GetStatusEffect(EFFECT_SLEEP)->GetTier() > 1)
+        {
+            wakeUp = false;
+        }
+    }
+
     ATTACK_TYPE attackType = (atkType != sol::lua_nil) ? static_cast<ATTACK_TYPE>(atkType.as<uint8>()) : ATTACK_TYPE::NONE;
     DAMAGE_TYPE damageType = (dmgType != sol::lua_nil) ? static_cast<DAMAGE_TYPE>(dmgType.as<uint8>()) : DAMAGE_TYPE::NONE;
 
@@ -8872,7 +9364,7 @@ void CLuaBaseEntity::hideHP(bool value)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB && m_PBaseEntity->objtype != TYPE_NPC)
     {
-        ShowWarning("Attempt to hide HP for invalid entity (%s)", m_PBaseEntity->GetName());
+        ShowWarning("Attempt to hide HP for invalid entity (%s)", m_PBaseEntity->getName());
         return;
     }
 
@@ -8907,7 +9399,7 @@ int32 CLuaBaseEntity::getMP()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8925,7 +9417,7 @@ uint8 CLuaBaseEntity::getMPP()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8942,7 +9434,7 @@ int32 CLuaBaseEntity::getMaxMP()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8959,7 +9451,7 @@ int32 CLuaBaseEntity::getBaseMP()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8977,7 +9469,7 @@ int32 CLuaBaseEntity::addMP(int32 amount)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -8994,7 +9486,7 @@ void CLuaBaseEntity::setMP(int32 value)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -9015,7 +9507,7 @@ int32 CLuaBaseEntity::restoreMP(int32 amount)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -9037,7 +9529,7 @@ int32 CLuaBaseEntity::delMP(int32 amount)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -9054,7 +9546,7 @@ float CLuaBaseEntity::getTP()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -9072,7 +9564,7 @@ int16 CLuaBaseEntity::addTP(int16 amount)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -9104,7 +9596,7 @@ int16 CLuaBaseEntity::delTP(int16 amount)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -9194,7 +9686,7 @@ void CLuaBaseEntity::capAllSkills()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -9208,9 +9700,9 @@ void CLuaBaseEntity::capAllSkills()
                             "skillid = %u,"
                             "value = %u,"
                             "rank = %u "
-                            "ON DUPLICATE KEY UPDATE value = %u, rank = %u;";
+                            "ON DUPLICATE KEY UPDATE value = %u, rank = %u";
 
-        sql->Query(Query, PChar->id, i, 5000, PChar->RealSkills.rank[i], 5000, PChar->RealSkills.rank[i]);
+        _sql->Query(Query, PChar->id, i, 5000, PChar->RealSkills.rank[i], 5000, PChar->RealSkills.rank[i]);
 
         uint16 maxSkill               = 10 * battleutils::GetMaxSkill(static_cast<SKILLTYPE>(i), PChar->GetMJob(), PChar->GetMLevel());
         PChar->RealSkills.skill[i]    = maxSkill; // set to capped
@@ -9232,7 +9724,7 @@ uint16 CLuaBaseEntity::getSkillLevel(uint16 skillId)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid entity calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -9349,7 +9841,7 @@ uint16 CLuaBaseEntity::getCharSkillLevel(uint8 skillID)
 /************************************************************************
  *  Function: addLearnedWeaponskill()
  *  Purpose : Manually add a new weaponskill for the player using WSID
- *  Example : player:addLearnedWeaponskill(xi.ws_unlock.DECIMATION)
+ *  Example : player:addLearnedWeaponskill(xi.wsUnlock.DECIMATION)
  *  Notes   : Do not see implemented in any script
  ************************************************************************/
 
@@ -9357,7 +9849,7 @@ void CLuaBaseEntity::addLearnedWeaponskill(uint8 wsUnlockId)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -9372,7 +9864,7 @@ void CLuaBaseEntity::addLearnedWeaponskill(uint8 wsUnlockId)
 /************************************************************************
  *  Function: hasLearnedWeaponskill()
  *  Purpose : Returns true if a player has learned a particular weaponskill
- *  Example : if player:hasLearnedWeaponskill(xi.ws_unlock.DECIMATION) then
+ *  Example : if player:hasLearnedWeaponskill(xi.wsUnlock.DECIMATION) then
  *  Notes   :
  ************************************************************************/
 
@@ -9380,7 +9872,7 @@ bool CLuaBaseEntity::hasLearnedWeaponskill(uint8 wsUnlockId)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -9390,7 +9882,7 @@ bool CLuaBaseEntity::hasLearnedWeaponskill(uint8 wsUnlockId)
 /************************************************************************
  *  Function: delLearnedWeaponskill()
  *  Purpose : Removes a learned weaponskill from the player
- *  Example : player:delLearnedWeaponskill(xi.ws_unlock.ASURAN_FISTS)
+ *  Example : player:delLearnedWeaponskill(xi.wsUnlock.ASURAN_FISTS)
  *  Notes   :
  ************************************************************************/
 
@@ -9398,7 +9890,7 @@ void CLuaBaseEntity::delLearnedWeaponskill(uint8 wsUnlockId)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -9443,7 +9935,7 @@ bool CLuaBaseEntity::addWeaponSkillPoints(uint8 slotID, uint16 points)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -9464,7 +9956,7 @@ void CLuaBaseEntity::addLearnedAbility(uint16 abilityID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -9490,7 +9982,7 @@ bool CLuaBaseEntity::hasLearnedAbility(uint16 abilityID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -9509,7 +10001,7 @@ uint32 CLuaBaseEntity::canLearnAbility(uint16 abilityID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -9538,7 +10030,7 @@ void CLuaBaseEntity::delLearnedAbility(uint16 abilityID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -9562,7 +10054,7 @@ void CLuaBaseEntity::addSpell(uint16 spellID, sol::variadic_args va)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -9602,7 +10094,7 @@ bool CLuaBaseEntity::hasSpell(uint16 spellID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -9620,7 +10112,7 @@ uint32 CLuaBaseEntity::canLearnSpell(uint16 spellID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -9649,7 +10141,7 @@ void CLuaBaseEntity::delSpell(uint16 spellID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -9673,7 +10165,7 @@ void CLuaBaseEntity::recalculateSkillsTable()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -9698,7 +10190,7 @@ void CLuaBaseEntity::recalculateAbilitiesTable()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -9729,7 +10221,7 @@ sol::table CLuaBaseEntity::getParty()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return sol::lua_nil;
     }
 
@@ -9755,7 +10247,7 @@ sol::table CLuaBaseEntity::getPartyWithTrusts()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return sol::lua_nil;
     }
 
@@ -9781,7 +10273,7 @@ uint8 CLuaBaseEntity::getPartySize(sol::object const& arg0)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -10093,7 +10585,7 @@ uint32 CLuaBaseEntity::getLeaderID()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -10126,7 +10618,7 @@ uint32 CLuaBaseEntity::getPartyLastMemberJoinedTime()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -10151,7 +10643,7 @@ void CLuaBaseEntity::reloadParty()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -10162,14 +10654,14 @@ void CLuaBaseEntity::reloadParty()
  *  Function: disableLevelSync()
  *  Purpose : Disables...wait for it...Level Sync
  *  Example : target:disableLevelSync()
- *  Notes   : Only used in scripts/globals/effects/level_sync.lua
+ *  Notes   : Only used in scripts/effects/level_sync.lua
  ************************************************************************/
 
 void CLuaBaseEntity::disableLevelSync()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -10201,7 +10693,7 @@ bool CLuaBaseEntity::isLevelSync()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -10226,7 +10718,7 @@ uint8 CLuaBaseEntity::checkSoloPartyAlliance()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -10256,23 +10748,20 @@ uint8 CLuaBaseEntity::checkSoloPartyAlliance()
  *  Notes   : and the mob is able to give exp to the members
  ************************************************************************/
 
-bool CLuaBaseEntity::checkKillCredit(CLuaBaseEntity* PLuaBaseEntity, sol::object const& arg1, sol::object const& arg2)
+bool CLuaBaseEntity::checkKillCredit(CLuaBaseEntity* PLuaBaseEntity, sol::object const& minRange)
 {
-    if (m_PBaseEntity->objtype != TYPE_PC || PLuaBaseEntity->GetBaseEntity()->objtype != TYPE_MOB)
+    if (m_PBaseEntity->objtype != TYPE_PC || (PLuaBaseEntity && PLuaBaseEntity->GetBaseEntity()->objtype != TYPE_MOB))
     {
         ShowWarning("CLuaBaseEntity::checkKillCredit() - Non-PC type calling function, or PLuaBaseEntity is not a MOB.");
         return false;
     }
 
-    CCharEntity* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
-    CMobEntity*  PMob  = static_cast<CMobEntity*>(PLuaBaseEntity->GetBaseEntity());
+    CCharEntity* PChar  = static_cast<CCharEntity*>(m_PBaseEntity);
+    CMobEntity*  PMob   = static_cast<CMobEntity*>(PLuaBaseEntity->GetBaseEntity());
+    float        range  = minRange.is<float>() ? minRange.as<float>() : 100;
+    bool         credit = false;
 
-    bool  credit  = false;
-    int   lvlDiff = (int)(PMob->GetMLevel()) - (int)(PChar->GetMLevel());
-    int   maxDiff = (arg1 != sol::lua_nil) ? arg1.as<int>() : 15;
-    float range   = (arg2 != sol::lua_nil) ? arg2.as<float>() : 100;
-
-    if (charutils::CheckMob(PMob->m_HiPCLvl, PMob->GetMLevel()) > EMobDifficulty::TooWeak && distance(PMob->loc.p, PChar->loc.p) < range && lvlDiff < maxDiff)
+    if (charutils::CheckMob(PMob->m_HiPCLvl, PMob->GetMLevel()) > EMobDifficulty::TooWeak && distance(PMob->loc.p, PChar->loc.p) < range && !PMob->GetCallForHelpFlag())
     {
         if (PChar->PParty && PChar->PParty->GetSyncTarget())
         {
@@ -10338,7 +10827,7 @@ void CLuaBaseEntity::setInstance(CLuaInstance* PLuaInstance)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -10363,7 +10852,7 @@ void CLuaBaseEntity::createInstance(uint16 instanceID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -10387,7 +10876,7 @@ void CLuaBaseEntity::instanceEntry(CLuaBaseEntity* PLuaBaseEntity, uint32 respon
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -10407,7 +10896,7 @@ uint16 CLuaBaseEntity::getConfrontationEffect()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -10425,7 +10914,7 @@ uint16 CLuaBaseEntity::copyConfrontationEffect(uint16 targetID)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -10483,13 +10972,13 @@ uint8 CLuaBaseEntity::registerBattlefield(sol::object const& arg0, sol::object c
 {
     if (m_PBaseEntity->loc.zone->m_BattlefieldHandler == nullptr)
     {
-        ShowWarning("m_BattlefieldHandler was null for %s.", m_PBaseEntity->GetName());
+        ShowWarning("m_BattlefieldHandler was null for %s.", m_PBaseEntity->getName());
         return BATTLEFIELD_RETURN_CODE_BATTLEFIELD_FULL;
     }
 
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return BATTLEFIELD_RETURN_CODE_BATTLEFIELD_FULL;
     }
 
@@ -10521,7 +11010,13 @@ uint8 CLuaBaseEntity::registerBattlefield(sol::object const& arg0, sol::object c
         registration.levelCap   = battlefield["levelCap"];
         registration.timeLimit  = std::chrono::seconds(battlefield.get<int32>("timeLimit"));
         registration.isMission  = battlefield.get_or("isMission", false);
-        registration.showTimer  = battlefield.get_or("showTimer", true);
+
+        if (registration.isMission && settings::get<uint8>("map.LV_CAP_MISSION_BCNM") == 0)
+        {
+            registration.levelCap = settings::get<uint8>("main.MAX_LEVEL");
+        }
+
+        registration.showTimer = battlefield.get_or("showTimer", true);
         registration.rules |= battlefield.get<bool>("allowSubjob") ? RULES_ALLOW_SUBJOBS : 0;
         registration.rules |= battlefield.get<bool>("canLoseExp") ? RULES_LOSE_EXP : 0;
     }
@@ -10533,13 +11028,13 @@ bool CLuaBaseEntity::battlefieldAtCapacity(int battlefieldID)
 {
     if (m_PBaseEntity->loc.zone->m_BattlefieldHandler == nullptr)
     {
-        ShowWarning("m_BattlefieldHandler was null for %s.", m_PBaseEntity->GetName());
+        ShowWarning("m_BattlefieldHandler was null for %s.", m_PBaseEntity->getName());
         return true;
     }
 
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return true;
     }
 
@@ -10618,7 +11113,7 @@ bool CLuaBaseEntity::isInDynamis()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -10636,7 +11131,7 @@ void CLuaBaseEntity::setEnteredBattlefield(bool entered)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -10658,7 +11153,7 @@ bool CLuaBaseEntity::hasEnteredBattlefield()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -10721,7 +11216,7 @@ void CLuaBaseEntity::sendRaise(uint8 raiseLevel)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -10753,7 +11248,7 @@ void CLuaBaseEntity::sendReraise(uint8 raiseLevel)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -10780,7 +11275,7 @@ void CLuaBaseEntity::sendTractor(float xPos, float yPos, float zPos, uint8 rotat
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -10800,37 +11295,186 @@ void CLuaBaseEntity::sendTractor(float xPos, float yPos, float zPos, uint8 rotat
 }
 
 /************************************************************************
+ *  Function: allowSendRaisePrompt()
+ *  Purpose : Allows the raise prompt to be sent again to client
+ *            if for example player was moved while dead (thus removing the prompt)
+ *  Example : player:allowSendRaisePrompt()
+ ************************************************************************/
+
+void CLuaBaseEntity::allowSendRaisePrompt()
+{
+    if (m_PBaseEntity == nullptr || m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowError("m_PBaseEntity is null or not a Player.");
+        return;
+    }
+
+    if (m_PBaseEntity->PAI->IsCurrentState<CDeathState>())
+    {
+        auto deathState = static_cast<CDeathState*>(m_PBaseEntity->PAI->GetCurrentState());
+        deathState->allowSendRaise();
+    }
+}
+
+/************************************************************************
  *  Function: countdown()
  *  Purpose : Starts or clears a visible countdown bar for player
  *  Example : player:countdown(60)
  *  Notes   : Using 0 or no argument removes the countdown bar from the player
  ************************************************************************/
-void CLuaBaseEntity::countdown(sol::object const& secondsObj,
-                               sol::object const& bar1NameObj, sol::object const& bar1ValObj,
-                               sol::object const& bar2NameObj, sol::object const& bar2ValObj)
+void CLuaBaseEntity::countdown(sol::object const& secondsObj)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
     CCharEntity* PChar  = (CCharEntity*)m_PBaseEntity;
-    auto*        packet = new CTimerBarUtilPacket();
+    auto*        packet = new CObjectiveUtilityPacket();
 
     if (secondsObj.is<uint32>())
     {
         packet->addCountdown(secondsObj.as<uint32>());
     }
 
-    if (bar1NameObj.is<std::string>() && bar1ValObj.is<uint8>())
+    PChar->pushPacket(packet);
+}
+
+/************************************************************************
+ *  Function: objectiveUtility()
+ *  Purpose : Manages countdown, progress bars, battle fence, help text
+ *  Example :
+        local objective = {
+            -- countdown = 1800, -- countdown duration with default warning (60s)
+            countdown = {
+                duration = 3600, -- countdown length in seconds
+                warning = 300 -- remaining duration after which the timer starts flashing red
+            },
+            bars = {
+                [1] = {
+                    title = "Izzat", -- bar title, empty string hides bar
+                    value = 100 -- % bar progress
+                },
+            },
+            scoreboard = { -- Yorcia Alluvion Skirmish
+                marchlandScore = 0,
+                strongholdScore = 0,
+                marchlandProgress = 50180,
+                marchlandProgressMax = 50180,
+                strongholdProgress = 500180,
+                strongholdProgressMax = 500180,
+                strongholdNameOverride = 0
+            },
+            fence = {
+                pos = {x = 0.000, y = 0.000}, -- center of fence
+                radius = 25.00, -- radius from pos in yalms
+                render = 25.00, -- distance from fence it becomes visible
+                blue = true -- optional, turns default red fence bars blue
+            },
+            help = {
+                title = 1, -- string index from ROM\333\16.DAT
+                description = 62 -- same as above, must be 19 or higher
+            }
+        }
+        player:objectiveUtility(objective)
+ *  Notes   : Bars and scoreboard are mutually exclusive.
+        Can have up to 6 bars. Many of these items are optional.
+        Calling without arguments will clear everything.
+ ************************************************************************/
+void CLuaBaseEntity::objectiveUtility(sol::object const& obj)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        packet->addBar1(bar1NameObj.as<std::string>(), bar1ValObj.as<uint8>());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return;
     }
 
-    if (bar2NameObj.is<std::string>() && bar2ValObj.is<uint8>())
+    CCharEntity* PChar  = (CCharEntity*)m_PBaseEntity;
+    auto*        packet = new CObjectiveUtilityPacket();
+
+    if (obj.is<sol::table>())
     {
-        packet->addBar2(bar2NameObj.as<std::string>(), bar2ValObj.as<uint8>());
+        sol::object countdownObj = obj.as<sol::table>()["countdown"];
+        if (countdownObj.valid())
+        {
+            if (countdownObj.is<sol::table>())
+            {
+                uint32 duration = countdownObj.as<sol::table>().get<uint32>("duration");
+                uint32 warning  = countdownObj.as<sol::table>().get_or<uint32>("warning", 0);
+                packet->addCountdown(duration, warning);
+            }
+            else if (countdownObj.is<uint32>())
+            {
+                packet->addCountdown(countdownObj.as<uint32>());
+            }
+        }
+
+        sol::object barsObj = obj.as<sol::table>()["bars"];
+        if (barsObj.valid() && barsObj.is<sol::table>())
+        {
+            std::vector<std::pair<std::string, uint32>> bars;
+            for (uint8 i = 1; i <= 6; ++i)
+            {
+                sol::object barObj = barsObj.as<sol::table>()[i];
+                if (barObj.valid() && barObj.is<sol::table>())
+                {
+                    std::string barTitle = barObj.as<sol::table>().get<std::string>("title");
+                    uint32      barValue = barObj.as<sol::table>().get<uint32>("value");
+                    bars.push_back(std::make_pair(barTitle, barValue));
+                }
+                else
+                {
+                    bars.push_back(std::make_pair("", 0));
+                }
+            }
+            packet->addBars(std::move(bars));
+        }
+
+        sol::object scoreboardObj = obj.as<sol::table>()["scoreboard"];
+        if (scoreboardObj.valid() && scoreboardObj.is<sol::table>())
+        {
+            std::pair<int32, int32> score = {
+                static_cast<int32>(scoreboardObj.as<sol::table>().get_or<uint32>("marchlandScore", 0)),
+                static_cast<int32>(scoreboardObj.as<sol::table>().get_or<uint32>("strongholdScore", 0))
+            };
+            std::vector<uint32> data = {
+                scoreboardObj.as<sol::table>().get_or<uint32>("marchlandProgress", 0),
+                scoreboardObj.as<sol::table>().get_or<uint32>("marchlandProgressMax", 0),
+                scoreboardObj.as<sol::table>().get_or<uint32>("strongholdProgress", 0),
+                scoreboardObj.as<sol::table>().get_or<uint32>("strongholdProgressMax", 0),
+                scoreboardObj.as<sol::table>().get_or<uint32>("marchlandNameOverride", 0),
+                scoreboardObj.as<sol::table>().get_or<uint32>("strongholdNameOverride", 0),
+            };
+            packet->addScoreboard(score, data);
+        }
+
+        sol::object fenceObj = obj.as<sol::table>()["fence"];
+        if (fenceObj.valid() && fenceObj.is<sol::table>())
+        {
+            sol::object fencePosObj = fenceObj.as<sol::table>()["pos"];
+            float       posX        = 0.000;
+            float       posY        = 0.000;
+            if (fencePosObj.valid() && fencePosObj.is<sol::table>())
+            {
+                posX = fencePosObj.as<sol::table>().get<float>("x");
+                posY = fencePosObj.as<sol::table>().get<float>("y");
+            }
+
+            float radius = fenceObj.as<sol::table>().get_or<float>("radius", 0.00);
+            float render = fenceObj.as<sol::table>().get_or<float>("render", 25.00);
+            bool  blue   = fenceObj.as<sol::table>().get_or<bool, std::string, bool>("blue", false);
+
+            packet->addFence(posX, posY, radius, render, blue);
+        }
+
+        sol::object helpObj = obj.as<sol::table>()["help"];
+        if (helpObj.valid() && helpObj.is<sol::table>())
+        {
+            uint16 title       = helpObj.as<sol::table>().get<uint16>("title");
+            uint16 description = helpObj.as<sol::table>().get<uint16>("description");
+            packet->addHelpText(title, description);
+        }
     }
 
     PChar->pushPacket(packet);
@@ -10929,7 +11573,7 @@ void CLuaBaseEntity::timer(int ms, sol::function func)
  *  Example :
  *  Notes   : For instance, Sic can be used before a Pet reaches 100% TP.
  *          : Once the Pet reaches 100%, it will use it's Special Ability.
- *          : See scripts/globals/abilities/sic.lua for how the Special
+ *          : See scripts/actions/abilities/sic.lua for how the Special
  *          : Ability is delayed until 100% (essentially loops into Action Queue)
  ************************************************************************/
 
@@ -11112,7 +11756,7 @@ void CLuaBaseEntity::wakeUp()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -11134,7 +11778,7 @@ void CLuaBaseEntity::setBattleID(uint16 battleID)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -11153,7 +11797,7 @@ uint16 CLuaBaseEntity::getBattleID()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -11165,7 +11809,7 @@ uint16 CLuaBaseEntity::getBattleID()
  *  Function: recalculateStats()
  *  Purpose : Recalculate the total Stats for a PC (force update)
  *  Example : target:recalculateStats()
- *  Notes   : See scripts/globals/effects/obliviscence.lua
+ *  Notes   : See scripts/effects/obliviscence.lua
  ************************************************************************/
 
 void CLuaBaseEntity::recalculateStats()
@@ -11207,7 +11851,7 @@ bool CLuaBaseEntity::checkImbuedItems()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -11295,6 +11939,35 @@ bool CLuaBaseEntity::isUsingH2H()
     }
 
     return false;
+}
+
+/************************************************************************
+ *  Function: getBaseWeaponDelay(bool offhand)
+ *  Purpose : Returns the unmodified base delay of an PCs's melee attack without any form of delay reduction
+ *  Example : local delay = player:getBaseWeaponDelay(false)
+ *  Notes   :
+ ************************************************************************/
+
+uint16 CLuaBaseEntity::getBaseWeaponDelay(uint16 slot)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return false;
+    }
+    CCharEntity* PCharEntity = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+
+    if (PCharEntity)
+    {
+        CItemWeapon* PWeapon = dynamic_cast<CItemWeapon*>(PCharEntity->getEquip(static_cast<SLOTTYPE>(slot)));
+
+        if (PWeapon)
+        {
+            return PWeapon->getBaseDelay();
+        }
+    }
+
+    return 0;
 }
 
 /************************************************************************
@@ -11416,7 +12089,7 @@ int32 CLuaBaseEntity::getCE(CLuaBaseEntity const* target)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to get CE for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to get CE for invalid entity type (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -11434,7 +12107,7 @@ int32 CLuaBaseEntity::getVE(CLuaBaseEntity const* target)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to get VE for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to get VE for invalid entity type (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -11452,7 +12125,7 @@ void CLuaBaseEntity::setCE(CLuaBaseEntity* target, uint16 amount)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to set CE for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to set CE for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -11470,7 +12143,7 @@ void CLuaBaseEntity::setVE(CLuaBaseEntity* target, uint16 amount)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to set VE for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to set VE for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -11515,7 +12188,7 @@ void CLuaBaseEntity::lowerEnmity(CLuaBaseEntity* PEntity, uint8 percent)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to lower enmnity for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to lower enmnity for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -11527,22 +12200,22 @@ void CLuaBaseEntity::lowerEnmity(CLuaBaseEntity* PEntity, uint8 percent)
 
 /************************************************************************
  *  Function: updateEnmity()
- *  Purpose : Unlike updateClaim(), this function only generates Enmity toward an Entity
+ *  Purpose : Unlike updateClaim(), this function only causes a mob to fight the target
  *  Example : mob:updateEnmity(target)
- *  Notes   : Mob will aggro an Entity, but be unclaimed until engaged
+ *  Notes   : Mob will engage an entity, but be unclaimed until acted upon
  ************************************************************************/
 
 void CLuaBaseEntity::updateEnmity(CLuaBaseEntity* PEntity)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to update enmnity for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to update enmity for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
     if (PEntity != nullptr && PEntity->GetBaseEntity()->objtype != TYPE_NPC)
     {
-        static_cast<CMobEntity*>(m_PBaseEntity)->PEnmityContainer->AddBaseEnmity(static_cast<CBattleEntity*>(PEntity->GetBaseEntity()));
+        m_PBaseEntity->PAI->Engage(PEntity->GetBaseEntity()->targid);
     }
 }
 
@@ -11550,7 +12223,7 @@ void CLuaBaseEntity::updateEnmity(CLuaBaseEntity* PEntity)
  *  Function: transferEnmity()
  *  Purpose : Used to transfer an amount of Enmity from one Entity to another
  *  Example : target:transferEnmity(player, 50, 20.6)
- *  Notes   : See scripts/globals/abilities/accomplice.lua
+ *  Notes   : See scripts/actions/abilities/accomplice.lua
  ************************************************************************/
 
 void CLuaBaseEntity::transferEnmity(CLuaBaseEntity* entity, uint8 percent, float range)
@@ -11635,8 +12308,11 @@ void CLuaBaseEntity::updateEnmityFromDamage(CLuaBaseEntity* PEntity, int32 damag
  *  Notes   : Used in nearly all Cure scripts and abilities which heal
  ************************************************************************/
 
-void CLuaBaseEntity::updateEnmityFromCure(CLuaBaseEntity* PEntity, int32 amount)
+void CLuaBaseEntity::updateEnmityFromCure(CLuaBaseEntity* PEntity, int32 amount, sol::object const& optionalFixedCE, sol::object const& optionalFixedVE)
 {
+    int32 fixedCE = optionalFixedCE.is<int32>() ? optionalFixedCE.as<int32>() : 0;
+    int32 fixedVE = optionalFixedVE.is<int32>() ? optionalFixedVE.as<int32>() : 0;
+
     if (amount < 0)
     {
         ShowWarning("Received negative cure amount.");
@@ -11664,7 +12340,7 @@ void CLuaBaseEntity::updateEnmityFromCure(CLuaBaseEntity* PEntity, int32 amount)
 
     if (PEntity != nullptr && PCurer)
     {
-        battleutils::GenerateCureEnmity(PCurer, static_cast<CBattleEntity*>(PEntity->GetBaseEntity()), amount);
+        battleutils::GenerateCureEnmity(PCurer, static_cast<CBattleEntity*>(PEntity->GetBaseEntity()), amount, fixedCE, fixedVE);
     }
 }
 
@@ -11679,7 +12355,7 @@ void CLuaBaseEntity::resetEnmity(CLuaBaseEntity* PEntity)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to reset enmnity for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to reset enmnity for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -11729,7 +12405,7 @@ bool CLuaBaseEntity::hasEnmity()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -11747,7 +12423,7 @@ sol::table CLuaBaseEntity::getNotorietyList()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return sol::lua_nil;
     }
 
@@ -11814,7 +12490,7 @@ void CLuaBaseEntity::clearEnmityForEntity(CLuaBaseEntity* PEntity)
 }
 
 /************************************************************************
- *  Function: addStatusEffect(effect, power, tick, duration)
+ *  Function: addStatusEffect(effect, power, tick, duration, subtype, subpower, tier)
  *  Purpose : Adds a specified Status Effect to the Entity
  *  Example : target:addStatusEffect(xi.effect.ACCURACY_DOWN, 20, 3, 60)
  *  Notes   :
@@ -11938,7 +12614,7 @@ std::optional<CLuaStatusEffect> CLuaBaseEntity::getStatusEffect(uint16 StatusID,
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return std::nullopt;
     }
 
@@ -11980,7 +12656,7 @@ sol::table CLuaBaseEntity::getStatusEffects()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return sol::lua_nil;
     }
 
@@ -12013,7 +12689,7 @@ int16 CLuaBaseEntity::getStatusEffectElement(uint16 statusId)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12031,7 +12707,7 @@ bool CLuaBaseEntity::canGainStatusEffect(uint16 effect, sol::object const& power
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -12059,7 +12735,7 @@ bool CLuaBaseEntity::hasStatusEffect(uint16 StatusID, sol::object const& SubType
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -12096,7 +12772,7 @@ uint16 CLuaBaseEntity::hasStatusEffectByFlag(uint16 StatusID)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12121,7 +12797,7 @@ uint8 CLuaBaseEntity::countEffect(uint16 StatusID)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12146,7 +12822,7 @@ bool CLuaBaseEntity::delStatusEffect(uint16 StatusID, sol::object const& SubType
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -12184,7 +12860,7 @@ void CLuaBaseEntity::delStatusEffectsByFlag(uint32 flag, sol::object const& sile
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -12210,7 +12886,7 @@ bool CLuaBaseEntity::delStatusEffectSilent(uint16 StatusID)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -12235,7 +12911,7 @@ uint16 CLuaBaseEntity::eraseStatusEffect()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12260,7 +12936,7 @@ uint8 CLuaBaseEntity::eraseAllStatusEffect()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12284,7 +12960,7 @@ int32 CLuaBaseEntity::dispelStatusEffect(sol::object const& flagObj)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12310,7 +12986,7 @@ uint8 CLuaBaseEntity::dispelAllStatusEffect(sol::object const& flagObj)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12336,7 +13012,7 @@ uint16 CLuaBaseEntity::stealStatusEffect(CLuaBaseEntity* PTargetEntity, sol::obj
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12376,7 +13052,7 @@ void CLuaBaseEntity::addMod(uint16 type, int16 amount)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -12400,7 +13076,7 @@ int16 CLuaBaseEntity::getMod(uint16 modID)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12418,7 +13094,7 @@ void CLuaBaseEntity::setMod(uint16 modID, int16 value)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -12436,7 +13112,7 @@ void CLuaBaseEntity::delMod(uint16 modID, int16 value)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -12453,7 +13129,7 @@ void CLuaBaseEntity::addLatent(uint16 condID, uint16 conditionValue, uint16 mID,
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -12474,7 +13150,7 @@ bool CLuaBaseEntity::delLatent(uint16 condID, uint16 conditionValue, uint16 mID,
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -12482,6 +13158,24 @@ bool CLuaBaseEntity::delLatent(uint16 condID, uint16 conditionValue, uint16 mID,
     Mod    modID       = static_cast<Mod>(mID);
 
     return static_cast<CCharEntity*>(m_PBaseEntity)->PLatentEffectContainer->DelLatentEffect(conditionID, conditionValue, modID, modValue);
+}
+
+/************************************************************************
+ *  Function: hasAllLatentsActive()
+ *  Purpose : Returns false if any latents for the slot are not active
+ *  Example : player:hasAllLatentsActive(xi.slot.NECK)
+ *  Notes   :
+ ************************************************************************/
+
+bool CLuaBaseEntity::hasAllLatentsActive(uint8 slot)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return false;
+    }
+
+    return static_cast<CCharEntity*>(m_PBaseEntity)->PLatentEffectContainer->HasAllLatentsActive(slot);
 }
 
 /************************************************************************
@@ -12493,28 +13187,14 @@ bool CLuaBaseEntity::delLatent(uint16 condID, uint16 conditionValue, uint16 mID,
 
 int16 CLuaBaseEntity::getMaxGearMod(Mod modId)
 {
-    CCharEntity* PChar       = dynamic_cast<CCharEntity*>(m_PBaseEntity);
-    uint16       maxModValue = 0;
-
-    if (!PChar)
+    if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("CLuaBaseEntity::getMaxGearMod() - m_PBaseEntity is not a player.");
+        ShowWarning("Invalid Entity (Non-PC: %s) calling function.", m_PBaseEntity->getName());
+
         return 0;
     }
 
-    for (uint8 i = 0; i < SLOT_BACK; ++i)
-    {
-        auto* PItem = PChar->getEquip((SLOTTYPE)i);
-        if (PItem && (PItem->isType(ITEM_EQUIPMENT) || PItem->isType(ITEM_WEAPON)))
-        {
-            uint16 modValue = PItem->getModifier(modId);
-            if (modValue > maxModValue)
-            {
-                maxModValue = modValue;
-            }
-        }
-    }
-    return maxModValue;
+    return static_cast<CCharEntity*>(m_PBaseEntity)->getMaxGearMod(static_cast<Mod>(modId));
 }
 
 /************************************************************************
@@ -12541,11 +13221,34 @@ void CLuaBaseEntity::doWildCard(CLuaBaseEntity* PEntity, uint8 total)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
     battleutils::DoWildCardToEntity(static_cast<CCharEntity*>(m_PBaseEntity), static_cast<CCharEntity*>(PEntity->m_PBaseEntity), total);
+}
+
+/************************************************************************
+ *  Function: doRandomDeal()
+ *  Purpose : Executes the Random Deal job ability
+ *  Example : player:doRandomDeal(target)
+ *  Notes   : Calls the DoRandomDealToEntity function of battleutils
+ ************************************************************************/
+bool CLuaBaseEntity::doRandomDeal(CLuaBaseEntity* PTarget)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return false;
+    }
+
+    if (!PTarget || !PTarget->m_PBaseEntity)
+    {
+        ShowWarning("Invalid entity type passed as target (%s).", m_PBaseEntity->getName());
+        return false;
+    }
+
+    return battleutils::DoRandomDealToEntity(static_cast<CCharEntity*>(m_PBaseEntity), static_cast<CCharEntity*>(PTarget->m_PBaseEntity));
 }
 
 /************************************************************************
@@ -12559,7 +13262,7 @@ bool CLuaBaseEntity::addCorsairRoll(uint8 casterJob, uint8 bustDuration, uint16 
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -12608,7 +13311,7 @@ bool CLuaBaseEntity::hasBustEffect(uint16 id)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -12627,7 +13330,7 @@ uint8 CLuaBaseEntity::numBustEffects()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12646,7 +13349,7 @@ uint16 CLuaBaseEntity::healingWaltz()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12754,7 +13457,7 @@ uint8 CLuaBaseEntity::getOverloadChance(uint8 element)
  *  Function: setStatDebilitation()
  *  Purpose : Updates the private member m_StatsDebilitation in CCharEntity
  *  Example : target:setStatDebilitation(power)
- *  Notes   : Used only through scripts/globals/effects/debilitation.lua
+ *  Notes   : Used only through scripts/effects/debilitation.lua
  ************************************************************************/
 
 void CLuaBaseEntity::setStatDebilitation(uint16 statDebil)
@@ -12771,14 +13474,14 @@ void CLuaBaseEntity::setStatDebilitation(uint16 statDebil)
  *  Function: getStat()
  *  Purpose : Returns a particular stat for an Entity
  *  Example : caster:getStat(xi.mod.INT)
- *  Notes   :
+ *  Notes   : weaponSlot param is used only for ATT (optional and defaults to SLOT_MAIN)
  ************************************************************************/
 
-uint16 CLuaBaseEntity::getStat(uint16 statId)
+uint16 CLuaBaseEntity::getStat(uint16 statId, sol::variadic_args va)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12809,8 +13512,11 @@ uint16 CLuaBaseEntity::getStat(uint16 statId)
             value = PEntity->CHR();
             break;
         case Mod::ATT:
-            value = PEntity->ATT();
-            break;
+        {
+            SLOTTYPE weaponSlot = va[0].is<uint32>() ? va[0].as<SLOTTYPE>() : SLOTTYPE::SLOT_MAIN;
+            value               = PEntity->ATT(weaponSlot);
+        }
+        break;
         case Mod::DEF:
             value = PEntity->DEF();
             break;
@@ -12837,7 +13543,7 @@ uint16 CLuaBaseEntity::getACC()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12862,8 +13568,8 @@ uint16 CLuaBaseEntity::getEVA()
  *  Function: getRACC()
  *  Purpose : Calculates and returns the Ranged Accuracy of a Weapon euipped in the Ranged slot
  *  Example : player:getRACC()
- *  Notes   : To Do: The calculation is already a public member of battleentity, shouldn't have two calculations, just call (CBattleEntity*)m_PBaseEntity)->RACC
- *and return result
+ *  Notes   : TODO: The calculation is already a public member of battleentity, shouldn't have two calculations, just call (CBattleEntity*)m_PBaseEntity)->RACC
+ *            and return result
  ************************************************************************/
 
 int CLuaBaseEntity::getRACC()
@@ -12904,7 +13610,7 @@ uint16 CLuaBaseEntity::getRATT()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -12985,7 +13691,7 @@ int32 CLuaBaseEntity::physicalDmgTaken(double damage, sol::variadic_args va)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13005,7 +13711,7 @@ int32 CLuaBaseEntity::magicDmgTaken(double damage, sol::variadic_args va)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13025,7 +13731,7 @@ int32 CLuaBaseEntity::rangedDmgTaken(double damage, sol::variadic_args va)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13045,7 +13751,7 @@ int32 CLuaBaseEntity::breathDmgTaken(double damage)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13063,7 +13769,7 @@ void CLuaBaseEntity::handleAfflatusMiseryDamage(double damage)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -13081,7 +13787,7 @@ bool CLuaBaseEntity::isWeaponTwoHanded()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -13097,39 +13803,6 @@ bool CLuaBaseEntity::isWeaponTwoHanded()
 }
 
 /************************************************************************
- *  Function: getMeleeHitDamage()
- *  Purpose : Calculates and returns total damage for a single hit
- *  Example : getMeleeHitDamage(Attacker,Local Hit Rate)
- *  Notes   : Battleutils calculates hit rate already, so inserting hit rate
- *          : here only increases chance of missing (assuming < 100)?
- *          : Not currently used in any scripts (handled by battleutils) - Is this even needed?
- ************************************************************************/
-
-int CLuaBaseEntity::getMeleeHitDamage(CLuaBaseEntity* PLuaBaseEntity, sol::object const& arg1)
-{
-    if (m_PBaseEntity->objtype == TYPE_NPC)
-    {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
-        return 0;
-    }
-
-    CBattleEntity* PAttacker = static_cast<CBattleEntity*>(m_PBaseEntity);
-    CBattleEntity* PDefender = static_cast<CBattleEntity*>(PLuaBaseEntity->GetBaseEntity());
-
-    uint8 hitrate = (arg1 == sol::lua_nil) ? battleutils::GetHitRate(PAttacker, PDefender) : arg1.as<uint8>();
-
-    if (xirand::GetRandomNumber(100) < hitrate)
-    {
-        float DamageRatio = battleutils::GetDamageRatio(PAttacker, PDefender, false, 0.f);
-        int   damage      = (uint16)((PAttacker->GetMainWeaponDmg() + battleutils::GetFSTR(PAttacker, PDefender, SLOT_MAIN)) * DamageRatio);
-
-        return damage;
-    }
-
-    return -1;
-}
-
-/************************************************************************
  *  Function: getWeaponDmg()
  *  Purpose : Returns the real damage value of a Weapon in the Main slot
  *  Example : local weaponDamage = attacker:getWeaponDmg()
@@ -13140,7 +13813,7 @@ uint16 CLuaBaseEntity::getWeaponDmg()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13158,7 +13831,7 @@ uint16 CLuaBaseEntity::getWeaponDmgRank()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13176,7 +13849,7 @@ uint16 CLuaBaseEntity::getOffhandDmg()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13194,7 +13867,7 @@ uint16 CLuaBaseEntity::getOffhandDmgRank()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13212,7 +13885,7 @@ uint16 CLuaBaseEntity::getRangedDmg()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13230,7 +13903,7 @@ uint16 CLuaBaseEntity::getRangedDmgRank()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13248,7 +13921,7 @@ uint16 CLuaBaseEntity::getAmmoDmg()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13265,6 +13938,38 @@ uint16 CLuaBaseEntity::getAmmoDmg()
 }
 
 /************************************************************************
+ *  Function: getWeaponHitCount(false)
+ *  Purpose : Gets the number of hits from a weapon
+ *  Example : local numMainHandHits = player:getWeaponHitCount(false)
+ ************************************************************************/
+
+uint16 CLuaBaseEntity::getWeaponHitCount(bool offhand)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return 0;
+    }
+
+    if (CCharEntity* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity))
+    {
+        CItemWeapon* PMain = dynamic_cast<CItemWeapon*>(PChar->getEquip(SLOT_MAIN));
+        CItemWeapon* PSub  = dynamic_cast<CItemWeapon*>(PChar->getEquip(SLOT_SUB));
+
+        if (offhand && PSub)
+        {
+            return PSub->getHitCount();
+        }
+        else if (PMain)
+        {
+            return PMain->getHitCount();
+        }
+    }
+
+    return 0;
+}
+
+/************************************************************************
  *  Function: removeAmmo()
  *  Purpose : Expends one item in the ammo slot (arrow,bullet, etc)
  *  Example : player:removeAmmo()
@@ -13275,7 +13980,7 @@ void CLuaBaseEntity::removeAmmo()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -13293,7 +13998,7 @@ uint16 CLuaBaseEntity::getWeaponSkillLevel(uint8 slotID)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13328,7 +14033,7 @@ uint16 CLuaBaseEntity::getWeaponDamageType(uint8 slotID)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13358,7 +14063,7 @@ uint8 CLuaBaseEntity::getWeaponSkillType(uint8 slotID)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13370,6 +14075,11 @@ uint8 CLuaBaseEntity::getWeaponSkillType(uint8 slotID)
         if (PWeapon)
         {
             return PWeapon->getSkillType();
+        }
+        else
+        {
+            // nothing in offhand or non-weapon (shield/grip)
+            return 0;
         }
     }
 
@@ -13388,7 +14098,7 @@ uint8 CLuaBaseEntity::getWeaponSubSkillType(uint8 slotID)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13420,7 +14130,7 @@ auto CLuaBaseEntity::getWSSkillchainProp() -> std::tuple<uint8, uint8, uint8>
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return { 0, 0, 0 };
     }
 
@@ -13492,7 +14202,7 @@ int32 CLuaBaseEntity::takeSwipeLungeDamage(CLuaBaseEntity* caster, int32 damage,
 /************************************************************************
  *  Function: spawnPet()
  *  Purpose : Spawns a pet if a few correct conditions are met
- *  Example : caster:spawnPet(xi.pet.id.CARBUNCLE)
+ *  Example : caster:spawnPet(xi.petId.CARBUNCLE)
  *  Notes   :
  ************************************************************************/
 
@@ -13506,6 +14216,7 @@ void CLuaBaseEntity::spawnPet(sol::object const& arg0)
 
     if (m_PBaseEntity->objtype == TYPE_PC)
     {
+        auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
         if ((arg0 != sol::lua_nil) && arg0.is<int>())
         {
             uint32 petId = arg0.as<uint32>();
@@ -13513,7 +14224,7 @@ void CLuaBaseEntity::spawnPet(sol::object const& arg0)
             {
                 if (((CCharEntity*)m_PBaseEntity)->PAutomaton)
                 {
-                    petId = PETID_HARLEQUINFRAME + static_cast<CCharEntity*>(m_PBaseEntity)->PAutomaton->getFrame() - 0x20;
+                    petId = static_cast<uint32>(PETID_HARLEQUINFRAME) + static_cast<uint32>(PChar->PAutomaton->getFrame()) - 0x20;
                 }
                 else
                 {
@@ -13565,7 +14276,7 @@ std::optional<CLuaBaseEntity> CLuaBaseEntity::spawnTrust(uint16 trustId)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return std::nullopt;
     }
 
@@ -13582,7 +14293,7 @@ void CLuaBaseEntity::clearTrusts()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -13599,7 +14310,7 @@ uint32 CLuaBaseEntity::getTrustID()
 {
     if (m_PBaseEntity->objtype != TYPE_TRUST)
     {
-        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -13616,7 +14327,7 @@ void CLuaBaseEntity::trustPartyMessage(uint32 message_id)
 {
     if (m_PBaseEntity->objtype != TYPE_TRUST)
     {
-        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -13644,7 +14355,7 @@ std::string CLuaBaseEntity::addSimpleGambit(uint16 targ, uint16 cond, uint32 con
 {
     if (m_PBaseEntity->objtype != TYPE_TRUST)
     {
-        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->getName());
         return {};
     }
 
@@ -13683,7 +14394,7 @@ void CLuaBaseEntity::removeSimpleGambit(std::string const& id)
 {
     if (m_PBaseEntity->objtype != TYPE_TRUST)
     {
-        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -13704,7 +14415,7 @@ void CLuaBaseEntity::removeAllSimpleGambits()
 {
     if (m_PBaseEntity->objtype != TYPE_TRUST)
     {
-        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -13725,7 +14436,7 @@ void CLuaBaseEntity::setTrustTPSkillSettings(uint16 trigger, uint16 select, sol:
 {
     if (m_PBaseEntity->objtype != TYPE_TRUST)
     {
-        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -13753,7 +14464,7 @@ void CLuaBaseEntity::despawnPet()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -13795,7 +14506,7 @@ bool CLuaBaseEntity::hasValidJugPetItem()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -13820,7 +14531,7 @@ bool CLuaBaseEntity::hasPet()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -13877,7 +14588,7 @@ bool CLuaBaseEntity::isAutomaton()
     if (m_PBaseEntity->objtype == TYPE_PET)
     {
         uint32 petID = static_cast<CPetEntity*>(m_PBaseEntity)->m_PetID;
-        if (petID >= PETID_HARLEQUINFRAME and petID <= PETID_STORMWAKERFRAME)
+        if (petID >= PETID_HARLEQUINFRAME && petID <= PETID_STORMWAKERFRAME)
         {
             return true;
         }
@@ -13918,7 +14629,7 @@ uint8 CLuaBaseEntity::getPetElement()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -14000,7 +14711,7 @@ std::optional<CLuaBaseEntity> CLuaBaseEntity::getMaster()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return std::nullopt;
     }
 
@@ -14026,7 +14737,7 @@ auto CLuaBaseEntity::getPetName() -> const std::string
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return {};
     }
 
@@ -14044,7 +14755,7 @@ auto CLuaBaseEntity::getPetName() -> const std::string
 /************************************************************************
  *  Function: setPetName()
  *  Purpose : Passes a string to name a new pet
- *  Example : player:setPetName(xi.pet.type.WYVERN, xi.pet.name.ROVER)
+ *  Example : player:setPetName(xi.petType.WYVERN, xi.petName.ROVER)
  *  Notes   : Updates char_pet.sql
  ************************************************************************/
 
@@ -14052,7 +14763,7 @@ void CLuaBaseEntity::setPetName(uint8 pType, uint16 value, sol::object const& ar
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -14062,12 +14773,12 @@ void CLuaBaseEntity::setPetName(uint8 pType, uint16 value, sol::object const& ar
     {
         if (petType == PET_TYPE::WYVERN)
         {
-            sql->Query("INSERT INTO char_pet SET charid = %u, wyvernid = %u ON DUPLICATE KEY UPDATE wyvernid = %u;", m_PBaseEntity->id, value, value);
+            _sql->Query("INSERT INTO char_pet SET charid = %u, wyvernid = %u ON DUPLICATE KEY UPDATE wyvernid = %u", m_PBaseEntity->id, value, value);
         }
         else if (petType == PET_TYPE::AUTOMATON)
         {
-            sql->Query("INSERT INTO char_pet SET charid = %u, automatonid = %u ON DUPLICATE KEY UPDATE automatonid = %u;", m_PBaseEntity->id, value,
-                       value);
+            _sql->Query("INSERT INTO char_pet SET charid = %u, automatonid = %u ON DUPLICATE KEY UPDATE automatonid = %u", m_PBaseEntity->id, value,
+                        value);
             if (static_cast<CCharEntity*>(m_PBaseEntity)->PAutomaton != nullptr)
             {
                 puppetutils::LoadAutomaton(static_cast<CCharEntity*>(m_PBaseEntity));
@@ -14083,8 +14794,8 @@ void CLuaBaseEntity::setPetName(uint8 pType, uint16 value, sol::object const& ar
 
             uint32 nameValue = chocoboname1 + chocoboname2;
 
-            sql->Query("INSERT INTO char_pet SET charid = %u, chocoboid = %u ON DUPLICATE KEY UPDATE chocoboid = %u;", m_PBaseEntity->id, nameValue,
-                       nameValue);
+            _sql->Query("INSERT INTO char_pet SET charid = %u, chocoboid = %u ON DUPLICATE KEY UPDATE chocoboid = %u", m_PBaseEntity->id, nameValue,
+                        nameValue);
         }
     }
 }
@@ -14099,7 +14810,7 @@ void CLuaBaseEntity::registerChocobo(uint32 value)
 
     auto* PChar           = static_cast<CCharEntity*>(m_PBaseEntity);
     PChar->m_FieldChocobo = value;
-    sql->Query("UPDATE char_pet SET field_chocobo = %u WHERE charid = %u;", value, PChar->id);
+    _sql->Query("UPDATE char_pet SET field_chocobo = %u WHERE charid = %u", value, PChar->id);
 }
 
 /************************************************************************
@@ -14113,7 +14824,7 @@ float CLuaBaseEntity::getCharmChance(CLuaBaseEntity const* target, sol::object c
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -14152,7 +14863,7 @@ void CLuaBaseEntity::petAttack(CLuaBaseEntity* PEntity)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -14185,7 +14896,7 @@ void CLuaBaseEntity::petRetreat()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -14225,7 +14936,7 @@ void CLuaBaseEntity::addPetMod(uint16 modID, int16 amount)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -14243,7 +14954,7 @@ void CLuaBaseEntity::setPetMod(uint16 modID, int16 amount)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -14261,7 +14972,7 @@ void CLuaBaseEntity::delPetMod(uint16 modID, int16 amount)
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -14279,7 +14990,7 @@ bool CLuaBaseEntity::hasAttachment(uint16 itemID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -14298,19 +15009,19 @@ auto CLuaBaseEntity::getAutomatonName() -> std::string
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return {};
     }
 
     const char* Query = "SELECT name FROM "
                         "char_pet LEFT JOIN pet_name ON automatonid = id "
-                        "WHERE charid = %u;";
+                        "WHERE charid = %u";
 
-    int32 ret = sql->Query(Query, m_PBaseEntity->id);
+    int32 ret = _sql->Query(Query, m_PBaseEntity->id);
 
-    if (ret != SQL_ERROR && sql->NumRows() != 0 && sql->NextRow() == SQL_SUCCESS)
+    if (ret != SQL_ERROR && _sql->NumRows() != 0 && _sql->NextRow() == SQL_SUCCESS)
     {
-        return sql->GetStringData(0);
+        return _sql->GetStringData(0);
     }
 
     return {}; // TODO: Verify this case
@@ -14365,7 +15076,7 @@ bool CLuaBaseEntity::unlockAttachment(uint16 itemID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -14416,6 +15127,61 @@ void CLuaBaseEntity::removeAllManeuvers()
 }
 
 /************************************************************************
+ *  Function: getAttachment(slotId)
+ *  Purpose : Gets the attachment of an automaton in the slot specified
+ *  Example : pet:getAttachment(1)
+ ************************************************************************/
+
+std::optional<CLuaItem> CLuaBaseEntity::getAttachment(uint8 slotId)
+{
+    auto* PAutomaton = dynamic_cast<CAutomatonEntity*>(m_PBaseEntity);
+
+    if (PAutomaton == nullptr)
+    {
+        ShowWarning("Invalid Entity accessing function.");
+        return std::nullopt;
+    }
+
+    uint8 slotItem = PAutomaton->getAttachment(slotId);
+    if (slotItem != 0)
+    {
+        return CLuaItem(itemutils::GetItemPointer(0x2100 + slotItem)); // TODO: Stop storing by offset
+    }
+
+    return std::nullopt;
+}
+
+/************************************************************************
+ *  Function: getAttachments()
+ *  Purpose : Returns a table of attachment items equipped by an Automaton
+ *  Example : pet:getAttachments()
+ ************************************************************************/
+
+sol::table CLuaBaseEntity::getAttachments()
+{
+    auto* PAutomaton = dynamic_cast<CAutomatonEntity*>(m_PBaseEntity);
+
+    if (PAutomaton == nullptr)
+    {
+        ShowWarning("Invalid Entity accessing function.");
+        return sol::lua_nil;
+    }
+
+    auto attachmentTable = lua.create_table();
+    for (uint8 attachmentSlot = 0; attachmentSlot < 12; ++attachmentSlot)
+    {
+        uint8 attachmentItemId = PAutomaton->getAttachment(attachmentSlot);
+
+        if (attachmentItemId != 0)
+        {
+            attachmentTable[attachmentSlot] = CLuaItem(itemutils::GetItemPointer(0x2100 + attachmentItemId));
+        }
+    }
+
+    return attachmentTable;
+}
+
+/************************************************************************
  *  Function: updateAttachments()
  *  Purpose : Updates all of the attachments
  *  Example : master:updateAttachments()
@@ -14426,7 +15192,7 @@ void CLuaBaseEntity::updateAttachments()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -14446,7 +15212,7 @@ void CLuaBaseEntity::reduceBurden(float percentReduction, sol::object const& int
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return;
     }
 
@@ -14480,7 +15246,7 @@ bool CLuaBaseEntity::isExceedingElementalCapacity()
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -14612,7 +15378,7 @@ void CLuaBaseEntity::setMobLevel(uint8 level)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to set mob level for invalid entity type (%s, %d).", m_PBaseEntity->GetName(), level);
+        ShowWarning("Attempting to set mob level for invalid entity type (%s, %d).", m_PBaseEntity->getName(), level);
         return;
     }
 
@@ -14635,7 +15401,7 @@ uint8 CLuaBaseEntity::getEcosystem()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -14713,7 +15479,7 @@ bool CLuaBaseEntity::isUndead()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -14762,7 +15528,7 @@ void CLuaBaseEntity::setMobFlags(uint32 flags, sol::object const& mobId)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB && m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Attempt to set Mob Flags for invalid entity (%s)", m_PBaseEntity->GetName());
+        ShowWarning("Attempt to set Mob Flags for invalid entity (%s)", m_PBaseEntity->getName());
         return;
     }
 
@@ -14809,7 +15575,7 @@ uint32 CLuaBaseEntity::getMobFlags()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to get mob flags for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to get mob flags for invalid entity type (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -14855,7 +15621,7 @@ void CLuaBaseEntity::spawn(sol::object const& despawnSec, sol::object const& res
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to spawn invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to spawn invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -14879,7 +15645,7 @@ void CLuaBaseEntity::spawn(sol::object const& despawnSec, sol::object const& res
         }
         else
         {
-            ShowDebug("SpawnMob: %u <%s> is already spawned", PMob->id, PMob->GetName());
+            ShowDebug("SpawnMob: %u <%s> is already spawned", PMob->id, PMob->getName());
         }
     }
 }
@@ -14917,7 +15683,7 @@ auto CLuaBaseEntity::getSpawnPos() -> std::map<std::string, float>
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Calling entity is not a Mob (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Calling entity is not a Mob (%s).", m_PBaseEntity->getName());
         return {};
     }
 
@@ -14943,7 +15709,7 @@ void CLuaBaseEntity::setSpawn(float x, float y, float z, sol::object const& rot)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to set spawn for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to set spawn for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -14966,7 +15732,7 @@ uint32 CLuaBaseEntity::getRespawnTime()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to get respawn time for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to get respawn time for invalid entity type (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -14997,7 +15763,7 @@ void CLuaBaseEntity::setRespawnTime(uint32 seconds)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to set respawn time for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to set respawn time for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -15023,7 +15789,7 @@ void CLuaBaseEntity::instantiateMob(uint32 groupID)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -15036,19 +15802,20 @@ void CLuaBaseEntity::instantiateMob(uint32 groupID)
 
 /************************************************************************
  *  Function: hasTrait()
- *  Purpose : Returns true if a Mob has an active trait
+ *  Purpose : Returns true if a battle entity has an active trait
  *  Example : if target:hasTrait(15) then -- Double Attack
  *  Notes   :
  ************************************************************************/
 
 bool CLuaBaseEntity::hasTrait(uint16 traitID)
 {
-    if (m_PBaseEntity->objtype != TYPE_PC)
+    CBattleEntity* PBattleEntity = dynamic_cast<CBattleEntity*>(m_PBaseEntity);
+    if (PBattleEntity)
     {
-        return false;
+        return PBattleEntity->hasTrait(traitID);
     }
 
-    return charutils::hasTrait(static_cast<CCharEntity*>(m_PBaseEntity), traitID);
+    return false;
 }
 
 /************************************************************************
@@ -15103,7 +15870,7 @@ void CLuaBaseEntity::setAggressive(bool aggressive)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to set aggressive for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to set aggressive for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -15120,7 +15887,7 @@ void CLuaBaseEntity::setTrueDetection(bool truedetection)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to set true detection for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to set true detection for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -15153,7 +15920,7 @@ void CLuaBaseEntity::setUntargetable(bool untargetable)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB && m_PBaseEntity->objtype != TYPE_NPC)
     {
-        ShowWarning("Attempt to set untargetable for invalid entity (%s)", m_PBaseEntity->GetName());
+        ShowWarning("Attempt to set untargetable for invalid entity (%s)", m_PBaseEntity->getName());
         return;
     }
 
@@ -15180,7 +15947,7 @@ bool CLuaBaseEntity::getUntargetable()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB && m_PBaseEntity->objtype != TYPE_NPC)
     {
-        ShowWarning("Attempt to get untargetable for invalid entity (%s)", m_PBaseEntity->GetName());
+        ShowWarning("Attempt to get untargetable for invalid entity (%s)", m_PBaseEntity->getName());
         return false;
     }
 
@@ -15207,7 +15974,7 @@ void CLuaBaseEntity::setIsAggroable(bool isAggroable)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to set is Aggroable for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to set is Aggroable for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -15225,7 +15992,7 @@ bool CLuaBaseEntity::isAggroable()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to get is aggroable for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to get is aggroable for invalid entity type (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -15247,7 +16014,10 @@ void CLuaBaseEntity::setDelay(uint16 delay)
     }
 
     auto* PMobEntity = static_cast<CMobEntity*>(m_PBaseEntity);
-    static_cast<CItemWeapon*>(PMobEntity->m_Weapons[SLOT_MAIN])->setDelay(delay);
+    if (auto* PItemWeapon = dynamic_cast<CItemWeapon*>(PMobEntity->m_Weapons[SLOT_MAIN]))
+    {
+        PItemWeapon->setDelay(delay);
+    }
 }
 
 /************************************************************************
@@ -15265,7 +16035,10 @@ void CLuaBaseEntity::setDamage(uint16 damage)
     }
 
     auto* PMobEntity = static_cast<CMobEntity*>(m_PBaseEntity);
-    static_cast<CItemWeapon*>(PMobEntity->m_Weapons[SLOT_MAIN])->setDamage(damage);
+    if (auto* PItemWeapon = dynamic_cast<CItemWeapon*>(PMobEntity->m_Weapons[SLOT_MAIN]))
+    {
+        PItemWeapon->setDamage(damage);
+    }
 }
 
 /************************************************************************
@@ -15458,7 +16231,7 @@ uint32 CLuaBaseEntity::getBattleTime()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -15476,7 +16249,7 @@ uint16 CLuaBaseEntity::getBehaviour()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to get behaviour for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to get behaviour for invalid entity type (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -15494,7 +16267,7 @@ void CLuaBaseEntity::setBehaviour(uint16 behavior)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to set behaviour for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to set behaviour for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -15511,7 +16284,7 @@ uint16 CLuaBaseEntity::getRoamFlags()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to get roam flags for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to get roam flags for invalid entity type (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -15528,7 +16301,7 @@ void CLuaBaseEntity::setRoamFlags(uint16 newRoamFlags)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to set roam flags for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to set roam flags for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -15546,7 +16319,7 @@ std::optional<CLuaBaseEntity> CLuaBaseEntity::getTarget()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return std::nullopt;
     }
 
@@ -15571,7 +16344,7 @@ void CLuaBaseEntity::updateTarget()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to update target for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to update target for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -15595,7 +16368,7 @@ sol::table CLuaBaseEntity::getEnmityList()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to get enmity list for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to get enmity list for invalid entity type (%s).", m_PBaseEntity->getName());
         return sol::lua_nil;
     }
 
@@ -15686,13 +16459,21 @@ void CLuaBaseEntity::castSpell(sol::object const& spell, sol::object const& enti
         m_PBaseEntity->PAI->QueueAction(queueAction_t(0ms, true,
         [targid, spellid](auto PEntity)
         {
+            CMobEntity* PMobEntity = dynamic_cast<CMobEntity*>(PEntity);
+
+            // Always delete recast of spell if mob
+            if (PMobEntity)
+            {
+                PMobEntity->PRecastContainer->Del(RECAST_MAGIC, static_cast<uint16>(spellid));
+            }
+
             if (targid)
             {
                 PEntity->PAI->Cast(targid, spellid);
             }
-            else if (dynamic_cast<CMobEntity*>(PEntity))
+            else if (PMobEntity)
             {
-                PEntity->PAI->Cast(static_cast<CMobEntity*>(PEntity)->GetBattleTargetID(), spellid);
+                PEntity->PAI->Cast(PMobEntity->GetBattleTargetID(), spellid);
             }
         }));
         // clang-format on
@@ -15759,7 +16540,7 @@ void CLuaBaseEntity::useMobAbility(sol::variadic_args va)
 {
     if (m_PBaseEntity->objtype != TYPE_TRUST && m_PBaseEntity->objtype != TYPE_MOB && m_PBaseEntity->objtype != TYPE_PET)
     {
-        ShowWarning("Entity is not a Trust, Mob, or Pet (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Entity is not a Trust, Mob, or Pet (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -15854,7 +16635,7 @@ void CLuaBaseEntity::weaknessTrigger(uint8 level)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to trigger weakness for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to trigger weakness for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -15919,14 +16700,14 @@ void CLuaBaseEntity::restoreFromChest(CLuaBaseEntity* PLuaBaseEntity, uint32 res
  *  Function: hasPreventActionEffect()
  *  Purpose : Returns true if a non-NPC entity has a preventative status effect
  *  Example : if not pet:hasPreventActionEffect() then
- *  Notes   : Used in scripts/globals/abilities/stay.lua
+ *  Notes   : Used in scripts/actions/abilities/stay.lua
  ************************************************************************/
 
 bool CLuaBaseEntity::hasPreventActionEffect()
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
-        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->GetName());
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
         return false;
     }
 
@@ -15986,7 +16767,7 @@ uint32 CLuaBaseEntity::getDropID()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to get drop id for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to get drop id for invalid entity type (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -16005,7 +16786,7 @@ void CLuaBaseEntity::setDropID(uint32 dropID)
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to set drop id for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to set drop id for invalid entity type (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -16024,7 +16805,7 @@ void CLuaBaseEntity::addTreasure(uint16 itemID, sol::object const& arg1, sol::ob
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
         return;
     }
 
@@ -16067,7 +16848,7 @@ uint16 CLuaBaseEntity::getStealItem()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to get steal item for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to get steal item for invalid entity type (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -16111,7 +16892,7 @@ uint16 CLuaBaseEntity::getDespoilItem()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to get despoil item for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to get despoil item for invalid entity type (%s).", m_PBaseEntity->getName());
         return 0;
     }
 
@@ -16152,14 +16933,14 @@ uint16 CLuaBaseEntity::getDespoilDebuff(uint16 itemID)
  *  Function: itemStolen()
  *  Purpose : Flags a mob's item as stolen, returns true upon update
  *  Example : target:itemStolen()
- *  Notes   : Used in scripts/globals/abilities/steal.lua
+ *  Notes   : Used in scripts/actions/abilities/steal.lua
  ************************************************************************/
 
 bool CLuaBaseEntity::itemStolen()
 {
     if (m_PBaseEntity->objtype != TYPE_MOB)
     {
-        ShowWarning("Attempting to flag stolen item for invalid entity type (%s).", m_PBaseEntity->GetName());
+        ShowWarning("Attempting to flag stolen item for invalid entity type (%s).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -16383,9 +17164,9 @@ auto CLuaBaseEntity::getChocoboRaisingInfo() -> sol::table
             hunger, \
             care_plan, \
             held_item \
-            FROM char_chocobos WHERE charid = %u;";
+            FROM char_chocobos WHERE charid = %u";
 
-        int32 ret = sql->Query(Query, m_PBaseEntity->id);
+        int32 ret = _sql->Query(Query, m_PBaseEntity->id);
 
         if (ret == SQL_ERROR)
         {
@@ -16393,46 +17174,46 @@ auto CLuaBaseEntity::getChocoboRaisingInfo() -> sol::table
             return sol::lua_nil;
         }
 
-        if (sql->NumRows() == 0)
+        if (_sql->NumRows() == 0)
         {
             ShowDebug("No Raised Chocobo information found");
             return sol::lua_nil;
         }
 
-        if (sql->NextRow() == SQL_SUCCESS)
+        if (_sql->NextRow() == SQL_SUCCESS)
         {
             auto table = lua.create_table();
 
-            table["charid"]          = sql->GetUIntData(0);
-            table["first_name"]      = sql->GetStringData(1);
-            table["last_name"]       = sql->GetStringData(2);
-            table["sex"]             = sql->GetUIntData(3);
-            table["created"]         = sql->GetUIntData(4);
-            table["last_update_age"] = sql->GetUIntData(5);
-            table["stage"]           = sql->GetUIntData(6);
-            table["location"]        = sql->GetUIntData(7);
-            table["colour"]          = sql->GetUIntData(8);
+            table["charid"]          = _sql->GetUIntData(0);
+            table["first_name"]      = _sql->GetStringData(1);
+            table["last_name"]       = _sql->GetStringData(2);
+            table["sex"]             = _sql->GetUIntData(3);
+            table["created"]         = _sql->GetUIntData(4);
+            table["last_update_age"] = _sql->GetUIntData(5);
+            table["stage"]           = _sql->GetUIntData(6);
+            table["location"]        = _sql->GetUIntData(7);
+            table["colour"]          = _sql->GetUIntData(8);
 
-            table["dominant_gene"]  = sql->GetUIntData(9);
-            table["recessive_gene"] = sql->GetUIntData(10);
+            table["dominant_gene"]  = _sql->GetUIntData(9);
+            table["recessive_gene"] = _sql->GetUIntData(10);
 
-            table["strength"]    = sql->GetUIntData(11);
-            table["endurance"]   = sql->GetUIntData(12);
-            table["discernment"] = sql->GetUIntData(13);
-            table["receptivity"] = sql->GetUIntData(14);
+            table["strength"]    = _sql->GetUIntData(11);
+            table["endurance"]   = _sql->GetUIntData(12);
+            table["discernment"] = _sql->GetUIntData(13);
+            table["receptivity"] = _sql->GetUIntData(14);
 
-            table["affection"]          = sql->GetUIntData(15);
-            table["energy"]             = sql->GetUIntData(16);
-            table["satisfaction"]       = sql->GetUIntData(17);
-            table["conditions"]         = sql->GetUIntData(18);
-            table["ability1"]           = sql->GetUIntData(19);
-            table["ability2"]           = sql->GetUIntData(20);
-            table["personality"]        = sql->GetUIntData(21);
-            table["weather_preference"] = sql->GetUIntData(22);
-            table["hunger"]             = sql->GetUIntData(23);
+            table["affection"]          = _sql->GetUIntData(15);
+            table["energy"]             = _sql->GetUIntData(16);
+            table["satisfaction"]       = _sql->GetUIntData(17);
+            table["conditions"]         = _sql->GetUIntData(18);
+            table["ability1"]           = _sql->GetUIntData(19);
+            table["ability2"]           = _sql->GetUIntData(20);
+            table["personality"]        = _sql->GetUIntData(21);
+            table["weather_preference"] = _sql->GetUIntData(22);
+            table["hunger"]             = _sql->GetUIntData(23);
 
-            table["care_plan"] = sql->GetUIntData(24);
-            table["held_item"] = sql->GetUIntData(25);
+            table["care_plan"] = _sql->GetUIntData(24);
+            table["held_item"] = _sql->GetUIntData(25);
 
             return table;
         }
@@ -16477,35 +17258,35 @@ bool CLuaBaseEntity::setChocoboRaisingInfo(sol::table const& table)
                                 weather_preference = %u, \
                                 hunger = %u, \
                                 care_plan = %u, \
-                                held_item = %u;";
+                                held_item = %u";
 
-    int32 ret = sql->Query(Query,
-                           m_PBaseEntity->id,
-                           table.get_or<std::string>("first_name", "Chocobo"),
-                           table.get_or<std::string>("last_name", "Chocobo"),
-                           table.get_or<uint32>("sex", 0),
-                           table.get_or<uint32>("created", 0),
-                           table.get_or<uint32>("last_update_age", 0),
-                           table.get_or<uint32>("stage", 1),
-                           table.get_or<uint32>("location", 0),
-                           table.get_or<uint32>("colour", 0),
-                           table.get_or<uint32>("dominant_gene", 0),
-                           table.get_or<uint32>("recessive_gene", 0),
-                           table.get_or<uint32>("strength", 0),
-                           table.get_or<uint32>("endurance", 0),
-                           table.get_or<uint32>("discernment", 0),
-                           table.get_or<uint32>("receptivity", 0),
-                           table.get_or<uint32>("affection", 0),
-                           table.get_or<uint32>("energy", 0),
-                           table.get_or<uint32>("satisfaction", 0),
-                           table.get_or<uint32>("conditions", 0),
-                           table.get_or<uint32>("ability1", 0),
-                           table.get_or<uint32>("ability2", 0),
-                           table.get_or<uint32>("personality", 0),
-                           table.get_or<uint32>("weather_preference", 0),
-                           table.get_or<uint32>("hunger", 0),
-                           table.get_or<uint32>("care_plan", 0),
-                           table.get_or<uint32>("held_item", 0));
+    int32 ret = _sql->Query(Query,
+                            m_PBaseEntity->id,
+                            table.get_or<std::string>("first_name", "Chocobo"),
+                            table.get_or<std::string>("last_name", "Chocobo"),
+                            table.get_or<uint32>("sex", 0),
+                            table.get_or<uint32>("created", 0),
+                            table.get_or<uint32>("last_update_age", 0),
+                            table.get_or<uint32>("stage", 1),
+                            table.get_or<uint32>("location", 0),
+                            table.get_or<uint32>("colour", 0),
+                            table.get_or<uint32>("dominant_gene", 0),
+                            table.get_or<uint32>("recessive_gene", 0),
+                            table.get_or<uint32>("strength", 0),
+                            table.get_or<uint32>("endurance", 0),
+                            table.get_or<uint32>("discernment", 0),
+                            table.get_or<uint32>("receptivity", 0),
+                            table.get_or<uint32>("affection", 0),
+                            table.get_or<uint32>("energy", 0),
+                            table.get_or<uint32>("satisfaction", 0),
+                            table.get_or<uint32>("conditions", 0),
+                            table.get_or<uint32>("ability1", 0),
+                            table.get_or<uint32>("ability2", 0),
+                            table.get_or<uint32>("personality", 0),
+                            table.get_or<uint32>("weather_preference", 0),
+                            table.get_or<uint32>("hunger", 0),
+                            table.get_or<uint32>("care_plan", 0),
+                            table.get_or<uint32>("held_item", 0));
 
     if (ret == SQL_ERROR)
     {
@@ -16526,7 +17307,7 @@ bool CLuaBaseEntity::deleteRaisedChocobo()
         return false;
     }
 
-    int32 ret = sql->Query("DELETE FROM char_chocobos WHERE charid = %u;", m_PBaseEntity->id);
+    int32 ret = _sql->Query("DELETE FROM char_chocobos WHERE charid = %u", m_PBaseEntity->id);
     if (ret == SQL_ERROR)
     {
         ShowDebug("DELETE Query failed");
@@ -16534,6 +17315,22 @@ bool CLuaBaseEntity::deleteRaisedChocobo()
     }
 
     return true;
+}
+
+void CLuaBaseEntity::clearActionQueue()
+{
+    if (m_PBaseEntity->PAI)
+    {
+        m_PBaseEntity->PAI->ClearActionQueue();
+    }
+}
+
+void CLuaBaseEntity::clearTimerQueue()
+{
+    if (m_PBaseEntity->PAI)
+    {
+        m_PBaseEntity->PAI->ClearTimerQueue();
+    }
 }
 
 void CLuaBaseEntity::setMannequinPose(uint16 itemID, uint8 race, uint8 pose)
@@ -16559,10 +17356,10 @@ void CLuaBaseEntity::setMannequinPose(uint16 itemID, uint8 race, uint8 pose)
                         char        extra[sizeof(PMannequin->m_extra) * 2 + 1];
                         const char* fmtQuery = "UPDATE char_inventory  \
                                SET extra = '%s' \
-                               WHERE charid = %u AND itemId = %u;";
+                               WHERE charid = %u AND itemId = %u";
 
-                        sql->EscapeStringLen(extra, (const char*)PMannequin->m_extra, sizeof(PMannequin->m_extra));
-                        if (sql->Query(fmtQuery, extra, PChar->id, PMannequin->getID()) == SQL_ERROR)
+                        _sql->EscapeStringLen(extra, (const char*)PMannequin->m_extra, sizeof(PMannequin->m_extra));
+                        if (_sql->Query(fmtQuery, extra, PChar->id, PMannequin->getID()) == SQL_ERROR)
                         {
                             ShowError("lua_baseentity::setMannequinPose: Cannot insert item to database");
                         }
@@ -16630,8 +17427,8 @@ void CLuaBaseEntity::Register()
     // Messaging System
     SOL_REGISTER("showText", CLuaBaseEntity::showText);
     SOL_REGISTER("messageText", CLuaBaseEntity::messageText);
-    SOL_REGISTER("PrintToPlayer", CLuaBaseEntity::PrintToPlayer);
-    SOL_REGISTER("PrintToArea", CLuaBaseEntity::PrintToArea);
+    SOL_REGISTER("printToPlayer", CLuaBaseEntity::printToPlayer);
+    SOL_REGISTER("printToArea", CLuaBaseEntity::printToArea);
     SOL_REGISTER("messageBasic", CLuaBaseEntity::messageBasic);
     SOL_REGISTER("messageName", CLuaBaseEntity::messageName);
     SOL_REGISTER("messagePublic", CLuaBaseEntity::messagePublic);
@@ -16644,10 +17441,12 @@ void CLuaBaseEntity::Register()
     // Variables
     SOL_REGISTER("getCharVar", CLuaBaseEntity::getCharVar);
     SOL_REGISTER("setCharVar", CLuaBaseEntity::setCharVar);
+    SOL_REGISTER("setCharVarExpiration", CLuaBaseEntity::setCharVarExpiration);
     SOL_REGISTER("getVar", CLuaBaseEntity::getCharVar); // Compatibility binding
     SOL_REGISTER("setVar", CLuaBaseEntity::setCharVar); // Compatibility binding
     SOL_REGISTER("incrementCharVar", CLuaBaseEntity::incrementCharVar);
     SOL_REGISTER("setVolatileCharVar", CLuaBaseEntity::setVolatileCharVar);
+    SOL_REGISTER("getLocalVars", CLuaBaseEntity::getLocalVars);
     SOL_REGISTER("getLocalVar", CLuaBaseEntity::getLocalVar);
     SOL_REGISTER("setLocalVar", CLuaBaseEntity::setLocalVar);
     SOL_REGISTER("resetLocalVars", CLuaBaseEntity::resetLocalVars);
@@ -16673,7 +17472,6 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("didGetMessage", CLuaBaseEntity::didGetMessage);
     SOL_REGISTER("resetGotMessage", CLuaBaseEntity::resetGotMessage);
 
-    SOL_REGISTER("setFlag", CLuaBaseEntity::setFlag);
     SOL_REGISTER("getMoghouseFlag", CLuaBaseEntity::getMoghouseFlag);
     SOL_REGISTER("setMoghouseFlag", CLuaBaseEntity::setMoghouseFlag);
     SOL_REGISTER("needToZone", CLuaBaseEntity::needToZone);
@@ -16688,6 +17486,7 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("isNPC", CLuaBaseEntity::isNPC);
     SOL_REGISTER("isMob", CLuaBaseEntity::isMob);
     SOL_REGISTER("isPet", CLuaBaseEntity::isPet);
+    SOL_REGISTER("isTrust", CLuaBaseEntity::isTrust);
     SOL_REGISTER("isAlly", CLuaBaseEntity::isAlly);
 
     // AI and Control
@@ -16829,14 +17628,12 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("getPacketName", CLuaBaseEntity::getPacketName);
     SOL_REGISTER("renameEntity", CLuaBaseEntity::renameEntity);
     SOL_REGISTER("hideName", CLuaBaseEntity::hideName);
-    SOL_REGISTER("checkNameFlags", CLuaBaseEntity::checkNameFlags);
     SOL_REGISTER("getModelId", CLuaBaseEntity::getModelId);
     SOL_REGISTER("setModelId", CLuaBaseEntity::setModelId);
-    SOL_REGISTER("setCostume", CLuaBaseEntity::setCostume);
     SOL_REGISTER("getCostume", CLuaBaseEntity::getCostume);
+    SOL_REGISTER("setCostume", CLuaBaseEntity::setCostume);
     SOL_REGISTER("getCostume2", CLuaBaseEntity::getCostume2);
     SOL_REGISTER("setCostume2", CLuaBaseEntity::setCostume2);
-
     SOL_REGISTER("getAnimation", CLuaBaseEntity::getAnimation);
     SOL_REGISTER("setAnimation", CLuaBaseEntity::setAnimation);
     SOL_REGISTER("getAnimationSub", CLuaBaseEntity::getAnimationSub);
@@ -16862,8 +17659,12 @@ void CLuaBaseEntity::Register()
 
     SOL_REGISTER("getGMLevel", CLuaBaseEntity::getGMLevel);
     SOL_REGISTER("setGMLevel", CLuaBaseEntity::setGMLevel);
+    SOL_REGISTER("setVisibleGMLevel", CLuaBaseEntity::setVisibleGMLevel);
+    SOL_REGISTER("getVisibleGMLevel", CLuaBaseEntity::getVisibleGMLevel);
     SOL_REGISTER("getGMHidden", CLuaBaseEntity::getGMHidden);
     SOL_REGISTER("setGMHidden", CLuaBaseEntity::setGMHidden);
+    SOL_REGISTER("getWallhack", CLuaBaseEntity::getWallhack);
+    SOL_REGISTER("setWallhack", CLuaBaseEntity::setWallhack);
 
     SOL_REGISTER("isJailed", CLuaBaseEntity::isJailed);
     SOL_REGISTER("jail", CLuaBaseEntity::jail);
@@ -16894,6 +17695,14 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("levelRestriction", CLuaBaseEntity::levelRestriction);
     SOL_REGISTER("addJobTraits", CLuaBaseEntity::addJobTraits);
 
+    // Monstrosity
+    SOL_REGISTER("getMonstrosityData", CLuaBaseEntity::getMonstrosityData);
+    SOL_REGISTER("setMonstrosityData", CLuaBaseEntity::setMonstrosityData);
+    SOL_REGISTER("getBelligerencyFlag", CLuaBaseEntity::getBelligerencyFlag);
+    SOL_REGISTER("setBelligerencyFlag", CLuaBaseEntity::setBelligerencyFlag);
+    SOL_REGISTER("getMonstrositySize", CLuaBaseEntity::getMonstrositySize);
+    SOL_REGISTER("setMonstrosityEntryData", CLuaBaseEntity::setMonstrosityEntryData);
+
     // Player Titles and Fame
     SOL_REGISTER("getTitle", CLuaBaseEntity::getTitle);
     SOL_REGISTER("hasTitle", CLuaBaseEntity::hasTitle);
@@ -16913,6 +17722,7 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("setRankPoints", CLuaBaseEntity::setRankPoints);
 
     SOL_REGISTER("addQuest", CLuaBaseEntity::addQuest);
+    SOL_REGISTER("delCurrentQuest", CLuaBaseEntity::delCurrentQuest);
     SOL_REGISTER("delQuest", CLuaBaseEntity::delQuest);
     SOL_REGISTER("getQuestStatus", CLuaBaseEntity::getQuestStatus);
     SOL_REGISTER("hasCompletedQuest", CLuaBaseEntity::hasCompletedQuest);
@@ -16939,6 +17749,10 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("toggleReceivedDeedRewards", CLuaBaseEntity::toggleReceivedDeedRewards);
     SOL_REGISTER("setClaimedDeed", CLuaBaseEntity::setClaimedDeed);
     SOL_REGISTER("resetClaimedDeeds", CLuaBaseEntity::resetClaimedDeeds);
+
+    SOL_REGISTER("setUniqueEvent", CLuaBaseEntity::setUniqueEvent);
+    SOL_REGISTER("delUniqueEvent", CLuaBaseEntity::delUniqueEvent);
+    SOL_REGISTER("hasCompletedUniqueEvent", CLuaBaseEntity::hasCompletedUniqueEvent);
 
     SOL_REGISTER("addAssault", CLuaBaseEntity::addAssault);
     SOL_REGISTER("delAssault", CLuaBaseEntity::delAssault);
@@ -17109,8 +17923,10 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("sendRaise", CLuaBaseEntity::sendRaise);
     SOL_REGISTER("sendReraise", CLuaBaseEntity::sendReraise);
     SOL_REGISTER("sendTractor", CLuaBaseEntity::sendTractor);
+    SOL_REGISTER("allowSendRaisePrompt", CLuaBaseEntity::allowSendRaisePrompt);
 
     SOL_REGISTER("countdown", CLuaBaseEntity::countdown);
+    SOL_REGISTER("objectiveUtility", CLuaBaseEntity::objectiveUtility);
     SOL_REGISTER("enableEntities", CLuaBaseEntity::enableEntities);
     SOL_REGISTER("independentAnimation", CLuaBaseEntity::independentAnimation);
 
@@ -17141,6 +17957,7 @@ void CLuaBaseEntity::Register()
 
     SOL_REGISTER("isDualWielding", CLuaBaseEntity::isDualWielding);
     SOL_REGISTER("isUsingH2H", CLuaBaseEntity::isUsingH2H);
+    SOL_REGISTER("getBaseWeaponDelay", CLuaBaseEntity::getBaseWeaponDelay);
     SOL_REGISTER("getBaseDelay", CLuaBaseEntity::getBaseDelay);
     SOL_REGISTER("getBaseRangedDelay", CLuaBaseEntity::getBaseRangedDelay);
 
@@ -17193,9 +18010,11 @@ void CLuaBaseEntity::Register()
 
     SOL_REGISTER("addLatent", CLuaBaseEntity::addLatent);
     SOL_REGISTER("delLatent", CLuaBaseEntity::delLatent);
+    SOL_REGISTER("hasAllLatentsActive", CLuaBaseEntity::hasAllLatentsActive);
 
     SOL_REGISTER("fold", CLuaBaseEntity::fold);
     SOL_REGISTER("doWildCard", CLuaBaseEntity::doWildCard);
+    SOL_REGISTER("doRandomDeal", CLuaBaseEntity::doRandomDeal);
     SOL_REGISTER("addCorsairRoll", CLuaBaseEntity::addCorsairRoll);
     SOL_REGISTER("hasCorsairEffect", CLuaBaseEntity::hasCorsairEffect);
     SOL_REGISTER("hasBustEffect", CLuaBaseEntity::hasBustEffect);
@@ -17231,7 +18050,6 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("handleAfflatusMiseryDamage", CLuaBaseEntity::handleAfflatusMiseryDamage);
 
     SOL_REGISTER("isWeaponTwoHanded", CLuaBaseEntity::isWeaponTwoHanded);
-    SOL_REGISTER("getMeleeHitDamage", CLuaBaseEntity::getMeleeHitDamage);
     SOL_REGISTER("getWeaponDmg", CLuaBaseEntity::getWeaponDmg);
     SOL_REGISTER("getWeaponDmgRank", CLuaBaseEntity::getWeaponDmgRank);
     SOL_REGISTER("getOffhandDmg", CLuaBaseEntity::getOffhandDmg);
@@ -17239,6 +18057,7 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("getRangedDmg", CLuaBaseEntity::getRangedDmg);
     SOL_REGISTER("getRangedDmgRank", CLuaBaseEntity::getRangedDmgRank);
     SOL_REGISTER("getAmmoDmg", CLuaBaseEntity::getAmmoDmg);
+    SOL_REGISTER("getWeaponHitCount", CLuaBaseEntity::getWeaponHitCount);
 
     SOL_REGISTER("removeAmmo", CLuaBaseEntity::removeAmmo);
 
@@ -17294,6 +18113,8 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("getActiveManeuverCount", CLuaBaseEntity::getActiveManeuverCount);
     SOL_REGISTER("removeOldestManeuver", CLuaBaseEntity::removeOldestManeuver);
     SOL_REGISTER("removeAllManeuvers", CLuaBaseEntity::removeAllManeuvers);
+    SOL_REGISTER("getAttachment", CLuaBaseEntity::getAttachment);
+    SOL_REGISTER("getAttachments", CLuaBaseEntity::getAttachments);
     SOL_REGISTER("updateAttachments", CLuaBaseEntity::updateAttachments);
     SOL_REGISTER("reduceBurden", CLuaBaseEntity::reduceBurden);
 
@@ -17403,6 +18224,8 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("getPlayerTriggerAreaInZone", CLuaBaseEntity::getPlayerTriggerAreaInZone);
     SOL_REGISTER("updateToEntireZone", CLuaBaseEntity::updateToEntireZone);
     SOL_REGISTER("sendEntityUpdateToPlayer", CLuaBaseEntity::sendEntityUpdateToPlayer);
+    SOL_REGISTER("forceRezone", CLuaBaseEntity::forceRezone);
+    SOL_REGISTER("forceLogout", CLuaBaseEntity::forceLogout);
 
     // Abyssea
     SOL_REGISTER("getAvailableTraverserStones", CLuaBaseEntity::getAvailableTraverserStones);
@@ -17413,6 +18236,9 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("setClaimedTraverserStones", CLuaBaseEntity::setClaimedTraverserStones);
 
     SOL_REGISTER("getHistory", CLuaBaseEntity::getHistory);
+
+    SOL_REGISTER("clearActionQueue", CLuaBaseEntity::clearActionQueue);
+    SOL_REGISTER("clearTimerQueue", CLuaBaseEntity::clearTimerQueue);
 
     SOL_REGISTER("getChocoboRaisingInfo", CLuaBaseEntity::getChocoboRaisingInfo);
     SOL_REGISTER("setChocoboRaisingInfo", CLuaBaseEntity::setChocoboRaisingInfo);

@@ -1,4 +1,4 @@
-/*
+﻿/*
 ===========================================================================
 
 Copyright (c) 2023 LandSandBoat Dev Teams
@@ -23,54 +23,60 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 
 #include "message_server.h"
 
+#include "common/database.h"
+
 ConquestSystem::ConquestSystem()
-: sql(std::make_unique<SqlConnection>())
 {
 }
 
-bool ConquestSystem::handleMessage(std::vector<uint8> payload,
-                                   in_addr            from_addr,
-                                   uint16             from_port)
+bool ConquestSystem::handleMessage(HandleableMessage&& message)
 {
-    const uint8 conquestMsgType = payload[1];
-    if (conquestMsgType == CONQUESTMSGTYPE::CONQUEST_MAP2WORLD_GM_WEEKLY_UPDATE)
+    const uint8 conquestMsgType = message.payload[1];
+    switch (conquestMsgType)
     {
-        updateWeekConquest();
-        return true;
+        case CONQUESTMSGTYPE::CONQUEST_MAP2WORLD_GM_WEEKLY_UPDATE:
+        {
+            updateWeekConquest();
+            return true;
+        }
+        break;
+        case CONQUESTMSGTYPE::CONQUEST_MAP2WORLD_ADD_INFLUENCE_POINTS:
+        {
+            int32  points = 0;
+            uint32 nation = 0;
+            uint8  region = 0;
+            std::memcpy(&points, message.payload.data() + 2, sizeof(int32));
+            std::memcpy(&nation, message.payload.data() + 6, sizeof(uint32));
+            std::memcpy(&region, message.payload.data() + 10, sizeof(uint8));
+
+            // We update influence but do not immediately send this update to all map servers
+            // Influence updates are sent periodically via time_server instead.
+            // It is okay for map servers to be eventually consistent.
+            updateInfluencePoints(points, nation, (REGION_TYPE)region);
+            return true;
+        }
+        break;
+        case CONQUESTMSGTYPE::CONQUEST_MAP2WORLD_GM_CONQUEST_UPDATE:
+        {
+            // Convert from_addr to ip + port
+            uint64 ipp = message.from_addr.s_addr;
+            ipp |= (((uint64)message.from_port) << 32);
+
+            // Send influence data to the requesting map server
+            sendInfluencesMsg(true, ipp);
+            return true;
+        }
+        break;
+        default:
+        {
+            ShowDebug(fmt::format("Message: unknown conquest type received: {} from {}:{}",
+                                  static_cast<uint8>(conquestMsgType),
+                                  message.from_addr.s_addr,
+                                  message.from_port));
+        }
+        break;
     }
 
-    if (conquestMsgType == CONQUESTMSGTYPE::CONQUEST_MAP2WORLD_ADD_INFLUENCE_POINTS)
-    {
-        // const int32  points = ref<int32>(data, 2);
-        int32  points = 0;
-        uint32 nation = 0;
-        uint8  region = 0;
-        std::memcpy(&points, payload.data() + 2, sizeof(int32));
-        std::memcpy(&nation, payload.data() + 6, sizeof(uint32));
-        std::memcpy(&region, payload.data() + 10, sizeof(uint8));
-
-        // We update influence but do not immediately send this update to all map servers
-        // Influence updates are sent periodically via time_server instead.
-        // It is okay for map servers to be eventually consistent.
-        updateInfluencePoints(points, nation, (REGION_TYPE)region);
-        return true;
-    }
-
-    if (conquestMsgType == CONQUESTMSGTYPE::CONQUEST_MAP2WORLD_GM_CONQUEST_UPDATE)
-    {
-        // Convert from_addr to ip + port
-        uint64 ipp = from_addr.s_addr;
-        ipp |= (((uint64)from_port) << 32);
-
-        // Send influence data to the requesting map server
-        sendInfluencesMsg(true, ipp);
-        return true;
-    }
-
-    ShowDebug(fmt::format("Message: unknown conquest type received: {} from {}:{}",
-                          static_cast<uint8>(conquestMsgType),
-                          from_addr.s_addr,
-                          from_port));
     return false;
 }
 
@@ -95,8 +101,8 @@ void ConquestSystem::sendInfluencesMsg(bool shouldUpdateZones, uint64 ipp)
     auto influences = getRegionalInfluences();
 
     // Base length is the type + subtype + influence size
-    const std::size_t headerLength = 2 * sizeof(uint8);
-    const std::size_t dataLen      = headerLength + sizeof(bool) + sizeof(size_t) + sizeof(influence_t) * influences.size();
+    const std::size_t headerLength = 2 * sizeof(uint8) + sizeof(std::size_t) + sizeof(bool);
+    const std::size_t dataLen      = headerLength + sizeof(influence_t) * influences.size();
     const uint8*      data         = new uint8[dataLen];
 
     // Regional event type + conquest msg type
@@ -109,7 +115,7 @@ void ConquestSystem::sendInfluencesMsg(bool shouldUpdateZones, uint64 ipp)
     for (std::size_t i = 0; i < influences.size(); i++)
     {
         // Everything is offset by i*size of region control struct + headerLength
-        const std::size_t start              = headerLength + sizeof(bool) + sizeof(size_t) + i * sizeof(influence_t);
+        const std::size_t start              = headerLength + i * sizeof(influence_t);
         ref<uint16>((uint8*)data, start)     = influences[i].sandoria_influence;
         ref<uint16>((uint8*)data, start + 2) = influences[i].bastok_influence;
         ref<uint16>((uint8*)data, start + 4) = influences[i].windurst_influence;
@@ -140,8 +146,8 @@ void ConquestSystem::sendRegionControlsMsg(CONQUESTMSGTYPE msgType, uint64 ipp)
     //      - prev control (uint8)
     auto regionControls = getRegionControls();
 
-    // Base length is the type + subtype + region control size
-    const std::size_t headerLength = 2 * sizeof(uint8);
+    // Header length is the type + subtype + region control size + size of the size_t
+    const std::size_t headerLength = 2 * sizeof(uint8) + sizeof(std::size_t);
     const std::size_t dataLen      = headerLength + sizeof(region_control_t) * regionControls.size();
     const uint8*      data         = new uint8[dataLen];
 
@@ -153,8 +159,8 @@ void ConquestSystem::sendRegionControlsMsg(CONQUESTMSGTYPE msgType, uint64 ipp)
     ref<std::size_t>((uint8*)data, 2) = regionControls.size();
     for (std::size_t i = 0; i < regionControls.size(); i++)
     {
-        // Everything is offset by i*size of region control struct + headerLength + size of size_t
-        const std::size_t offset             = headerLength + sizeof(size_t) + sizeof(region_control_t) * i;
+        // Everything is offset by i*size of region control struct + headerLength
+        const std::size_t offset             = headerLength + sizeof(region_control_t) * i;
         ref<uint8>((uint8*)data, offset)     = regionControls[i].current;
         ref<uint8>((uint8*)data, offset + 1) = regionControls[i].prev;
     }
@@ -180,20 +186,19 @@ bool ConquestSystem::updateInfluencePoints(int points, unsigned int nation, REGI
         return false;
     }
 
-    std::string Query = "SELECT sandoria_influence, bastok_influence, windurst_influence, beastmen_influence FROM conquest_system WHERE region_id = %d;";
+    std::string query = "SELECT sandoria_influence, bastok_influence, windurst_influence, beastmen_influence FROM conquest_system WHERE region_id = %d";
 
-    int ret = sql->Query(Query.c_str(), static_cast<uint8>(region));
-
-    if (ret == SQL_ERROR || sql->NextRow() != SQL_SUCCESS)
+    auto rset = db::query(fmt::sprintf(query.c_str(), static_cast<uint8>(region)));
+    if (!rset || rset->rowsCount() == 0 || !rset->next())
     {
         return false;
     }
 
     int influences[4] = {
-        sql->GetIntData(0),
-        sql->GetIntData(1),
-        sql->GetIntData(2),
-        sql->GetIntData(3),
+        rset->getInt("sandoria_influence"),
+        rset->getInt("bastok_influence"),
+        rset->getInt("windurst_influence"),
+        rset->getInt("beastmen_influence"),
     };
 
     if (influences[nation] == 5000)
@@ -216,11 +221,11 @@ bool ConquestSystem::updateInfluencePoints(int points, unsigned int nation, REGI
 
     influences[nation] += lost;
 
-    ret = sql->Query("UPDATE conquest_system SET sandoria_influence = %d, bastok_influence = %d, "
-                     "windurst_influence = %d, beastmen_influence = %d WHERE region_id = %u;",
-                     influences[0], influences[1], influences[2], influences[3], static_cast<uint8>(region));
+    auto rset2 = db::query(fmt::sprintf("UPDATE conquest_system SET sandoria_influence = %d, bastok_influence = %d, "
+                                        "windurst_influence = %d, beastmen_influence = %d WHERE region_id = %u",
+                                        influences[0], influences[1], influences[2], influences[3], static_cast<uint8>(region)));
 
-    return ret != SQL_ERROR;
+    return !rset2;
 }
 
 void ConquestSystem::updateWeekConquest()
@@ -231,16 +236,16 @@ void ConquestSystem::updateWeekConquest()
     sendTallyStartMsg();
 
     // 2- Do the actual db update
-    const char* Query = "UPDATE conquest_system SET region_control = \
+    auto query = "UPDATE conquest_system SET region_control = \
                             IF(sandoria_influence > bastok_influence AND sandoria_influence > windurst_influence AND \
                             sandoria_influence > beastmen_influence, 0, \
                             IF(bastok_influence > sandoria_influence AND bastok_influence > windurst_influence AND \
                             bastok_influence > beastmen_influence, 1, \
                             IF(windurst_influence > bastok_influence AND windurst_influence > sandoria_influence AND \
-                            windurst_influence > beastmen_influence, 2, 3)));";
+                            windurst_influence > beastmen_influence, 2, 3)))";
 
-    int ret = sql->Query(Query);
-    if (ret == SQL_ERROR)
+    auto rset = db::query(query);
+    if (!rset)
     {
         ShowError("handleWeeklyUpdate() failed");
     }
@@ -261,20 +266,20 @@ void ConquestSystem::updateVanaHourlyConquest()
 
 auto ConquestSystem::getRegionalInfluences() -> std::vector<influence_t> const
 {
-    const char* Query = "SELECT sandoria_influence, bastok_influence, windurst_influence, beastmen_influence FROM conquest_system;";
+    auto query = "SELECT sandoria_influence, bastok_influence, windurst_influence, beastmen_influence FROM conquest_system";
 
-    int32 ret = sql->Query(Query);
+    auto rset = db::query(query);
 
     std::vector<influence_t> influences;
-    if (ret != SQL_ERROR && sql->NumRows() != 0)
+    if (rset && rset->rowsCount())
     {
-        while (sql->NextRow() == SQL_SUCCESS)
+        while (rset->next())
         {
             influence_t influence{};
-            influence.sandoria_influence = sql->GetIntData(0);
-            influence.bastok_influence   = sql->GetIntData(1);
-            influence.windurst_influence = sql->GetIntData(2);
-            influence.beastmen_influence = sql->GetIntData(3);
+            influence.sandoria_influence = rset->getInt("sandoria_influence");
+            influence.bastok_influence   = rset->getInt("bastok_influence");
+            influence.windurst_influence = rset->getInt("windurst_influence");
+            influence.beastmen_influence = rset->getInt("beastmen_influence");
             influences.emplace_back(influence);
         }
     }
@@ -284,18 +289,18 @@ auto ConquestSystem::getRegionalInfluences() -> std::vector<influence_t> const
 
 auto ConquestSystem::getRegionControls() -> std::vector<region_control_t> const
 {
-    const char* Query = "SELECT region_control, region_control_prev FROM conquest_system;";
+    auto query = "SELECT region_control, region_control_prev FROM conquest_system";
 
-    int32 ret = sql->Query(Query);
+    auto rset = db::query(query);
 
     std::vector<region_control_t> controllers;
-    if (ret != SQL_ERROR && sql->NumRows() != 0)
+    if (rset && rset->rowsCount())
     {
-        while (sql->NextRow() == SQL_SUCCESS)
+        while (rset->next())
         {
             region_control_t regionControl{};
-            regionControl.current = sql->GetIntData(0);
-            regionControl.prev    = sql->GetIntData(1);
+            regionControl.current = rset->getInt("region_control");
+            regionControl.prev    = rset->getInt("region_control_prev");
             controllers.emplace_back(regionControl);
         }
     }

@@ -4,21 +4,15 @@
 -- !addquest 3 90
 -- Ajithaam : !pos -82 0.1 160 244
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/npc_util')
-require('scripts/globals/utils')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local upperJeunoID = require('scripts/zones/Upper_Jeuno/IDs')
+local upperJeunoID = zones[xi.zone.UPPER_JEUNO]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.LURE_OF_THE_WILDCAT)
+local quest = Quest:new(xi.questLog.JEUNO, xi.quest.id.jeuno.LURE_OF_THE_WILDCAT)
 
 quest.reward =
 {
     fame     = 150,
-    fameArea = xi.quest.fame_area.JEUNO,
+    fameArea = xi.fameArea.JEUNO,
     keyItem  = xi.ki.WHITE_INVITATION_CARD,
 }
 
@@ -62,7 +56,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 xi.settings.main.ENABLE_TOAU == 1
         end,
 
@@ -82,7 +76,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.LOWER_JEUNO] =

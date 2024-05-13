@@ -6,27 +6,22 @@
 -- Malene : !pos -173 -5 64 235
 -- Enu    : !pos -253.673 -13 -92.326 235
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.WISH_UPON_A_STAR)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.WISH_UPON_A_STAR)
 
 quest.reward =
 {
     fame     = 50,
-    fameArea = xi.quest.fame_area.BASTOK,
-    item     = { { xi.items.BAG_OF_CACTUS_STEMS, 4 } },
+    fameArea = xi.fameArea.BASTOK,
+    item     = { { xi.item.BAG_OF_CACTUS_STEMS, 4 } },
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getFameLevel(xi.quest.fame_area.BASTOK) >= 5
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getFameLevel(xi.fameArea.BASTOK) >= 5
         end,
 
         [xi.zone.BASTOK_MARKETS] =
@@ -77,7 +72,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.BASTOK_MARKETS] =
@@ -85,7 +80,7 @@ quest.sections =
             ['Enu'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.FALLEN_STAR) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.FALLEN_STAR) then
                         local isNight = VanadielTOTD() == xi.time.NIGHT or VanadielTOTD() == xi.time.MIDNIGHT
 
                         if
@@ -115,7 +110,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.BASTOK_MARKETS] =

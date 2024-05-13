@@ -4,24 +4,19 @@
 -- Log ID: 6, Quest ID: 13
 -- Dabhuh: !pos 97.939 0 -91.530 50
 -----------------------------------
-require("scripts/globals/quests")
-require("scripts/globals/npc_util")
-require('scripts/globals/interaction/quest')
-require("scripts/globals/zone")
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.AHT_URHGAN, xi.quest.id.ahtUrhgan.SUCH_SWEET_SORROW)
+local quest = Quest:new(xi.questLog.AHT_URHGAN, xi.quest.id.ahtUrhgan.SUCH_SWEET_SORROW)
 
 quest.reward =
 {
-    item = xi.items.MERROW_NO_17_LOCKET,
+    item = xi.item.MERROW_NO_17_LOCKET,
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.AHT_URHGAN_WHITEGATE] =
@@ -74,7 +69,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.AHT_URHGAN_WHITEGATE] =
@@ -86,7 +81,7 @@ quest.sections =
                 end,
 
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, { xi.items.MERROW_SCALE }) then
+                    if npcUtil.tradeHasExactly(trade, { xi.item.MERROW_SCALE }) then
                         return quest:progressEvent(583, { text_table = 0 })
                     end
                 end,
@@ -105,7 +100,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.AHT_URHGAN_WHITEGATE] =

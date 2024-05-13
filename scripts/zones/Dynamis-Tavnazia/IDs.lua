@@ -1,10 +1,6 @@
 -----------------------------------
 -- Area: Dynamis-Tavnazia
 -----------------------------------
-require("scripts/globals/dynamis")
-require("scripts/globals/zone")
------------------------------------
-
 zones = zones or {}
 
 zones[xi.zone.DYNAMIS_TAVNAZIA] =
@@ -19,15 +15,15 @@ zones[xi.zone.DYNAMIS_TAVNAZIA] =
         LOGIN_CAMPAIGN_UNDERWAY       = 7002, -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
         LOGIN_NUMBER                  = 7003, -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
         MEMBERS_LEVELS_ARE_RESTRICTED = 7023, -- Your party is unable to participate because certain members' levels are restricted.
-        CONQUEST_BASE                 = 7160, -- Tallying conquest results...
-        DYNAMIS_TIME_BEGIN            = 7325, -- The sands of the <item> have begun to fall. You have <number> minutes (Earth time) remaining in Dynamis.
-        DYNAMIS_TIME_EXTEND           = 7326, -- our stay in Dynamis has been extended by <number> minute[/s].
-        DYNAMIS_TIME_UPDATE_1         = 7327, -- ou will be expelled from Dynamis in <number> [second/minute] (Earth time).
-        DYNAMIS_TIME_UPDATE_2         = 7328, -- ou will be expelled from Dynamis in <number> [seconds/minutes] (Earth time).
-        DYNAMIS_TIME_EXPIRED          = 7330, -- The sands of the hourglass have emptied...
-        DYNAMIS_SUB_UNLOCKED          = 7335, -- Memories of skills long forgotten come flooding back to you...
-        DIABOLOS                      = 7339, -- You sense that something might happen if you possessed one of these...
-        OMINOUS_PRESENCE              = 7342, -- You feel an ominous presence, as if something might happen if you possessed <item>.
+        CONQUEST_BASE                 = 7164, -- Tallying conquest results...
+        DYNAMIS_TIME_BEGIN            = 7329, -- The sands of the <item> have begun to fall. You have <number> minutes (Earth time) remaining in Dynamis.
+        DYNAMIS_TIME_EXTEND           = 7330, -- our stay in Dynamis has been extended by <number> minute[/s].
+        DYNAMIS_TIME_UPDATE_1         = 7331, -- ou will be expelled from Dynamis in <number> [second/minute] (Earth time).
+        DYNAMIS_TIME_UPDATE_2         = 7332, -- ou will be expelled from Dynamis in <number> [seconds/minutes] (Earth time).
+        DYNAMIS_TIME_EXPIRED          = 7334, -- The sands of the hourglass have emptied...
+        DYNAMIS_SUB_UNLOCKED          = 7339, -- Memories of skills long forgotten come flooding back to you...
+        DIABOLOS                      = 7343, -- You sense that something might happen if you possessed one of these...
+        OMINOUS_PRESENCE              = 7346, -- You feel an ominous presence, as if something might happen if you possessed <item>.
     },
     mob =
     {
@@ -96,7 +92,7 @@ zones[xi.zone.DYNAMIS_TAVNAZIA] =
     {
         QM =
         {
-            [16949396] =
+            [16949397] =
             {
                 param = { 3459, 3483, 3484, 3485, 3486 },
                 trade =

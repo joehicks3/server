@@ -3,9 +3,6 @@
 --  NPC: Antiquated_Sluice_Gate
 -- !pos -529.361 -7.000 59.988 258
 -----------------------------------
-require('scripts/globals/instance')
-require('scripts/globals/zone')
------------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -19,6 +16,7 @@ entity.onTrigger = function(player, npc)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)
+    -- TODO if instance creation fails, the player will be stuck in a cutscene
     if xi.instance.onEventUpdate(player, csid, option, npc) then
         if csid == 5511 and option == 843 then
             print(1)

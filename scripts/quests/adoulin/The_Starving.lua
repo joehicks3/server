@@ -4,16 +4,12 @@
 -- !addquest 9 84
 -- Westerly Breeze : !pos 62 32 123 256
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.ADOULIN, xi.quest.id.adoulin.THE_STARVING)
+local quest = Quest:new(xi.questLog.ADOULIN, xi.quest.id.adoulin.THE_STARVING)
 
 quest.reward =
 {
-    fameArea = xi.quest.fame_area.ADOULIN,
+    fameArea = xi.fameArea.ADOULIN,
     xp       = 1000,
     bayld    = 500,
 }
@@ -22,7 +18,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 quest:getVar(player, 'Timer') <= VanadielUniqueDay()
         end,
 
@@ -41,13 +37,13 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         ['Westerly_Breeze'] =
         {
             onTrade = function(player, npc, trade)
-                if npcUtil.tradeHasExactly(trade, xi.items.BOTTLE_OF_GOBLIN_DRINK) then
+                if npcUtil.tradeHasExactly(trade, xi.item.BOTTLE_OF_GOBLIN_DRINK) then
                     return quest:progressEvent(3007)
                 elseif
                     trade:getItemCount() == 1 and
@@ -73,8 +69,8 @@ quest.sections =
         {
             [3007] = function(player, csid, option, npc)
                 if quest:complete(player) then
-                    xi.quest.setMustZone(player, xi.quest.log_id.ADOULIN, xi.quest.id.adoulin.ALWAYS_MORE_QUOTH_THE_RAVENOUS)
-                    xi.quest.setVar(player, xi.quest.log_id.ADOULIN, xi.quest.id.adoulin.ALWAYS_MORE_QUOTH_THE_RAVENOUS, 'Timer', VanadielUniqueDay() + 1)
+                    xi.quest.setMustZone(player, xi.questLog.ADOULIN, xi.quest.id.adoulin.ALWAYS_MORE_QUOTH_THE_RAVENOUS)
+                    xi.quest.setVar(player, xi.questLog.ADOULIN, xi.quest.id.adoulin.ALWAYS_MORE_QUOTH_THE_RAVENOUS, 'Timer', VanadielUniqueDay() + 1)
                 end
             end,
 

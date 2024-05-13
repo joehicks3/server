@@ -4,18 +4,13 @@
 -- Log ID: 1, Quest ID: 19
 -- Pavvke : !pos 16.586 6.985 -14.843 234
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.FALLEN_COMRADES)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.FALLEN_COMRADES)
 
 quest.reward =
 {
     fame     = 8,
-    fameArea = xi.quest.fame_area.BASTOK,
+    fameArea = xi.fameArea.BASTOK,
     gil      = 550,
 }
 
@@ -23,8 +18,8 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getFameLevel(xi.quest.fame_area.BASTOK) >= 2
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getFameLevel(xi.fameArea.BASTOK) >= 2
         end,
 
         [xi.zone.BASTOK_MINES] =
@@ -42,7 +37,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status >= QUEST_ACCEPTED
+            return status >= xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.BASTOK_MINES] =
@@ -50,7 +45,7 @@ quest.sections =
             ['Pavvke'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.SILVER_NAME_TAG) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.SILVER_NAME_TAG) then
                         if player:hasCompletedQuest(quest.areaId, quest.questId) then
                             return quest:progressEvent(92)
                         else
@@ -66,7 +61,7 @@ quest.sections =
                     if quest:complete(player) then
                         player:confirmTrade()
 
-                        player:addFame(xi.quest.fame_area.BASTOK, 112)
+                        player:addFame(xi.fameArea.BASTOK, 112)
                     end
                 end,
 

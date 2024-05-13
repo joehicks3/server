@@ -7,23 +7,17 @@
 -- Baunise      : !pos -55 -8 -32 230
 -- Disused Well : !pos -221 2 -293 149
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local davoiID            = require('scripts/zones/Davoi/IDs')
-local southernSandoriaID = require('scripts/zones/Southern_San_dOria/IDs')
+local davoiID            = zones[xi.zone.DAVOI]
+local southernSandoriaID = zones[xi.zone.SOUTHERN_SAN_DORIA]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.A_KNIGHTS_TEST)
+local quest = Quest:new(xi.questLog.SANDORIA, xi.quest.id.sandoria.A_KNIGHTS_TEST)
 
 quest.reward =
 {
     fame     = 30,
-    fameArea = xi.quest.fame_area.SANDORIA,
-    item     = xi.items.KITE_SHIELD,
+    fameArea = xi.fameArea.SANDORIA,
+    item     = xi.item.KITE_SHIELD,
     keyItem  = xi.ki.JOB_GESTURE_PALADIN,
     title    = xi.title.TRIED_AND_TESTED_KNIGHT,
 }
@@ -32,8 +26,8 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.A_SQUIRES_TEST_II)
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.A_SQUIRES_TEST_II)
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -76,7 +70,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -160,7 +154,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =

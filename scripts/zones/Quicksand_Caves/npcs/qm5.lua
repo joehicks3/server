@@ -10,23 +10,21 @@
 -- 5: !pos 787 -16 -819
 -- spawn in npc_list is 770 0 -419
 -----------------------------------
-local ID = require("scripts/zones/Quicksand_Caves/IDs")
-require("scripts/globals/quests")
+local ID = zones[xi.zone.QUICKSAND_CAVES]
 -----------------------------------
 local entity = {}
 
 entity.onTrigger = function(player, npc)
-    local theMissingPiece = player:getQuestStatus(xi.quest.log_id.OUTLANDS, xi.quest.id.outlands.THE_MISSING_PIECE)
+    local theMissingPiece = player:getQuestStatus(xi.questLog.OUTLANDS, xi.quest.id.outlands.THE_MISSING_PIECE)
     local hasAncientFragment = player:hasKeyItem(xi.ki.ANCIENT_TABLET_FRAGMENT)
     local hasAncientTablet = player:hasKeyItem(xi.ki.TABLET_OF_ANCIENT_MAGIC)
 
     -- Need to make sure the quest is flagged the player is no further along in the quest
-
     if
-        theMissingPiece == QUEST_ACCEPTED and
+        theMissingPiece == xi.questStatus.QUEST_ACCEPTED and
         not hasAncientTablet and
         not hasAncientFragment and
-        not player:getTitle() == xi.title.ACQUIRER_OF_ANCIENT_ARCANUM
+        player:getTitle() ~= xi.title.ACQUIRER_OF_ANCIENT_ARCANUM
     then
         player:addKeyItem(xi.ki.ANCIENT_TABLET_FRAGMENT)
         player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.ANCIENT_TABLET_FRAGMENT)

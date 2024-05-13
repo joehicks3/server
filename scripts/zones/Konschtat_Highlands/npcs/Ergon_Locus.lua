@@ -4,9 +4,6 @@
 -- Involved in quest Dances with Luopans
 -- pos 220.041 24.451 309.234
 -----------------------------------
-require("scripts/globals/npc_util")
-require("scripts/globals/quests")
------------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -15,7 +12,7 @@ end
 entity.onTrigger = function(player, npc)
     -- DANCES WITH LUOPANS
     if
-        player:getQuestStatus(xi.quest.log_id.ADOULIN, xi.quest.id.adoulin.DANCES_WITH_LUOPANS) == QUEST_ACCEPTED and
+        player:getQuestStatus(xi.questLog.ADOULIN, xi.quest.id.adoulin.DANCES_WITH_LUOPANS) == xi.questStatus.QUEST_ACCEPTED and
         player:getNation() == xi.nation.BASTOK
     then
         if

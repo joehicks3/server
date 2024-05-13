@@ -2,16 +2,14 @@
 -- Area: East Ronfaure [S]
 --  NPC: Logging Point
 -----------------------------------
-require("scripts/globals/helm")
------------------------------------
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
-    xi.helm.onTrade(player, npc, trade, xi.helm.type.LOGGING, 901)
+    xi.helm.onTrade(player, npc, trade, xi.helmType.LOGGING, 901)
 end
 
 entity.onTrigger = function(player, npc)
-    xi.helm.onTrigger(player, xi.helm.type.LOGGING)
+    xi.helm.onTrigger(player, xi.helmType.LOGGING)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)

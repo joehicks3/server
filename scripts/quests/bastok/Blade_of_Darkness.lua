@@ -5,21 +5,15 @@
 -- Gumbah : !pos 52 0 -36 234
 -- TODO: This quest needs verification!
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local beadeauxID = require('scripts/zones/Beadeaux/IDs')
+local beadeauxID = zones[xi.zone.BEADEAUX]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.BASTOK, xi.quest.id.bastok.BLADE_OF_DARKNESS)
+local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.BLADE_OF_DARKNESS)
 
 quest.reward =
 {
     fame     = 30,
-    fameArea = xi.quest.fame_area.BASTOK,
+    fameArea = xi.fameArea.BASTOK,
     title    = xi.title.DARK_SIDER,
 }
 
@@ -27,7 +21,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 player:getMainLvl() >= xi.settings.main.ADVANCED_JOB_LEVEL
         end,
 
@@ -46,7 +40,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.ZERUHN_MINES] =
@@ -57,7 +51,7 @@ quest.sections =
                     if prevZone == xi.zone.PALBOROUGH_MINES then
                         if quest:getVar(player, 'Prog') == 0 then
                             return 130
-                        elseif not player:hasItem(xi.items.CHAOSBRINGER) then
+                        elseif not player:hasItem(xi.item.CHAOSBRINGER) then
                             return 131
                         end
                     end
@@ -67,13 +61,13 @@ quest.sections =
             onEventFinish =
             {
                 [130] = function(player, csid, option, npc)
-                    if npcUtil.giveItem(player, xi.items.CHAOSBRINGER) then
+                    if npcUtil.giveItem(player, xi.item.CHAOSBRINGER) then
                         quest:setVar(player, 'Prog', 1)
                     end
                 end,
 
                 [131] = function(player, csid, option, npc)
-                    npcUtil.giveItem(player, xi.items.CHAOSBRINGER)
+                    npcUtil.giveItem(player, xi.item.CHAOSBRINGER)
                 end,
             },
         },
@@ -85,7 +79,7 @@ quest.sections =
                 function(player, prevZone)
                     if
                         prevZone == xi.zone.PASHHOW_MARSHLANDS and
-                        player:getCharVar("ChaosbringerKills") >= 100
+                        player:getCharVar('ChaosbringerKills') >= 100
                     then
                         return 121
                     end

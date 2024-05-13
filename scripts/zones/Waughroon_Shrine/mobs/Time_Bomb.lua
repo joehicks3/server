@@ -5,14 +5,14 @@
 -----------------------------------
 local entity = {}
 
-entity.onMobEngaged = function(mob, target)
-    mob:setLocalVar("selfDestruct", os.time() + 60)
+entity.onMobEngage = function(mob, target)
+    mob:setLocalVar('selfDestruct', os.time() + 60)
     mob:setAutoAttackEnabled(false)
     mob:setMobAbilityEnabled(false)
 end
 
 entity.onMobFight = function(mob, target)
-    if os.time() > mob:getLocalVar("selfDestruct") then
+    if os.time() > mob:getLocalVar('selfDestruct') then
         mob:useMobAbility(256) -- self-destruct_321
     end
 end

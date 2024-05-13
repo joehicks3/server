@@ -3,8 +3,7 @@
 --  Mob: Ajido-Marujido
 -- Ally during Windurst Mission 9-2
 -----------------------------------
-local ID = require("scripts/zones/Full_Moon_Fountain/IDs")
-require("scripts/globals/magic")
+local ID = zones[xi.zone.FULL_MOON_FOUNTAIN]
 -----------------------------------
 local entity = {}
 
@@ -21,8 +20,12 @@ local function ajidoSelectTarget(mobArg)
         end
     end
 
-    local target = livingMobs[math.random(1, #livingMobs)]
-    if not target:isDead() then
+    local target = nil
+    if #livingMobs > 0 then
+        target = livingMobs[math.random(1, #livingMobs)]
+    end
+
+    if target and not target:isDead() then
         mobArg:addEnmity(target, 0, 1)
     end
 
@@ -35,7 +38,7 @@ entity.onMobInitialize = function(mob)
 end
 
 entity.onMobSpawn = function(ajidoMob)
-    ajidoMob:addListener("MAGIC_START", "MAGIC_MSG", function(mob, spell, action)
+    ajidoMob:addListener('MAGIC_START', 'MAGIC_MSG', function(mob, spell, action)
         -- Burst
         if spell:getID() == 212 then
             mob:showText(mob, ID.text.PLAY_TIME_IS_OVER)
@@ -54,14 +57,14 @@ end
 entity.onMobRoam = function(mob)
 end
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     mob:setMobMod(xi.mobMod.TELEPORT_TYPE, 0)
 end
 
 entity.onMobFight = function(mob, target)
-    if mob:getHPP() < 50 and mob:getLocalVar("saidMessage") == 0 then
+    if mob:getHPP() < 50 and mob:getLocalVar('saidMessage') == 0 then
         mob:showText(mob, ID.text.DONT_GIVE_UP)
-        mob:setLocalVar("saidMessage", 1)
+        mob:setLocalVar('saidMessage', 1)
     end
 
     if target:isEngaged() then

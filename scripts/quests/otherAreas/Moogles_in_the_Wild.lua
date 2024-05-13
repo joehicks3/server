@@ -4,13 +4,8 @@
 -- Log ID: 4, Quest ID: 102
 -- Moogle : (Mog House, Home Nation)
 -----------------------------------
-require('scripts/globals/moghouse')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.MOOGLES_IN_THE_WILD)
+local quest = Quest:new(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.MOOGLES_IN_THE_WILD)
 
 quest.reward =
 {
@@ -24,8 +19,8 @@ quest.sections[1] = {}
 quest.sections[1].check = function(player, status, vars)
     local bedPlacedTime = quest:getVar(player, 'bedPlacedTime')
 
-    return status == QUEST_AVAILABLE and
-        player:hasCompletedQuest(xi.quest.log_id.OTHER_AREAS, xi.quest.id.otherAreas.THE_MOOGLE_PICNIC) and
+    return status == xi.questStatus.QUEST_AVAILABLE and
+        player:hasCompletedQuest(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.THE_MOOGLE_PICNIC) and
         xi.moghouse.isInMogHouseInHomeNation(player) and
         player:getFameLevel(player:getNation()) >= 7 and
         not quest:getMustZone(player) and
@@ -39,7 +34,7 @@ local questAvailable =
     ['Moogle'] =
     {
         onTrigger = function(player, npc)
-            return quest:progressEvent(30013, 0, 0, 0, 6, 0, xi.items.RAPTOR_MANTLE, xi.items.WOOL_HAT)
+            return quest:progressEvent(30013, 0, 0, 0, 6, 0, xi.item.RAPTOR_MANTLE, xi.item.WOOL_HAT)
         end,
     },
 
@@ -57,7 +52,7 @@ local questAvailable =
 
 quest.sections[2] = {}
 quest.sections[2].check = function(player, status, vars)
-    return status == QUEST_ACCEPTED
+    return status == xi.questStatus.QUEST_ACCEPTED
 end
 
 local questAccepted =
@@ -65,7 +60,7 @@ local questAccepted =
     ['Moogle'] =
     {
         onTrade = function(player, npc, trade)
-            if npcUtil.tradeHasExactly(trade, { xi.items.RAPTOR_MANTLE, xi.items.WOOL_HAT }) then
+            if npcUtil.tradeHasExactly(trade, { xi.item.RAPTOR_MANTLE, xi.item.WOOL_HAT }) then
                 return quest:progressEvent(30015)
             end
         end,
@@ -79,7 +74,7 @@ local questAccepted =
             end
 
             if questProgress == 0 then
-                return quest:progressEvent(30014, 0, 0, 0, 0, 0, xi.items.RAPTOR_MANTLE, xi.items.WOOL_HAT)
+                return quest:progressEvent(30014, 0, 0, 0, 0, 0, xi.item.RAPTOR_MANTLE, xi.item.WOOL_HAT)
             elseif
                 questProgress == 1 and
                 quest:getVar(player, 'Timer') < os.time()

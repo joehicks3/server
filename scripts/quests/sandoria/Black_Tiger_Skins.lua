@@ -4,20 +4,14 @@
 -- Log ID: 0, Quest ID: 31
 -- Hanaa Punaa : !pos -179.726 -8.8 27.574 230
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/titles')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.BLACK_TIGER_SKINS)
+local quest = Quest:new(xi.questLog.SANDORIA, xi.quest.id.sandoria.BLACK_TIGER_SKINS)
 
 quest.reward =
 {
     fame = 30,
-    fameArea = xi.quest.fame_area.SANDORIA,
-    item = xi.items.TIGER_STOLE,
+    fameArea = xi.fameArea.SANDORIA,
+    item = xi.item.TIGER_STOLE,
     itemParams = { fromTrade = true },
     title = xi.title.CAT_SKINNER,
 }
@@ -26,9 +20,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getFameLevel(xi.quest.fame_area.SANDORIA) >= 3 and
-                player:hasCompletedQuest(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.LIZARD_SKINS)
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getFameLevel(xi.fameArea.SANDORIA) >= 3 and
+                player:hasCompletedQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.LIZARD_SKINS)
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -67,7 +61,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =
@@ -75,7 +69,7 @@ quest.sections =
             ['Hanaa_Punaa'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, { { xi.items.TIGER_HIDE, 3 } }) then
+                    if npcUtil.tradeHasExactly(trade, { { xi.item.TIGER_HIDE, 3 } }) then
                         return quest:progressEvent(577)
                     end
                 end,
@@ -96,7 +90,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED and player:getFameLevel(xi.quest.fame_area.SANDORIA) >= 3
+            return status == xi.questStatus.QUEST_COMPLETED and player:getFameLevel(xi.fameArea.SANDORIA) >= 3
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA] =

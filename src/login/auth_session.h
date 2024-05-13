@@ -49,7 +49,11 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #define LOGIN_ERROR_ALREADY_LOGGED_IN   0x0A
 #define LOGIN_ERROR_VERSION_UNSUPPORTED 0x0B
 
-#define SUPPORTED_XILOADER_VERSION "1.0.0"
+// Only the first 3 characters of the version string are matched
+// ie. 1.1.1 -> 1.1.x
+// Major.Minor.Patch
+// Major and minor version changes should be breaking, patch should not.
+#define SUPPORTED_XILOADER_VERSION "1.1.x"
 
 // NOTE: This collection of flags is 64-bits wide!
 enum AUTH_COMPONENTS
@@ -76,6 +80,7 @@ enum ACCOUNT_STATUS_CODE : uint8
     NORMAL = 0x01,
     BANNED = 0x02,
 };
+DECLARE_FORMAT_AS_UNDERLYING(ACCOUNT_STATUS_CODE);
 
 enum ACCOUNT_PRIVILEGE_CODE : uint8
 {
@@ -83,6 +88,7 @@ enum ACCOUNT_PRIVILEGE_CODE : uint8
     ADMIN = 0x02,
     ROOT  = 0x04,
 };
+DECLARE_FORMAT_AS_UNDERLYING(ACCOUNT_PRIVILEGE_CODE);
 
 // Interaction with xiloader, port 54231
 class auth_session : public handler_session

@@ -55,24 +55,24 @@ namespace gardenutils
 {
     void LoadResultList()
     {
-        int32 ret = sql->Query("SELECT resultId, seed, element1, element2, result, min_quantity, max_quantity, weight FROM gardening_results");
+        int32 ret = _sql->Query("SELECT resultId, seed, element1, element2, result, min_quantity, max_quantity, weight FROM gardening_results");
 
-        if (ret != SQL_ERROR && sql->NumRows() != 0)
+        if (ret != SQL_ERROR && _sql->NumRows() != 0)
         {
-            while (sql->NextRow() == SQL_SUCCESS)
+            while (_sql->NextRow() == SQL_SUCCESS)
             {
-                uint8 SeedID   = (uint8)sql->GetUIntData(1);
-                uint8 Element1 = (uint8)sql->GetUIntData(2);
-                uint8 Element2 = (uint8)sql->GetUIntData(3);
+                uint8 SeedID   = (uint8)_sql->GetUIntData(1);
+                uint8 Element1 = (uint8)_sql->GetUIntData(2);
+                uint8 Element2 = (uint8)_sql->GetUIntData(3);
 
                 uint32 uid = (SeedID << 8) + (Element1 << 4) + Element2;
 
                 GardenResultList_t& resultList = g_pGardenResultMap[uid];
 
-                uint16 ItemID      = (uint16)sql->GetIntData(4);
-                uint8  MinQuantity = (uint8)sql->GetIntData(5);
-                uint8  MaxQuantity = (uint8)sql->GetIntData(6);
-                uint8  Weight      = (uint8)sql->GetIntData(7);
+                uint16 ItemID      = (uint16)_sql->GetIntData(4);
+                uint8  MinQuantity = (uint8)_sql->GetIntData(5);
+                uint8  MaxQuantity = (uint8)_sql->GetIntData(6);
+                uint8  Weight      = (uint8)_sql->GetIntData(7);
                 resultList.emplace_back(ItemID, MinQuantity, MaxQuantity, Weight);
             }
         }
@@ -116,9 +116,9 @@ namespace gardenutils
                         PPotItem->clearExamined();
 
                         char extra[sizeof(PItem->m_extra) * 2 + 1];
-                        sql->EscapeStringLen(extra, (const char*)PItem->m_extra, sizeof(PItem->m_extra));
+                        _sql->EscapeStringLen(extra, (const char*)PItem->m_extra, sizeof(PItem->m_extra));
                         const char* Query = "UPDATE char_inventory SET extra = '%s' WHERE charid = %u AND location = %u AND slot = %u";
-                        sql->Query(Query, extra, PChar->id, containerID, slotID);
+                        _sql->Query(Query, extra, PChar->id, containerID, slotID);
 
                         if (sendPacket)
                         {
@@ -296,8 +296,17 @@ namespace gardenutils
             item = resultList.back();
         }
 
+        // The percentage of strength between the item's minimum weight to maximum weight
         float percentage = (strength - (cumulativeWeight - item.Weight)) / float(item.Weight);
-        uint8 quantity   = item.MinQuantity + int((item.MaxQuantity - item.MinQuantity) * percentage + 0.1);
+        // Split the quantity range n into n+1 evenly-distributed buckets across 0-100%. Yields of 20-35 is a range of 15 with 16 possible outcomes.
+        // Ex. For a yield of 4-8 which has a range of 4 and a percentage p, it's split into 5 equal buckets:
+        // 4 = p < 0.2
+        // 5 = 0.2 <= p < 0.4
+        // 6 = 0.4 <= p < 0.6
+        // 7 = 0.6 <= p < 0.8
+        // 8 = p >= 0.8
+        // The final result is truncated instead of rounded, so only p>=1.0 will return a higher than maximum yield. It's special-cased to avoid this.
+        const uint8 quantity = percentage >= 1.0f ? item.MaxQuantity : (item.MinQuantity + percentage * (1 + item.MaxQuantity - item.MinQuantity));
 
         return std::make_tuple(item.ItemID, quantity);
     }

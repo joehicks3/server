@@ -2,7 +2,7 @@
 -- Area: Boneyard Gully
 --  Mob: Armored Hunter
 -----------------------------------
-mixins = { require("scripts/mixins/families/antlion_ambush") }
+mixins = { require('scripts/mixins/families/antlion_ambush') }
 -----------------------------------
 local entity = {}
 
@@ -12,7 +12,7 @@ entity.onMobSpawn = function(mob)
     mob:setMobMod(xi.mobMod.NO_MOVE, 1)
 end
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     mob:setMobMod(xi.mobMod.NO_MOVE, 0)
 end
 

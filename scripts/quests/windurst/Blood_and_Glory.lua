@@ -3,21 +3,16 @@
 -- Shantotto !pos 122 -2 112 239
 -- qm3 !pos 119 20 144 205
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/weaponskillids')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
------------------------------------
-local windurstWallsID = require('scripts/zones/Windurst_Walls/IDs')
-local ifritsCauldronID = require('scripts/zones/Ifrits_Cauldron/IDs')
+local windurstWallsID  = zones[xi.zone.WINDURST_WALLS]
+local ifritsCauldronID = zones[xi.zone.IFRITS_CAULDRON]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.WINDURST, xi.quest.id.windurst.BLOOD_AND_GLORY)
+local quest = Quest:new(xi.questLog.WINDURST, xi.quest.id.windurst.BLOOD_AND_GLORY)
 
 quest.reward =
 {
     fame = 30,
-    fameArea = xi.quest.fame_area.WINDURST,
+    fameArea = xi.fameArea.WINDURST,
 }
 
 quest.sections =
@@ -25,8 +20,8 @@ quest.sections =
     -- Section: Quest available
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:canEquipItem(xi.items.POLE_OF_TRIALS, true) and
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:canEquipItem(xi.item.POLE_OF_TRIALS, true) and
                 player:getCharSkillLevel(xi.skill.STAFF) / 10 >= 230 and
                 not player:hasKeyItem(xi.keyItem.WEAPON_TRAINING_GUIDE)
         end,
@@ -44,8 +39,8 @@ quest.sections =
             {
                 [445] = function(player, csid, option, npc)
                     if
-                        player:hasItem(xi.items.POLE_OF_TRIALS) or
-                        npcUtil.giveItem(player, xi.items.POLE_OF_TRIALS)
+                        player:hasItem(xi.item.POLE_OF_TRIALS) or
+                        npcUtil.giveItem(player, xi.item.POLE_OF_TRIALS)
                     then
                         npcUtil.giveKeyItem(player, xi.keyItem.WEAPON_TRAINING_GUIDE)
                         quest:begin(player)
@@ -58,7 +53,7 @@ quest.sections =
     -- Section: Quest accepted
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.WINDURST_WALLS] =
@@ -71,12 +66,12 @@ quest.sections =
                     elseif player:hasKeyItem(xi.ki.MAP_TO_THE_ANNALS_OF_TRUTH) then
                         return quest:event(449) -- cont 2
                     else
-                        return quest:event(446, 0, xi.items.POLE_OF_TRIALS, 0, 0, player:hasItem(xi.items.POLE_OF_TRIALS) and 2 or 0) -- cont 1
+                        return quest:event(446, 0, xi.item.POLE_OF_TRIALS, 0, 0, player:hasItem(xi.item.POLE_OF_TRIALS) and 2 or 0) -- cont 1
                     end
                 end,
 
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.POLE_OF_TRIALS) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.POLE_OF_TRIALS) then
                         local wsPoints = trade:getItem(0):getWeaponskillPoints()
 
                         if wsPoints < 300 then
@@ -91,10 +86,10 @@ quest.sections =
             onEventFinish =
             {
                 [446] = function(player, csid, option, npc)
-                    if option == 1 and not player:hasItem(xi.items.POLE_OF_TRIALS) then
-                        npcUtil.giveItem(player, xi.items.POLE_OF_TRIALS)
+                    if option == 1 and not player:hasItem(xi.item.POLE_OF_TRIALS) then
+                        npcUtil.giveItem(player, xi.item.POLE_OF_TRIALS)
                     elseif option == 3 then
-                        player:delQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.BLOOD_AND_GLORY)
+                        player:delQuest(xi.questLog.WINDURST, xi.quest.id.windurst.BLOOD_AND_GLORY)
                         player:delKeyItem(xi.ki.WEAPON_TRAINING_GUIDE)
                         player:delKeyItem(xi.ki.MAP_TO_THE_ANNALS_OF_TRUTH)
                     end
@@ -110,7 +105,7 @@ quest.sections =
                         player:delKeyItem(xi.ki.MAP_TO_THE_ANNALS_OF_TRUTH)
                         player:delKeyItem(xi.ki.ANNALS_OF_TRUTH)
                         player:delKeyItem(xi.ki.WEAPON_TRAINING_GUIDE)
-                        player:addLearnedWeaponskill(xi.ws_unlock.RETRIBUTION)
+                        player:addLearnedWeaponskill(xi.wsUnlock.RETRIBUTION)
                         player:messageSpecial(windurstWallsID.text.RETRIBUTION_LEARNED)
                         player:setPos(121, -3, 111)
                     end

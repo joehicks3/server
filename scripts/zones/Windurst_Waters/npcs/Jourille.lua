@@ -4,9 +4,7 @@
 -- Only sells when Windurst controlls Ronfaure Region
 -- Confirmed shop stock, August 2013
 -----------------------------------
-local ID = require("scripts/zones/Windurst_Waters/IDs")
-require("scripts/globals/conquest")
-require("scripts/globals/shop")
+local ID = zones[xi.zone.WINDURST_WATERS]
 -----------------------------------
 local entity = {}
 
@@ -27,7 +25,7 @@ entity.onTrigger = function(player, npc)
             610,    55,  -- San d'Orian Flour
             4431,   69,  -- San d'Orian Grape
         }
-        xi.shop.general(player, stock, xi.quest.fame_area.WINDURST)
+        xi.shop.general(player, stock, xi.fameArea.WINDURST)
     end
 end
 

@@ -3,16 +3,20 @@
 --  Mob: Orcish Grunt
 -- Note: PH for Supplespine Mujwuj
 -----------------------------------
-local ID = require("scripts/zones/Jugner_Forest/IDs")
-require("scripts/globals/mobs")
+local ID = zones[xi.zone.JUGNER_FOREST]
 -----------------------------------
 local entity = {}
+
+local supplespinePHTable =
+{
+    [ID.mob.SUPPLESPINE_MUJWUJ - 38] = ID.mob.SUPPLESPINE_MUJWUJ,
+}
 
 entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.SUPPLESPINE_MUJWUJ_PH, 10, 3600) -- 1 hour
+    xi.mob.phOnDespawn(mob, supplespinePHTable, 10, 3600) -- 1 hour
 end
 
 return entity

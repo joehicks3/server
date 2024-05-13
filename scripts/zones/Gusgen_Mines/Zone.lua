@@ -1,16 +1,13 @@
 -----------------------------------
 -- Zone: Gusgen Mines (196)
 -----------------------------------
-local ID = require('scripts/zones/Gusgen_Mines/IDs')
-require('scripts/globals/conquest')
-require('scripts/globals/treasure')
-require('scripts/globals/helm')
+local ID = zones[xi.zone.GUSGEN_MINES]
 -----------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
     xi.treasure.initZone(zone)
-    xi.helm.initZone(zone, xi.helm.type.MINING)
+    xi.helm.initZone(zone, xi.helmType.MINING)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -57,7 +54,7 @@ zoneObject.onGameHour = function(zone)
 
         for i = 1, 6 do
             ghost = ghostTable[i].nm
-            if not ghost:isSpawned() and os.time() > ghost:getLocalVar("cooldown") then
+            if not ghost:isSpawned() and os.time() > ghost:getLocalVar('cooldown') then
                 SpawnMob(ghostTable[i].id)
             end
         end

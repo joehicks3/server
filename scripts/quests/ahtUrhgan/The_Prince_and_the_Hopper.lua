@@ -6,14 +6,10 @@
 -- Toads Footprint2 : !pos 216.1 -23.818 -102.464 65
 -- Toads Footprint1 : !pos -42.9248 5.9847 -100.2972 65
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/zone')
-require('scripts/globals/interaction/quest')
------------------------------------
-local mamookID = require('scripts/zones/Mamook/IDs')
+local mamookID = zones[xi.zone.MAMOOK]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.AHT_URHGAN, xi.quest.id.ahtUrhgan.THE_PRINCE_AND_THE_HOPPER)
+local quest = Quest:new(xi.questLog.AHT_URHGAN, xi.quest.id.ahtUrhgan.THE_PRINCE_AND_THE_HOPPER)
 
 local spawnedMobs =
 {
@@ -27,7 +23,7 @@ local spawnedMobs =
 
 quest.reward =
 {
-    item = xi.items.CHANOIXS_GORGET
+    item = xi.item.CHANOIXS_GORGET
 }
 
 quest.sections =
@@ -35,7 +31,7 @@ quest.sections =
     -- Section: Quest available
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.AHT_URHGAN_WHITEGATE] =
@@ -56,7 +52,7 @@ quest.sections =
     -- Section: Quest accepted
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.WAJAOM_WOODLANDS] =

@@ -4,32 +4,28 @@
 -- !addquest 9 54
 -- Traiffeaux : !pos 437.451 63 -290.512 267
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/interaction/quest')
------------------------------------
-local kamihrID = require('scripts/zones/Kamihr_Drifts/IDs')
+local kamihrID = zones[xi.zone.KAMIHR_DRIFTS]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.ADOULIN, xi.quest.id.adoulin.BREAKING_THE_ICE)
+local quest = Quest:new(xi.questLog.ADOULIN, xi.quest.id.adoulin.BREAKING_THE_ICE)
 
 quest.reward =
 {
-    fameArea = xi.quest.fame_area.ADOULIN,
+    fameArea = xi.fameArea.ADOULIN,
     bayld    = 500,
 }
 
 local requiredTradeItems =
 {
-    { xi.items.RABBIT_HIDE, 3 },
-    { xi.items.RAAZ_TUSK,   1 },
+    { xi.item.RABBIT_HIDE, 3 },
+    { xi.item.RAAZ_TUSK,   1 },
 }
 
 quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.KAMIHR_DRIFTS] =
@@ -49,7 +45,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.KAMIHR_DRIFTS] =

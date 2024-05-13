@@ -1,9 +1,6 @@
 -----------------------------------
 -- Area: Bostaunieux_Oubliette
 -----------------------------------
-require("scripts/globals/zone")
------------------------------------
-
 zones = zones or {}
 
 zones[xi.zone.BOSTAUNIEUX_OUBLIETTE] =
@@ -21,23 +18,23 @@ zones[xi.zone.BOSTAUNIEUX_OUBLIETTE] =
         LOGIN_CAMPAIGN_UNDERWAY       = 7161,  -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
         LOGIN_NUMBER                  = 7162,  -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
         MEMBERS_LEVELS_ARE_RESTRICTED = 7182,  -- Your party is unable to participate because certain members' levels are restricted.
-        FISHING_MESSAGE_OFFSET        = 7219,  -- You can't fish here.
-        CHUMIA_DIALOG                 = 7319,  -- Welcome to Bostaunieux Oubliette...
-        SEEMS_LOCKED                  = 7321,  -- It seems to be locked.
-        SPIRAL_HELL_LEARNED           = 7428,  -- You have learned the weapon skill Spiral Hell!
-        SENSE_OMINOUS_PRESENCE        = 7429,  -- You sense an ominous presence...
-        ITEMS_ITEMS_LA_LA             = 7432,  -- You can hear a strange voice... Items, items, la la la la la
-        GOBLIN_SLIPPED_AWAY           = 7438,  -- The Goblin slipped away when you were not looking...
-        REGIME_REGISTERED             = 9543,  -- New training regime registered!
-        PLAYER_OBTAINS_ITEM           = 10595, -- <name> obtains <item>!
-        UNABLE_TO_OBTAIN_ITEM         = 10596, -- You were unable to obtain the item.
-        PLAYER_OBTAINS_TEMP_ITEM      = 10597, -- <name> obtains the temporary item: <item>!
-        ALREADY_POSSESS_TEMP          = 10598, -- You already possess that temporary item.
-        NO_COMBINATION                = 10603, -- You were unable to enter a combination.
-        LEARNS_SPELL                  = 10627, -- <name> learns <spell>!
-        UNCANNY_SENSATION             = 10629, -- You are assaulted by an uncanny sensation.
-        COMMON_SENSE_SURVIVAL         = 10636, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
-        UNITY_WANTED_BATTLE_INTERACT  = 10700, -- Those who have accepted % must pay # Unity accolades to participate. The content for this Wanted battle is #. [Ready to begin?/You do not have the appropriate object set, so your rewards will be limited.]
+        FISHING_MESSAGE_OFFSET        = 7223,  -- You can't fish here.
+        CHUMIA_DIALOG                 = 7323,  -- Welcome to Bostaunieux Oubliette...
+        SEEMS_LOCKED                  = 7325,  -- It seems to be locked.
+        SPIRAL_HELL_LEARNED           = 7432,  -- You have learned the weapon skill Spiral Hell!
+        SENSE_OMINOUS_PRESENCE        = 7433,  -- You sense an ominous presence...
+        ITEMS_ITEMS_LA_LA             = 7436,  -- You can hear a strange voice... Items, items, la la la la la
+        GOBLIN_SLIPPED_AWAY           = 7442,  -- The Goblin slipped away when you were not looking...
+        REGIME_REGISTERED             = 9547,  -- New training regime registered!
+        PLAYER_OBTAINS_ITEM           = 10599, -- <name> obtains <item>!
+        UNABLE_TO_OBTAIN_ITEM         = 10600, -- You were unable to obtain the item.
+        PLAYER_OBTAINS_TEMP_ITEM      = 10601, -- <name> obtains the temporary item: <item>!
+        ALREADY_POSSESS_TEMP          = 10602, -- You already possess that temporary item.
+        NO_COMBINATION                = 10607, -- You were unable to enter a combination.
+        LEARNS_SPELL                  = 10631, -- <name> learns <spell>!
+        UNCANNY_SENSATION             = 10633, -- You are assaulted by an uncanny sensation.
+        COMMON_SENSE_SURVIVAL         = 10640, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
+        UNITY_WANTED_BATTLE_INTERACT  = 10704, -- Those who have accepted % must pay # Unity accolades to participate. The content for this Wanted battle is #. [Ready to begin?/You do not have the appropriate object set, so your rewards will be limited.]
     },
     mob =
     {

@@ -6,20 +6,16 @@
 -- Chateau d'Oraguille, Curilla,     !pos 27 0.1 0.1 233
 -- Northern San'doria,  Pagisalis,   !pos 97 0.1 113 231
 -----------------------------------
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/interaction/quest')
------------------------------------
-local crawlersID = require("scripts/zones/Crawlers_Nest/IDs")
+local crawlersID = zones[xi.zone.CRAWLERS_NEST]
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.ENVELOPED_IN_DARKNESS)
+local quest = Quest:new(xi.questLog.SANDORIA, xi.quest.id.sandoria.ENVELOPED_IN_DARKNESS)
 
 quest.reward =
 {
-    item     = xi.items.WARLOCKS_BOOTS,
+    item     = xi.item.WARLOCKS_BOOTS,
     fame     = 30,
-    fameArea = xi.quest.fame_area.SANDORIA,
+    fameArea = xi.fameArea.SANDORIA,
 }
 
 quest.sections =
@@ -27,10 +23,10 @@ quest.sections =
     -- Section: Quest available.
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:getQuestStatus(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.THE_CRIMSON_TRIAL) == QUEST_COMPLETED and
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.THE_CRIMSON_TRIAL) == xi.questStatus.QUEST_COMPLETED and
                 player:getMainJob() == xi.job.RDM and
-                player:getMainLvl() >= 50
+                player:getMainLvl() >= xi.settings.main.AF2_QUEST_LEVEL
         end,
 
         [xi.zone.CHATEAU_DORAGUILLE] =
@@ -75,7 +71,7 @@ quest.sections =
     -- Section: Quest accepted
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.CHATEAU_DORAGUILLE] =
@@ -155,7 +151,7 @@ quest.sections =
             ['Pagisalis'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.items.SQUARE_OF_VELVET_CLOTH) then
+                    if npcUtil.tradeHasExactly(trade, xi.item.SQUARE_OF_VELVET_CLOTH) then
                         return quest:progressEvent(37)
                     end
                 end,

@@ -2,45 +2,40 @@
 -- A Pose By Any Other Name
 -- Angelica !pos -64 -9.25 -9 238
 -----------------------------------
-require('scripts/globals/quests')
-require('scripts/globals/interaction/quest')
-require('scripts/globals/npc_util')
-require('scripts/globals/titles')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.WINDURST, xi.quest.id.windurst.A_POSE_BY_ANY_OTHER_NAME)
+local quest = Quest:new(xi.questLog.WINDURST, xi.quest.id.windurst.A_POSE_BY_ANY_OTHER_NAME)
 
 local poseItems =
 {
-    [xi.job.WAR] = xi.items.BRONZE_HARNESS,
-    [xi.job.MNK] = xi.items.ROBE,
-    [xi.job.WHM] = xi.items.TUNIC,
-    [xi.job.BLM] = xi.items.TUNIC,
-    [xi.job.RDM] = xi.items.TUNIC,
-    [xi.job.THF] = xi.items.LEATHER_VEST,
-    [xi.job.PLD] = xi.items.BRONZE_HARNESS,
-    [xi.job.DRK] = xi.items.BRONZE_HARNESS,
-    [xi.job.BST] = xi.items.LEATHER_VEST,
-    [xi.job.BRD] = xi.items.ROBE,
-    [xi.job.RNG] = xi.items.LEATHER_VEST,
-    [xi.job.SAM] = xi.items.KENPOGI,
-    [xi.job.NIN] = xi.items.KENPOGI,
-    [xi.job.DRG] = xi.items.BRONZE_HARNESS,
-    [xi.job.SMN] = xi.items.TUNIC,
-    [xi.job.BLU] = xi.items.ROBE,
-    [xi.job.COR] = xi.items.BRONZE_HARNESS,
-    [xi.job.PUP] = xi.items.TUNIC,
-    [xi.job.DNC] = xi.items.LEATHER_VEST,
-    [xi.job.SCH] = xi.items.TUNIC,
-    [xi.job.GEO] = xi.items.TUNIC,
-    [xi.job.RUN] = xi.items.BRONZE_HARNESS,
+    [xi.job.WAR] = xi.item.BRONZE_HARNESS,
+    [xi.job.MNK] = xi.item.ROBE,
+    [xi.job.WHM] = xi.item.TUNIC,
+    [xi.job.BLM] = xi.item.TUNIC,
+    [xi.job.RDM] = xi.item.TUNIC,
+    [xi.job.THF] = xi.item.LEATHER_VEST,
+    [xi.job.PLD] = xi.item.BRONZE_HARNESS,
+    [xi.job.DRK] = xi.item.BRONZE_HARNESS,
+    [xi.job.BST] = xi.item.LEATHER_VEST,
+    [xi.job.BRD] = xi.item.ROBE,
+    [xi.job.RNG] = xi.item.LEATHER_VEST,
+    [xi.job.SAM] = xi.item.KENPOGI,
+    [xi.job.NIN] = xi.item.KENPOGI,
+    [xi.job.DRG] = xi.item.BRONZE_HARNESS,
+    [xi.job.SMN] = xi.item.TUNIC,
+    [xi.job.BLU] = xi.item.ROBE,
+    [xi.job.COR] = xi.item.BRONZE_HARNESS,
+    [xi.job.PUP] = xi.item.TUNIC,
+    [xi.job.DNC] = xi.item.LEATHER_VEST,
+    [xi.job.SCH] = xi.item.TUNIC,
+    [xi.job.GEO] = xi.item.TUNIC,
+    [xi.job.RUN] = xi.item.BRONZE_HARNESS,
 }
 
 quest.reward =
 {
     fame = 75,
-    fameArea = xi.quest.fame_area.WINDURST,
-    item = xi.items.COPY_OF_ANCIENT_BLOOD,
+    fameArea = xi.fameArea.WINDURST,
+    item = xi.item.COPY_OF_ANCIENT_BLOOD,
     title = xi.title.SUPER_MODEL,
     keyItem = xi.ki.ANGELICAS_AUTOGRAPH,
 }
@@ -50,7 +45,7 @@ quest.sections =
     -- Section: Quest available
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and player:needToZone() == false
+            return status == xi.questStatus.QUEST_AVAILABLE and player:needToZone() == false
         end,
 
         [xi.zone.WINDURST_WATERS] =
@@ -99,7 +94,7 @@ quest.sections =
     -- Section: Quest accepted
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog == 0
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog == 0
         end,
 
         [xi.zone.WINDURST_WATERS] =
@@ -121,7 +116,7 @@ quest.sections =
     -- Section: Finish quest
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED and vars.Prog ~= 0
+            return status == xi.questStatus.QUEST_ACCEPTED and vars.Prog ~= 0
         end,
 
         [xi.zone.WINDURST_WATERS] =
@@ -149,7 +144,7 @@ quest.sections =
                 end,
 
                 [102] = function(player, csid, option, npc) -- Quest failed.
-                    player:delQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.A_POSE_BY_ANY_OTHER_NAME)
+                    player:delQuest(xi.questLog.WINDURST, xi.quest.id.windurst.A_POSE_BY_ANY_OTHER_NAME)
                     quest:setVar(player, 'Prog', 0) -- TODO: Confirm that initial CS has to be repeated aswell upon quest failure. If not, set var to 1 here.
                     quest:setVar(player, 'Stage', 0)
                     player:addTitle(xi.title.LOWER_THAN_THE_LOWEST_TUNNEL_WORM)
@@ -162,7 +157,7 @@ quest.sections =
     -- Section: Quest Completed
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED
+            return status == xi.questStatus.QUEST_COMPLETED
         end,
 
         [xi.zone.WINDURST_WATERS] =

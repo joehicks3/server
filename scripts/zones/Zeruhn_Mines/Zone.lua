@@ -1,16 +1,10 @@
 -----------------------------------
 -- Zone: Zeruhn_Mines (172)
 -----------------------------------
-local ID = require('scripts/zones/Zeruhn_Mines/IDs')
-require('scripts/globals/conquest')
-require('scripts/globals/quests')
-require('scripts/globals/helm')
-require('scripts/globals/zone')
------------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    xi.helm.initZone(zone, xi.helm.type.MINING)
+    xi.helm.initZone(zone, xi.helmType.MINING)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)

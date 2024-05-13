@@ -1,8 +1,6 @@
 -----------------------------------
 -- Zone: Nyzul_Isle
 -----------------------------------
-require('scripts/globals/zone')
------------------------------------
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
@@ -29,9 +27,9 @@ zoneObject.onInstanceZoneIn = function(player, instance)
         player:setPos(entrypos.x, entrypos.y, entrypos.z, entrypos.rot)
     end
 
-    player:entityVisualPacket("1pa1")
-    player:entityVisualPacket("1pb1")
-    player:entityVisualPacket("2pb1")
+    player:entityVisualPacket('1pa1')
+    player:entityVisualPacket('1pb1')
+    player:entityVisualPacket('2pb1')
 
     return cs
 end
@@ -39,12 +37,8 @@ end
 -- NOTE: This is called after onInstanceZoneIn for the fade in cutscene.
 -- onInstanceZoneIn does not consider event returns.
 zoneObject.onZoneIn = function(player, prevZone)
-    local cs = -1
-
     -- This event is common to all zone in, and is fade from black
-    cs = 51
-
-    return cs
+    return 51
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

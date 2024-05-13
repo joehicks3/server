@@ -4,11 +4,8 @@
 -- Involved in Quests: Community Service
 -- !pos -3 0 11 245
 -----------------------------------
-require("scripts/zones/Lower_Jeuno/globals")
-local ID = require("scripts/zones/Lower_Jeuno/IDs")
-require("scripts/globals/npc_util")
-require("scripts/globals/quests")
-require("scripts/globals/titles")
+require('scripts/zones/Lower_Jeuno/globals')
+local ID = zones[xi.zone.LOWER_JEUNO]
 -----------------------------------
 local entity = {}
 
@@ -17,9 +14,9 @@ end
 
 entity.onTrigger = function(player, npc)
     local hour              = VanadielHour()
-    local playerOnQuestId   = GetServerVariable("[JEUNO]CommService")
-    local doneCommService   = (player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.COMMUNITY_SERVICE) == QUEST_COMPLETED) and 1 or 0
-    local currCommService   = player:getCharVar("currCommService")
+    local playerOnQuestId   = GetServerVariable('[JEUNO]CommService')
+    local doneCommService   = (player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.COMMUNITY_SERVICE) == xi.questStatus.QUEST_COMPLETED) and 1 or 0
+    local currCommService   = player:getCharVar('currCommService')
     local hasMembershipCard = player:hasKeyItem(xi.ki.LAMP_LIGHTERS_MEMBERSHIP_CARD) and 1 or 0
 
     local allLampsLit = true
@@ -43,14 +40,14 @@ entity.onTrigger = function(player, npc)
             elseif hour >= 21 or hour < 1 then
                 player:startEvent(114) -- tell player they can start lighting lamps.
             else
-                SetServerVariable("[JEUNO]CommService", -1) -- frees player from quest, but don't allow anyone else to take it today.
+                SetServerVariable('[JEUNO]CommService', -1) -- frees player from quest, but don't allow anyone else to take it today.
                 player:startEvent(119) -- player didn't light lamps in time. fail quest.
             end
         end
 
     -- quest is available to player, nobody is currently on it, and the hour is right
     elseif
-        player:getFameLevel(xi.quest.fame_area.JEUNO) >= 1 and
+        player:getFameLevel(xi.fameArea.JEUNO) >= 1 and
         playerOnQuestId == 0 and
         (hour >= 18 or hour < 1)
     then
@@ -67,8 +64,8 @@ entity.onEventUpdate = function(player, csid, option, npc)
         -- player accepts quest
         -- if nobody else has already been assigned to the quest, including Vhana, give it to this player
 
-        local doneCommService = (player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.COMMUNITY_SERVICE) == QUEST_COMPLETED) and 1 or 0
-        local playerOnQuestId = GetServerVariable("[JEUNO]CommService")
+        local doneCommService = (player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.COMMUNITY_SERVICE) == xi.questStatus.QUEST_COMPLETED) and 1 or 0
+        local playerOnQuestId = GetServerVariable('[JEUNO]CommService')
         local hour = VanadielHour()
 
         if
@@ -76,9 +73,9 @@ entity.onEventUpdate = function(player, csid, option, npc)
             (hour >= 18 or hour < 1)
         then
             -- nobody is currently on the quest
-            SetServerVariable("[JEUNO]CommService", player:getID())
-            player:addQuest(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.COMMUNITY_SERVICE)
-            player:setCharVar("currCommService", 1)
+            SetServerVariable('[JEUNO]CommService', player:getID())
+            player:addQuest(xi.questLog.JEUNO, xi.quest.id.jeuno.COMMUNITY_SERVICE)
+            player:setCharVar('currCommService', 1)
             player:updateEvent(1, doneCommService)
         else
             -- either another player or vasha have been assigned the quest
@@ -90,8 +87,8 @@ end
 entity.onEventFinish = function(player, csid, option, npc)
     -- COMMUNITY SERVICE
     if csid == 117 then
-        local params = { title = xi.title.TORCHBEARER, var = "currCommService" }
-        if player:getQuestStatus(xi.quest.log_id.JEUNO, xi.quest.id.jeuno.COMMUNITY_SERVICE) ~= QUEST_COMPLETED then
+        local params = { title = xi.title.TORCHBEARER, var = 'currCommService' }
+        if player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.COMMUNITY_SERVICE) ~= xi.questStatus.QUEST_COMPLETED then
             -- first victory
             params.fame = 30
         else
@@ -102,7 +99,7 @@ entity.onEventFinish = function(player, csid, option, npc)
             end
         end
 
-        npcUtil.completeQuest(player, xi.quest.log_id.JEUNO, xi.quest.id.jeuno.COMMUNITY_SERVICE, params)
+        npcUtil.completeQuest(player, xi.questLog.JEUNO, xi.quest.id.jeuno.COMMUNITY_SERVICE, params)
 
     elseif csid == 118 and option == 1 then
         -- player drops membership card
@@ -110,7 +107,7 @@ entity.onEventFinish = function(player, csid, option, npc)
 
     elseif csid == 119 then
         -- player fails quest
-        player:setCharVar("currCommService", 0)
+        player:setCharVar('currCommService', 0)
     end
 end
 

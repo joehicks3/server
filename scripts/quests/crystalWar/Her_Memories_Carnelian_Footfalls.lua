@@ -7,14 +7,10 @@
 -- qm4         : !pos 541.425 -49.83 178.563 81
 -- qm5         : !pos 380.015 -26.5 -22.525 81
 -----------------------------------
-require('scripts/globals/missions')
-require('scripts/globals/interaction/quest')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
 require('scripts/missions/wotg/helpers')
 -----------------------------------
 
-local quest = Quest:new(xi.quest.log_id.CRYSTAL_WAR, xi.quest.id.crystalWar.HER_MEMORIES_CARNELIAN_FOOTFALLS)
+local quest = Quest:new(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.HER_MEMORIES_CARNELIAN_FOOTFALLS)
 
 quest.reward =
 {
@@ -25,7 +21,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
+            return status == xi.questStatus.QUEST_AVAILABLE and
                 player:getCurrentMission(xi.mission.log_id.WOTG) == xi.mission.id.wotg.HER_MEMORIES and
                 player:getCampaignAllegiance() == 1
         end,
@@ -68,7 +64,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.SOUTHERN_SAN_DORIA_S] =

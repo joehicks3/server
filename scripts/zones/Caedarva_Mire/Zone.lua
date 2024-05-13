@@ -1,11 +1,7 @@
 -----------------------------------
 -- Zone: Caedarva_Mire (79)
 -----------------------------------
-local ID = require('scripts/zones/Caedarva_Mire/IDs')
-require('scripts/globals/missions')
-require('scripts/globals/titles')
-require('scripts/globals/helm')
-require('scripts/globals/zone')
+local ID = zones[xi.zone.CAEDARVA_MIRE]
 -----------------------------------
 local zoneObject = {}
 
@@ -14,7 +10,7 @@ zoneObject.onInitialize = function(zone)
     GetMobByID(ID.mob.AYNU_KAYSEY):setRespawnTime(math.random(900, 10800))
     GetMobByID(ID.mob.KHIMAIRA):setRespawnTime(math.random(12, 36) * 3600) -- 12 to 36 hours after maintenance, in 1-hour increments
 
-    xi.helm.initZone(zone, xi.helm.type.LOGGING)
+    xi.helm.initZone(zone, xi.helmType.LOGGING)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -40,10 +36,10 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.afterZoneIn = function(player)
-    player:entityVisualPacket("1pb1")
-    player:entityVisualPacket("2pb1")
-    player:entityVisualPacket("1pd1")
-    player:entityVisualPacket("2pc1")
+    player:entityVisualPacket('1pb1')
+    player:entityVisualPacket('2pb1')
+    player:entityVisualPacket('1pd1')
+    player:entityVisualPacket('2pc1')
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

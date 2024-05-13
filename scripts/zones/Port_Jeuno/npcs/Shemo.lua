@@ -2,10 +2,6 @@
 -- Area: Port Jeuno
 --  NPC: Shemo
 -----------------------------------
-local ID = require("scripts/zones/Port_Jeuno/IDs")
-require("scripts/globals/quests")
-require("scripts/globals/utils")
------------------------------------
 local entity = {}
 
 local beastmanSeal       = 0
@@ -19,8 +15,8 @@ local sacredKindredCrest = 4
 local isTradeNum2 = 0
 
 entity.onTrigger = function(player, npc)
-    local csid = 352
-    local sealShift = {}
+    local csid        = 352
+    local sealShift   = {}
     local hideOptions = 0
 
     sealShift[1] = player:getSeals(beastmanSeal)

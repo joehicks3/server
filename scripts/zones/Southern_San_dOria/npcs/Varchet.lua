@@ -3,9 +3,7 @@
 --  NPC: Varchet
 -- !pos 116.484 -1 91.554 230
 -----------------------------------
-local ID = require("scripts/zones/Southern_San_dOria/IDs")
-require("scripts/globals/npc_util")
-require("scripts/globals/quests")
+local ID = zones[xi.zone.SOUTHERN_SAN_DORIA]
 -----------------------------------
 local entity = {}
 
@@ -14,7 +12,7 @@ local gameLost = 2
 local gameTie  = 3
 
 entity.onTrade = function(player, npc, trade)
-    if npcUtil.tradeHas(trade, { { "gil", 5 } }) then
+    if npcUtil.tradeHas(trade, { { 'gil', 5 } }) then
         player:confirmTrade()
 
         local vdie1 = math.random(1, 6)
@@ -39,7 +37,7 @@ entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
-    if player:getQuestStatus(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.EXIT_THE_GAMBLER) == QUEST_ACCEPTED then
+    if player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.EXIT_THE_GAMBLER) == xi.questStatus.QUEST_ACCEPTED then
         player:startEvent(638)
     else
         player:startEvent(525)
@@ -55,8 +53,8 @@ entity.onEventFinish = function(player, csid, option, npc)
         if result == gameWon then
             npcUtil.giveCurrency(player, 'gil', 10)
 
-            if player:getQuestStatus(xi.quest.log_id.SANDORIA, xi.quest.id.sandoria.EXIT_THE_GAMBLER) == QUEST_ACCEPTED then
-                player:setCharVar("exitTheGamblerStat", 1)
+            if player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.EXIT_THE_GAMBLER) == xi.questStatus.QUEST_ACCEPTED then
+                player:setCharVar('exitTheGamblerStat', 1)
                 player:showText(player:getEventTarget(), ID.text.VARCHET_KEEP_PROMISE)
             end
         elseif result == gameTie then

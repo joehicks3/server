@@ -4,9 +4,7 @@
 -- Only sells when Windurst controls Movalpolos
 -- Confirmed shop stock, August 2013
 -----------------------------------
-local ID = require("scripts/zones/Windurst_Waters/IDs")
-require("scripts/globals/conquest")
-require("scripts/globals/shop")
+local ID = zones[xi.zone.WINDURST_WATERS]
 -----------------------------------
 local entity = {}
 
@@ -29,7 +27,7 @@ entity.onTrigger = function(player, npc)
             1650,  6500,   --Kopparnickel Ore
             5165,   736    --Movalpolos Water
         }
-        xi.shop.general(player, stock, xi.quest.fame_area.WINDURST)
+        xi.shop.general(player, stock, xi.fameArea.WINDURST)
     end
 end
 

@@ -7,18 +7,13 @@
 -- Orn             : !pos -68 -9 30 238
 -- Quu Bokye       : !pos -159 16 181 145
 -----------------------------------
-require('scripts/globals/interaction/quest')
-require('scripts/globals/npc_util')
-require('scripts/globals/quests')
-require('scripts/globals/zone')
------------------------------------
 
-local quest = Quest:new(xi.quest.log_id.WINDURST, xi.quest.id.windurst.EARLY_BIRD_CATCHES_THE_BOOKWORM)
+local quest = Quest:new(xi.questLog.WINDURST, xi.quest.id.windurst.EARLY_BIRD_CATCHES_THE_BOOKWORM)
 
 quest.reward =
 {
     fame = 120,
-    fameArea = xi.quest.fame_area.WINDURST,
+    fameArea = xi.fameArea.WINDURST,
     gil = 1500,
     title = xi.title.SAVIOR_OF_KNOWLEDGE,
 }
@@ -27,9 +22,9 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status == QUEST_AVAILABLE and
-                player:hasCompletedQuest(xi.quest.log_id.WINDURST, xi.quest.id.windurst.GLYPH_HANGER) and
-                player:getFameLevel(xi.quest.fame_area.WINDURST) >= 2 and
+            return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.WINDURST, xi.quest.id.windurst.GLYPH_HANGER) and
+                player:getFameLevel(xi.fameArea.WINDURST) >= 2 and
                 not quest:getMustZone(player)
         end,
 
@@ -43,8 +38,8 @@ quest.sections =
                     -- https://ffxiclopedia.fandom.com/wiki/Early_Bird_Catches_the_Bookworm
                     if
                         player:getNation() ~= xi.nation.WINDURST or
-                        (not player:getCurrentMission(xi.mission.log_id.WINDURST) == xi.mission.id.windurst.LOST_FOR_WORDS and
-                        not player:getCurrentMission(xi.mission.log_id.WINDURST) == xi.mission.id.windurst.THE_SIXTH_MINISTRY)
+                        (player:getCurrentMission(xi.mission.log_id.WINDURST) ~= xi.mission.id.windurst.LOST_FOR_WORDS and
+                        player:getCurrentMission(xi.mission.log_id.WINDURST) ~= xi.mission.id.windurst.THE_SIXTH_MINISTRY)
                     then
                         return quest:progressEvent(387)
                     end
@@ -64,7 +59,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_ACCEPTED
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.WINDURST_WATERS] =
@@ -140,7 +135,7 @@ quest.sections =
                 onTrade = function(player, npc, trade)
                     if
                         quest:getVar(player, 'Prog') == 1 and
-                        npcUtil.tradeHasExactly(trade, xi.items.SILVER_BEASTCOIN)
+                        npcUtil.tradeHasExactly(trade, xi.item.SILVER_BEASTCOIN)
                     then
                         return quest:progressEvent(58)
                     end
@@ -170,7 +165,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status == QUEST_COMPLETED and
+            return status == xi.questStatus.QUEST_COMPLETED and
                 player:getLocalVar('Quest[2][13]mustZone') == 1
         end,
 

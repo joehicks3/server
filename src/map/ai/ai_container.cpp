@@ -185,7 +185,7 @@ bool CAIContainer::Untargetable(duration _duration, bool canChangeState)
 
 bool CAIContainer::Internal_Engage(uint16 targetid)
 {
-    //#TODO: pet engage/disengage
+    // TODO: pet engage/disengage
     auto* entity = dynamic_cast<CBattleEntity*>(PEntity);
 
     if (entity && entity->PAI->IsEngaged())
@@ -197,12 +197,12 @@ bool CAIContainer::Internal_Engage(uint16 targetid)
         }
         return false;
     }
-    //#TODO: use valid target stuff from spell
+    // TODO: use valid target stuff from spell
     if (entity)
     {
-        //#TODO: remove m_battleTarget if possible (need to check disengage)
-        // Check if an entity can change to the attack state
-        // Allow entity with prevent action effect to very briefly switch to the attack state to be properly engaged
+        // TODO: remove m_battleTarget if possible (need to check disengage)
+        //  Check if an entity can change to the attack state
+        //  Allow entity with prevent action effect to very briefly switch to the attack state to be properly engaged
         if (CanChangeState() || (GetCurrentState() && GetCurrentState()->IsCompleted()) || entity->StatusEffectContainer->HasPreventActionEffect(true))
         {
             if (ForceChangeState<CAttackState>(entity, targetid))
@@ -226,7 +226,7 @@ bool CAIContainer::Internal_Cast(uint16 targetid, SpellID spellid)
     auto* entity = dynamic_cast<CBattleEntity*>(PEntity);
     if (entity)
     {
-        if (auto target = entity->GetEntity(targetid); target && target->PAI->IsUntargetable())
+        if (auto* target = entity->GetEntity(targetid); target && target->PAI->IsUntargetable())
         {
             return false;
         }
@@ -269,7 +269,7 @@ bool CAIContainer::Internal_WeaponSkill(uint16 targid, uint16 wsid)
     auto* entity = dynamic_cast<CBattleEntity*>(PEntity);
     if (entity)
     {
-        if (auto target = entity->GetEntity(targid); target && target->PAI->IsUntargetable())
+        if (auto* target = entity->GetEntity(targid); target && target->PAI->IsUntargetable())
         {
             return false;
         }
@@ -280,10 +280,10 @@ bool CAIContainer::Internal_WeaponSkill(uint16 targid, uint16 wsid)
 
 bool CAIContainer::Internal_MobSkill(uint16 targid, uint16 wsid)
 {
-    auto* entity = dynamic_cast<CMobEntity*>(PEntity);
+    auto* entity = dynamic_cast<CBattleEntity*>(PEntity);
     if (entity)
     {
-        if (auto target = entity->GetEntity(targid); target && target->PAI->IsUntargetable())
+        if (auto* target = entity->GetEntity(targid); target && target->PAI->IsUntargetable())
         {
             return false;
         }
@@ -297,7 +297,7 @@ bool CAIContainer::Internal_PetSkill(uint16 targid, uint16 abilityid)
     auto* entity = dynamic_cast<CPetEntity*>(PEntity);
     if (entity)
     {
-        if (auto target = entity->GetEntity(targid); target && target->PAI->IsUntargetable())
+        if (auto* target = entity->GetEntity(targid); target && target->PAI->IsUntargetable())
         {
             return false;
         }
@@ -311,7 +311,7 @@ bool CAIContainer::Internal_Ability(uint16 targetid, uint16 abilityid)
     auto* entity = dynamic_cast<CBattleEntity*>(PEntity);
     if (entity)
     {
-        if (auto target = entity->GetEntity(targetid); target && target->PAI->IsUntargetable())
+        if (auto* target = entity->GetEntity(targetid); target && target->PAI->IsUntargetable())
         {
             return false;
         }
@@ -325,7 +325,7 @@ bool CAIContainer::Internal_RangedAttack(uint16 targetid)
     auto* entity = dynamic_cast<CBattleEntity*>(PEntity);
     if (entity)
     {
-        if (auto target = entity->GetEntity(targetid); target && target->PAI->IsUntargetable())
+        if (auto* target = entity->GetEntity(targetid); target && target->PAI->IsUntargetable())
         {
             return false;
         }
@@ -417,11 +417,11 @@ void CAIContainer::Tick(time_point _tick)
     m_PrevTick = m_Tick;
     m_Tick     = _tick;
 
-    //#TODO: timestamp in the event?
+    // TODO: timestamp in the event?
     EventHandler.triggerListener("TICK", CLuaBaseEntity(PEntity));
     PEntity->Tick(_tick);
 
-    //#TODO: check this in the controller instead maybe? (might not want to check every tick)
+    // TODO: check this in the controller instead maybe? (might not want to check every tick)
     ActionQueue.checkAction(_tick);
 
     // check pathfinding only if there is no controller to do it
@@ -494,7 +494,7 @@ bool CAIContainer::IsEngaged()
 
 bool CAIContainer::IsUntargetable()
 {
-    return PEntity->PAI->IsCurrentState<CInactiveState>() && static_cast<CInactiveState*>(PEntity->PAI->GetCurrentState())->GetUntargetable();
+    return (PEntity->PAI->IsCurrentState<CInactiveState>() && static_cast<CInactiveState*>(PEntity->PAI->GetCurrentState())->GetUntargetable()) || PEntity->GetUntargetable();
 }
 
 time_point CAIContainer::getTick()
@@ -527,6 +527,16 @@ void CAIContainer::QueueAction(queueAction_t&& action)
 bool CAIContainer::QueueEmpty()
 {
     return ActionQueue.isEmpty();
+}
+
+void CAIContainer::ClearActionQueue()
+{
+    ActionQueue.clearActionQueue();
+}
+
+void CAIContainer::ClearTimerQueue()
+{
+    ActionQueue.clearTimerQueue();
 }
 
 void CAIContainer::checkQueueImmediately()
