@@ -5,14 +5,14 @@
 -- Note: Heals for a fixed amount based on Luopan Level:
 -- This is a light-based cure, so it can suffer Darkness day/weather penalties.
 -----------------------------------
+---@type TAbilityPet
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
-    return 0, 0
+    return xi.job_utils.geomancer.geoOnAbilityCheck(player, target, ability)
 end
 
-abilityObject.onPetAbility = function(target, pet, skill)
-    local master    = pet:getMaster()
+abilityObject.onPetAbility = function(target, pet, petskill, master, action)
     local hpAmount  = math.floor(7 * pet:getMainLvl())
     local hpRestore = hpAmount
 
@@ -27,13 +27,11 @@ abilityObject.onPetAbility = function(target, pet, skill)
 
     target:wakeUp()
 
-    skill:setMsg(xi.msg.basic.SKILL_RECOVERS_HP)
-
     if target:getID() == pet:getID() then
         hpRestore = 0
     end
 
-    target:addHP()
+    target:addHP(hpRestore)
 
     pet:timer(200, function(mobArg)
         mobArg:setHP(0)

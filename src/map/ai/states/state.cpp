@@ -1,20 +1,20 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2010-2015 Darkstar Dev Teams
+  Copyright (c) 2010-2015 Darkstar Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
@@ -55,14 +55,25 @@ void CState::Complete()
     m_completed = true;
 }
 
-time_point CState::GetEntryTime() const
+timer::time_point CState::GetEntryTime() const
 {
     return m_entryTime;
 }
 
+bool CState::WasExitDelayed()
+{
+    return m_wasDelayed;
+}
+
+void CState::DelayExitTime(std::chrono::milliseconds delayMilliseconds)
+{
+    m_entryTime += delayMilliseconds;
+    m_wasDelayed = true;
+}
+
 void CState::ResetEntryTime()
 {
-    m_entryTime = server_clock::now();
+    m_entryTime = timer::now();
 }
 
 void CState::SetTarget(uint16 _targid)
@@ -79,12 +90,19 @@ bool CState::HasErrorMsg() const
     return m_errorMsg != nullptr;
 }
 
-CBasicPacket* CState::GetErrorMsg()
+auto CState::GetErrorMsg() -> std::unique_ptr<CBasicPacket>
 {
-    return m_errorMsg.release();
+    if (HasErrorMsg())
+    {
+        return m_errorMsg->copy();
+    }
+
+    ShowError("State attempted to get error message when error message was null");
+
+    return std::unique_ptr<CBasicPacket>();
 }
 
-bool CState::DoUpdate(time_point tick)
+bool CState::DoUpdate(timer::time_point tick)
 {
     UpdateTarget(m_targid);
     return Update(tick);

@@ -184,7 +184,7 @@ quest.sections =
                 [346] = function(player, csid, option, npc)
                     player:delQuest(quest.areaId, quest.questId)
                     player:delKeyItem(xi.ki.SMALL_BAG)
-                    quest:setVar('dueDate', 0)
+                    quest:setVar(player, 'dueDate', 0)
                     quest:setVar(player, 'Prog', 256)
                 end,
 
@@ -222,7 +222,7 @@ quest.sections =
             ['Kenapa-Keppa'] =
             {
                 onTrigger = function(player, npc)
-                    if math.random(1, 2) == 1 then
+                    if math.random(1, 100) <= 50 then
                         return quest:event(349):replaceDefault()
                     else
                         return quest:event(350):replaceDefault()

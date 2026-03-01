@@ -7,10 +7,8 @@
 -----------------------------------
 local ID = zones[xi.zone.WINDURST_WATERS]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local wakingDreams = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.WAKING_DREAMS)
@@ -33,14 +31,11 @@ entity.onTrigger = function(player, npc)
         or
         (
             wakingDreams == xi.questStatus.QUEST_COMPLETED and
-            os.time() > player:getCharVar('Darkness_Named_date')
+            GetSystemTime() > player:getCharVar('Darkness_Named_date')
         )
     then
         player:startEvent(918)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
@@ -68,7 +63,7 @@ entity.onEventFinish = function(player, csid, option, npc)
 
         if npcUtil.completeQuest(player, xi.questLog.WINDURST, xi.quest.id.windurst.WAKING_DREAMS, reward) then
             player:delKeyItem(xi.ki.WHISPER_OF_DREAMS)
-            player:setCharVar('Darkness_Named_date', getMidnight())
+            player:setCharVar('Darkness_Named_date', JstMidnight())
         end
     end
 end

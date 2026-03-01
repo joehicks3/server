@@ -4,6 +4,7 @@
 --  Involved in quest: No Strings Attached
 -- !pos 101.329 -6.999 -29.042 50
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -82,9 +83,6 @@ entity.onTrigger = function(player, npc)
     elseif operationTeaTime == xi.questStatus.QUEST_COMPLETED then
         player:startEvent(777)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

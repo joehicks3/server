@@ -46,7 +46,7 @@ mission.sections =
                             npcUtil.tradeHasExactly(trade, xi.item.GRAY_CHIP)
                         )
                     then
-                        return mission:progressEvent(52, 500 * xi.settings.main.GIL_RATE)
+                        return mission:progressEvent(52, xi.settings.main.GIL_RATE * 500)
                     end
                 end,
 
@@ -87,7 +87,7 @@ mission.sections =
                 [52] = function(player, csid, option, npc)
                     player:confirmTrade()
 
-                    npcUtil.giveCurrency(player, 'gil', 500)
+                    player:addGil(xi.settings.main.GIL_RATE * 500) -- Silent since the gil reward is baked into the CS.
                     npcUtil.giveKeyItem(player, xi.ki.PSOXJA_PASS)
                     mission:setVar(player, 'Status', 3)
                 end,
@@ -131,14 +131,11 @@ mission.sections =
 
         [xi.zone.THE_SHROUDED_MAW] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if mission:getVar(player, 'Status') == 3 then
-                        return 2
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if mission:getVar(player, 'Status') == 3 then
+                    return 2
+                end
+            end,
 
             onEventFinish =
             {
@@ -148,7 +145,7 @@ mission.sections =
 
                 [32001] = function(player, csid, option, npc)
                     if
-                        player:getLocalVar('battlefieldWin') == 704 and
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.DARKNESS_NAMED and
                         mission:getVar(player, 'Status') == 4
                     then
                         player:addTitle(xi.title.TRANSIENT_DREAMER)

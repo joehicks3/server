@@ -3,13 +3,11 @@
 -- NPC: Eschan Portal #1
 -- !pos 10 -34 -463 289
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    xi.escha.portals.eschanPortalOnTrigger(player, npc, 8)
+    xi.escha.portals.eschanPortalOnTrigger(player, npc)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)

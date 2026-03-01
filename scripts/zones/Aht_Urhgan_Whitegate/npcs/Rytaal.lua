@@ -5,10 +5,8 @@
 -----------------------------------
 local ID = zones[xi.zone.AHT_URHGAN_WHITEGATE]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local currentAssault = player:getCurrentAssault()
@@ -51,7 +49,7 @@ entity.onTrigger = function(player, npc)
         (player:getCurrentMission(xi.mission.log_id.TOAU) == xi.mission.id.toau.PRESIDENT_SALAHEEM and
         player:getCharVar('ToAU3Progress') >= 1)
     then
-        local currentTime = os.time()
+        local currentTime = GetSystemTime()
         local refreshTime = player:getCharVar('nextTagTime')
         local idTagPeriod = 86400
 
@@ -96,9 +94,6 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     local tagStock = player:getCurrency('id_tags')
 
@@ -122,7 +117,7 @@ entity.onEventFinish = function(player, csid, option, npc)
         end
 
         if tagStock >= 3 then
-            player:setCharVar('nextTagTime', os.time() + idTagPeriod)
+            player:setCharVar('nextTagTime', GetSystemTime() + idTagPeriod)
         end
 
         player:setCurrency('id_tags', tagStock - 1)

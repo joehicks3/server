@@ -1,21 +1,33 @@
 -----------------------------------
 -- Malediction
--- Steals an enemy's HP. Ineffective against undead.
+-- Family: Skeletons
+-- Description: Steals HP of surrounding targets.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 1.5, xi.element.DARK, dmgmod, xi.mobskills.magicalTpBonus.MAB_BONUS, 1)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.DARK, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    skill:setMsg(xi.mobskills.mobPhysicalDrainMove(mob, target, skill, xi.mobskills.drainType.HP, dmg))
+    params.baseDamage         = mob:getMainLvl()
+    params.fTP                = { 4, 4, 4 }
+    params.element            = xi.element.NONE
+    params.attackType         = xi.attackType.MAGICAL
+    params.damageType         = xi.damageType.NONE
+    params.shadowBehavior     = xi.mobskills.shadowBehavior.WIPE_SHADOWS
+    params.skipMagicBonusDiff = true
 
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        skill:setMsg(xi.mobskills.mobDrainMove(mob, target, xi.mobskills.drainType.HP, info.damage))
+    end
+
+    return info.damage
 end
 
 return mobskillObject

@@ -27,15 +27,89 @@ xi.confrontation = xi.confrontation or {}
 
 xi.confrontation.lookup = {}
 
+---@param mobs table
+---@return nil
+xi.confrontation.despawnMobs = function(mobs)
+    for _, mob in ipairs(mobs) do
+        if mob:isSpawned() then
+            DespawnMob(mob:getID())
+        end
+    end
+end
+
+local msgIfExists = function(player, msgID, offset)
+    if
+        not player or
+        not msgID
+    then
+        return
+    end
+
+    player:messageSpecial(msgID + (offset or 0))
+end
+
+-- will early exit with false return if confrontation doesn't define a distanceLimit
+-- will default to warn 5 times before failing confrontation
+-- messages are in the zone's IDs.lua text table offset from CONFRONTATION_DISENGAGED:
+-- -1: warning you have left the area
+-- +1: returned to area
+--  0: confrontation has ended
+local confrontationDistCheck = function(player, npc, distanceLimit, distanceWarnLimit)
+    if
+        not (player and
+        npc and
+        distanceLimit and
+        distanceLimit > 0)
+    then
+        return false
+    end
+
+    local endMsg = zones[player:getZoneID()].text.CONFRONTATION_DISENGAGED
+    local prevOutOfRange = player:getLocalVar('Confrontation_Dist')
+    if player:checkDistance(npc) < distanceLimit then
+        player:setLocalVar('Confrontation_Dist', 0)
+        if prevOutOfRange > 0 then
+            -- you have returned to the area
+            msgIfExists(player, endMsg, 1)
+        end
+    else
+        -- running out of range
+        player:setLocalVar('Confrontation_Dist', prevOutOfRange + 1)
+        if prevOutOfRange >= (distanceWarnLimit or 5) then
+            -- the confrontation has ended
+            msgIfExists(player, endMsg)
+
+            return true
+        else
+            -- you have ventured too far
+            msgIfExists(player, endMsg, -1)
+        end
+    end
+
+    return false
+end
+
+---@param lookupKey integer
+---@param setupTimer boolean
+---@return nil
 xi.confrontation.check = function(lookupKey, setupTimer)
-    -- Get the list of mobs from the
+    -- Get the confrontation information
     local lookup = xi.confrontation.lookup[lookupKey]
+
+    if not lookup then
+        return
+    end
+
     local didWin = false
     local didLose = false
 
     local players = {}
     for _, id in ipairs(lookup.registeredPlayerIds) do
-        table.insert(players, GetPlayerByID(id))
+        local player = GetPlayerByID(id)
+
+        if player then
+            table.insert(players, player)
+        end
     end
 
     local mobs = {}
@@ -45,13 +119,19 @@ xi.confrontation.check = function(lookupKey, setupTimer)
 
     -- Check to see if the players are still valid
     local validPlayerCount = 0
-    for _, m in ipairs(players) do
+    for _, member in ipairs(players) do
         if
-            m:isAlive() and
-            m:getZoneID() == lookup.npc:getZoneID() and
-            m:getStatusEffect(xi.effect.CONFRONTATION):getPower() == lookupKey
+            member:isAlive() and
+            member:getZoneID() == lookup.npc:getZoneID() and
+            member:hasStatusEffect(xi.effect.CONFRONTATION) and
+            member:getStatusEffect(xi.effect.CONFRONTATION):getPower() == lookupKey
         then
             validPlayerCount = validPlayerCount + 1
+
+            -- send out-of-range messages multiple times in a row then fail the confrontation if any member stays out of range long enough
+            if confrontationDistCheck(member, lookup.npc, lookup.distanceLimit, lookup.distanceWarnLimit) then
+                didLose = true
+            end
         end
     end
 
@@ -59,13 +139,20 @@ xi.confrontation.check = function(lookupKey, setupTimer)
         didLose = true
     end
 
+    if lookup.timeLimit then
+        if GetSystemTime() > lookup.timeLimit then
+            didLose = true
+        end
+    end
+
     -- Check to see if the mobs are still valid
     local validMobCount = 0
-    for _, m in pairs(mobs) do
+    for _, mob in pairs(mobs) do
         if
-            m:isAlive() and
-            m:getZoneID() == lookup.npc:getZoneID() and
-            m:getStatusEffect(xi.effect.CONFRONTATION):getPower() == lookupKey
+            mob:isAlive() and
+            mob:getZoneID() == lookup.npc:getZoneID() and
+            mob:hasStatusEffect(xi.effect.CONFRONTATION) and
+            mob:getStatusEffect(xi.effect.CONFRONTATION):getPower() == lookupKey
         then
             validMobCount = validMobCount + 1
         end
@@ -88,11 +175,14 @@ xi.confrontation.check = function(lookupKey, setupTimer)
             end
         end
 
-        -- Despawn Mobs
-        for _, mob in ipairs(mobs) do
-            if mob:isSpawned() then
-                DespawnMob(mob:getID())
-            end
+        -- Despawn mobs if lost, otherwise let them despawn naturally
+        if didLose then
+            xi.confrontation.despawnMobs(mobs)
+        end
+
+        -- Reset mobs/npcs/variables that may not be handled by win/lose
+        if lookup.cleanUp then
+            lookup.cleanUp()
         end
 
         xi.confrontation.lookup[lookupKey] = nil
@@ -105,9 +195,16 @@ xi.confrontation.check = function(lookupKey, setupTimer)
     end
 end
 
-xi.confrontation.start = function(player, npc, mobIds, winFunc, loseFunc)
+---@param player CBaseEntity
+---@param npc CBaseEntity
+---@param mobIds table|integer
+---@param params table
+---@return nil
+xi.confrontation.start = function(player, npc, mobIds, params)
     -- Generate lookup ID from spawn npc data
     local lookupKey = bit.rshift(npc:getID(), 16)
+
+    params = params or {}
 
     -- Extract mobIds
     local mobs = {}
@@ -124,37 +221,58 @@ xi.confrontation.start = function(player, npc, mobIds, winFunc, loseFunc)
     mobIds = mobs
 
     -- Tag alliance members with the confrontation effect
+    local alliance = {}
+    if type(params.playerList) == 'table' then
+        alliance = params.playerList
+    else
+        alliance = player:getAlliance()
+    end
+
     local registeredPlayerIds = {}
-    local alliance = player:getAlliance()
+
     for _, member in ipairs(alliance) do
         -- Using the pop npc's ID as the 'key'
-        member:addStatusEffect(xi.effect.CONFRONTATION, lookupKey, 0, 0)
-        -- local effect = member:getStatusEffect(xi.effect.CONFRONTATION)
-        -- TODO: confirm correct flags in sql, should need to set here and even if we did, we'd not use this method to add a flag
-        -- effect:setEffectFlags(effect:getEffectFlags() + xi.effectFlag.ON_ZONE)
+        member:addStatusEffect(xi.effect.CONFRONTATION, { power = lookupKey, origin = member })
         table.insert(registeredPlayerIds, member:getID())
     end
 
     -- Tag mobs with the confrontation effect
     for _, mobId in pairs(mobs) do
         local mob = GetMobByID(mobId)
-        mob:addStatusEffect(xi.effect.CONFRONTATION, lookupKey, 0, 0)
-        mob:addListener('DEATH', 'CONFRONTATION_DEATH', function(mobArg)
-            mobArg:removeListener('CONFRONTATION_DEATH')
-            xi.confrontation.check(npc, false)
-        end)
+
+        if mob then
+            mob:addStatusEffect(xi.effect.CONFRONTATION, { power = lookupKey, origin = mob })
+            mob:addListener('DEATH', 'CONFRONTATION_DEATH', function(mobArg)
+                mobArg:removeListener('CONFRONTATION_DEATH')
+                xi.confrontation.check(lookupKey, false)
+            end)
+        end
     end
 
     -- Cache the lists into the global lookup
-    xi.confrontation.lookup[lookupKey] = {}
-    xi.confrontation.lookup[lookupKey].npc = npc
-    xi.confrontation.lookup[lookupKey].registeredPlayerIds = registeredPlayerIds
-    xi.confrontation.lookup[lookupKey].mobIds = mobIds
-    xi.confrontation.lookup[lookupKey].onWin = winFunc
-    xi.confrontation.lookup[lookupKey].onLose = loseFunc
+    local lookup = {}
+
+    lookup.npc                 = npc
+    lookup.registeredPlayerIds = registeredPlayerIds
+    lookup.mobIds              = mobIds
+    lookup.onWin               = params.onWin
+    lookup.onLose              = params.onLose
+    lookup.cleanUp             = params.cleanUp
+    lookup.distanceLimit       = params.distanceLimit
+    lookup.distanceWarnLimit   = params.distanceWarnLimit
+
+    if params.timeLimit then
+        lookup.timeLimit = GetSystemTime() + params.timeLimit
+    end
+
+    xi.confrontation.lookup[lookupKey] = lookup
 
     -- Pop!
-    npcUtil.popFromQM(player, npc, mobIds, { look = true, claim = true, hide = 1 })
+    if params.allRegPlayerEnmity then
+        npcUtil.popFromQM(player, npc, mobIds, { look = true, claim = true, hide = 1, enmityPlayerList = alliance })
+    else
+        npcUtil.popFromQM(player, npc, mobIds, { look = true, claim = true, hide = 1 })
+    end
 
     -- Set up timed checks
     xi.confrontation.check(lookupKey, true)

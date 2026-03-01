@@ -4,8 +4,7 @@
 -- Type: ENM Quest Activator
 -- !pos -308.112 -42.137 -570.096 5
 -----------------------------------
-local ID = zones[xi.zone.ULEGUERAND_RANGE]
------------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -25,9 +24,9 @@ entity.onTrigger = function(player, npc)
     if player:hasKeyItem(xi.ki.ZEPHYR_FAN) then
         player:startEvent(12)
     else
-        if zephyrFanCD >= os.time() then
+        if zephyrFanCD >= GetSystemTime() then
             -- Both Vanadiel time and unix timestamps are based on seconds. Add the difference to the event.
-            player:startEvent(15, VanadielTime() + (zephyrFanCD - os.time()))
+            player:startEvent(15, VanadielTime() + (zephyrFanCD - GetSystemTime()))
         else
             if
                 player:hasItem(xi.item.HANDFUL_OF_CHAMNAET_ICE) or
@@ -41,22 +40,12 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 13 then
-        player:addKeyItem(xi.ki.ZEPHYR_FAN)
-        player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.ZEPHYR_FAN)
-        player:setCharVar('[ENM]ZephyrFan', os.time() + (xi.settings.main.ENM_COOLDOWN * 3600)) -- Current time + (ENM_COOLDOWN*1hr in seconds)
+        npcUtil.giveKeyItem(player, xi.ki.ZEPHYR_FAN)
+        player:setCharVar('[ENM]ZephyrFan', GetSystemTime() + (xi.settings.main.ENM_COOLDOWN * 3600)) -- Current time + (ENM_COOLDOWN*1hr in seconds)
     elseif csid == 14 then
-        if player:getFreeSlotsCount() == 0 then
-            player:messageSpecial(ID.text.ITEM_CANNOT_BE_OBTAINED, xi.item.COTTON_POUCH) -- Cotton Pouch
-            return
-        else
-            player:addItem(xi.item.COTTON_POUCH)
-            player:messageSpecial(ID.text.ITEM_OBTAINED, xi.item.COTTON_POUCH) -- Cotton Pouch
-        end
+        npcUtil.giveItem(player, xi.item.COTTON_POUCH)
     end
 end
 

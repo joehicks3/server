@@ -1,25 +1,37 @@
 -----------------------------------
 -- MP Drainkiss
--- Deals dark damage to a single target. Additional effect: Aspir
--- Type: Magical
--- Utsusemi/Blink absorb: 1 shadow
--- Range: Melee
--- Notes: If used against undead, it will simply do damage and not drain MP.
+-- Family: Leeches
+-- Description: Steals MP from target.
+-- Notes: Ineffective vs undead.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 1.6, xi.element.DARK, dmgmod, xi.mobskills.magicalTpBonus.MAB_BONUS, 1)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.DARK, xi.mobskills.shadowBehavior.NUMSHADOWS_1)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    skill:setMsg(xi.mobskills.mobPhysicalDrainMove(mob, target, skill, xi.mobskills.drainType.MP, dmg))
+    params.baseDamage           = mob:getMainLvl() + 2 -- TODO: Capture base damage. Other MP Drains are often Level - 2
+    params.fTP                  = { 1.50, 1.50, 1.50 }
+    params.element              = xi.element.NONE
+    params.attackType           = xi.attackType.MAGICAL
+    params.damageType           = xi.damageType.NONE
+    params.shadowBehavior       = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
+    params.skipDamageAdjustment = true
+    params.skipMagicBonusDiff   = true
+    params.skipStoneSkin        = true
+    params.dStatMultiplier      = 1.5
 
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        skill:setMsg(xi.mobskills.mobDrainMove(mob, target, xi.mobskills.drainType.MP, info.damage))
+    end
+
+    return info.damage
 end
 
 return mobskillObject

@@ -2,11 +2,12 @@
 -- Area: Lufaise Meadows
 --  Mob: Defoliate Leshy
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobDeath = function(mob, player, optParams)
     if optParams.isKiller then
-        GetMobByID(mob:getID()-1):setLocalVar('timeToGrow', os.time() + math.random(43200, 86400)) -- Colorful in 12 to 24 hours
+        GetMobByID(mob:getID()-1):setLocalVar('timeToGrow', GetSystemTime() + math.random(43200, 86400)) -- Colorful in 12 to 24 hours
     end
 end
 

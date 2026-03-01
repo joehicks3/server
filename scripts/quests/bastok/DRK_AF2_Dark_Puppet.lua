@@ -59,7 +59,7 @@ quest.sections =
                     then
                         player:confirmTrade()
 
-                        return quest:messageSpecial(ordellesID.text.GERWITZS_AXE_DIALOG)
+                        return quest:messageSpecial(ordellesID.text.SENSE_A_FOUL_PRESENCE)
                     end
                 end,
             },
@@ -74,7 +74,7 @@ quest.sections =
                     then
                         player:confirmTrade()
 
-                        return quest:messageSpecial(ordellesID.text.GERWITZS_SWORD_DIALOG)
+                        return quest:messageSpecial(ordellesID.text.SENSE_A_FOUL_PRESENCE)
                     end
                 end,
             },
@@ -88,7 +88,7 @@ quest.sections =
                     then
                         player:confirmTrade()
 
-                        return quest:messageSpecial(ordellesID.text.GERWITZS_SOUL_DIALOG)
+                        return quest:messageSpecial(ordellesID.text.SENSE_A_FOUL_PRESENCE)
                     end
                 end,
             },
@@ -100,14 +100,11 @@ quest.sections =
                 end,
             },
 
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if quest:getVar(player, 'Prog') == 0 then
-                        return 10
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if quest:getVar(player, 'Prog') == 0 then
+                    return 10
+                end
+            end,
 
             onEventFinish =
             {
@@ -119,14 +116,11 @@ quest.sections =
 
         [xi.zone.LA_THEINE_PLATEAU] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if quest:getVar(player, 'Prog') == 2 then
-                        return 122
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if quest:getVar(player, 'Prog') == 2 then
+                    return 122
+                end
+            end,
 
             onEventFinish =
             {

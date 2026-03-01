@@ -1,20 +1,20 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2010-2015 Darkstar Dev Teams
+  Copyright (c) 2010-2015 Darkstar Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
@@ -54,12 +54,11 @@ enum class AURA_TARGET : uint8
 
 enum FINDFLAGS
 {
-    FINDFLAGS_NONE            = 0,
-    FINDFLAGS_DEAD            = 1,  // target dead
-    FINDFLAGS_ALLIANCE        = 2,  // force target alliance
-    FINDFLAGS_PET             = 4,  // force target pet
-    FINDFLAGS_UNLIMITED       = 8,  // unlimited distance
-    FINDFLAGS_HIT_ALL         = 16, // hit all targets, regardless of party
+    FINDFLAGS_NONE     = 0,
+    FINDFLAGS_DEAD     = 1, // target dead
+    FINDFLAGS_ALLIANCE = 2, // force target alliance
+    FINDFLAGS_PET      = 4, // force target pet
+    // 8 and 16 are available
     FINDFLAGS_IGNORE_BATTLEID = 32, // ignore battle id check
 };
 
@@ -147,6 +146,9 @@ protected:
     position_t* m_APoint;
     position_t  m_BPoint;
     position_t  m_CPoint;
+
+    // For self-centered AoEs (radiusType == AOE_RADIUS::ATTACKER)
+    bool m_selfCenteredAoE;
 };
 
 #endif

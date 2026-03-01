@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.LUFAISE_MEADOWS]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -17,7 +18,7 @@ entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
-    player:messageSpecial(ID.text.NOTHING_OUT_OF_ORDINARY)
+    player:messageSpecial(ID.text.AMALTHEIA_TEXT)
 end
 
 return entity

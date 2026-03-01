@@ -23,12 +23,9 @@ mission.sections =
 
         [xi.zone.LOWER_JEUNO] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    return 10094
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                return 10094
+            end,
 
             onEventUpdate =
             {
@@ -39,8 +36,10 @@ mission.sections =
                         local noVerena = 0
                         local noSibyl  = 0
 
-                        -- TODO: Fact check this.
-                        if player:hasCompletedMission(xi.mission.log_id.ZILART, xi.mission.id.zilart.WELCOME_TNORG) then
+                        if
+                            player:getCurrentMission(xi.mission.log_id.ZILART) >= xi.mission.id.zilart.RETURN_TO_DELKFUTTS_TOWER and -- Verena is kidnapped and then in plot coma.
+                            player:getCurrentMission(xi.mission.log_id.ZILART) < xi.mission.id.zilart.AWAKENING                      -- Verena appears in Tenshodo cutscene, recovered.
+                        then
                             noVerena = 1
                         end
 

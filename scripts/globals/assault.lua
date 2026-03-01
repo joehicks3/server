@@ -87,7 +87,7 @@ xi.assault.afterInstanceRegister = function(player, fireFlies)
     player:addTempItem(fireFlies)
 
     if levelCap ~= 0 then
-        player:addStatusEffect(xi.effect.LEVEL_RESTRICTION, levelCap, 0, 0)
+        player:addStatusEffect(xi.effect.LEVEL_RESTRICTION, { power = levelCap, origin = player })
     end
 
     for _, entity in pairs(ID.mob[assaultID].MOBS_START) do
@@ -193,6 +193,8 @@ xi.assault.adjustMobLevel = function(mob)
             reducedLevel = 25
         end
 
-        entity:setMobLevel(entity:getMainLvl() - reducedLevel)
+        if entity then
+            entity:setMobLevel(entity:getMainLvl() - reducedLevel)
+        end
     end
 end

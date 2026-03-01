@@ -1,22 +1,22 @@
 -----------------------------------
 -- Area: Windurst Woods
 --  NPC: Nalta
--- Type: Conquest Troupe
--- !pos 19.140 1 -51.297 241
+-- Member of the traveling troupe. Only appears if Windurst is in 1st and there is NOT a tie
+-- !pos 19.14 2.0 -51.297
 -----------------------------------
+local ID = zones[xi.zone.WINDURST_WOODS]
+-----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    player:startEvent(54)
-end
+    local pNation = player:getNation()
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
+    if pNation == xi.nation.SANDORIA then
+        return player:messageText(npc, ID.text.NALTA_SANDY_CIT)
+    else
+        return player:messageText(npc, ID.text.NALTA_NOT_SANDY_CIT)
+    end
 end
 
 return entity

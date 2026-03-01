@@ -20,7 +20,8 @@
 */
 
 #include "item_furnishing.h"
-#include "map.h"
+
+#include "common/utils.h"
 
 CItemFurnishing::CItemFurnishing(uint16 id)
 : CItem(id)
@@ -180,7 +181,7 @@ bool CItemFurnishing::getOn2ndFloor()
 
 bool CItemFurnishing::isGardeningPot()
 {
-    auto id = CItem::getID();
+    const auto id = CItem::getID();
     return id == 216 ||  // porcelain_flowerpot
            id == 217 ||  // brass_flowerpot
            id == 218 ||  // earthen_flowerpot

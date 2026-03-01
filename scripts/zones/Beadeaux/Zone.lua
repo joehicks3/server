@@ -3,23 +3,24 @@
 -----------------------------------
 local ID = zones[xi.zone.BEADEAUX]
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
     -- The Afflictor System (ID, X, Radius, Z) for curse
-    zone:registerTriggerArea(1,  -163, 15, -137, 0, 0, 0) -- The Afflictor, Map 1, G-10
-    zone:registerTriggerArea(2,  -209, 15, -131, 0, 0, 0) -- The Afflictor, Map 1, F-10
-    zone:registerTriggerArea(3,  -140, 15,   20, 0, 0, 0) -- The Afflictor, Map 2, G-8
-    zone:registerTriggerArea(4,   261, 15,  140, 0, 0, 0) -- The Afflictor, Map 2, L-6
-    zone:registerTriggerArea(5,   340, 15,  100, 0, 0, 0) -- The Afflictor, Map 2, M-7, north-west
-    zone:registerTriggerArea(6,   380, 15,   60, 0, 0, 0) -- The Afflictor, Map 2, M-7, south-east
+    zone:registerCylindricalTriggerArea(1, -163, -137, 15) -- The Afflictor, Map 1, G-10
+    zone:registerCylindricalTriggerArea(2, -209, -131, 15) -- The Afflictor, Map 1, F-10
+    zone:registerCylindricalTriggerArea(3, -140, 20, 15) -- The Afflictor, Map 2, G-8
+    zone:registerCylindricalTriggerArea(4, 261, 140, 15) -- The Afflictor, Map 2, L-6
+    zone:registerCylindricalTriggerArea(5, 340, 100, 15) -- The Afflictor, Map 2, M-7, north-west
+    zone:registerCylindricalTriggerArea(6, 380, 60, 15) -- The Afflictor, Map 2, M-7, south-east
     -- The Afflictor Warning Message
-    zone:registerTriggerArea(7,  -163, 30, -137, 0, 0, 0) -- The Afflictor, Map 1, G-10
-    zone:registerTriggerArea(8,  -209, 30, -131, 0, 0, 0) -- The Afflictor, Map 1, F-10
-    zone:registerTriggerArea(9,  -140, 30,   20, 0, 0, 0) -- The Afflictor, Map 2, G-8
-    zone:registerTriggerArea(10,  261, 30,  140, 0, 0, 0) -- The Afflictor, Map 2, L-6
-    zone:registerTriggerArea(11,  340, 30,  100, 0, 0, 0) -- The Afflictor, Map 2, M-7, north-west
-    zone:registerTriggerArea(12,  380, 30,   60, 0, 0, 0) -- The Afflictor, Map 2, M-7, south-east
+    zone:registerCylindricalTriggerArea(7, -163, -137, 30) -- The Afflictor, Map 1, G-10
+    zone:registerCylindricalTriggerArea(8, -209, -131, 30) -- The Afflictor, Map 1, F-10
+    zone:registerCylindricalTriggerArea(9, -140, 20, 30) -- The Afflictor, Map 2, G-8
+    zone:registerCylindricalTriggerArea(10, 261, 140, 30) -- The Afflictor, Map 2, L-6
+    zone:registerCylindricalTriggerArea(11, 340, 100, 30) -- The Afflictor, Map 2, M-7, north-west
+    zone:registerCylindricalTriggerArea(12, 380, 60, 30) -- The Afflictor, Map 2, M-7, south-east
 
     xi.treasure.initZone(zone)
 end
@@ -39,13 +40,13 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
-    local triggerAreaID = triggerArea:GetTriggerAreaID()
+    local triggerAreaID = triggerArea:getTriggerAreaID()
     local yPos     = player:getYPos()
-    local time     = os.time()
+    local time     = GetSystemTime()
 
     -- TODO:
     -- Packet not implemented correctly. This should be able to have the npc use an animation onto the player itself but current cannot.
@@ -61,9 +62,9 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
     then
         if not player:hasStatusEffect(xi.effect.CURSE_I) then
             if not player:hasStatusEffect(xi.effect.SILENCE) then
-                GetNPCByID(ID.npc.AFFLICTOR_BASE + (triggerArea:GetTriggerAreaID() -1)):entityAnimationPacket('main', player)
+                GetNPCByID(ID.npc.AFFLICTOR_BASE + (triggerArea:getTriggerAreaID() -1)):entityAnimationPacket('main', player)
                 player:setLocalVar('inRegion', time + 11) -- Start timer. We set it here to prevent double message.
-                player:addStatusEffect(xi.effect.CURSE_I, 75, 0, 120)
+                player:addStatusEffect(xi.effect.CURSE_I, { power = 75, duration = 120, origin = player })
                 player:messageSpecial(ID.text.FEEL_NUMB)
             elseif player:getLocalVar('inRegion1') <= time then
                 player:messageSpecial(ID.text.LIGHT_HEADED)
@@ -92,7 +93,7 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
-    local triggerAreaID = triggerArea:GetTriggerAreaID()
+    local triggerAreaID = triggerArea:getTriggerAreaID()
     local yPos      = player:getYPos()
 
     if
@@ -107,10 +108,13 @@ end
 
 zoneObject.onZoneWeatherChange = function(weather)
     local qm1 = GetNPCByID(ID.npc.QM1) -- Quest: Beaudeaux Smog
-    if weather == xi.weather.RAIN or weather == xi.weather.SQUALL then
-        qm1:setStatus(xi.status.NORMAL)
-    else
-        qm1:setStatus(xi.status.DISAPPEAR)
+
+    if qm1 then
+        if weather == xi.weather.RAIN or weather == xi.weather.SQUALL then
+            qm1:setStatus(xi.status.NORMAL)
+        else
+            qm1:setStatus(xi.status.DISAPPEAR)
+        end
     end
 end
 

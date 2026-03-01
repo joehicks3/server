@@ -4,10 +4,8 @@
 --  Involved in Quests: Wonder Wands
 -- !pos -101.209 -4.25 110.886 240
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local wonderWands = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.WONDER_WANDS)
@@ -25,9 +23,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(233)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

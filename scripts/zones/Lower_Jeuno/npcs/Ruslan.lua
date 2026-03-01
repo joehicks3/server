@@ -4,10 +4,8 @@
 -- Involved In Quest: Wondering Minstrel
 -- !pos -19 -1 -58 245
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local wonderingstatus = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.WONDERING_MINSTREL)
@@ -27,15 +25,7 @@ entity.onTrigger = function(player, npc)
         else
             player:startEvent(10008) -- Standard Conversation
         end
-    else
-        player:startEvent(10008) -- Standard Conversation
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

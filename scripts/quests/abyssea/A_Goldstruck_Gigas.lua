@@ -2,6 +2,8 @@
 -- A Goldstruck Gigas
 -----------------------------------
 -- !addquest 8 163
+-- Cavernous Maw    : !pos -557.900 0.001 637.846 102
+-- Briareus         : !spawnmob 17318446
 -----------------------------------
 
 local quest = Quest:new(xi.questLog.ABYSSEA, xi.quest.id.abyssea.A_GOLDSTRUCK_GIGAS)
@@ -42,12 +44,9 @@ quest.sections =
 
         [xi.zone.LA_THEINE_PLATEAU] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    return 10
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                return 10
+            end,
 
             onEventUpdate =
             {

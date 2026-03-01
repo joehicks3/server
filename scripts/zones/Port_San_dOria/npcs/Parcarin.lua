@@ -4,10 +4,8 @@
 -- Involved in Quest: Lure of the Wildcat (San d'Oria)
 -- !pos -9 -13 -151 232
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     if
@@ -16,9 +14,6 @@ entity.onTrigger = function(player, npc)
     then
         player:startEvent(747)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

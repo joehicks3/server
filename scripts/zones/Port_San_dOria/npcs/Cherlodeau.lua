@@ -4,10 +4,8 @@
 -- Involved in Quest: Lure of the Wildcat (San d'Oria)
 -- !pos -20 -4 -69 232
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local wildcatSandy = player:getCharVar('WildcatSandy')
@@ -20,9 +18,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(590)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

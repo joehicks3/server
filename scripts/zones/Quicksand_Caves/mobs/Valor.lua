@@ -5,19 +5,14 @@
 -----------------------------------
 mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobInitialize = function(mob)
     mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 180)
-end
-
-entity.onMobSpawn = function(mob)
-    DespawnMob(mob:getID(), 180)
-    mob:addMod(xi.mod.SLEEP_MEVA, 50)
-    mob:addMod(xi.mod.LULLABY_MEVA, 50)
-end
-
-entity.onMobDeath = function(mob, player, optParams)
+    mob:addImmunity(xi.immunity.DARK_SLEEP)
+    mob:addImmunity(xi.immunity.LIGHT_SLEEP)
+    mob:setMod(xi.mod.SILENCE_RES_RANK, 8)
 end
 
 return entity

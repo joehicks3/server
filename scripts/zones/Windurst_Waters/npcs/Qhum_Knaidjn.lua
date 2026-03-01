@@ -6,6 +6,7 @@
 -----------------------------------
 local ID = zones[xi.zone.WINDURST_WATERS]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -18,13 +19,13 @@ end
 
 entity.onEventUpdate = function(player, csid, option, npc)
     if csid == 10024 then
-        xi.crafting.guildPointOnEventFinish(player, option, npc, xi.guild.COOKING)
+        xi.crafting.guildPointOnEventUpdate(player, option, npc, xi.guild.COOKING)
     end
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 10024 then
-        xi.crafting.guildPointOnEventFinish(player, option, npc, xi.guild.COOKING)
+        xi.crafting.guildPointOnEventFinish(player, option, xi.guild.COOKING)
     elseif csid == 10025 then
         player:messageSpecial(ID.text.GP_OBTAINED, option)
     end

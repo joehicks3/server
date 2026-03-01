@@ -27,36 +27,75 @@ mission.sections =
 
         [xi.zone.LOWER_DELKFUTTS_TOWER] =
         {
-            onZoneIn =
+            ['Tales_Beginning'] =
             {
-                function(player, prevZone)
-                    if prevZone == xi.zone.QUFIM_ISLAND then
-                        return 22
-                    end
+                onTrigger = function(player, npc)
+                    return mission:progressEvent(53, 3) -- 3 prints "Chains of Promathia". I guess the cutscene was copy pasted?
                 end,
             },
 
+            onZoneIn = function(player, prevZone)
+                if prevZone == xi.zone.QUFIM_ISLAND and player:getCharVar('[COP]TalesBeginning') == 0 then
+                    return 22
+                end
+            end,
+
+            afterZoneIn = function(player)
+                if player:getCharVar('[COP]TalesBeginning') > 0 then
+                    local lowerDelkfuttsIDs = zones[xi.zone.LOWER_DELKFUTTS_TOWER]
+
+                    player:enableEntities({ lowerDelkfuttsIDs.npc.TALES_BEGINNING, lowerDelkfuttsIDs.npc.TALES_BEGINNING - 1 })
+                end
+            end,
+
             onEventFinish =
             {
+                -- TODO: These are most likely a series of pos changes that trigger
+                -- onZoneIn events.  In addition, set status vars after each one
+                -- so that on disconnect, it will resume at the latest state.  This
+                -- pattern should also change in section 3
                 [22] = function(player, csid, option, npc)
-                    return mission:event(36)
+                    if option == 1 then
+                        player:startEvent(36)
+                    else
+                        local lowerDelkfuttsIDs = zones[xi.zone.LOWER_DELKFUTTS_TOWER]
+
+                        player:setCharVar('[COP]TalesBeginning', 1)
+                        player:enableEntities({ lowerDelkfuttsIDs.npc.TALES_BEGINNING, lowerDelkfuttsIDs.npc.TALES_BEGINNING - 1 })
+
+                        player:sendPartialMissionLog(xi.mission.log_id.COP, false) -- Send packet to update mission log with special text
+                    end
                 end,
 
                 [36] = function(player, csid, option, npc)
-                    return mission:event(37)
+                    player:startEvent(37)
                 end,
 
                 [37] = function(player, csid, option, npc)
-                    return mission:event(38)
+                    player:startEvent(38)
                 end,
 
                 [38] = function(player, csid, option, npc)
-                    return mission:event(39)
+                    player:startEvent(39)
                 end,
 
                 [39] = function(player, csid, option, npc)
+                    if player:getCharVar('[COP]TalesBeginning') > 0 then
+                        -- Send blank entry to hide all selectively shown NPCs again
+                        -- see https://github.com/atom0s/XiPackets/blob/main/world/server/0x0077/README.md
+                        player:enableEntities({})
+
+                        player:setCharVar('[COP]TalesBeginning', 0)
+                    end
+
                     mission:begin(player)
                     mission:setVar(player, 'Status', 1)
+                end,
+
+                [53] = function(player, csid, option, npc)
+                    if option == 4 then -- It seems this parameter changes depending on the input to event 53
+                        player:startEvent(22, 0, 0, 0, 1) -- CoP intro CS with param[3] == 1 does not have the dialog that would eventually lead us to Tales' Beginning
+                    end
                 end,
             },
         },
@@ -70,12 +109,9 @@ mission.sections =
 
         [xi.zone.UPPER_JEUNO] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    return 2
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                return 2
+            end,
 
             onEventFinish =
             {
@@ -99,11 +135,11 @@ mission.sections =
             onEventFinish =
             {
                 [10] = function(player, csid, option, npc)
-                    return mission:event(206)
+                    player:startEvent(206)
                 end,
 
                 [206] = function(player, csid, option, npc)
-                    return mission:event(207)
+                    player:startEvent(207)
                 end,
 
                 [207] = function(player, csid, option, npc)

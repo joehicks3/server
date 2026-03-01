@@ -1,36 +1,39 @@
 -----------------------------------
 -- Erratic Flutter
---
--- Description: Deals Fire damage around the caster. Grants the effect of Haste.
 -- Family: Wamoura
--- Monipulators: Wamoura (MON), Coral Wamoura (MON)
--- Level (Monstrosity): 60
--- TP Cost (Monstrosity): 1500 TP
--- Type: Enhancing
--- Element: Fire
--- Can be dispelled: Yes
+-- Description: Deals Fire damage to enemies in range. Grants the effect of Haste.
 -- Notes:
--- Blue magic version is 307/1024 haste for 5 minutes. Wamaora haste is presumed identical.
--- Wamoura version also deals Fire damage to targets around the wamoura.
--- While it does not overwrite most forms of Slowga, Slow II, Slow II TP moves,
--- Erratic Flutter does overwrite Hojo: Ni, Hojo: Ichi, and Slow.
--- Player Blue magic version is wind element instead of fire.
+--  Wamoura version also deals Fire damage to targets around the wamoura.
+--  While it does not overwrite most forms of Slowga, Slow II, Slow II TP moves,
+--  Erratic Flutter does overwrite Hojo: Ni, Hojo: Ichi, and Slow.
+--  Player Blue magic version is wind element instead of fire.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 1.5, xi.element.FIRE, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg , mob, skill, target, xi.attackType.MAGICAL, xi.damageType.FIRE, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    xi.mobskills.mobBuffMove(mob, xi.effect.HASTE, 2998, 0, 300) -- There is no message for the self buff aspect, only dmg.
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 2.75, 2.75, 2.75 }
+    params.element        = xi.element.FIRE
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.FIRE
+    params.shadowBehavior = xi.mobskills.shadowBehavior.WIPE_SHADOWS
 
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.FIRE)
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+    end
+
+    xi.mobskills.mobBuffMove(mob, xi.effect.HASTE, 4500, 0, 180)
+
+    return info.damage
 end
 
 return mobskillObject

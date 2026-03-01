@@ -4,27 +4,28 @@
 -- Item Effect: Eva +15
 -- Duration: 20 Minutes
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
-    local effect = target:getStatusEffect(xi.effect.ENCHANTMENT)
-    if effect ~= nil and effect:getSubType() == 15681 then
-        target:delStatusEffect(xi.effect.ENCHANTMENT)
+itemObject.onItemCheck = function(target, item, param, caster)
+    if target:getStatusEffectBySource(xi.effect.EVASION_BOOST, xi.effectSourceType.EQUIPPED_ITEM, xi.item.HYDRA_SPATS) ~= nil then
+        target:delStatusEffect(xi.effect.EVASION_BOOST, nil, xi.effectSourceType.EQUIPPED_ITEM, xi.item.HYDRA_SPATS)
     end
 
     return 0
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffect(xi.effect.ENCHANTMENT, 0, 0, 1200, 15681)
+itemObject.onItemUse = function(target, user)
+    if target:hasEquipped(xi.item.HYDRA_SPATS) then
+        target:addStatusEffect(xi.effect.EVASION_BOOST, { duration = 180, origin = user, sourceType = xi.effectSourceType.EQUIPPED_ITEM, sourceTypeParam = xi.item.HYDRA_SPATS })
+    end
 end
 
 itemObject.onEffectGain = function(target, effect)
-    target:addMod(xi.mod.EVA, 15)
+    effect:addMod(xi.mod.EVA, 15)
 end
 
 itemObject.onEffectLose = function(target, effect)
-    target:delMod(xi.mod.EVA, 15)
 end
 
 return itemObject

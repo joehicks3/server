@@ -1,10 +1,11 @@
 -----------------------------------
 -- Zone: Arrapago_Reef (54)
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    zone:registerTriggerArea(1, -462, -4, -420, -455, -1, -392) -- approach the Cutter
+    zone:registerCuboidTriggerArea(1, -462, -4, -420, -455, -1, -392) -- approach the Cutter
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -42,6 +43,10 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
     then
         player:startEvent(237)
     end
+end
+
+zoneObject.onGameDay = function()
+    xi.apkallu.updateHate(xi.zone.ARRAPAGO_REEF, -3)
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)

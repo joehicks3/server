@@ -1,24 +1,35 @@
 -----------------------------------
 -- Osmosis
---
--- Description: Steals an enemy's HP and one beneficial status xi.effect. Ineffective against undead.
--- Type: Magical
+-- Family: Amoeban
+-- Description: Deals Dark damage to an enemy. Additional Effect: HP Drain, Steals 1 Beneficial Effect
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    -- local effect = mob:stealStatusEffect(target)
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 5, xi.element.DARK, dmgmod, xi.mobskills.magicalTpBonus.MAB_BONUS, 1)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.DARK, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    skill:setMsg(xi.mobskills.mobPhysicalDrainMove(mob, target, skill, xi.mobskills.drainType.HP, dmg))
+    params.baseDamage         = mob:getMainLvl() + 2
+    params.fTP                = { 5, 5, 5 } -- TODO: Capture fTPs
+    params.element            = xi.element.NONE
+    params.attackType         = xi.attackType.MAGICAL
+    params.damageType         = xi.damageType.NONE
+    params.shadowBehavior     = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
+    params.skipMagicBonusDiff = true
 
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        skill:setMsg(xi.mobskills.mobDrainMove(mob, target, xi.mobskills.drainType.HP, info.damage))
+
+        mob:stealStatusEffect(target, xi.effectFlag.DISPELABLE)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

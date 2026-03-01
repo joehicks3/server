@@ -10,7 +10,7 @@ local quest = Quest:new(xi.questLog.ADOULIN, xi.quest.id.adoulin.THE_STARVING)
 quest.reward =
 {
     fameArea = xi.fameArea.ADOULIN,
-    xp       = 1000,
+    exp      = 1000,
     bayld    = 500,
 }
 
@@ -52,7 +52,7 @@ quest.sections =
                     local itemObj = trade:getItem(0)
                     local auctionCategory = itemObj:getAHCat()
 
-                    if auctionCategory == 58 then
+                    if auctionCategory == xi.itemAHCategory.DRINKS then
                         return quest:event(3008)
                     else
                         return quest:event(3006)

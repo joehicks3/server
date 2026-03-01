@@ -5,14 +5,15 @@
 -- Recast Time: 10:00
 -- Duration: Instant
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
-    return xi.job_utils.beastmaster.onAbilityCheckTame(player, target, ability)
+    return xi.job_utils.beastmaster.checkTame(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    return xi.job_utils.beastmaster.onUseAbilityTame(player, target, ability)
+    return xi.job_utils.beastmaster.useTame(player, target, ability)
 end
 
 return abilityObject

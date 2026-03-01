@@ -3,7 +3,6 @@
 -----------------------------------
 require('scripts/globals/npc_util')
 require('scripts/globals/quests')
-require('scripts/globals/utils')
 require('scripts/globals/extravaganza')
 -----------------------------------
 xi = xi or {}
@@ -11,15 +10,15 @@ xi.abyssea = xi.abyssea or {}
 
 xi.abyssea.exitPositions =
 {
-    [xi.zone.ABYSSEA_KONSCHTAT]  = {   88.4, -68.09, -579.97, 128, 108 },
-    [xi.zone.ABYSSEA_TAHRONGI]   = {  -28.6,  46.17,  -680.3, 192, 117 },
-    [xi.zone.ABYSSEA_LA_THEINE]  = {   -562,      0,     640, 158, 102 },
-    [xi.zone.ABYSSEA_ATTOHWA]    = {   -340, -23.36,   48.49,  31, 118 },
-    [xi.zone.ABYSSEA_MISAREAUX]  = { 363.47,      0, -119.72, 129, 103 },
-    [xi.zone.ABYSSEA_VUNKERL]    = { 242.98,   0.24,    8.72, 157, 104 },
-    [xi.zone.ABYSSEA_ALTEPA]     = {    340,  -0.52,    -668, 192, 107 },
+    [xi.zone.ABYSSEA_KONSCHTAT ] = {   88.4, -68.09, -579.97, 128, 108 },
+    [xi.zone.ABYSSEA_TAHRONGI  ] = {  -28.6,  46.17,  -680.3, 192, 117 },
+    [xi.zone.ABYSSEA_LA_THEINE ] = {   -562,      0,     640, 158, 102 },
+    [xi.zone.ABYSSEA_ATTOHWA   ] = {   -340, -23.36,   48.49,  31, 118 },
+    [xi.zone.ABYSSEA_MISAREAUX ] = { 363.47,      0, -119.72, 129, 103 },
+    [xi.zone.ABYSSEA_VUNKERL   ] = { 242.98,   0.24,    8.72, 157, 104 },
+    [xi.zone.ABYSSEA_ALTEPA    ] = {    340,  -0.52,    -668, 192, 107 },
     [xi.zone.ABYSSEA_ULEGUERAND] = {    270,   -7.8,     -82,  64, 112 },
-    [xi.zone.ABYSSEA_GRAUBERG]   = {    -64,      0,     600,   0, 106 },
+    [xi.zone.ABYSSEA_GRAUBERG  ] = {    -64,      0,     600,   0, 106 },
 }
 
 xi.abyssea.lightType =
@@ -69,6 +68,7 @@ xi.abyssea.abyssiteType =
     DEMILUNE     = 20,
 }
 
+---@enum xi.abyssea.itemType
 xi.abyssea.itemType =
 {
     ITEM        = 1,
@@ -316,7 +316,7 @@ xi.abyssea.mob =
     ['Pallid_Percy']  = { ['Atma'] = {                                     }, ['Normal'] = { xi.ki.MUCID_WORM_SEGMENT         } },
     ['Smok']          = { ['Atma'] = { xi.ki.ATMA_OF_THE_SMOLDERING_SKY    }, ['Normal'] = {                                  } },
     ['Svarbhanu']     = { ['Atma'] = {                                     }, ['Normal'] = { xi.ki.HOLLOW_DRAGON_EYE          } },
-    ['Titlacauan']    = { ['Atma'] = { xi.ki.ATMA_OF_UNDYING               }, ['Normal'] = {                                  } },
+    ['Titlacauan']    = { ['Atma'] = { xi.ki.ATMA_OF_THE_UNDYING           }, ['Normal'] = {                                  } },
     ['Tunga']         = { ['Atma'] = {                                     }, ['Normal'] = { xi.ki.DISTENDED_CHIGOE_ABDOMEN   } },
     ['Ulhuadshi']     = { ['Atma'] = { xi.ki.ATMA_OF_THE_DESERT_WORM       }, ['Normal'] = {                                  } },
     ['Warbler']       = { ['Atma'] = {                                     }, ['Normal'] = { xi.ki.JADE_ABYSSITE_OF_MERIT     } },
@@ -336,7 +336,7 @@ xi.abyssea.mob =
     ['Gukumatz']            = { ['Atma'] = {                                     }, ['Normal'] = { xi.ki.MOLTED_PEISTE_SKIN               } },
     ['Heqet']               = { ['Atma'] = {                                     }, ['Normal'] = { xi.ki.DOFFED_POROGGO_HAT               } },
     ['Ironclad_Observer']   = { ['Atma'] = {                                     }, ['Normal'] = { xi.ki.SCALDING_IRONCLAD_SPIKE          } },
-    ['Ironclad_Pulverizer'] = { ['Atma'] = { xi.ki.ATMA_OF_THE_RAZED_RUIN        }, ['Normal'] = {                                        } },
+    ['Ironclad_Pulverizer'] = { ['Atma'] = { xi.ki.ATMA_OF_THE_RAZED_RUINS       }, ['Normal'] = {                                        } },
     ['Karkatakam']          = { ['Atma'] = { xi.ki.ATMA_OF_THE_CRADLE            }, ['Normal'] = {                                        } },
     ['Kutharei']            = { ['Atma'] = { xi.ki.ATMA_OF_THE_MOUNTED_CHAMPION  }, ['Normal'] = {                                        } },
     ['Manohra']             = { ['Atma'] = {                                     }, ['Normal'] = { xi.ki.CLIPPED_BIRD_WING                } },
@@ -368,7 +368,7 @@ xi.abyssea.mob =
     ['Pascerpot']              = { ['Atma'] = {                                       }, ['Normal'] = { xi.ki.CRIMSON_ABYSSITE_OF_CONFLUENCE } },
     ['Quasimodo']              = { ['Atma'] = {                                       }, ['Normal'] = { xi.ki.OSSIFIED_GARGOUILLE_HAND       } },
     ['Rakshas']                = { ['Atma'] = {                                       }, ['Normal'] = { xi.ki.WARPED_SMILODON_CHOKER         } },
-    ['Seps']                   = { ['Atma'] = { xi.ki.ATMA_OF_THE_APPARITIONS         }, ['Normal'] = {                                      } },
+    ['Seps']                   = { ['Atma'] = { xi.ki.ATMA_OF_APPARITIONS             }, ['Normal'] = {                                      } },
     ['Sedna']                  = { ['Atma'] = { xi.ki.ATMA_OF_THE_TUSKED_TERROR       }, ['Normal'] = {                                      } },
     ['Sippoy']                 = { ['Atma'] = { xi.ki.ATMA_OF_THE_WOULD_BE_KING       }, ['Normal'] = {                                      } },
     ['Xan']                    = { ['Atma'] = { xi.ki.ATMA_OF_THE_SHIMMERING_SHELL    }, ['Normal'] = {                                      } },
@@ -394,7 +394,7 @@ xi.abyssea.mob =
 
     -- Abyssea - Uleguerand (zone 253)
     ['Apademak']              = { ['Atma'] = { xi.ki.ATMA_OF_THE_WAR_LION            }, ['Normal'] = {                                                                  } },
-    ['Awahondo']              = { ['Atma'] = { xi.ki.ATMA_OF_THE_PERSISTANT_PREDATOR }, ['Normal'] = { xi.ki.DECAYING_DIREMITE_FANG                                     } },
+    ['Awahondo']              = { ['Atma'] = { xi.ki.ATMA_OF_THE_PERSISTENT_PREDATOR }, ['Normal'] = { xi.ki.DECAYING_DIREMITE_FANG                                     } },
     ['Blanga']                = { ['Atma'] = { xi.ki.ATMA_OF_THE_STONE_GOD           }, ['Normal'] = {                                                                  } },
     ['Dhorme_Khimaira']       = { ['Atma'] = { xi.ki.ATMA_OF_PURGATORY               }, ['Normal'] = { xi.ki.TORN_KHIMAIRA_WING                                         } },
     ['Empousa']               = { ['Atma'] = { xi.ki.ATMA_OF_THE_SHRIEKING_ONE       }, ['Normal'] = {                                                                  } },
@@ -407,20 +407,20 @@ xi.abyssea.mob =
     ['Resheph']               = { ['Atma'] = { xi.ki.ATMA_OF_THE_PLAGUEBRINGER       }, ['Normal'] = {                                                                  } },
     ['Veri_Selen']            = { ['Atma'] = {                                       }, ['Normal'] = { xi.ki.VERMILLION_ABYSSITE_OF_GUERDON                             } },
     ['Yaguarogui']            = { ['Atma'] = { xi.ki.ATMA_OF_THE_SUN_EATER           }, ['Normal'] = {                                                                  } },
-    ['Chione']                = { ['Atma'] = {                                       }, ['Normal'] = { xi.ki.VERMILLION_ABYSSITE_OF_PERSPICACITY                        } },
+    ['Chione']                = { ['Atma'] = {                                       }, ['Normal'] = { xi.ki.VERM_ABYSSITE_OF_PERSPICACITY                              } },
     ['Ogopogo']               = { ['Atma'] = { xi.ki.ATMA_OF_THE_LAKE_LURKER         }, ['Normal'] = {                                                                  } },
 
     -- Abyssea - Grauberg (zone 254)
     ['Alfard']                  = { ['Atma'] = { xi.ki.ATMA_OF_THE_SOLITARY_ONE      }, ['Normal'] = {                                                             } },
-    ['Amphitrite']              = { ['Atma'] = { xi.ki.ATMA_OF_THE_SEA_DAUGTER       }, ['Normal'] = {                                                             } },
+    ['Amphitrite']              = { ['Atma'] = { xi.ki.ATMA_OF_THE_SEA_DAUGHTER      }, ['Normal'] = {                                                             } },
     ['Assailer_Chariot']        = { ['Atma'] = {                                     }, ['Normal'] = { xi.ki.WARPED_CHARIOT_PLATE, xi.ki.IVORY_ABYSSITE_OF_SOJOURN } },
     ['Azdaja']                  = { ['Atma'] = { xi.ki.ATMA_OF_THE_WINGED_GLOOM      }, ['Normal'] = {                                                             } },
     ['Bomblix_Flamefinger']     = { ['Atma'] = { xi.ki.ATMA_OF_FIRES_AND_FLARES      }, ['Normal'] = {                                                             } },
     ['Deelgeed']                = { ['Atma'] = { xi.ki.ATMA_OF_THE_HORNED_BEAST      }, ['Normal'] = { xi.ki.VACANT_BUGARD_EYE                                     } },
     ['Fleshflayer_Killakriq']   = { ['Atma'] = { xi.ki.ATMA_OF_THE_FOE_FLAYER        }, ['Normal'] = {                                                             } },
-    ['Fuath']                   = { ['Atma'] = { xi.ki.ATMA_OF_THE_HATEFUL_STEAM     }, ['Normal'] = {                                                             } },
+    ['Fuath']                   = { ['Atma'] = { xi.ki.ATMA_OF_THE_HATEFUL_STREAM    }, ['Normal'] = {                                                             } },
     ['Ironclad_Sunderer']       = { ['Atma'] = { xi.ki.ATMA_OF_THE_SUNDERING_SLASH   }, ['Normal'] = { xi.ki.SHATTERED_IRON_GIANT_CHAIN                            } },
-    ['Melo_Melo']               = { ['Atma'] = { xi.ki.ATMA_OF_AQUADIC_ARDOR         }, ['Normal'] = { xi.ki.VARIEGATED_URAGNITE_SHELL                             } },
+    ['Melo_Melo']               = { ['Atma'] = { xi.ki.ATMA_OF_AQUATIC_ARDOR         }, ['Normal'] = { xi.ki.VARIEGATED_URAGNITE_SHELL                             } },
     ['Ningishzida']             = { ['Atma'] = { xi.ki.ATMA_OF_ENTWINED_SERPENTS     }, ['Normal'] = { xi.ki.VENOMOUS_HYDRA_FANG                                   } },
     ['Raja']                    = { ['Atma'] = { xi.ki.ATMA_OF_THE_DESPOT            }, ['Normal'] = {                                                             } },
     ['Teugghia']                = { ['Atma'] = { xi.ki.ATMA_OF_THE_FALLEN_ONE        }, ['Normal'] = {                                                             } },
@@ -689,7 +689,7 @@ xi.abyssea.visionsCruorProspectorOnEventFinish = function(player, csid, option, 
 
         if enhanceData[2] <= cruorTotal then
             for _, v in ipairs(enhanceData[1]) do
-                player:addStatusEffectEx(v[1], v[2], v[3] + xi.abyssea.getAbyssiteTotal(player, v[4]) * v[5], 0, 0)
+                player:addStatusEffect(v[1], { power = v[3] + xi.abyssea.getAbyssiteTotal(player, v[4]) * v[5], origin = player, icon = v[2] })
 
                 if v[1] == xi.effect.ABYSSEA_HP then
                     player:addHP(v[3] + xi.abyssea.getAbyssiteTotal(player, v[4]) * v[5])
@@ -777,22 +777,27 @@ xi.abyssea.giveNMDrops = function(mob, player, ID)
     local playerClaimed = GetPlayerByID(mob:getLocalVar('[ClaimedBy]'))
 
     for _, keyItemId in pairs(normalDrops) do
-        if xi.abyssea.canGiveNMKI(mob, 20) then
+        if
+            playerClaimed and
+            xi.abyssea.canGiveNMKI(mob, 20)
+        then
             npcUtil.giveKeyItem(playerClaimed, keyItemId, ID.text.PLAYER_KEYITEM_OBTAINED)
         end
     end
 
     for _, keyItemId in pairs(atmaDrops) do
-        local ally = playerClaimed:getAlliance()
+        if playerClaimed then
+            local ally = playerClaimed:getAlliance()
 
-        for _, member in ipairs(ally) do
-            if not member:hasKeyItem(keyItemId) and xi.abyssea.canGiveNMKI(mob, 10) then
-                npcUtil.giveKeyItem(member, keyItemId, ID.text.PLAYER_KEYITEM_OBTAINED)
+            for _, member in ipairs(ally) do
+                if not member:hasKeyItem(keyItemId) and xi.abyssea.canGiveNMKI(mob, 10) then
+                    npcUtil.giveKeyItem(member, keyItemId, ID.text.PLAYER_KEYITEM_OBTAINED)
+                end
             end
-        end
 
-        if not playerClaimed:hasKeyItem(keyItemId) then
-            npcUtil.giveKeyItem(playerClaimed, keyItemId, ID.text.PLAYER_KEYITEM_OBTAINED)
+            if not playerClaimed:hasKeyItem(keyItemId) then
+                npcUtil.giveKeyItem(playerClaimed, keyItemId, ID.text.PLAYER_KEYITEM_OBTAINED)
+            end
         end
     end
 
@@ -813,17 +818,19 @@ xi.abyssea.getDemiluneAbyssite = function(player)
 end
 
 xi.abyssea.getNewYellowWeakness = function(mob)
-    local day = VanadielDayOfTheWeek()
-    local weakness = math.random(day - 1, day + 1)
+    local currentDay = VanadielDayOfTheWeek()                      -- Fetch current day.
+    local chosenDay  = math.random(currentDay - 1, currentDay + 1) -- It can be the element of the same day, the day before or the day after.
 
-    if weakness < 0 then
-        weakness = 7
-    elseif weakness > 7 then
-        weakness = 0
+    -- Acount for day element cycling.
+    if chosenDay < xi.day.FIRESDAY then
+        chosenDay = xi.day.DARKSDAY
+    elseif chosenDay > xi.day.DARKSDAY then
+        chosenDay = xi.day.FIRESDAY
     end
 
-    local element = xi.magic.dayElement[weakness]
-    return yellowWeakness[element][math.random(#yellowWeakness[element])]
+    local element = xi.data.element.getDayElement(chosenDay)
+
+    return yellowWeakness[element][math.random(1, #yellowWeakness[element])] -- Choose an specific spell the mob is weak to.
 end
 
 xi.abyssea.getNewRedWeakness = function(mob)
@@ -859,7 +866,7 @@ xi.abyssea.procMonster = function(mob, player, triggerType)
             end
 
             mob:weaknessTrigger(2)
-            mob:addStatusEffect(xi.effect.TERROR, 0, 0, 30)
+            mob:addStatusEffect(xi.effect.TERROR, { duration = 30, origin = player })
         elseif triggerType == xi.abyssea.triggerType.YELLOW then
             if mob:getLocalVar('[AbysseaYellowProc]') == 0 then
                 mob:setLocalVar('[AbysseaYellowProc]', 1)
@@ -868,7 +875,7 @@ xi.abyssea.procMonster = function(mob, player, triggerType)
             end
 
             mob:weaknessTrigger(1)
-            mob:addStatusEffect(xi.effect.TERROR, 0, 0, 30)
+            mob:addStatusEffect(xi.effect.TERROR, { duration = 30, origin = player })
         elseif triggerType == xi.abyssea.triggerType.BLUE then
             if mob:getLocalVar('[AbysseaBlueProc]') == 0 then
                 mob:setLocalVar('[AbysseaBlueProc]', 1)
@@ -877,7 +884,7 @@ xi.abyssea.procMonster = function(mob, player, triggerType)
             end
 
             mob:weaknessTrigger(0)
-            mob:addStatusEffect(xi.effect.TERROR, 0, 0, 30)
+            mob:addStatusEffect(xi.effect.TERROR, { duration = 30, origin = player })
         end
     end
 end
@@ -1147,7 +1154,7 @@ end
 xi.abyssea.onZoneIn = function(player)
     -- If the player is a GM, and has GM toggled active, give them permanent visitant status.
     if player:getGMLevel() > 0 and player:getVisibleGMLevel() >= 3 then
-        player:addStatusEffectEx(xi.effect.VISITANT, xi.effect.VISITANT, 0, 0, 0)
+        player:addStatusEffect(xi.effect.VISITANT, { origin = player })
     end
 end
 
@@ -1167,7 +1174,7 @@ xi.abyssea.afterZoneIn = function(player)
     -- the countdown timer for visitant status reach 0 before actually running out of time on
     -- the effect.
     if not player:hasStatusEffect(xi.effect.VISITANT) then
-        player:addStatusEffectEx(xi.effect.VISITANT, 0, 0, 3, 304)
+        player:addStatusEffect(xi.effect.VISITANT, { duration = 304, origin = player, tick = 3, icon = 0 })
     end
 
     local visitantEffect = player:getStatusEffect(xi.effect.VISITANT)
@@ -1198,11 +1205,11 @@ xi.abyssea.searingWardTimer = function(player)
     local tetherTimer = player:getLocalVar('tetherTimer')
 
     if tetherTimer > 1 then
-        if tetherTimer == 11 or tetherTimer <= 6 then
+        player:setLocalVar('tetherTimer', tetherTimer - 1)
+        if tetherTimer <= 6 then
             player:messageSpecial(ID.text.RETURNING_TO_SEARING_IN, tetherTimer - 1)
         end
 
-        player:setLocalVar('tetherTimer', tetherTimer - 1)
         player:timer(1500, function()
             xi.abyssea.searingWardTimer(player)
         end)
@@ -1225,6 +1232,85 @@ end
 
 xi.abyssea.onWardTriggerAreaEnter = function(player)
     player:setLocalVar('tetherTimer', 0)
+end
+
+-----------------------------------
+-- Abyssea Cavernous Maw Entrance Functions
+-- TODO: Use retail capture data for more precise entrance coords
+-----------------------------------
+local abysseaEntranceMawData =
+{
+    [xi.zone.LA_THEINE_PLATEAU]   = { warpCsid = 218, dest = { -480,   0,  794,  62, xi.zone.ABYSSEA_LA_THEINE  } },
+    [xi.zone.KONSCHTAT_HIGHLANDS] = { warpCsid = 107, dest = {  153, -72, -840, 140, xi.zone.ABYSSEA_KONSCHTAT  } },
+    [xi.zone.TAHRONGI_CANYON]     = { warpCsid = 100, dest = {  -24,  44, -678, 240, xi.zone.ABYSSEA_TAHRONGI   } },
+    [xi.zone.JUGNER_FOREST]       = { warpCsid =  47, dest = { -351, -46,  699,  10, xi.zone.ABYSSEA_VUNKERL    } },
+    [xi.zone.VALKURM_DUNES]       = { warpCsid =  55, dest = {  670, -15,  318, 119, xi.zone.ABYSSEA_MISAREAUX  } },
+    [xi.zone.BUBURIMU_PENINSULA]  = { warpCsid =  61, dest = { -140,  20, -181, 131, xi.zone.ABYSSEA_ATTOHWA    } },
+    [xi.zone.SOUTH_GUSTABERG]     = { warpCsid = 914, dest = {  432,   0,  321, 125, xi.zone.ABYSSEA_ALTEPA     } },
+    [xi.zone.XARCABARD]           = { warpCsid = 204, dest = { -240, -40, -520, 251, xi.zone.ABYSSEA_ULEGUERAND } },
+    [xi.zone.NORTH_GUSTABERG]     = { warpCsid = 908, dest = { -555,  31, -760,   0, xi.zone.ABYSSEA_GRAUBERG   } },
+}
+
+xi.abyssea.entranceMawOnTrigger = function(player, npc)
+    local zoneId = player:getZoneID()
+    local ID = zones[zoneId]
+
+    if xi.settings.main.ENABLE_ABYSSEA == 0 then
+        player:messageSpecial(ID.text.NOTHING_HAPPENS)
+        return
+    end
+
+    if player:getMainLvl() < 30 then
+        player:messageSpecial(ID.text.NOTHING_HAPPENS)
+        return
+    end
+
+    local maw = abysseaEntranceMawData[zoneId]
+    if not maw then
+        player:messageSpecial(ID.text.NOTHING_HAPPENS)
+        return
+    end
+
+    player:startEvent(maw.warpCsid, 0, 1)
+end
+
+xi.abyssea.entranceMawOnEventFinish = function(player, csid, option, npc)
+    local maw = abysseaEntranceMawData[player:getZoneID()]
+    if maw and csid == maw.warpCsid and option == 1 then
+        player:setPos(unpack(maw.dest))
+    end
+end
+
+-----------------------------------
+-- Abyssea Cavernous Maw Exit Functions
+-- TODO: Use retail capture data for more precise exit coords
+-----------------------------------
+local abysseaExitMawData =
+{
+    [xi.zone.ABYSSEA_LA_THEINE         ] = { exitCsid = 200, dest = { -561.837,   0.000,  641.772, 158, xi.zone.LA_THEINE_PLATEAU     } },
+    [xi.zone.ABYSSEA_KONSCHTAT         ] = { exitCsid = 200, dest = {       91,     -68,     -582, 237, xi.zone.KONSCHTAT_HIGHLANDS   } },
+    [xi.zone.ABYSSEA_TAHRONGI          ] = { exitCsid = 200, dest = {  -28.597,  46.166, -680.254, 192, xi.zone.TAHRONGI_CANYON       } },
+    [xi.zone.ABYSSEA_VUNKERL           ] = { exitCsid = 200, dest = {  242.979,   0.235,    8.721, 157, xi.zone.JUGNER_FOREST         } },
+    [xi.zone.ABYSSEA_MISAREAUX         ] = { exitCsid = 200, dest = {      362,   0.001,     -119,   4, xi.zone.VALKURM_DUNES         } },
+    [xi.zone.ABYSSEA_ATTOHWA           ] = { exitCsid = 200, dest = { -339.979, -23.372,   48.493,  31, xi.zone.BUBURIMU_PENINSULA    } },
+    [xi.zone.ABYSSEA_ALTEPA            ] = { exitCsid = 200, dest = {      343,       0,     -679, 199, xi.zone.SOUTH_GUSTABERG       } },
+    [xi.zone.ABYSSEA_ULEGUERAND        ] = { exitCsid = 200, dest = {      269,      -7,      -75, 192, xi.zone.XARCABARD             } },
+    [xi.zone.ABYSSEA_GRAUBERG          ] = { exitCsid = 200, dest = {  -72.890,   0.057,  600.131, 122, xi.zone.NORTH_GUSTABERG       } },
+    [xi.zone.ABYSSEA_EMPYREAL_PARADOX  ] = { exitCsid = 200, dest = {  -256.128, -20.000, 225.053, 218, xi.zone.QUFIM_ISLAND          } },
+}
+
+xi.abyssea.exitMawOnTrigger = function(player, npc)
+    local exitMaw = abysseaExitMawData[player:getZoneID()]
+    if exitMaw then
+        player:startEvent(exitMaw.exitCsid)
+    end
+end
+
+xi.abyssea.exitMawOnEventFinish = function(player, csid, option, npc)
+    local exitMaw = abysseaExitMawData[player:getZoneID()]
+    if exitMaw and csid == exitMaw.exitCsid and option == 1 then
+        player:setPos(unpack(exitMaw.dest))
+    end
 end
 
 -----------------------------------
@@ -1341,7 +1427,7 @@ xi.abyssea.traverserNPCOnUpdate = function(player, csid, option, npc)
             -- the result as a minute value to the player.
 
             local rechargeInterval = 20 - xi.abyssea.getAbyssiteTotal(player, xi.abyssea.abyssiteType.CELERITY)
-            local lastStoneClaimedTime = os.time() - player:getTraverserEpoch() - rechargeInterval * 3600 * player:getClaimedTraverserStones()
+            local lastStoneClaimedTime = GetSystemTime() - player:getTraverserEpoch() - rechargeInterval * 3600 * player:getClaimedTraverserStones()
             local rechargeRemaining = rechargeInterval * 60 - lastStoneClaimedTime / 60
 
             player:updateEvent(0, 0, 0, 0, rechargeRemaining)

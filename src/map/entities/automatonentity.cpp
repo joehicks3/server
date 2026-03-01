@@ -21,17 +21,14 @@
 
 #include "automatonentity.h"
 
+#include "action/action.h"
 #include "ai/ai_container.h"
 #include "ai/controllers/automaton_controller.h"
 #include "ai/states/magic_state.h"
 #include "ai/states/mobskill_state.h"
 #include "common/tracy.h"
 #include "common/utils.h"
-#include "mob_modifier.h"
-#include "packets/action.h"
-#include "packets/char_job_extra.h"
-#include "packets/entity_update.h"
-#include "packets/pet_sync.h"
+#include "enmity_container.h"
 #include "recast_container.h"
 #include "status_effect_container.h"
 #include "utils/mobutils.h"
@@ -49,29 +46,14 @@ CAutomatonEntity::~CAutomatonEntity()
     TracyZoneScoped;
 }
 
-void CAutomatonEntity::setFrame(AUTOFRAMETYPE frame)
-{
-    m_Equip.Frame = frame;
-}
-
 AUTOFRAMETYPE CAutomatonEntity::getFrame() const
 {
     return (AUTOFRAMETYPE)m_Equip.Frame;
 }
 
-void CAutomatonEntity::setHead(AUTOHEADTYPE head)
-{
-    m_Equip.Head = head;
-}
-
 AUTOHEADTYPE CAutomatonEntity::getHead() const
 {
     return (AUTOHEADTYPE)m_Equip.Head;
-}
-
-void CAutomatonEntity::setAttachment(uint8 slotid, uint8 id)
-{
-    m_Equip.Attachments[slotid] = id;
 }
 
 uint8 CAutomatonEntity::getAttachment(uint8 slotid)
@@ -91,45 +73,14 @@ bool CAutomatonEntity::hasAttachment(uint8 attachment)
     return false;
 }
 
-void CAutomatonEntity::setElementMax(uint8 element, uint8 max)
-{
-    m_ElementMax[element] = max;
-}
-
 uint8 CAutomatonEntity::getElementMax(uint8 element)
 {
     return m_ElementMax[element];
 }
 
-void CAutomatonEntity::addElementCapacity(uint8 element, int8 value)
-{
-    m_ElementEquip[element] += value;
-}
-
 uint8 CAutomatonEntity::getElementCapacity(uint8 element)
 {
     return m_ElementEquip[element];
-}
-
-uint8 CAutomatonEntity::getElementalCapacityBonus()
-{
-    return m_elementalCapacityBonus;
-}
-
-void CAutomatonEntity::setElementalCapacityBonus(uint8 bonus)
-{
-    if (bonus == m_elementalCapacityBonus)
-    {
-        return;
-    }
-
-    int8 difference = static_cast<int8>(bonus) - m_elementalCapacityBonus;
-    for (size_t i = 0; i < m_ElementMax.size(); ++i)
-    {
-        m_ElementMax[i] += difference;
-    }
-
-    m_elementalCapacityBonus = bonus;
 }
 
 void CAutomatonEntity::burdenTick()
@@ -200,7 +151,7 @@ void CAutomatonEntity::PostTick()
     {
         if (PMaster && PMaster->objtype == TYPE_PC)
         {
-            ((CCharEntity*)PMaster)->pushPacket(new CCharJobExtraPacket((CCharEntity*)PMaster, PMaster->GetMJob() == JOB_PUP));
+            charutils::SendExtendedJobPackets(static_cast<CCharEntity*>(PMaster));
         }
     }
 }
@@ -230,11 +181,21 @@ void CAutomatonEntity::OnCastFinished(CMagicState& state, action_t& action)
     auto* PSpell  = state.GetSpell();
     auto* PTarget = static_cast<CBattleEntity*>(state.GetTarget());
 
-    PRecastContainer->Add(RECAST_MAGIC, static_cast<uint16>(PSpell->getID()), action.recast);
+    PRecastContainer->Add(RECAST_MAGIC, static_cast<Recast>(PSpell->getID()), action.recast);
 
     if (PSpell->tookEffect())
     {
         puppetutils::TrySkillUP(this, SKILL_AUTOMATON_MAGIC, PTarget->GetMLevel());
+
+        if (PTarget && PTarget->objtype == TYPE_MOB && PTarget->allegiance != ALLEGIANCE_TYPE::PLAYER)
+        {
+            auto* PMob    = static_cast<CMobEntity*>(PTarget);
+            auto* PMaster = dynamic_cast<CBattleEntity*>(this->PMaster);
+            if (PMaster && PMaster->objtype == TYPE_PC)
+            {
+                PMob->PEnmityContainer->AddBaseEnmity(PMaster);
+            }
+        }
     }
 }
 
@@ -244,6 +205,16 @@ void CAutomatonEntity::OnMobSkillFinished(CMobSkillState& state, action_t& actio
 
     auto* PSkill  = state.GetSkill();
     auto* PTarget = static_cast<CBattleEntity*>(state.GetTarget());
+
+    if (PTarget && PTarget->objtype == TYPE_MOB && PTarget->allegiance != ALLEGIANCE_TYPE::PLAYER)
+    {
+        auto* PMob    = static_cast<CMobEntity*>(PTarget);
+        auto* PMaster = dynamic_cast<CBattleEntity*>(this->PMaster);
+        if (PMaster && PMaster->objtype == TYPE_PC)
+        {
+            PMob->PEnmityContainer->AddBaseEnmity(PMaster);
+        }
+    }
 
     // Ranged attack skill up
     if (PSkill->getID() == 1949 && !PSkill->hasMissMsg())
@@ -257,7 +228,7 @@ void CAutomatonEntity::Spawn()
     status = allegiance == ALLEGIANCE_TYPE::MOB ? STATUS_TYPE::UPDATE : STATUS_TYPE::NORMAL;
     updatemask |= UPDATE_HP;
     PAI->Reset();
-    PAI->EventHandler.triggerListener("SPAWN", CLuaBaseEntity(this));
+    PAI->EventHandler.triggerListener("SPAWN", this);
     animation = ANIMATION_NONE;
     m_OwnerID.clean();
     HideName(false);

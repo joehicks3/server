@@ -36,8 +36,16 @@ xi.settings.map =
     -- Minimal number of 0x3A packets which uses for detect lightluggage (set 0 for disable)
     LIGHTLUGGAGE_BLOCK = 4,
 
+    -- Enable or disable leaking item extdata to client when moving items out of an inventory container into another one
+    -- Retail leaks extdata on move, which is useful for edge cases such as weapon skill points
+    LEAK_EXT_DATA_ON_ITEM_MOVE = true,
+
     -- Enable or disable Recycle Bin (Set to false for items to be dropped immediately)
     ENABLE_ITEM_RECYCLE_BIN = true,
+
+    -- Self-unstuck feature (sends player to homepoint via Help Desk command)
+    SELF_UNSTUCK_ENABLED  = false,
+    SELF_UNSTUCK_COOLDOWN = 86400, -- Cooldown in seconds (default: 24 hours)
 
     -- AH fee structure, defaults are retail.
     AH_BASE_FEE_SINGLE = 1,
@@ -48,7 +56,7 @@ xi.settings.map =
 
     -- Max open listings per player, 0 = no limit. (Default 7)
     -- Note = Settings over 7 may need client-side plugin to work under all circumstances.
-    -- If this is the case, consider using the ah_pagination module
+    -- If this is the case, consider using the ah_pagination module (which supports setting AH_LIST_LIMIT to 0 or >7).
     AH_LIST_LIMIT = 7,
 
     -- The total enmity cap for a given entity on the enmity table.
@@ -95,25 +103,37 @@ xi.settings.map =
     -- Disables ability to equip higher level gear when level cap/sync effect is on player.
     DISABLE_GEAR_SCALING = false,
 
-    -- Weaponskill point base (before skillchain) for breaking latent - whole numbers only. retail is 1.
-    WS_POINTS_BASE = 1,
+    -- Disables Treasure Hunter procs (Era behavior wants this true)
+    DISABLE_TREASURE_HUNTER_PROCS = false,
 
-    -- Weaponskill points per skillchain element - whole numbers only, retail is 1
-    -- (tier 3 sc's have 4 elements, plus 1 for the ws itself, giving 5 points to the closer).
-    WS_POINTS_SKILLCHAIN = 1,
+    -- Enable auto attack damage calculations in Lua
+    ENABLE_AUTO_ATTACK_LUA = false,
+
+    -- Weaponskill point base (before skillchain) for breaking latent - whole numbers only. retail is 5.
+    WS_POINTS_BASE = 5,
+
+    -- Weaponskill points per skillchain level - whole numbers only, retail is 2
+    WS_POINTS_SKILLCHAIN = 2,
 
     -- Enable/disable jobs other than BST and RNG having widescan
     ALL_JOBS_WIDESCAN = true,
 
-    -- Modifier to apply to player speed. 0 is the retail accurate default. Negative numbers will reduce it.
-    SPEED_MOD = 0,
+    -- Base player movement speed
+    BASE_SPEED = 50,
 
-    -- Modifier to apply to mount speed. 0 is the retail accurate default. Negative numbers will reduce it.
-    -- Note retail treats the mounted speed as double what it actually is.
-    MOUNT_SPEED_MOD = 0,
+    -- Player movement speed limit
+    SPEED_LIMIT = 80,
 
-    -- This is an integer percentage. Modifier to apply to agro'd monster speed (i.e. while engaged in combat). 0 is the retail accurate default. Negative numbers will reduce ALL mobs's speed.
-    MOB_SPEED_MOD = 0,
+    -- Mount speed, expressed as player speed. Can surpass speed limit.
+    MOUNT_SPEED = 80,
+
+    -- Player animation speed divisor
+    -- Raising this increases the players movement animation speed
+    ANIMATION_SPEED_DIVISOR = 1.0,
+
+    -- Multiplier for speed of engaged mobs when their target is out of range.
+    -- The default for almost all mobs on retail is 2.5x their normal speed.
+    MOB_RUN_SPEED_MULTIPLIER = 2.5,
 
     -- Allows you to manipulate the constant multiplier in the skill-up rate formulas, having a potent effect on skill-up rates.
     SKILLUP_CHANCE_MULTIPLIER = 1.0,
@@ -138,8 +158,14 @@ xi.settings.map =
     -- Amount of points allowed in crafts over the level defined above. Points are shared across all crafting skills. (Retail = 400; All skills can go to max = 3200)
     CRAFT_SPECIALIZATION_POINTS = 400,
 
-    -- Enables fishing. 0 = Disabled. 1 = Enable. ENABLE AT YOUR OWN RISK.
+    -- Multiplier applied to high quality chance
+    CRAFT_HQ_CHANCE_MULTIPLIER = 1.0,
+
+    -- Enable/disable all fishing, including quests. ENABLE AT YOUR OWN RISK.
     FISHING_ENABLE = false,
+
+    -- Sets the minimum level a character must be to fish.
+    FISHING_MIN_LEVEL = 1,
 
     -- Multiplier for fishing skill-up chance. Default = 1.0, very hard.
     FISHING_SKILL_MULTIPLIER = 1.0,
@@ -155,16 +181,14 @@ xi.settings.map =
     TRUST_TP_MULTIPLIER  = 1.0,
     FELLOW_TP_MULTIPLIER = 1.0,
 
-    -- Adjust max HP pool for NMs, regular mobs, players, and trusts/fellows. Acts as a multiplier, so default is 1.
+    -- Adjust max HP pool for NMs, regular mobs, players, and trusts/fellows. Acts as a multiplier, so default is 1. Valid range: 0.1 to 2.0
     NM_HP_MULTIPLIER        = 1.0,
     MOB_HP_MULTIPLIER       = 1.0,
-    PLAYER_HP_MULTIPLIER    = 1.0,
     ALTER_EGO_HP_MULTIPLIER = 1.0,
 
-    -- Adjust max MP pool for NMs, regular mobs, players, and trusts/fellows. Acts as a multiplier, so default is 1.
+    -- Adjust max MP pool for NMs, regular mobs, players, and trusts/fellows. Acts as a multiplier, so default is 1. Valid range: 0.1 to 2.0
     NM_MP_MULTIPLIER        = 1.0,
     MOB_MP_MULTIPLIER       = 1.0,
-    PLAYER_MP_MULTIPLIER    = 1.0,
     ALTER_EGO_MP_MULTIPLIER = 1.0,
 
     -- Sets the fraction of MP a subjob provides to the main job. Retail is half and this acts as a divisor so default is 2
@@ -180,10 +204,9 @@ xi.settings.map =
     -- Also adjust monsters subjob in ratio adjustments? 1 = true / 0 = false
     INCLUDE_MOB_SJ = false,
 
-    -- Adjust base stats (str/vit/etc.) for NMs, regular mobs, players, and trusts/fellows. Acts as a multiplier, so default is 1.
+    -- Adjust base stats (str/vit/etc.) for NMs, regular mobs, players, and trusts/fellows. Acts as a multiplier, so default is 1.0. Valid range: 0.1 to 2.0
     NM_STAT_MULTIPLIER        = 1.0,
     MOB_STAT_MULTIPLIER       = 1.0,
-    PLAYER_STAT_MULTIPLIER    = 1.0,
     ALTER_EGO_STAT_MULTIPLIER = 1.0,
 
     -- Adjust skill caps for trusts/fellows. Acts as a multiplier, so default is 1.
@@ -257,15 +280,19 @@ xi.settings.map =
     AUDIT_LINKSHELL = false,
     AUDIT_UNITY     = false,
     AUDIT_PARTY     = false,
+    AUDIT_BALLISTA  = false,
+    AUDIT_ASSISTE   = false,
+    AUDIT_ASSISTJ   = false,
+
+    -- Player Item Transaction Logging (Default: Off)
+    -- Logs player item transactions to the database for persistence.
+    AUDIT_PLAYER_TRADES = false,
+    AUDIT_PLAYER_BAZAAR = false,
+    AUDIT_PLAYER_DBOX   = false,
+    AUDIT_PLAYER_VENDOR = false,
 
     -- Seconds between healing ticks. Default is 10
     HEALING_TICK_DELAY = 10,
-
-    -- Set to 1 to enable server side anti-cheating measurements
-    ANTICHEAT_ENABLED = true,
-
-    -- Set to 1 to completely disable auto-jailing offenders
-    ANTICHEAT_JAIL_DISABLE = false,
 
     -- Enable/disable keeping jug pets through zoning
     KEEP_JUGPET_THROUGH_ZONING = false,

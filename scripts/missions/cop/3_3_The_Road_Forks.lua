@@ -48,7 +48,7 @@ jewelTimer = function(player)
         return
     end
 
-    local secondsRemaining = mission:getLocalVar(player, 'Timer') - os.time()
+    local secondsRemaining = mission:getLocalVar(player, 'Timer') - GetSystemTime()
     if secondsRemaining <= 0 then
         -- There are some conditions that can instantly break the jewel.  Short-circuit out
         -- here and display the final message should that occur.
@@ -102,14 +102,11 @@ mission.sections =
                 end,
             },
 
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if player:getMissionStatus(mission.areaId, xi.mission.status.COP.SANDORIA) == 0 then
-                        return 14
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if player:getMissionStatus(mission.areaId, xi.mission.status.COP.SANDORIA) == 0 then
+                    return 14
+                end
+            end,
 
             onEventFinish =
             {
@@ -253,14 +250,11 @@ mission.sections =
                 end,
             },
 
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if player:getMissionStatus(mission.areaId, xi.mission.status.COP.WINDURST) == 0 then
-                        return 871
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if player:getMissionStatus(mission.areaId, xi.mission.status.COP.WINDURST) == 0 then
+                    return 871
+                end
+            end,
 
             onEventFinish =
             {
@@ -371,8 +365,10 @@ mission.sections =
                 onTrigger = function(player, npc)
                     if player:hasKeyItem(xi.ki.MIMEO_JEWEL) then
                         local animationNpc = GetNPCByID(npc:getID() + 1)
+                        if animationNpc then
+                            animationNpc:entityAnimationPacket('krtu')
+                        end
 
-                        animationNpc:entityAnimationPacket('krtu')
                         return mission:progressEvent(2)
                     end
                 end,
@@ -411,7 +407,7 @@ mission.sections =
                             then
                                 npcUtil.giveKeyItem(player, xi.ki.MIMEO_JEWEL)
                                 mission:setLocalVar(player, 'Option', 0)
-                                mission:setLocalVar(player, 'Timer', os.time() + 30 * 60)
+                                mission:setLocalVar(player, 'Timer', GetSystemTime() + 30 * 60)
                                 jewelTimer(player)
                                 return mission:noAction()
                             end
@@ -422,15 +418,12 @@ mission.sections =
                 end,
             },
 
-            onZoneOut =
-            {
-                function(player)
-                    if player:hasKeyItem(xi.ki.MIMEO_JEWEL) then
-                        player:messageSpecial(attohwaChasmID.text.MIMEO_JEWEL_OFFSET + 4)
-                        player:delKeyItem(xi.ki.MIMEO_JEWEL)
-                    end
-                end,
-            },
+            onZoneOut = function(player)
+                if player:hasKeyItem(xi.ki.MIMEO_JEWEL) then
+                    player:messageSpecial(attohwaChasmID.text.MIMEO_JEWEL_OFFSET + 4)
+                    player:delKeyItem(xi.ki.MIMEO_JEWEL)
+                end
+            end,
 
             onEventFinish =
             {

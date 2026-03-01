@@ -4,6 +4,7 @@
 -- Type: Bonecraft Guild Master
 -- !pos -6.175 -6.249 -144.667 241
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -12,9 +13,6 @@ end
 
 entity.onTrigger = function(player, npc)
     xi.crafting.guildMasterOnTrigger(player, npc)
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

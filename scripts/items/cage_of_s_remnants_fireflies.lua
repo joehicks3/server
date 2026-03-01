@@ -3,9 +3,10 @@
 -- S. Rem. Fireflies
 -- Transports the user out of Silver Sea Remnants
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     if target:getZoneID() == xi.zone.SILVER_SEA_REMNANTS then
         return 0
     end
@@ -13,8 +14,8 @@ itemObject.onItemCheck = function(target)
     return xi.msg.basic.ITEM_UNABLE_TO_USE_2
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffectEx(xi.effect.TELEPORT, 0, xi.teleport.id.S_REM, 0, 1)
+itemObject.onItemUse = function(target, user)
+    target:addStatusEffect(xi.effect.TELEPORT, { power = xi.teleport.id.S_REM, duration = 1, origin = user, icon = 0 })
 end
 
 itemObject.onItemDrop = function(target, item)

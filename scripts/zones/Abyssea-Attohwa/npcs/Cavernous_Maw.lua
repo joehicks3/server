@@ -4,22 +4,15 @@
 -- !pos -133.197 20.242 -181.658 215
 -- Notes: Teleports Players to Buburimu Peninsula
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    player:startEvent(200)
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
+    xi.abyssea.exitMawOnTrigger(player, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
-    if csid == 200 and option == 1 then
-        player:setPos(-338, -23, 47, 167, 118)
-    end
+    xi.abyssea.exitMawOnEventFinish(player, csid, option, npc)
 end
 
 return entity

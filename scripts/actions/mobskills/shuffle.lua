@@ -2,9 +2,14 @@
 -- Shuffle
 -- Dispels a single buff at random (which could be food)<-Pending verification. It does not reset hate.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
+    if not mob:isNM() then
+        return 1
+    end
+
     return 0
 end
 

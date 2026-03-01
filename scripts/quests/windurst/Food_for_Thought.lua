@@ -60,7 +60,9 @@ quest.sections =
             ['Kenapa-Keppa'] =
             {
                 onTrigger = function(player, npc)
-                    return quest:progressEvent(310)
+                    if player:getVar('Quest[2][50]Option') ~= 1 then -- Getting the dialogue about the cactus in the quest "Say it with Flowers" takes priority and doesn't clear until they clear the quest.
+                        return quest:progressEvent(310)
+                    end
                 end
             },
 
@@ -90,10 +92,12 @@ quest.sections =
                 onTrigger = function(player, npc)
                     local ohbiruProgress = quest:getVar(player, 'ohbiruProg')
 
-                    if ohbiruProgress == 0 then
-                        return quest:progressEvent(308)
-                    elseif ohbiruProgress == 1 then
-                        return quest:progressEvent(309)
+                    if player:getVar('Quest[2][50]Prog') ~= 1 then -- The player CANNOT have the quest "Say it with Flowers" Active or Ranpi will not talk to you about this quest
+                        if ohbiruProgress == 0 then
+                            return quest:progressEvent(308)
+                        elseif ohbiruProgress == 1 then
+                            return quest:progressEvent(309)
+                        end
                     end
                 end,
             },
@@ -138,7 +142,7 @@ quest.sections =
                     if npcUtil.tradeHasExactly(trade, xi.item.HARD_BOILED_EGG) then
                         -- Traded item without receiving order
                         if kenapaProg < 3 then
-                            if math.random(1, 2) == 1 then
+                            if math.random(1, 100) <= 50 then
                                 return quest:progressEvent(331)
                             else
                                 return quest:progressEvent(330, 120)
@@ -213,7 +217,7 @@ quest.sections =
 
                         -- Traded all 3 items & Didn't ask for order
                         if ohbiruProgress < 2 then
-                            if math.random(1, 2) == 1 then
+                            if math.random(1, 100) <= 50 then
                                 return quest:progressEvent(325, 440)
                             else
                                 return quest:progressEvent(326)

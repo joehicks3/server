@@ -1,13 +1,13 @@
-﻿#include "../src/map/packet_guard.h"
-#include "../src/map/utils/moduleutils.h"
-#include "../src/map/zone.h"
+﻿#include "map/packet_guard.h"
+#include "map/utils/moduleutils.h"
+#include "map/zone.h"
 
-extern uint8                                                                             PacketSize[512];
-extern std::function<void(map_session_data_t* const, CCharEntity* const, CBasicPacket&)> PacketParser[512];
+extern uint8                                                                     PacketSize[512];
+extern std::function<void(MapSession* const, CCharEntity* const, CBasicPacket&)> PacketParser[512];
 
 class RenamerModule : public CPPModule
 {
-    void SendListPacket(CCharEntity* PChar, std::string const& data)
+    void SendListPacket(CCharEntity* PChar, const std::string& data)
     {
         if (data.empty())
         {
@@ -15,14 +15,14 @@ class RenamerModule : public CPPModule
             return;
         }
 
-        auto* customPacket = new CBasicPacket();
+        auto customPacket = std::unique_ptr<CBasicPacket>();
         customPacket->setType(0x1FF);
         customPacket->setSize(0x100);
         for (std::size_t i = 0; i < data.size(); ++i)
         {
             customPacket->ref<uint8>(0x04 + i) = data[i];
         }
-        PChar->pushPacket(customPacket);
+        PChar->pushPacket(std::move(customPacket));
     }
 
     void OnInit() override
@@ -50,7 +50,7 @@ class RenamerModule : public CPPModule
         lua[sol::create_if_nil]["xi"]["renamerTable"] = result;
 
         // Add a custom packet handler to the PacketParser array for id 0x01
-        PacketParser[0x01] = [&](map_session_data_t* const, CCharEntity* const PChar, CBasicPacket&)
+        PacketParser[0x01] = [&](MapSession* const, CCharEntity* const PChar, CBasicPacket&)
         {
             ShowInfo(fmt::format("{} requested renamer list for {}", PChar->getName(), PChar->loc.zone->getName()));
 
@@ -64,7 +64,7 @@ class RenamerModule : public CPPModule
             }
 
             std::string dataString;
-            for (auto [key, value] : zoneTable)
+            for (const auto& [key, value] : zoneTable)
             {
                 auto entryTable = value.as<sol::table>();
 

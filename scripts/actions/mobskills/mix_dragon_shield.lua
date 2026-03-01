@@ -1,6 +1,7 @@
 -----------------------------------
 -- Mix: Dragon Shield - Applies Magic Defense Bonus to all party members for 60 seconds.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -16,7 +17,7 @@ mobskillObject.onMobWeaponSkill = function(target, mob, skill)
     end
 
     if not target:hasStatusEffect(xi.effect.MAGIC_DEF_BOOST) then
-        target:addStatusEffect(xi.effect.MAGIC_DEF_BOOST, 10, 0, 60)
+        target:addStatusEffect(xi.effect.MAGIC_DEF_BOOST, { power = 10, duration = 60, origin = mob })
     end
 
     return xi.effect.MAGIC_DEF_BOOST

@@ -4,10 +4,8 @@
 -- !pos 113 1 -40 80
 -- Retrace NPC
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local allegiance =  player:getCampaignAllegiance()
@@ -18,12 +16,9 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 454 then
-        player:addStatusEffectEx(xi.effect.TELEPORT, 0, xi.teleport.id.RETRACE, 0, 3)
+        player:addStatusEffect(xi.effect.TELEPORT, { power = xi.teleport.id.RETRACE, duration = 3, origin = player, icon = 0 })
         player:delCurrency('allied_notes', 30)
     end
 end

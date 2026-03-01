@@ -5,18 +5,22 @@ xi.magic = xi.magic or {}
 -- Spell flag bits
 -----------------------------------
 
+---@enum xi.spellFlag
 xi.magic.spellFlag =
 {
     NONE           = 0x00,
-    HIT_ALL        = 0x01, -- Hit all targets in range regardless of party
+    -- 0x01 is available
     WIPE_SHADOWS   = 0x02, -- Wipe shadows even if single target and miss/resist (example: "Maiden's Virelai")
-    IGNORE_SHADOWS = 0x04  -- Ignore shadows and hit player anyways (example: Mobs "Death" spell)
+    IGNORE_SHADOWS = 0x04, -- Ignore shadows and hit player anyways (example: Mobs "Death" spell)
+    NO_START_MSG   = 0x08, -- Doesn't emit "<caster> starts casting <spell>"
+    NO_FINISH_MSG  = 0x10, -- Doesn't emit finish message when magic state completes
 }
 
 -----------------------------------
 -- Spell AOE IDs
 -----------------------------------
 
+---@enum xi.magic.aoe
 xi.magic.aoe =
 {
     NONE        = 0,
@@ -32,6 +36,7 @@ xi.magic.aoe =
 -- Spell Groups
 -----------------------------------
 
+---@enum xi.magic.spellGroup
 xi.magic.spellGroup =
 {
     NONE      = 0,
@@ -49,6 +54,7 @@ xi.magic.spellGroup =
 -- Spell Families
 -----------------------------------
 
+---@enum xi.magic.spellFamily
 xi.magic.spellFamily =
 {
     NONE               = 0,
@@ -214,6 +220,7 @@ xi.magic.spellFamily =
 -- Spell IDs
 -----------------------------------
 
+---@enum xi.magic.spell
 xi.magic.spell =
 {
     CURE                  =    1,

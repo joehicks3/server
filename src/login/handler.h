@@ -1,20 +1,20 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2023 LandSandBoat Dev Teams
+  Copyright (c) 2023 LandSandBoat Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
@@ -29,13 +29,18 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include "data_session.h"
 #include "view_session.h"
 
+#include "common/scheduler.h"
+#include "common/zmq_dealer_wrapper.h"
+
 template <typename T>
 class handler
 {
 public:
-    handler(asio::io_context& io_context, unsigned int port)
-    : acceptor_(io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
+    handler(Scheduler& scheduler, unsigned int port, ZMQDealerWrapper& zmqDealerWrapper)
+    : scheduler_(scheduler)
+    , acceptor_(scheduler_.ioContext(), asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
     , sslContext_(asio::ssl::context::tls_server)
+    , zmqDealerWrapper_(zmqDealerWrapper)
     {
         acceptor_.set_option(asio::socket_base::reuse_address(true));
 
@@ -44,44 +49,35 @@ public:
         sslContext_.use_rsa_private_key_file("login.key", asio::ssl::context::file_format::pem);
         sslContext_.use_certificate_chain_file("login.cert");
 
-        do_accept();
+        scheduler_.postToMainThread(accept_loop());
     }
 
 private:
-    void do_accept()
+    auto accept_loop() -> Task<void>
     {
-        // clang-format off
-        acceptor_.async_accept(
-        [this](std::error_code ec, asio::ip::tcp::socket socket)
+        while (!scheduler_.closeRequested())
         {
+            auto [ec, socket] = co_await acceptor_.async_accept(asio::as_tuple(asio::use_awaitable));
+
             if (!ec)
             {
-                if constexpr (std::is_same_v<T, auth_session>)
-                {
-                    auto auth_handler = std::make_shared<T>(asio::ssl::stream<asio::ip::tcp::socket>(std::move(socket), sslContext_));
-                    auth_handler->start();
-                }
-                else if constexpr (std::is_same_v<T, view_session>)
-                {
-                    auto view_handler = std::make_shared<T>(asio::ssl::stream<asio::ip::tcp::socket>(std::move(socket), sslContext_));
-                    view_handler->start();
-                }
-                else if constexpr (std::is_same_v<T, data_session>)
-                {
-                    auto data_handler = std::make_shared<T>(asio::ssl::stream<asio::ip::tcp::socket>(std::move(socket), sslContext_));
-                    data_handler->start();
-                }
+                const auto sessionHandler = std::make_shared<T>(asio::ssl::stream<asio::ip::tcp::socket>(std::move(socket), sslContext_), zmqDealerWrapper_);
+                scheduler_.postToWorkerThread(
+                    [sessionHandler]
+                    {
+                        sessionHandler->start();
+                    });
             }
             else
             {
                 ShowError(ec.message());
             }
-
-            do_accept();
-        });
-        // clang-format on
+        }
     }
 
+    Scheduler&              scheduler_;
     asio::ip::tcp::acceptor acceptor_;
     asio::ssl::context      sslContext_;
+
+    ZMQDealerWrapper& zmqDealerWrapper_;
 };

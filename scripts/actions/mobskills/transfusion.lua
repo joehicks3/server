@@ -1,25 +1,33 @@
 -----------------------------------
---  Transfusion
---  Description: Steals HP from players within range.
---  Type: Magical
---  Utsusemi/Blink absorb: Ignores shadows
---  Range: Unknown radial
+-- Transfusion
+-- Family: Shadow Lord
+-- Description: Steals HP from players within range.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 1
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 3, xi.element.DARK, dmgmod, xi.mobskills.magicalTpBonus.MAB_BONUS, 1)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.DARK, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
+    params.baseDamage         = mob:getMainLvl() + 2
+    params.fTP                = { 3.00, 3.00, 3.00 } -- TODO: Capture fTPs
+    params.element            = xi.element.NONE
+    params.attackType         = xi.attackType.MAGICAL
+    params.damageType         = xi.damageType.NONE
+    params.shadowBehavior     = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
+    params.skipMagicBonusDiff = true
 
-    skill:setMsg(xi.mobskills.mobDrainMove(mob, target, xi.mobskills.drainType.HP, dmg, xi.attackType.MAGICAL, xi.damageType.DARK))
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
 
-    return dmg
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        skill:setMsg(xi.mobskills.mobDrainMove(mob, target, xi.mobskills.drainType.HP, info.damage))
+    end
+
+    return info.damage
 end
 
 return mobskillObject

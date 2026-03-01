@@ -1,8 +1,8 @@
 -----------------------------------
 -- Area: Kazham
 --  NPC: Tatapp
--- Standard Merchant NPC
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local pathNodes =
@@ -135,12 +135,7 @@ entity.onTrigger = function(player, npc)
         elseif progress >= 7 or failed >= 8 then
             player:startEvent(248) -- happy with blackened toad
         end
-    else
-        player:startEvent(203)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

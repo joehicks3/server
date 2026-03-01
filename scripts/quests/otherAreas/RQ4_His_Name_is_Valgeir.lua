@@ -33,7 +33,7 @@ quest.sections =
                 onTrigger = function(player, npc)
                     if
                         player:getCharVar('Quest[4][2]DayCompleted') + 2 < VanadielUniqueDay() and
-                        player:getFameLevel(xi.fameArea.WINDURST) > 2
+                        player:getFameLevel(xi.fameArea.WINDURST) >= 3
                     then
                         return quest:progressEvent(86) -- His Name is Valgeir starting event.
                     else
@@ -71,7 +71,7 @@ quest.sections =
                     if
                         player:hasKeyItem(xi.ki.ARAGONEU_PIZZA) and -- No free ride after delivering Pizza.
                         player:getZPos() > 38.5 and -- Pos check.
-                        quest:setVar(player, 'Prog') == 0 -- Hasn't taken the free ride.
+                        quest:getVar(player, 'Prog') == 0 -- Hasn't taken the free ride.
                     then
                         return quest:progressEvent(230) -- Free ride. 1 time only. Non-Mandatory step.
                     end

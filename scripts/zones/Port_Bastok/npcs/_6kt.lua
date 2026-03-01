@@ -2,6 +2,7 @@
 -- Area: Port Bastok
 --  NPC: Drawbridge
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onSpawn = function(npc)
@@ -34,7 +35,7 @@ entity.onTimeTrigger = function(npc, triggerID)
 
         --If a player is on the bridge, kick them off
         for _, player in pairs(players) do
-            if player:getPlayerTriggerAreaInZone() == 2 then
+            if player:isPlayerInTriggerArea(2) then
                 player:startEvent(70)
             end
         end

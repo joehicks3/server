@@ -12,15 +12,17 @@
 -- 100%TP    200%TP    300%TP
 -- 2.00      2.00      2.00
 -----------------------------------
+---@type TWeaponSkill
 local weaponskillObject = {}
 
 weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary, action, taChar)
-    local params = {}
-    params.ftpMod = { 2.0, 2.0, 2.0 }
-    params.mnd_wsc = 0.3
-    params.ele = xi.element.DARK
-    params.skill = xi.skill.STAFF
+    local params      = {}
+    params.ftpMod     = { 2, 2, 2 }
+    params.mnd_wsc    = 0.3
+    params.ele        = xi.element.DARK
+    params.skill      = xi.skill.STAFF
     params.includemab = true
+    -- params.dStat = xi.mod.MND (pMND-mMND)×2 (Not supported in weaponskills.lua currently)
 
     if xi.settings.main.USE_ADOULIN_WEAPON_SKILL_CHANGES then
         params.mnd_wsc = 0.8
@@ -31,12 +33,12 @@ weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary,
     -- Apply Aftermath
     xi.aftermath.addStatusEffect(player, tp, xi.slot.MAIN, xi.aftermath.type.MYTHIC)
 
-    if damage > 0 then
-        if not target:hasStatusEffect(xi.effect.MAGIC_ATK_DOWN) then
-            local duration = tp / 1000 * 60
-            target:addStatusEffect(xi.effect.MAGIC_ATK_DOWN, 10, 0, duration)
-        end
-    end
+    -- Handle status effect
+    local effectId      = xi.effect.MAGIC_ATK_DOWN
+    local actionElement = xi.element.DARK
+    local power         = 10
+    local duration      = math.floor(6 * tp / 100 * applyResistanceAddEffect(player, target, actionElement, 0))
+    xi.weaponskills.handleWeaponskillEffect(player, target, effectId, actionElement, damage, power, duration)
 
     return tpHits, extraHits, criticalHit, damage
 end

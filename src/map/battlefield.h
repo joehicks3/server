@@ -1,20 +1,20 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2010-2015 Darkstar Dev Teams
+  Copyright (c) 2010-2015 Darkstar Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
@@ -29,16 +29,14 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 
 #include "common/cbasetypes.h"
 #include "common/mmo.h"
+#include "common/timer.h"
 #include "sol/sol.hpp"
 #include <unordered_map>
 
 enum BCRULES : uint8
 {
-    RULES_ALLOW_SUBJOBS         = 0x01,
-    RULES_LOSE_EXP              = 0x02,
-    RULES_REMOVE_3MIN           = 0x04,
-    RULES_SPAWN_TREASURE_ON_WIN = 0x08,
-    RULES_MAAT                  = 0x10
+    RULES_ALLOW_SUBJOBS = 0x01,
+    RULES_LOSE_EXP      = 0x02,
 };
 
 enum BATTLEFIELDMOBCONDITION : uint8
@@ -97,13 +95,13 @@ struct BattlefieldMob_t
 
 struct BattlefieldRecord_t
 {
-    std::string name;
-    size_t      partySize;
-    duration    time;
+    std::string     name;
+    size_t          partySize;
+    timer::duration time;
 
     BattlefieldRecord_t()
     : partySize(0)
-    , time(std::chrono::minutes(30))
+    , time(30min)
     {
     }
 };
@@ -126,42 +124,40 @@ struct BattlefieldGroup
     sol::function       randomDeathCallback;
     sol::function       allDeathCallback;
     sol::function       setupCallback;
-    uint8               deathCount  = 0;
     uint32              randomMobId = 0;
 };
 
 class CBattlefield : public std::enable_shared_from_this<CBattlefield>
 {
 public:
-    CBattlefield(uint16 id, CZone* PZone, uint8 area, CCharEntity* PInitiator, bool isInteraction);
+    CBattlefield(uint16 id, CZone* PZone, uint8 area, CCharEntity* PInitiator);
     ~CBattlefield();
 
     uint16                        GetID() const;
     CZone*                        GetZone() const;
     uint16                        GetZoneID() const;
-    std::string const&            GetName() const;
+    const std::string&            GetName() const;
     const BattlefieldInitiator_t& GetInitiator() const;
     uint8                         GetArea() const;
     const BattlefieldRecord_t&    GetRecord() const;
     uint8                         GetStatus() const;
     uint16                        GetRuleMask() const;
-    time_point                    GetStartTime() const;
-    duration                      GetTimeInside() const;
-    time_point                    GetFightTime() const;
-    duration                      GetTimeLimit() const;
-    time_point                    GetWipeTime() const;
+    timer::time_point             GetStartTime() const;
+    timer::duration               GetTimeInside() const;
+    timer::time_point             GetFightTime() const;
+    timer::duration               GetTimeLimit() const;
+    timer::time_point             GetWipeTime() const;
     size_t                        GetMaxParticipants() const;
     size_t                        GetPlayerCount() const;
     uint8                         GetLevelCap() const;
-    duration                      GetFinishTime() const;
-    duration                      GetRemainingTime() const;
-    duration                      GetLastTimeUpdate() const;
-    uint64_t                      GetLocalVar(std::string const& name) const;
+    timer::duration               GetFinishTime() const;
+    timer::duration               GetRemainingTime() const;
+    timer::duration               GetLastTimeUpdate() const;
+    uint64_t                      GetLocalVar(const std::string& name) const;
     uint32                        GetArmouryCrate() const;
 
     bool CheckInProgress();
     bool IsOccupied() const;
-    bool isInteraction() const;
     bool isEntered(CCharEntity* PChar) const;
 
     void ForEachPlayer(const std::function<void(CCharEntity*)>& func);
@@ -171,21 +167,18 @@ public:
     void ForEachNpc(const std::function<void(CNpcEntity*)>& func);
     void ForEachAlly(const std::function<void(CMobEntity*)>& func);
 
-    void SetID(uint16 id);
-    void SetName(std::string const& name);
-    void SetInitiator(std::string const& name);
+    void SetName(const std::string& name);
+    void SetInitiator(const std::string& name);
     void SetArea(uint8 area);
-    void SetRecord(std::string const& name, duration time, size_t partySize);
+    void SetRecord(const std::string& name, timer::duration time, size_t partySize);
     void SetStatus(uint8 status);
     void SetRuleMask(uint16 rulemask);
-    void SetStartTime(time_point time);
-    void SetFightTime(time_point time);
-    void SetTimeLimit(duration time);
-    void SetWipeTime(time_point time);
+    void SetTimeLimit(timer::duration time);
+    void SetWipeTime(timer::time_point time);
     void SetMaxParticipants(uint8 max);
     void SetLevelCap(uint8 cap);
-    void SetLocalVar(std::string const& name, uint64_t value);
-    void SetLastTimeUpdate(duration time);
+    void SetLocalVar(const std::string& name, uint64_t value);
+    void SetLastTimeUpdate(timer::duration time);
     void setArmouryCrate(uint32 entityId);
 
     void         ApplyLevelRestrictions(CCharEntity* PChar) const;
@@ -193,11 +186,9 @@ public:
     CBaseEntity* GetEntity(CBaseEntity* PEntity);
     bool         IsRegistered(CCharEntity* PChar);
     bool         RemoveEntity(CBaseEntity* PEntity, uint8 leavecode = 0);
-    void         onTick(time_point time);
+    void         onTick(timer::time_point time);
     bool         CanCleanup(bool cleanup = false);
-    bool         Cleanup(time_point time, bool force);
-    bool         LoadMobs();
-    bool         SpawnLoot(CBaseEntity* PEntity = nullptr);
+    bool         Cleanup(timer::time_point time, bool force);
 
     // Groups
     void addGroup(BattlefieldGroup group);
@@ -227,23 +218,22 @@ private:
     BattlefieldRecord_t    m_Record;
     uint8                  m_Status{ BATTLEFIELD_STATUS_OPEN };
     uint16                 m_Rules;
-    time_point             m_StartTime;
-    time_point             m_Tick;
-    time_point             m_FightTick;
-    duration               m_TimeLimit{};
-    time_point             m_WipeTime;
-    duration               m_FinishTime{};
-    duration               m_LastPromptTime{};
+    timer::time_point      m_StartTime;
+    timer::time_point      m_Tick;
+    timer::time_point      m_FightTick;
+    timer::duration        m_TimeLimit{};
+    timer::time_point      m_WipeTime;
+    timer::duration        m_FinishTime{};
+    timer::duration        m_LastPromptTime{};
     size_t                 m_MaxParticipants;
     uint8                  m_LevelCap;
     // Entity id of the Armoury Crate that appears upon victory
-    uint32     m_armouryCrate = 0;
-    bool const m_isInteraction;
+    uint32 m_armouryCrate = 0;
 
-    time_point m_cleanupTime{};
-    bool       m_cleanedPlayers = false;
-    bool       m_Cleanup        = false;
-    bool       m_Attacked       = false;
+    timer::time_point m_cleanupTime{};
+    bool              m_cleanedPlayers = false;
+    bool              m_Cleanup        = false;
+    bool              m_Attacked       = false;
 
     std::unordered_map<std::string, uint64_t> m_LocalVars;
     std::vector<BattlefieldGroup>             m_groups;

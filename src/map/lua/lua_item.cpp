@@ -1,20 +1,20 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2010-2015 Darkstar Dev Teams
+  Copyright (c) 2010-2015 Darkstar Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
@@ -24,9 +24,9 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include "common/logging.h"
 #include "items/item.h"
 #include "items/item_equipment.h"
+#include "items/item_furnishing.h"
 #include "items/item_general.h"
 #include "items/item_weapon.h"
-#include "map.h"
 #include "utils/itemutils.h"
 
 CLuaItem::CLuaItem(CItem* PItem)
@@ -194,6 +194,28 @@ uint16 CLuaItem::getWeaponskillPoints()
     return 0;
 }
 
+void CLuaItem::setWeaponskillPointsNeeded(uint16 points)
+{
+    auto* PItem = dynamic_cast<CItemWeapon*>(m_PLuaItem);
+
+    if (PItem)
+    {
+        PItem->setTotalUnlockPointsNeeded(points);
+    }
+}
+
+uint16 CLuaItem::getWeaponskillPointsNeeded()
+{
+    auto* PItem = dynamic_cast<CItemWeapon*>(m_PLuaItem);
+
+    if (PItem)
+    {
+        return PItem->getTotalUnlockPointsNeeded();
+    }
+
+    return 0;
+}
+
 bool CLuaItem::isTwoHanded()
 {
     if (CItemWeapon* PWeapon = dynamic_cast<CItemWeapon*>(m_PLuaItem))
@@ -234,6 +256,48 @@ bool CLuaItem::isShield()
     }
 
     return false;
+}
+
+uint8 CLuaItem::getShieldSize()
+{
+    if (CItemEquipment* PArmor = dynamic_cast<CItemEquipment*>(m_PLuaItem))
+    {
+        if (PArmor->IsShield())
+        {
+            return PArmor->getShieldSize();
+        }
+        else
+        {
+            ShowError("CLuaItem::getShieldSize - not a valid Shield.");
+        }
+    }
+    else
+    {
+        ShowError("CLuaItem::getShieldSize - not a valid Armor.");
+    }
+
+    return 0;
+}
+
+uint8 CLuaItem::getShieldAbsorptionRate()
+{
+    if (CItemEquipment* PArmor = dynamic_cast<CItemEquipment*>(m_PLuaItem))
+    {
+        if (PArmor->IsShield())
+        {
+            return PArmor->getShieldAbsorption();
+        }
+        else
+        {
+            ShowError("CLuaItem::getShieldSize - not a valid Shield.");
+        }
+    }
+    else
+    {
+        ShowError("CLuaItem::getShieldSize - not a valid Armor.");
+    }
+
+    return 0;
 }
 
 auto CLuaItem::getSignature() -> std::string
@@ -282,9 +346,9 @@ bool CLuaItem::isInstalled()
     return PFurnishing->isInstalled();
 }
 
-void CLuaItem::setSoulPlateData(std::string const& name, uint16 mobFamily, uint8 zeni, uint16 skillIndex, uint8 fp)
+void CLuaItem::setSoulPlateData(const std::string& name, uint32 interestData, uint8 zeni, uint16 skillIndex, uint8 fp)
 {
-    m_PLuaItem->setSoulPlateData(name, mobFamily, zeni, skillIndex, fp);
+    m_PLuaItem->setSoulPlateData(name, interestData, zeni, skillIndex, fp);
 }
 
 auto CLuaItem::getSoulPlateData() -> sol::table
@@ -292,11 +356,11 @@ auto CLuaItem::getSoulPlateData() -> sol::table
     auto       data  = m_PLuaItem->getSoulPlateData();
     sol::table table = lua.create_table();
 
-    table["name"]       = std::get<0>(data);
-    table["mobFamily"]  = std::get<1>(data);
-    table["zeni"]       = std::get<2>(data);
-    table["skillIndex"] = std::get<3>(data);
-    table["fp"]         = std::get<4>(data);
+    table["name"]         = std::get<0>(data);
+    table["interestData"] = std::get<1>(data);
+    table["zeni"]         = std::get<2>(data);
+    table["skillIndex"]   = std::get<3>(data);
+    table["fp"]           = std::get<4>(data);
 
     return table;
 }
@@ -311,9 +375,9 @@ auto CLuaItem::getExData() -> sol::table
     return table;
 }
 
-void CLuaItem::setExData(sol::table const& newData)
+void CLuaItem::setExData(const sol::table& newData)
 {
-    for (auto const& [keyObj, valObj] : newData)
+    for (const auto& [keyObj, valObj] : newData)
     {
         uint8 key = keyObj.as<uint8>();
         uint8 val = valObj.as<uint8>();
@@ -357,9 +421,13 @@ void CLuaItem::Register()
     SOL_REGISTER("getAugment", CLuaItem::getAugment);
     SOL_REGISTER("getSkillType", CLuaItem::getSkillType);
     SOL_REGISTER("getWeaponskillPoints", CLuaItem::getWeaponskillPoints);
+    SOL_REGISTER("setWeaponskillPointsNeeded", CLuaItem::setWeaponskillPointsNeeded);
+    SOL_REGISTER("getWeaponskillPointsNeeded", CLuaItem::getWeaponskillPointsNeeded);
     SOL_REGISTER("isTwoHanded", CLuaItem::isTwoHanded);
     SOL_REGISTER("isHandToHand", CLuaItem::isHandToHand);
     SOL_REGISTER("isShield", CLuaItem::isShield);
+    SOL_REGISTER("getShieldSize", CLuaItem::getShieldSize);
+    SOL_REGISTER("getShieldAbsorptionRate", CLuaItem::getShieldAbsorptionRate);
     SOL_REGISTER("getSignature", CLuaItem::getSignature);
     SOL_REGISTER("getAppraisalID", CLuaItem::getAppraisalID);
     SOL_REGISTER("setAppraisalID", CLuaItem::setAppraisalID);

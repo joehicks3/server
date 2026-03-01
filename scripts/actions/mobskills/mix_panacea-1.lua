@@ -1,6 +1,7 @@
 -----------------------------------
 -- Mix: Panacea-1 - Removes anything a Panacea can remove.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -9,7 +10,6 @@ end
 
 local statii =
 {
-    xi.effect.PARALYSIS,
     xi.effect.BIND,
     xi.effect.WEIGHT,
     xi.effect.ADDLE,
@@ -21,6 +21,10 @@ local statii =
     xi.effect.DROWN,
     xi.effect.DIA,
     xi.effect.BIO,
+    xi.effect.SLOW,
+    xi.effect.ELEGY,
+    xi.effect.REQUIEM,
+    xi.effect.HELIX,
     xi.effect.STR_DOWN,
     xi.effect.DEX_DOWN,
     xi.effect.VIT_DOWN,
@@ -45,11 +49,12 @@ mobskillObject.onMobWeaponSkill = function(target, mob, skill)
     for _, effect in pairs(statii) do
         if target:delStatusEffect(effect) then
             lastEffect = effect
+            skill:setMsg(xi.msg.basic.SKILL_ERASE)
+            return lastEffect
+        else
+            skill:setMsg(xi.msg.basic.NO_EFFECT)
         end
     end
-
-    skill:setMsg(xi.msg.basic.SKILL_ERASE)
-    return lastEffect
 end
 
 return mobskillObject

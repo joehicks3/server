@@ -11,14 +11,12 @@
 local ID = zones[xi.zone.THE_GARDEN_OF_RUHMET]
 local gardenGlobal = require('scripts/zones/The_Garden_of_RuHmet/globals')
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local hatedPlayer = npc:getLocalVar('hatedPlayer')
-    local isInTime = npc:getLocalVar('hateTimer') > os.time()
+    local isInTime = npc:getLocalVar('hateTimer') > GetSystemTime()
 
     if hatedPlayer ~= 0 and not isInTime then
         -- player took too long, so reset animosity
@@ -49,12 +47,6 @@ entity.onTrigger = function(player, npc)
         npc:setLocalVar('hatedPlayer', 0)
         npc:setLocalVar('hateTimer', 0)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

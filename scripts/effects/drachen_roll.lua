@@ -1,6 +1,7 @@
 -----------------------------------
 -- xi.effect.DRACHEN_ROLL
 -----------------------------------
+---@type TEffect
 local effectObject = {}
 
 effectObject.onEffectGain = function(target, effect)
@@ -14,6 +15,7 @@ end
 effectObject.onEffectLose = function(target, effect)
     target:delPetMod(xi.mod.ACC, effect:getPower())
     target:delPetMod(xi.mod.RACC, effect:getPower())
+    xi.job_utils.corsair.onRollEffectLose(target, effect)
 end
 
 return effectObject

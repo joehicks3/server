@@ -369,9 +369,9 @@ xi.appraisal.appraisalItems =
         {
             items =
             {
-                { 20, xi.item.HOLLY_STAFF_HQ },
+                { 20, xi.item.HOLLY_STAFF_P1 },
                 { 40, xi.item.BRASS_ZAGHNAL  },
-                { 20, xi.item.WILLOW_WAND_HQ },
+                { 20, xi.item.WILLOW_WAND_P1 },
                 {  5, xi.item.PUK_LANCE      },
                 { 15, xi.item.SPARK_SPEAR    },
             },
@@ -382,8 +382,8 @@ xi.appraisal.appraisalItems =
             items =
             {
                 { 20, xi.item.SPARK_SPEAR       },
-                { 20, xi.item.WILLOW_WAND_HQ    },
-                { 15, xi.item.HOLLY_STAFF_HQ    },
+                { 20, xi.item.WILLOW_WAND_P1    },
+                { 15, xi.item.HOLLY_STAFF_P1    },
                 { 35, xi.item.BRASS_ZAGHNAL     },
                 { 10, xi.item.VOLUNTEERS_SCYTHE },
             },
@@ -485,7 +485,7 @@ xi.appraisal.appraisalItems =
             items =
             {
                 { 60, xi.item.HATCHET        },
-                { 10, xi.item.TOMAHAWK_HQ    },
+                { 10, xi.item.TOMAHAWK_P1    },
                 { 15, xi.item.WAMOURA_AXE    },
                 { 15, xi.item.PROMINENCE_AXE },
             },
@@ -698,7 +698,7 @@ xi.appraisal.appraisalItems =
             {
                 {  5, xi.item.STORM_CRACKOWS     },
                 { 35, xi.item.ASH_CLOGS          },
-                { 25, xi.item.BRONZE_LEGGINGS_HQ },
+                { 25, xi.item.BRONZE_LEGGINGS_P1 },
                 { 35, xi.item.LEATHER_HIGHBOOTS  },
             },
         },
@@ -708,7 +708,7 @@ xi.appraisal.appraisalItems =
             items =
             {
                 { 95, xi.item.LEATHER_HIGHBOOTS },
-                {  5, xi.item.LEAPING_BOOTS     },
+                {  5, xi.item.BOUNDING_BOOTS    },
             },
         },
 
@@ -757,7 +757,7 @@ xi.appraisal.appraisalItems =
             {
                 {  5, xi.item.STORM_TURBAN    },
                 { 20, xi.item.COTTON_HEADGEAR },
-                { 15, xi.item.BRONZE_CAP_HQ   },
+                { 15, xi.item.BRONZE_CAP_P1   },
                 { 30, xi.item.LEATHER_BANDANA },
                 { 30, xi.item.CIRCLET         },
             },
@@ -1600,27 +1600,9 @@ end
 
 xi.appraisal.pickUnappraisedItem = function(player, npc, qItemTable)
     if npc:getLocalVar('UnappraisedItem') == 0 then
-        for i = 1, #qItemTable, 1 do
-            local lootGroup = qItemTable[i]
-            if lootGroup then
-                local max = 0
-                for _, entry in pairs(lootGroup) do
-                    max = max + entry.droprate
-                end
-
-                local roll = math.random(1, max)
-
-                for _, entry in pairs(lootGroup) do
-                    max = max - entry.droprate
-                    if roll > max then
-                        if entry.itemid > 0 then
-                            npc:setLocalVar('UnappraisedItem', entry.itemid)
-                        end
-
-                        break
-                    end
-                end
-            end
+        local selectedLoot = utils.selectFromLootGroups(player, qItemTable)
+        if #selectedLoot > 0 then
+            npc:setLocalVar('UnappraisedItem', selectedLoot[1].itemId)
         end
     end
 end
@@ -1656,26 +1638,10 @@ xi.appraisal.assaultChestTrigger = function(player, npc, qItemTable, regItemTabl
             npcArg:setStatus(xi.status.DISAPPEAR)
         end)
 
-        for i = 1, #regItemTable, 1 do
-            local lootGroup = regItemTable[i]
-            if lootGroup then
-                local max = 0
-                for _, entry in pairs(lootGroup) do
-                    max = max + entry.droprate
-                end
-
-                local roll = math.random(1, max)
-                for _, entry in pairs(lootGroup) do
-                    max = max - entry.droprate
-                    if roll > max then
-                        if entry.itemid ~= 0 then
-                            player:addTreasure(entry.itemid, npc)
-                        end
-
-                        break
-                    end
-                end
-            end
+        local selectedLoot = utils.selectFromLootGroups(player, regItemTable)
+        for _, entry in ipairs(selectedLoot) do
+            -- regItemTable is guaranteed to not have xi.item.GIL in the table
+            player:addTreasure(entry.itemId, npc)
         end
     end
 end

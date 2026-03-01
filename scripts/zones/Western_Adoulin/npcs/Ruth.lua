@@ -4,10 +4,8 @@
 -- Involved With Quest: 'A Pioneers Best (Imaginary) Friend'
 -- !pos -144 4 -10 256
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     if player:getCurrentMission(xi.mission.log_id.SOA) >= xi.mission.id.soa.LIFE_ON_THE_FRONTIER then
@@ -21,14 +19,11 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 2523 then
         -- Progresses Quest: 'A Pioneers Best (Imaginary) Friend'
         player:delStatusEffectsByFlag(xi.effectFlag.INFLUENCE, true)
-        player:addStatusEffect(xi.effect.IONIS, 0, 0, 9000)
+        player:addStatusEffect(xi.effect.IONIS, { duration = 9000, origin = player })
     end
 end
 

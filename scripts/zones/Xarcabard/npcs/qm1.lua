@@ -6,6 +6,7 @@
 -----------------------------------
 local ID = zones[xi.zone.XARCABARD]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -13,20 +14,24 @@ entity.onTrade = function(player, npc, trade)
         player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.THE_THREE_MAGI) == xi.questStatus.QUEST_ACCEPTED and
         npcUtil.tradeHas(trade, xi.item.FADED_CRYSTAL) and
         not player:hasItem(xi.item.GLOWSTONE) and
-        npcUtil.popFromQM(player, npc, ID.mob.CHAOS_ELEMENTAL)
+        npcUtil.popFromQM(player, npc, ID.mob.CHAOS_ELEMENTAL, { hide = 0 })
     then
         player:confirmTrade()
     end
 end
 
 entity.onTrigger = function(player, npc)
+    if GetMobByID(ID.mob.CHAOS_ELEMENTAL):isSpawned() then
+        player:messageSpecial(ID.text.DO_NOT_SENSE)
+        return
+    end
+
+    if player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.THE_THREE_MAGI) == xi.questStatus.QUEST_ACCEPTED then
+        player:messageSpecial(ID.text.SENSE_EVIL)
+        return
+    end
+
     player:messageSpecial(ID.text.NOTHING_OUT_OF_ORDINARY)
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

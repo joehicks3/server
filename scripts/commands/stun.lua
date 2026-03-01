@@ -2,6 +2,7 @@
 -- func: stun
 -- desc: stuns a non-NPC target for an hour. good for testing damage/mechanics on a punching bag.
 -----------------------------------
+---@type TCommand
 local commandObj = {}
 
 commandObj.cmdprops =
@@ -16,7 +17,7 @@ commandObj.onTrigger = function(player)
         local stun = targ:getStatusEffect(xi.effect.STUN)
         targ:delStatusEffect(xi.effect.STUN)
         if not stun or stun:getPower() ~= 69 then -- it's toggleable
-            targ:addStatusEffect(xi.effect.STUN, 69, 0, 3600)
+            targ:addStatusEffect(xi.effect.STUN, { power = 69, duration = 3600, origin = player })
             player:printToPlayer('Gave target super Stun.')
         else
             player:printToPlayer('Removed target mob\'s super Stun.')

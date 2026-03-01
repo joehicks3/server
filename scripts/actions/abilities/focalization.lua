@@ -13,6 +13,7 @@
 -- 70      |4       |1:00 minute
 -- 90      |5       |48 seconds
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -24,7 +25,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    player:addStatusEffect(xi.effect.FOCALIZATION, player:getMerit(xi.merit.FOCALIZATION), 0, 60)
+    player:addStatusEffect(xi.effect.FOCALIZATION, { power = player:getMerit(xi.merit.FOCALIZATION), duration = 60, origin = player })
 
     return xi.effect.FOCALIZATION
 end

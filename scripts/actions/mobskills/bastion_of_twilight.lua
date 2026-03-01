@@ -2,8 +2,7 @@
 -- Bastion of Twilight
 -- Magic Shield Effect
 -----------------------------------
-local ID = zones[xi.zone.EMPYREAL_PARADOX]
------------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -14,15 +13,15 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
         return 1
     end
 
-    mob:showText(mob, ID.text.PROMATHIA_TEXT + 5)
     return 0
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    mob:addStatusEffect(xi.effect.MAGIC_SHIELD, 1, 0, 0)
-    mob:setAnimationSub(2)
+    mob:addStatusEffect(xi.effect.MAGIC_SHIELD, { power = 1, origin = mob })
+    skill:setFinalAnimationSub(2)
 
     skill:setMsg(xi.msg.basic.SKILL_GAIN_EFFECT)
+
     return xi.effect.MAGIC_SHIELD
 end
 

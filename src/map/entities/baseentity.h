@@ -1,4 +1,4 @@
-﻿/*
+/*
 ===========================================================================
 
   Copyright (c) 2010-2015 Darkstar Dev Teams
@@ -24,7 +24,8 @@
 
 #include "common/cbasetypes.h"
 #include "common/mmo.h"
-#include "packets/message_basic.h"
+#include "common/timer.h"
+#include "packets/basic.h"
 
 #include <map>
 #include <memory>
@@ -143,11 +144,12 @@ enum MOUNTTYPE : uint8
     MOUNT_RED_RAPTOR     = 31,
     MOUNT_IRON_GIANT     = 32,
     MOUNT_BYAKKO         = 33,
-    MOUNT_NOBLE_CHOCOBO  = 34, // NOTE: This is currently blank, probably needs additional packets sent
+    MOUNT_NOBLE_CHOCOBO  = 34, // NOTE: This uses Chocobo animation, and CustomProperties[1] set to 1
     MOUNT_IXION          = 35,
     MOUNT_PHUABO         = 36,
+    MOUNT_CRACKLAW       = 37,
     //
-    MOUNT_MAX = 37,
+    MOUNT_MAX = 38,
 };
 
 enum class ALLEGIANCE_TYPE : uint8
@@ -206,18 +208,24 @@ enum class SPAWN_ANIMATION : uint8
     SPECIAL = 1,
 };
 
-// TODO:it is possible to make this structure part of the class, instead of the current ID and Targid, but without the Clean method
-
+// TODO: It is possible to make this structure part of the class, instead of the current ID and Targid, but without the clean() method.
 struct EntityID_t
 {
+    // TODO: Add a constructor that takes an id and targid.
+    // TODO: Clean with a destructor.
     void clean()
     {
         id     = 0;
         targid = 0;
     }
 
-    uint32 id;
-    uint16 targid;
+    // TODO: Globally rename targid to index, zoneIndex, etc.
+
+    uint32 id;     // "Long" global ID of the entity. Built from 0x10000000 | (zoneId << 16) | targid.
+    uint16 targid; // The "index" of the entity in the current zone. Used for local targeting and referencing.
+
+    // TODO: Store the zoneId of this entity's zone. We can then use the targid (index) and the zoneId to build the global id.
+    // TODO: Store an incremental u64 as a UUID for the entity for disambiguation in the case of dynamic entities that might have the same targid.
 };
 
 class CAIContainer;
@@ -259,14 +267,16 @@ public:
     virtual void Spawn();
     virtual void FadeOut();
 
-    virtual const std::string& getName();       // Internal name of entity
+    virtual const std::string& getName() const; // Internal name of entity
     virtual const std::string& getPacketName(); // Name of entity sent to the client
 
-    uint16 getZone() const; // Current zone
-    float  GetXPos() const; // Position of co-ordinate X
-    float  GetYPos() const; // Position of co-ordinate Y
-    float  GetZPos() const; // Position of co-ordinate Z
-    uint8  GetRotPos() const;
+    uint16        getZone() const; // Current zone
+    float         GetXPos() const; // Position of co-ordinate X
+    float         GetYPos() const; // Position of co-ordinate Y
+    float         GetZPos() const; // Position of co-ordinate Z
+    uint8         GetRotPos() const;
+    uint8         GetSpeed() const;
+    virtual uint8 UpdateSpeed(bool run = false);
 
     void         HideName(bool hide);     // hide / show name
     void         GhostPhase(bool ghost);  // makes mob semi transparent
@@ -281,40 +291,43 @@ public:
     void         SendZoneUpdate();
 
     void   ResetLocalVars();
-    uint32 GetLocalVar(std::string var);
-    void   SetLocalVar(std::string var, uint32 val);
+    uint32 GetLocalVar(const std::string& var);
+    void   SetLocalVar(const std::string& var, uint32 val);
     auto   GetLocalVars() -> std::map<std::string, uint32>&;
 
     // pre-tick update
-    virtual void Tick(time_point) = 0;
+    virtual void Tick(timer::time_point) = 0;
     // post-tick update
     virtual void PostTick() = 0;
 
     void   SetModelId(uint16 modelId); // Set new modelid
     uint16 GetModelId() const;         // Get the modelid
 
-    virtual void HandleErrorMessage(std::unique_ptr<CBasicPacket>&){};
+    virtual void HandleErrorMessage(std::unique_ptr<CBasicPacket>&) {};
 
     bool IsDynamicEntity() const;
 
-    uint32          id;           // global identifier unique on the server
-    uint16          targid;       // local identifier unique to the zone
-    ENTITYTYPE      objtype;      // Type of entity
-    STATUS_TYPE     status;       // Entity status (different entities - different statuses)
-    uint16          m_TargID;     // the targid of the object the entity is looking at
-    std::string     name;         // Entity name
-    std::string     packetName;   // Used to override name when being sent to the client
-    look_t          look;         //
-    look_t          mainlook;     // only used if mob use changeSkin() or player /lockstyle
-    location_t      loc;          // Location of entity
-    uint8           animation;    // animation
-    uint8           animationsub; // Additional animation parameter
-    uint8           speed;        // speed of movement
-    uint8           speedsub;     // Additional movement speed parameter
+    uint32          id;             // global identifier unique on the server
+    uint16          targid;         // local identifier unique to the zone
+    ENTITYTYPE      objtype;        // Type of entity
+    STATUS_TYPE     status;         // Entity status (different entities - different statuses)
+    uint16          m_TargID;       // the targid of the object the entity is looking at
+    std::string     name;           // Entity name
+    std::string     packetName;     // Used to override name when being sent to the client
+    look_t          look;           //
+    look_t          mainlook;       // only used if mob use changeSkin() or player /lockstyle
+    location_t      loc;            // Location of entity
+    uint8           animation;      // animation
+    uint8           animationsub;   // Additional animation parameter
+    uint8           baseSpeed;      // base movement speed
+    uint8           animationSpeed; // speed of movement animation
     uint8           namevis;
     ALLEGIANCE_TYPE allegiance;     // what types of targets the entity can fight
     uint8           updatemask;     // what to update next server tick to players nearby
     bool            priorityRender; // CliPriorityFlag, will force this entity to render on clients if set. See https://github.com/atom0s/XiPackets/tree/main/world/server/0x0037 (also applies to 0x00E)
+
+    float modelHitboxSize = 0.0f; // used for distance calculations and is in packets
+    uint8 modelSize       = 0;
 
     bool isRenamed; // tracks if the entity's name has been overidden. Defaults to false.
 
@@ -326,10 +339,11 @@ public:
     CBattlefield*                 PBattlefield; // pointer to battlefield (if in one)
     CInstance*                    PInstance;
 
-    std::chrono::steady_clock::time_point m_nextUpdateTimer; // next time the entity should push an update packet
+    timer::time_point m_nextUpdateTimer; // next time the entity should push an update packet
 
 protected:
     std::map<std::string, uint32> m_localVars;
+    uint8                         speed; // speed of movement
 };
 
 #endif // _BASEENTITY_H

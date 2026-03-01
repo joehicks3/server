@@ -4,6 +4,7 @@
 -----------------------------------
 local ID = zones[xi.zone.ARRAPAGO_REMNANTS]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobSpawn = function(mob)
@@ -11,10 +12,14 @@ entity.onMobSpawn = function(mob)
 end
 
 entity.onMobDisengage = function(mob)
-    local run = mob:getLocalVar('run')
     local instance = mob:getInstance()
+    if not instance then
+        return
+    end
+
+    local run   = mob:getLocalVar('run')
     local stage = instance:getStage()
-    local prog = instance:getProgress()
+    local prog  = instance:getProgress()
 
     if run == 1 then
         mob:pathThrough(ID.points[stage][prog - 1].point1, 9)
@@ -38,37 +43,28 @@ entity.onMobDisengage = function(mob)
 end
 
 entity.onMobEngage = function(mob)
-    mob:setLocalVar('runTime', os.time())
+    mob:setLocalVar('runTime', GetSystemTime())
 end
 
 entity.onMobFight = function(mob, target)
-    local act = mob:getCurrentAction()
-    local isBusy = false
-    local runTime = mob:getLocalVar('runTime')
     local instance = mob:getInstance()
-    local stage = instance:getStage()
-    local prog = instance:getProgress()
-
-    if
-        act == xi.act.MOBABILITY_START or
-        act == xi.act.MOBABILITY_USING or
-        act == xi.act.MOBABILITY_FINISH or
-        act == xi.act.MAGIC_START or
-        act == xi.act.MAGIC_CASTING or
-        act == xi.act.MAGIC_START
-    then
-        isBusy = true -- is set to true if mob is in any stage of using a mobskill or casting a spell
+    if not instance then
+        return
     end
 
+    local runTime = mob:getLocalVar('runTime')
+    local stage   = instance:getStage()
+    local prog    = instance:getProgress()
+
     if not mob:isFollowingPath() then
-        if os.time() - runTime > 10 then
-            if mob:actionQueueEmpty() and not isBusy then
+        if GetSystemTime() - runTime > 10 then
+            if not xi.combat.behavior.isEntityBusy(mob) then
                 if mob:getLocalVar('run') <= 1 then
                     mob:setLocalVar('run', 1)
-                    mob:setLocalVar('runTime', os.time())
+                    mob:setLocalVar('runTime', GetSystemTime())
                     entity.onMobDisengage(mob)
                 elseif mob:getLocalVar('run') <= 6 then
-                    mob:setLocalVar('runTime', os.time())
+                    mob:setLocalVar('runTime', GetSystemTime())
                     entity.onMobDisengage(mob)
                 elseif mob:getLocalVar('run') == 7 then
                     DespawnMob(ID.mob[stage - 1][prog - 1].astrologer, instance)

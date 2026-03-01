@@ -2,6 +2,7 @@
 -- func: changejob
 -- desc: Changes the players current job.
 -----------------------------------
+---@type TCommand
 local commandObj = {}
 
 commandObj.cmdprops =
@@ -53,6 +54,12 @@ commandObj.onTrigger = function(player, jobId, level, master)
     local jobNameByNum = {}
     for k, v in pairs(xi.job) do
         jobNameByNum[v] = k
+    end
+
+    -- if the player has a pet despawn it, clean up pet.
+    local pet = player:getPet()
+    if pet then
+        player:despawnPet()
     end
 
     -- output new job to player

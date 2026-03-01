@@ -8,14 +8,15 @@
 -- You also subsequently cannot kill yourself using this JA.
 -- The increase in Life Cycle potency from Job points is applied in the same set as equipment bonuses.
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
     return xi.job_utils.geomancer.geoOnLifeCycleAbilityCheck(player, target, ability)
 end
 
-abilityObject.onUseAbility = function(player, target, ability)
-    return xi.job_utils.geomancer.lifeCycle(player, target, ability)
+abilityObject.onUseAbility = function(player, target, ability, action)
+    return xi.job_utils.geomancer.lifeCycle(player, target, ability, action)
 end
 
 return abilityObject

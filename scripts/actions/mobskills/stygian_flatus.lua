@@ -5,6 +5,7 @@
 -- Range: Melee?
 -- Duration: 9:00
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -12,7 +13,13 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    skill:setMsg(xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.PARALYSIS, 30, 0, 120))
+    local typeEffect = xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.PARALYSIS, 20, 0, 90)
+
+    if typeEffect == nil then
+        typeEffect = xi.msg.basic.SKILL_NO_EFFECT
+    end
+
+    skill:setMsg(typeEffect)
 
     return xi.effect.PARALYSIS
 end

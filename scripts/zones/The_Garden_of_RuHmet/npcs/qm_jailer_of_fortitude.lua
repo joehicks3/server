@@ -10,6 +10,7 @@
 -----------------------------------
 local ID = zones[xi.zone.THE_GARDEN_OF_RUHMET]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -22,12 +23,7 @@ entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
+    player:messageSpecial(ID.text.FORTITUDE_QM)
 end
 
 return entity

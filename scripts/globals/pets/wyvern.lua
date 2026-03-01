@@ -42,7 +42,8 @@ local wyvernTypes =
     [xi.job.RUN]  = wyvernCapabilities.MULTI,
 }
 
-local function doHealingBreath(player, threshold)
+-- healing breath uses ratios, so use a divisor as input
+local function doHealingBreath(player, divisor)
     local breathHealRange = 14
 
     local healingbreath = xi.jobAbility.HEALING_BREATH
@@ -62,19 +63,19 @@ local function doHealingBreath(player, threshold)
     end
 
     if
-        player:getHPP() <= threshold and
+        player:getHP() <= math.floor(player:getMaxHP() / divisor) and
         inBreathRange(player)
     then
-        player:getPet():useJobAbility(healingbreath, player)
+        player:getPet():usePetAbility(healingbreath, player)
     elseif wyvernType == wyvernCapabilities.DEFENSIVE then
         local party = player:getPartyWithTrusts()
         for _, member in pairs(party) do
             if
-                member:getHPP() <= threshold and
+                member:getHP() <= math.floor(member:getMaxHP() / divisor) and
                 inBreathRange(member) and
                 not member:isDead()
             then
-                player:getPet():useJobAbility(healingbreath, member)
+                player:getPet():usePetAbility(healingbreath, member)
                 break
             end
         end
@@ -107,7 +108,7 @@ local function doStatusBreath(target, player)
                     target:hasStatusEffect(effect) and
                     wyvern:checkDistance(target) <= breathRange
                 then
-                    wyvern:useJobAbility(ability, target)
+                    wyvern:usePetAbility(ability, target)
                     return true
                 end
             end
@@ -121,7 +122,7 @@ xi.pets.wyvern.onMobSpawn = function(mob)
     local master = mob:getMaster()
 
     if master:getMod(xi.mod.WYVERN_SUBJOB_TRAITS) > 0 then
-        mob:addJobTraits(master:getSubJob(), master:getSubLvl())
+        mob:addWyvernJobTraits(master:getSubJob(), master:getSubLvl())
     end
 
     local wyvernType = wyvernTypes[master:getSubJob()]
@@ -138,13 +139,14 @@ xi.pets.wyvern.onMobSpawn = function(mob)
             end
         end)
 
+        -- 1/3 and 1/2 divisor for healing breath
         master:addListener('MAGIC_USE', 'PET_WYVERN_MAGIC', function(player, target, spell, action)
-            local threshold = 33
+            local divisor = 3
             if player:getMod(xi.mod.WYVERN_EFFECTIVE_BREATH) > 0 then
-                threshold = 50
+                divisor = 2
             end
 
-            doHealingBreath(player, threshold)
+            doHealingBreath(player, divisor)
         end)
     elseif
         wyvernType == wyvernCapabilities.OFFENSIVE or
@@ -155,14 +157,15 @@ xi.pets.wyvern.onMobSpawn = function(mob)
         end)
     end
 
+    -- 1/4 and 1/3rd divisors for HP
     if wyvernType == wyvernCapabilities.MULTI then
         master:addListener('MAGIC_USE', 'PET_WYVERN_MAGIC', function(player, target, spell, action)
-            local threshold = 25
+            local divisor = 4
             if player:getMod(xi.mod.WYVERN_EFFECTIVE_BREATH) > 0 then
-                threshold = 33
+                divisor = 3
             end
 
-            doHealingBreath(player, threshold)
+            doHealingBreath(player, divisor)
         end)
     end
 
@@ -183,7 +186,7 @@ xi.pets.wyvern.onMobSpawn = function(mob)
     end)
 end
 
-local function removeWyvernLevels(mob)
+xi.pets.wyvern.removeWyvernLevels = function(mob)
     local master  = mob:getMaster()
     local numLvls = mob:getLocalVar('level_Ups')
 
@@ -202,7 +205,7 @@ local function removeWyvernLevels(mob)
 end
 
 xi.pets.wyvern.onMobDeath = function(mob, player)
-    removeWyvernLevels(mob)
+    xi.pets.wyvern.removeWyvernLevels(mob)
 
     local master  = mob:getMaster()
     master:removeListener('PET_WYVERN_WS')
@@ -213,7 +216,7 @@ xi.pets.wyvern.onMobDeath = function(mob, player)
 end
 
 xi.pets.wyvern.onPetLevelRestriction = function(pet)
-    removeWyvernLevels(pet)
+    xi.pets.wyvern.removeWyvernLevels(pet)
     pet:setLocalVar('wyvern_exp', 0)
     pet:setLocalVar('level_Ups', 0)
 end

@@ -6,6 +6,7 @@
 -----------------------------------
 local ID = zones[xi.zone.RUAUN_GARDENS]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -13,19 +14,12 @@ entity.onTrade = function(player, npc, trade)
         npcUtil.tradeHasExactly(trade, { xi.item.GEM_OF_THE_WEST, xi.item.AUTUMNSTONE }) and
         npcUtil.popFromQM(player, npc, ID.mob.BYAKKO)
     then -- Gem of the West and Autumnstone
-        player:showText(npc, ID.text.SKY_GOD_OFFSET + 11)
         player:confirmTrade()
     end
 end
 
 entity.onTrigger = function(player, npc)
     player:messageSpecial(ID.text.SKY_GOD_OFFSET + 2)
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

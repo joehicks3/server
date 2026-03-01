@@ -2,6 +2,7 @@
 -- Spell: Cure IV
 -- Restores target's HP.
 -----------------------------------
+---@type TSpell
 local spellObject = {}
 
 spellObject.onMagicCastingCheck = function(caster, target, spell)
@@ -77,7 +78,7 @@ spellObject.onSpellCast = function(caster, target, spell)
 
             solaceStoneskin = solaceStoneskin * (1 + caster:getMerit(xi.merit.ANIMUS_SOLACE) / 100)
 
-            target:addStatusEffect(xi.effect.STONESKIN, solaceStoneskin, 0, 25, 0, 0, 1)
+            target:addStatusEffect(xi.effect.STONESKIN, { power = solaceStoneskin, duration = 25, origin = caster, tier = 1 })
         end
 
         final = final + (final * (target:getMod(xi.mod.CURE_POTENCY_RCVD) / 100))

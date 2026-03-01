@@ -112,6 +112,13 @@ local function getBaseMPCost(player, ability)
         [xi.jobAbility.BLINDSIDE]        = 147,
         [xi.jobAbility.NIGHT_TERROR]     = 177,
         [xi.jobAbility.PAVOR_NOCTURNUS]  = 246,
+        -- Cait Sith
+        [xi.jobAbility.REGAL_SCRATCH]    = 5,
+        [xi.jobAbility.MEWING_LULLABY]   = 61,
+        [xi.jobAbility.EARIE_EYE]        = 134,
+        [xi.jobAbility.LEVEL_QM_HOLY]    = 235,
+        [xi.jobAbility.RAISE_II]         = 160,
+        [xi.jobAbility.RERAISE_II]       = 80,
         -- Siren
         [xi.jobAbility.WELT]             =   9,
         [xi.jobAbility.ROUNDHOUSE]       =  52,
@@ -122,10 +129,12 @@ local function getBaseMPCost(player, ability)
 
     local baseMPCost = nil
 
-    if ability:getAddType() == xi.addType.ADDTYPE_ASTRAL_FLOW then
-        baseMPCost = player:getMainLvl() * 2
-    elseif ability ~= nil then
-        baseMPCost = baseMPCostMap[ability:getID()]
+    if ability then
+        if ability:getAddType() == xi.addType.ADDTYPE_ASTRAL_FLOW then
+            baseMPCost = player:getMainLvl() * 2
+        else
+            baseMPCost = baseMPCostMap[ability:getID()]
+        end
     end
 
     if baseMPCost == nil then
@@ -159,43 +168,24 @@ end
 
 -- Bloodpact Delay is handled in charentity.cpp
 xi.job_utils.summoner.canUseBloodPact = function(player, pet, target, petAbility)
-    -- TODO: verify order of out of MP/range/etc checks.
+    -- The distance checks are performed in core but should be returned here when possible.
+    -- To activate a Blood Pact, the following conditions must be met:
+    -- 1 - The summoner is within "Blood Pact: Rage/Ward" range (20y + hitboxes)
+    -- 2 - The avatar is within actual Blood Pact range (varies + hitboxes)
     if pet ~= nil then
-        -- There is some complex interaction here.
-        -- First off, you will get out of range message if the pet isn't within the abilities range to it's target.
-        -- Second, if your pet is in range, but you're out of range of your pet, retail provides no message for some reason but the pet does nothing.
-        -- No out of range error message is unhelpful so we are setting that message anyway.
-
-        -- TODO: The hardcoded ranges of 21/22 need to take into account mob size.
-        -- TODO: add "era" setting or setting in general for this. Era used to have a smaller range for BPs.
-        -- This is a "new" change -- https://forum.square-enix.com/ffxi/threads/48564-Sep-16-2015-%28JST%29-Version-Update
-        -- TODO: verify who/what is "out of range" for out of range messages
-
-        -- check if target is too far from pet for ability
-        if pet:checkDistance(target) >= petAbility:getRange() then
-            return xi.msg.basic.TARG_OUT_OF_RANGE, 0
-        end
-
-        -- check if player is too far from pet
-        if pet:checkDistance(player) >= 21 then
-            return xi.msg.basic.TARG_OUT_OF_RANGE, 0
-        end
-
-        -- check if player is too far from target
-        if target:checkDistance(player) >= 22 then
-            return xi.msg.basic.TARG_OUT_OF_RANGE, 0
-        end
-
         local petAction = pet:getCurrentAction()
 
         -- check if avatar is under status effect
-        if petAction == xi.action.SLEEP or petAction == xi.action.STUN then
+        if
+            petAction == xi.action.category.SLEEP or
+            petAction == xi.action.category.STUN
+        then
             return xi.msg.basic.PET_CANNOT_DO_ACTION, 0 -- TODO: verify exact message in packet.
         end
 
         -- check if avatar is using a move already
-        if petAction == xi.action.PET_MOBABILITY_FINISH then
-            return xi.msg.basic.PET_CANNOT_DO_ACTION, 0 -- TODO: verify exact message in packet.
+        if petAction == xi.action.category.PET_MOBABILITY_FINISH then
+            return 0, 0
         end
 
         local baseMPCost = getBaseMPCost(player, petAbility)
@@ -212,23 +202,40 @@ end
 
 xi.job_utils.summoner.onUseBloodPact = function(target, petskill, summoner, action)
     local bloodPactAbility = GetAbility(petskill:getID()) -- Player abilities and Avatar abilities are mapped 1:1
-    local baseMPCost       = getBaseMPCost(summoner, bloodPactAbility)
-    local mpCost           = getMPCost(baseMPCost, summoner, bloodPactAbility)
-
-    if summoner:hasStatusEffect(xi.effect.APOGEE) then
-        summoner:resetRecast(xi.recast.ABILITY, bloodPactAbility:getRecastID())
-        summoner:delStatusEffect(xi.effect.APOGEE)
+    if not bloodPactAbility then
+        return
     end
 
+    local baseMPCost       = getBaseMPCost(summoner, bloodPactAbility)
+    local mpCost           = getMPCost(baseMPCost, summoner, bloodPactAbility)
+    local bloodPactRecast  = math.max(0, summoner:getLocalVar('bpRecastTime'))
+
     if target:getID() == action:getPrimaryTargetID() then
+        -- MP and Cooldown is only consumed if the ability goes off
         summoner:delMP(mpCost)
+
+        if target:isMob() then
+            target:addBaseEnmity(summoner)
+        end
+
+        if summoner:hasStatusEffect(xi.effect.APOGEE) then
+            summoner:resetRecast(xi.recast.ABILITY, bloodPactAbility:getRecastID())
+            summoner:delStatusEffect(xi.effect.APOGEE)
+        else
+            if xi.settings.map.BLOOD_PACT_SHARED_TIMER then
+                summoner:addRecast(xi.recast.ABILITY, xi.recastID.BLOODPACT_RAGE, bloodPactRecast)
+                summoner:addRecast(xi.recast.ABILITY, xi.recastID.BLOODPACT_WARD, bloodPactRecast)
+            else
+                summoner:addRecast(xi.recast.ABILITY, bloodPactAbility:getRecastID(), bloodPactRecast)
+            end
+        end
     end
 end
 
 -- to be removed once damage is overhauled
 xi.job_utils.summoner.calculateTPReturn = function(avatar, target, damage, numHits)
     if damage ~= 0 and numHits > 0 then -- absorbed hits still give TP, though we can't know how many hits actually connected in the current avatar damage formulas
-        local tpReturn = xi.combat.tp.getSingleMeleeHitTPReturn(avatar, target)
+        local tpReturn = xi.combat.tp.getSingleMeleeHitTPReturn(avatar, false)
         tpReturn = tpReturn + 10 * (numHits - 1) -- extra hits give 10 TP each
         avatar:setTP(tpReturn)
     else

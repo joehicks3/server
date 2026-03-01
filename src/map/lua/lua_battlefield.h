@@ -1,20 +1,20 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2010-2015 Darkstar Dev Teams
+  Copyright (c) 2010-2015 Darkstar Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
@@ -60,7 +60,7 @@ public:
     auto     getAllies() -> sol::table;
     auto     getRecord() -> std::tuple<std::string, uint32, uint32>;
     uint8    getStatus();
-    uint64_t getLocalVar(std::string const& name);
+    uint64_t getLocalVar(const std::string& name);
     uint32   getLastTimeUpdate();
     auto     getInitiator() -> std::pair<uint32, std::string>;
     uint32   getArmouryCrate();
@@ -68,16 +68,14 @@ public:
     void setLastTimeUpdate(uint32 seconds);
     void setTimeLimit(uint32 seconds);
     void setWipeTime(uint32 seconds);
-    void setRecord(std::string const& name, uint32 seconds);
+    void setRecord(const std::string& name, uint32 seconds);
     void setStatus(uint8 status);
-    void setLocalVar(std::string const& name, uint64_t value);
-    bool loadMobs();
-    bool spawnLoot(sol::object const& PEntityObj);
-    auto insertEntity(uint16 targid, bool ally, bool inBattlefield) -> std::optional<CLuaBaseEntity>;
+    void setLocalVar(const std::string& name, uint64_t value);
+    auto insertEntity(uint16 targid, bool ally, bool inBattlefield) -> CBaseEntity*;
     bool cleanup(bool cleanup);
     void win();
     void lose();
-    void addGroups(sol::table const& groups, bool hasMultipleArenas);
+    void addGroups(const sol::table& groups, bool hasMultipleArenas);
 
     bool operator==(const CLuaBattlefield& other) const
     {

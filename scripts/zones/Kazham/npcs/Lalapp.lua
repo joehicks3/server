@@ -2,6 +2,7 @@
 -- Area: Kazham
 --  NPC: Lalapp
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local pathNodes =
@@ -71,9 +72,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(205)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

@@ -2,6 +2,7 @@
 -- healing_ruby II
 -- Description: Restores HP.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -12,7 +13,7 @@ mobskillObject.onMobWeaponSkill = function(target, mob, skill)
     local potency = skill:getParam()
 
     if potency == 0 then
-        potency = 25
+        potency = 15
     end
 
     potency = potency - math.random(0, potency / 4)

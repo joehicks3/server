@@ -2,6 +2,7 @@
 -- Area: Kazham
 --  NPC: Popopp
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -55,12 +56,7 @@ entity.onTrigger = function(player, npc)
         elseif progress >= 5 or failed >= 6 then
             player:startEvent(246) -- happy with wandering bulb
         end
-    else
-        player:startEvent(201)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

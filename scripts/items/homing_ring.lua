@@ -3,14 +3,15 @@
 -- Teleport Homing Ring
 -- Enchantment: "Outpost Warp"
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     local result = 0
     local region = target:getCurrentRegion()
 
     if
-        not xi.conq.canTeleportToOutpost(target, region) or
+        not xi.conquest.canTeleportToOutpost(target, region) or
         GetRegionOwner(region) ~= target:getNation()
     then
         result = xi.msg.basic.CANT_BE_USED_IN_AREA
@@ -19,9 +20,9 @@ itemObject.onItemCheck = function(target)
     return result
 end
 
-itemObject.onItemUse = function(target)
+itemObject.onItemUse = function(target, user)
     local region = target:getCurrentRegion()
-    target:addStatusEffectEx(xi.effect.TELEPORT, 0, xi.teleport.id.OUTPOST, 0, 4, 0, region)
+    target:addStatusEffect(xi.effect.TELEPORT, { power = xi.teleport.id.OUTPOST, duration = 4, origin = user, icon = 0, subPower = region })
 end
 
 return itemObject

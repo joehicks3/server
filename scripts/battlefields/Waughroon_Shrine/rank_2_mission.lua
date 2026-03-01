@@ -3,13 +3,13 @@
 -- Waughroon Shrine mission battlefield
 -- !pos -345 104 -260 144
 -----------------------------------
-local waughroonID = zones[xi.zone.WAUGHROON_SHRINE]
------------------------------------
 
 local content = Battlefield:new({
     zoneId        = xi.zone.WAUGHROON_SHRINE,
     battlefieldId = xi.battlefield.id.RANK_2_MISSION_2,
+    canLoseExp    = false,
     isMission     = true,
+    allowTrusts   = true,
     maxPlayers    = 6,
     levelCap      = 25,
     timeLimit     = utils.minutes(30),
@@ -37,20 +37,6 @@ function content:checkSkipCutscene(player)
         ))
 end
 
-content.groups =
-{
-    {
-        mobIds =
-        {
-            { waughroonID.mob.DARK_DRAGON,     waughroonID.mob.DARK_DRAGON + 1 },
-            { waughroonID.mob.DARK_DRAGON + 2, waughroonID.mob.DARK_DRAGON + 3 },
-            { waughroonID.mob.DARK_DRAGON + 4, waughroonID.mob.DARK_DRAGON + 5 },
-        },
-
-        allDeath = function(battlefield, mob)
-            battlefield:setStatus(xi.battlefield.status.WON)
-        end,
-    },
-}
+content:addEssentialMobs({ 'Dark_Dragon', 'Seeker' })
 
 return content:register()

@@ -1,27 +1,36 @@
 -----------------------------------
---  Vitriolic Shower
---  Description: Expels a caustic stream at targets in a fan-shaped area of effect. Additional effect: Burn
---  Type: Magical
---  Utsusemi/Blink absorb: Wipes shadow
---  Range: Cone
+-- Vitriolic Shower
+-- Family: Wamouracampa
+-- Description: Deals Fire damage to targets surrounding mob. Additional Effect: Burn
+-- Notes: Used by Brass Borer and possibly other NMs.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local power = math.random(15, 35)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.BURN, power, 3, 60)
+    params.baseDamage      = mob:getMainLvl() + 2
+    params.fTP             = { 7.50, 7.50, 7.50 }
+    params.element         = xi.element.FIRE
+    params.attackType      = xi.attackType.MAGICAL
+    params.damageType      = xi.damageType.FIRE
+    params.shadowBehavior  = xi.mobskills.shadowBehavior.WIPE_SHADOWS
+    params.dStatMultiplier = 1.33
 
-    local dmgmod = 2
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 2.7, xi.element.FIRE, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    -- NOTE: nil value was undefined MOBPARAM_FIRE
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, nil, xi.mobskills.shadowBehavior.WIPE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.FIRE)
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.BURN, 30, 3, 60)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

@@ -46,7 +46,7 @@ quest.sections =
         {
             ['Chemioue'] =
             {
-                onTrigger = function(player, csid, option, npc)
+                onTrigger = function(player, npc)
                     if quest:getVar(player, 'Prog') == 0 then
                         return quest:progressEvent(536)
                     end
@@ -140,13 +140,13 @@ quest.sections =
                         quest:getVar(player, 'Prog') == 3 and
                         npcUtil.popFromQM(player, npc, misareauxID.mob.ALSHA, { claim = true, hide = 0 })
                     then
-                        return quest:messageSpecial(misareauxID.text.FOUL_STENCH)
+                        player:messageSpecial(misareauxID.text.FOUL_STENCH)
                     end
                 end,
 
                 [558] = function(player, csid, option, npc)
                     quest:setVar(player, 'Prog', 5)
-                    return quest:keyItem(xi.ki.BETTER_HUMES_AND_MANNEQUINS)
+                    npcUtil.giveKeyItem(player, xi.ki.BETTER_HUMES_AND_MANNEQUINS)
                 end,
             },
         },
@@ -155,7 +155,7 @@ quest.sections =
         {
             ['Fyi_Chalmwoh'] =
             {
-                onTrigger = function(player, csid, option, npc)
+                onTrigger = function(player, npc)
                     if quest:getVar(player, 'Prog') == 5 then
                         return quest:progressEvent(321, { [0] = 704,
                             [1] = xi.mannequin.getMannequins(player),
@@ -188,7 +188,7 @@ quest.sections =
         {
             ['Fyi_Chalmwoh'] =
             {
-                onTrigger = function(player, csid, option, npc)
+                onTrigger = function(player, npc)
                     return quest:progressEvent(321, { [1] = xi.mannequin.getMannequins(player),
                         [2] = xi.mannequin.cost.PURCHASE,
                         [3] = xi.mannequin.cost.TRADE,
@@ -204,10 +204,11 @@ quest.sections =
                     for itemId = xi.item.HUME_M_MANNEQUIN, xi.item.GALKA_MANNEQUIN do
                         if npcUtil.tradeHasExactly(trade, itemId) then
                             tradedMannequin = itemId
+                            break
                         end
                     end
 
-                    if tradedMannequin then
+                    if tradedMannequin ~= 0 then
                         return quest:progressEvent(319, { [0] = 2,
                             [1] = xi.mannequin.getMannequins(player), -- Player Mannequin List
                             [2] = xi.mannequin.cost.PURCHASE,
@@ -258,12 +259,16 @@ quest.sections =
                     then
                         player:confirmTrade()
                         npcUtil.giveItem(player, xi.item.HUME_M_MANNEQUIN + option - 1)
+                        local race = ((option - 1) % 8) + 1
+                        xi.mannequin.setMannequinPose(player, race, 0)
                     end
                 end,
 
                 [321] = function(player, csid, option, npc)
                     -- If the transaction failed, the option is nil.
-                    if
+                    if player:getFreeSlotsCount() == 0 then
+                        player:messageSpecial(mhauraID.text.ITEM_CANNOT_BE_OBTAINED, xi.item.HUME_M_MANNEQUIN + option - 1)
+                    elseif
                         -- Purchase the mannequin.  Option = race (1-8)
                         option >= 1 and
                         option <= 8 and
@@ -271,6 +276,8 @@ quest.sections =
                     then
                         player:messageSpecial(mhauraID.text.ITEM_OBTAINED, xi.item.HUME_M_MANNEQUIN + option - 1)
                         player:addItem(xi.item.HUME_M_MANNEQUIN + option - 1)
+                        local race = ((option - 1) % 8) + 1
+                        xi.mannequin.setMannequinPose(player, race, 0)
                     elseif
                         option >= 10 and
                         player:delGil(xi.mannequin.cost.POSE)

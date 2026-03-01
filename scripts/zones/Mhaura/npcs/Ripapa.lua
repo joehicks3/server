@@ -6,10 +6,8 @@
 -----------------------------------
 local ID = zones[xi.zone.MHAURA]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local trialByLightning = player:getQuestStatus(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.TRIAL_BY_LIGHTNING)
@@ -34,7 +32,7 @@ entity.onTrigger = function(player, npc)
     -- Trial by Lightning
     elseif
         (trialByLightning == xi.questStatus.QUEST_AVAILABLE and player:getFameLevel(xi.fameArea.WINDURST) >= 6) or
-        (trialByLightning == xi.questStatus.QUEST_COMPLETED and os.time() > player:getCharVar('TrialByLightning_date'))
+        (trialByLightning == xi.questStatus.QUEST_COMPLETED and GetSystemTime() > player:getCharVar('TrialByLightning_date'))
     then
         player:startEvent(10016, 0, xi.ki.TUNING_FORK_OF_LIGHTNING) -- Start and restart quest "Trial by Lightning"
     elseif
@@ -80,9 +78,6 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 10016 and option == 1 then
         if player:getQuestStatus(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.TRIAL_BY_LIGHTNING) == xi.questStatus.QUEST_COMPLETED then
@@ -91,11 +86,9 @@ entity.onEventFinish = function(player, csid, option, npc)
 
         player:addQuest(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.TRIAL_BY_LIGHTNING)
         player:setCharVar('TrialByLightning_date', 0)
-        player:addKeyItem(xi.ki.TUNING_FORK_OF_LIGHTNING)
-        player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.TUNING_FORK_OF_LIGHTNING)
+        npcUtil.giveKeyItem(player, xi.ki.TUNING_FORK_OF_LIGHTNING)
     elseif csid == 10024 then
-        player:addKeyItem(xi.ki.TUNING_FORK_OF_LIGHTNING)
-        player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.TUNING_FORK_OF_LIGHTNING)
+        npcUtil.giveKeyItem(player, xi.ki.TUNING_FORK_OF_LIGHTNING)
     elseif csid == 10019 then
         local item = 0
         if option == 1 then
@@ -123,7 +116,7 @@ entity.onEventFinish = function(player, csid, option, npc)
 
             player:addTitle(xi.title.HEIR_OF_THE_GREAT_LIGHTNING)
             player:delKeyItem(xi.ki.WHISPER_OF_STORMS) --Whisper of Storms, as a trade for the above rewards
-            player:setCharVar('TrialByLightning_date', getMidnight())
+            player:setCharVar('TrialByLightning_date', JstMidnight())
             player:addFame(xi.fameArea.WINDURST, 30)
             player:completeQuest(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.TRIAL_BY_LIGHTNING)
         end

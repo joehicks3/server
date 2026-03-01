@@ -2,6 +2,7 @@
 -- Area: Kazham
 --  NPC: Mumupp
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local pathNodes =
@@ -84,12 +85,7 @@ entity.onTrigger = function(player, npc)
         elseif progress >= 3 or failed >= 4 then
             player:startEvent(244) -- happy with ten of coins
         end
-    else
-        player:startEvent(199)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

@@ -2,6 +2,7 @@
 -- Attachment: Strobe II
 -- http://forum.square-enix.com/ffxi/threads/49065?p=565264#post565264
 -----------------------------------
+---@type TAttachment
 local attachmentObject = {}
 
 attachmentObject.onEquip = function(pet, attachment)
@@ -12,7 +13,7 @@ attachmentObject.onEquip = function(pet, attachment)
         if
             master and
             master:countEffect(xi.effect.FIRE_MANEUVER) > 0 and
-            (automaton:checkDistance(target) - target:getModelSize()) <= 15
+            automaton:checkDistance(target) <= (15 + target:getHitboxSize() + automaton:getHitboxSize()) -- needs verification
         then
             automaton:useMobAbility(xi.automaton.abilities.PROVOKE)
         end

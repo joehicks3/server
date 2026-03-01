@@ -1,33 +1,34 @@
 -----------------------------------
---  Thunderstrike
---
---  Description: Deals Lightning damage in an area of effect. Additional effect: Stun
---  Type: Magical
---  Ignores Shadows
---  Range: 13' radial
+-- Thunderstrike
+-- Family: Khimaira
+-- Description: Deals Thunder damage in an area of effect. Additional Effect: Stun
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
-    if mob:getFamily() == 316 then
-        local mobSkin = mob:getModelId()
-
-        if mobSkin == 1805 then
-            return 0
-        else
-            return 1
-        end
-    end
-
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 3
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 3, xi.element.THUNDER, dmgmod, xi.mobskills.magicalTpBonus.MAB_BONUS, 1)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.THUNDER, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.THUNDER)
-    return dmg
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
+
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 9.00, 9.00, 9.00 } -- TODO: Capture fTPs
+    params.element        = xi.element.THUNDER
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.THUNDER
+    params.shadowBehavior = xi.mobskills.shadowBehavior.IGNORE_SHADOWS -- TODO: Capture shadowBehavior
+
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.STUN, 1, 0, 4) -- TODO: Capture duration
+    end
+
+    return info.damage
 end
 
 return mobskillObject

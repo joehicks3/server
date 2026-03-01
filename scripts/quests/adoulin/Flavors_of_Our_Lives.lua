@@ -14,8 +14,8 @@ local quest = Quest:new(xi.questLog.ADOULIN, xi.quest.id.adoulin.FLAVORS_OF_OUR_
 
 quest.reward =
 {
-    xp    = 500,
     bayld = 300,
+    exp   = 500,
     title = xi.title.POTATION_PATHFINDER,
 }
 
@@ -173,8 +173,8 @@ quest.sections =
             ['Harvesting_Point'] =
             {
                 onTrade = function(player, npc, trade)
-                    -- TODO: CSID for YAHSE_HUNTING_GROUNDS
-                    xi.helm.onTrade(player, npc, trade, xi.helmType.HARVESTING, nil, nil)
+                    -- No CS for HELM in Adoulin
+                    xi.helm.onTrade(player, npc, trade, xi.helmType.HARVESTING, nil)
                     return quest:keyItem(xi.ki.BLIGHTBERRY)
                 end,
             },

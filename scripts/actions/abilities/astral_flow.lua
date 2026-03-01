@@ -5,6 +5,7 @@
 -- Recast Time: 1:00:00
 -- Duration: 0:03:00
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -14,7 +15,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    player:addStatusEffect(xi.effect.ASTRAL_FLOW, 1, 0, 180)
+    player:addStatusEffect(xi.effect.ASTRAL_FLOW, { power = 1, duration = 180, origin = player })
 
     return xi.effect.ASTRAL_FLOW
 end

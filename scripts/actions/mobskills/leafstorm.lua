@@ -1,38 +1,32 @@
 -----------------------------------
---  Leafstorm
---  Description: Deals wind damage within area of effect.
---  Type: Magical Wind
--- Notes: When used by Cernunnos, Cemetery Cherry, and leafless Jidra: Leafstorm dispels all positive status effects (including food) and gives a Slow effect equivalent to Slow I.
+-- Leafstorm
+-- Family: Treant
+-- Description: Deals Wind damage within area of effect.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    if
-        mob:getName() == 'Cernunnos' or
-        mob:getPool() == 671 or
-        mob:getPool() == 1346
-    then
-        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.SLOW, 128, 3, 120)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-        local count = target:dispelAllStatusEffect(bit.bor(xi.effectFlag.DISPELABLE, xi.effectFlag.FOOD))
-        if count == 0 then
-            skill:setMsg(xi.msg.basic.SKILL_NO_EFFECT)
-        else
-            skill:setMsg(xi.msg.basic.DISAPPEAR_NUM)
-        end
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 2.0, 2.0, 2.0 } -- TODO: Capture fTP scaling
+    params.element        = xi.element.WIND
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.WIND
+    params.shadowBehavior = xi.mobskills.shadowBehavior.WIPE_SHADOWS
 
-        return count
-    else
-        local dmgmod = 1
-        local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * math.random(4, 5), xi.element.WIND, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-        local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.WIND, xi.mobskills.shadowBehavior.WIPE_SHADOWS)
-        target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.WIND)
-        return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
     end
+
+    return info.damage
 end
 
 return mobskillObject

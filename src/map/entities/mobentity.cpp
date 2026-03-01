@@ -34,15 +34,21 @@
 #include "conquest_system.h"
 #include "enmity_container.h"
 #include "entities/charentity.h"
+#include "enums/loot_recast.h"
+#include "enums/weather.h"
+#include "items.h"
 #include "lua/lua_loot.h"
+#include "lua/luautils.h"
 #include "mob_modifier.h"
 #include "mob_spell_container.h"
 #include "mob_spell_list.h"
 #include "mobskill.h"
-#include "packets/action.h"
 #include "packets/entity_update.h"
 #include "packets/pet_sync.h"
+#include "packets/s2c/0x029_battle_message.h"
+#include "recast_container.h"
 #include "roe.h"
+#include "spawn_slot.h"
 #include "status_effect_container.h"
 #include "treasure_pool.h"
 #include "utils/battleutils.h"
@@ -56,9 +62,41 @@
 
 #include <cstring>
 
+namespace
+{
+
+// clang-format off
+    std::map<uint8, uint16> geodeMap = {
+        { ELEMENT_FIRE,    FLAME_GEODE   },
+        { ELEMENT_ICE,     SNOW_GEODE    },
+        { ELEMENT_WIND,    BREEZE_GEODE  },
+        { ELEMENT_EARTH,   SOIL_GEODE    },
+        { ELEMENT_THUNDER, THUNDER_GEODE },
+        { ELEMENT_WATER,   AQUA_GEODE    },
+        { ELEMENT_LIGHT,   LIGHT_GEODE   },
+        { ELEMENT_DARK,    SHADOW_GEODE  }
+    };
+
+    std::map<uint8, uint16> avatariteMap = {
+        { ELEMENT_FIRE,    IFRITITE  },
+        { ELEMENT_ICE,     SHIVITE   },
+        { ELEMENT_WIND,    GARUDITE  },
+        { ELEMENT_EARTH,   TITANITE  },
+        { ELEMENT_THUNDER, RAMUITE   },
+        { ELEMENT_WATER,   LEVIATITE },
+        { ELEMENT_LIGHT,   CARBITE   },
+        { ELEMENT_DARK,    FENRITE   }
+    };
+// clang-format on
+
+constexpr timer::duration SPECIAL_DROP_COOLDOWN = 5min; // 5 minutes between special drops
+
+} // namespace
+
 CMobEntity::CMobEntity()
 : m_AllowRespawn(false)
-, m_RespawnTime(300)
+, m_CanSpawn(false)
+, m_RespawnTime(5min)
 , m_DropItemTime(0)
 , m_DropID(0)
 , m_minLevel(1)
@@ -89,7 +127,7 @@ CMobEntity::CMobEntity()
 , m_TrueDetection(false)
 , m_Link(0)
 , m_isAggroable(false)
-, m_Behaviour(BEHAVIOUR_NONE)
+, m_Behavior(BEHAVIOR_NONE)
 , m_SpawnType(SPAWNTYPE_NORMAL)
 , m_battlefieldID(0)
 , m_bcnmID(0)
@@ -99,7 +137,9 @@ CMobEntity::CMobEntity()
 , m_HiPCLvl(0)
 , m_HiPartySize(0)
 , m_THLvl(0)
+, m_GilfinderLevel(0)
 , m_ItemStolen(false)
+, m_ItemDespoiled(false)
 , m_Family(0)
 , m_SuperFamily(0)
 , m_MobSkillList(0)
@@ -110,7 +150,7 @@ CMobEntity::CMobEntity()
 , m_unk1(8)
 , m_unk2(0)
 , m_CallForHelpBlocked(false)
-, m_IsClaimable(true)
+, m_IsPathingHome(false)
 {
     TracyZoneScoped;
     objtype     = ENTITYTYPE::TYPE_MOB;
@@ -138,6 +178,11 @@ CMobEntity::~CMobEntity()
     destroy(m_Weapons[SLOT_AMMO]);
     destroy(PEnmityContainer);
     destroy(SpellContainer);
+
+    if (spawnSlot)
+    {
+        spawnSlot->RemoveMob(this);
+    }
 
     if (PParty)
     {
@@ -168,21 +213,50 @@ void CMobEntity::setEntityFlags(uint32 EntityFlags)
  *                                                                       *
  ************************************************************************/
 
-time_point CMobEntity::GetDespawnTime()
+timer::time_point CMobEntity::GetDespawnTime()
 {
     return m_DespawnTimer;
 }
 
-void CMobEntity::SetDespawnTime(duration _duration)
+void CMobEntity::SetDespawnTime(timer::duration _duration)
 {
     if (_duration > 0s)
     {
-        m_DespawnTimer = server_clock::now() + _duration;
+        m_DespawnTimer = timer::now() + _duration;
     }
     else
     {
-        m_DespawnTimer = time_point::min();
+        m_DespawnTimer = timer::time_point::min();
     }
+}
+
+void CMobEntity::SetSpawnSlot(SpawnSlot* sharedSpawn)
+{
+    this->spawnSlot = sharedSpawn;
+}
+
+SpawnSlot* CMobEntity::GetSpawnSlot()
+{
+    return this->spawnSlot;
+}
+
+bool CMobEntity::TrySpawn()
+{
+    if (m_AllowRespawn && !PAI->IsSpawned())
+    {
+        if (spawnSlot)
+        {
+            spawnSlot->TrySpawn();
+            return false;
+        }
+
+        if (m_CanSpawn)
+        {
+            Spawn();
+            return true;
+        }
+    }
+    return false;
 }
 
 uint32 CMobEntity::GetRandomGil()
@@ -192,10 +266,10 @@ uint32 CMobEntity::GetRandomGil()
 
     if (min && max)
     {
-        // make sure divide won't crash server
+        // Assume we want this exact amount
         if (max <= min)
         {
-            max = min + 2;
+            return min;
         }
 
         if (max - min < 2)
@@ -354,6 +428,29 @@ bool CMobEntity::CanLink(position_t* pos, int16 superLink)
     return true;
 }
 
+bool CMobEntity::ShouldForceLink()
+{
+    // There are certain cases where mobs should always be able
+    // to link with other mobs, even if their families or sublinks
+    // do not align
+    if (loc.zone->GetTypeMask() & ZONE_TYPE::DYNAMIS)
+    {
+        return true;
+    }
+
+    if (m_Type & MOBTYPE_BATTLEFIELD)
+    {
+        return true;
+    }
+
+    if (getMobMod(MOBMOD_SUPERLINK))
+    {
+        return true;
+    }
+
+    return false;
+}
+
 bool CMobEntity::CanDeaggro() const
 {
     return !(m_Type & MOBTYPE_NOTORIOUS || m_Type & MOBTYPE_BATTLEFIELD);
@@ -369,27 +466,27 @@ bool CMobEntity::CanBeNeutral() const
     return !(m_Type & MOBTYPE_NOTORIOUS);
 }
 
-uint16 CMobEntity::TPUseChance()
+bool CMobEntity::shouldUseTPMove(uint16 tpThreshold)
 {
     const auto& MobSkillList = battleutils::GetMobSkillList(getMobMod(MOBMOD_SKILL_LIST));
 
     if (health.tp < 1000 || MobSkillList.empty() || !static_cast<CMobController*>(PAI->GetController())->IsWeaponSkillEnabled())
     {
-        return 0;
+        return false;
     }
 
-    if (health.tp == 3000 || (GetHPP() <= 25 && health.tp >= 1000))
+    if (health.tp == 3000 || (GetHPP() < 25 && health.tp >= 1000))
     {
-        return 10000;
+        return true;
     }
 
     // mobs use three mob skills in a row under Meikyo Shisui
     if (StatusEffectContainer->HasStatusEffect(EFFECT_MEIKYO_SHISUI) && GetLocalVar("[MeikyoShisui]MobSkillCount") > 0)
     {
-        return 10000;
+        return true;
     }
 
-    return (uint16)getMobMod(MOBMOD_TP_USE_CHANCE);
+    return health.tp >= tpThreshold;
 }
 
 void CMobEntity::setMobMod(uint16 type, int16 value)
@@ -418,11 +515,6 @@ void CMobEntity::defaultMobMod(uint16 type, int16 value)
 void CMobEntity::resetMobMod(uint16 type)
 {
     m_mobModStat[type] = m_mobModStatSave[type];
-}
-
-int32 CMobEntity::getBigMobMod(uint16 type)
-{
-    return getMobMod(type) * 1000;
 }
 
 void CMobEntity::saveMobModifiers()
@@ -494,7 +586,7 @@ void CMobEntity::PostTick()
 {
     TracyZoneScoped;
     CBattleEntity::PostTick();
-    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    timer::time_point now = timer::now();
     if (loc.zone && updatemask && now > m_nextUpdateTimer)
     {
         m_nextUpdateTimer = now + 250ms;
@@ -503,7 +595,7 @@ void CMobEntity::PostTick()
         // If this mob is charmed, it should sync with its master
         if (PMaster && PMaster->PPet == this && PMaster->objtype == TYPE_PC)
         {
-            ((CCharEntity*)PMaster)->pushPacket(new CPetSyncPacket((CCharEntity*)PMaster));
+            ((CCharEntity*)PMaster)->pushPacket<CPetSyncPacket>((CCharEntity*)PMaster);
         }
 
         updatemask = 0;
@@ -534,19 +626,19 @@ bool CMobEntity::ValidTarget(CBattleEntity* PInitiator, uint16 targetFlags)
         return true;
     }
 
-    if (targetFlags & TARGET_PLAYER_DEAD && (m_Behaviour & BEHAVIOUR_RAISABLE) && isDead())
+    if (targetFlags & TARGET_PLAYER_DEAD && (m_Behavior & BEHAVIOR_RAISABLE) && isDead())
     {
         return true;
     }
 
-    if ((targetFlags & TARGET_PLAYER) && allegiance == PInitiator->allegiance && !isCharmed)
+    if ((targetFlags & TARGET_PLAYER) && allegiance == PInitiator->allegiance && !(m_Behavior & BEHAVIOR_NO_ASSIST) && !isCharmed)
     {
         return true;
     }
 
     if (targetFlags & TARGET_NPC)
     {
-        if (allegiance == PInitiator->allegiance && !(m_Behaviour & BEHAVIOUR_NOHELP) && !isCharmed)
+        if (allegiance == PInitiator->allegiance && !(m_Behavior & BEHAVIOR_NO_ASSIST) && !isCharmed)
         {
             return true;
         }
@@ -559,13 +651,15 @@ void CMobEntity::Spawn()
 {
     TracyZoneScoped;
     CBattleEntity::Spawn();
-    m_giveExp      = true;
-    m_HiPCLvl      = 0;
-    m_HiPartySize  = 0;
-    m_THLvl        = 0;
-    m_ItemStolen   = false;
-    m_DropItemTime = 1000;
-    animationsub   = (uint8)getMobMod(MOBMOD_SPAWN_ANIMATIONSUB);
+    m_giveExp        = true;
+    m_HiPCLvl        = 0;
+    m_HiPartySize    = 0;
+    m_THLvl          = 0;
+    m_GilfinderLevel = 0;
+    m_ItemStolen     = false;
+    m_ItemDespoiled  = false;
+    m_DropItemTime   = 1000ms;
+    animationsub     = (uint8)getMobMod(MOBMOD_SPAWN_ANIMATIONSUB);
     SetCallForHelpFlag(false);
 
     PEnmityContainer->Clear();
@@ -605,8 +699,15 @@ void CMobEntity::Spawn()
         }
     }
 
-    m_DespawnTimer = time_point::min();
+    m_DespawnTimer = timer::time_point::min();
     luautils::OnMobSpawn(this);
+
+    // Set the despawn time if the mob has a non-zero idle despawn time modifier.
+    // This is used to despawn mobs that are not engaged in combat after a certain time.
+    if (getMobMod(MOBMOD_IDLE_DESPAWN) > 0)
+    {
+        SetDespawnTime(std::chrono::seconds(getMobMod(MOBMOD_IDLE_DESPAWN)));
+    }
 }
 
 void CMobEntity::OnWeaponSkillFinished(CWeaponSkillState& state, action_t& action)
@@ -651,8 +752,8 @@ void CMobEntity::DistributeRewards()
                 if (PMember->getZone() == PChar->getZone())
                 {
                     RoeDatagramList datagrams;
-                    datagrams.emplace_back(RoeDatagram("mob", this));
-                    datagrams.emplace_back(RoeDatagram("atkType", static_cast<uint8>(this->BattleHistory.lastHitTaken_atkType)));
+                    datagrams.emplace_back("mob", this);
+                    datagrams.emplace_back("atkType", static_cast<uint8>(this->BattleHistory.lastHitTaken_atkType));
                     roeutils::event(ROE_MOBKILL, (CCharEntity*)PMember, datagrams);
                 }
             });
@@ -681,30 +782,180 @@ void CMobEntity::DistributeRewards()
     }
 }
 
+// Return the list of seals that can drop based on the mob's level.
+// Rules:
+// - Mob  < 50: Beastmen's Seal
+// - Mob >= 50: Beastmen's Seal, Kindred's Seal
+// - Mob >= 70: Beastmen's Seal, Kindred's Seal, Kindred's Crest
+// - Mob >= 80: Beastmen's Seal, Kindred's Seal, Kindred's Crest, High Kindred's Crest
+// If Abyssea is not enabled, pool is limited to Beastmen's Seal and Kindred's Seal.
+auto CMobEntity::GetEligibleSeals() -> std::vector<uint16>
+{
+    if (GetMLevel() >= 80 && luautils::IsContentEnabled("ABYSSEA"))
+    {
+        return { BEASTMENS_SEAL, KINDREDS_SEAL, KINDREDS_CREST, HIGH_KINDREDS_CREST };
+    }
+
+    if (GetMLevel() >= 70 && luautils::IsContentEnabled("ABYSSEA"))
+    {
+        return { BEASTMENS_SEAL, KINDREDS_SEAL, KINDREDS_CREST };
+    }
+
+    if (GetMLevel() >= 50)
+    {
+        return { BEASTMENS_SEAL, KINDREDS_SEAL };
+    }
+
+    return { BEASTMENS_SEAL };
+}
+
+// Return the list of Geode and Avatarites that can drop based on the mob's level.
+// Rules:
+// - Mob >= 50: Geodes of matching weather/day can drop. Weather takes priority.
+// - Mob >= 80: Avatarites of matching weather/day can also drop. Weather takes priority.
+auto CMobEntity::GetEligibleGeodes() const -> std::vector<uint16>
+{
+    if (!luautils::IsContentEnabled("ABYSSEA"))
+    {
+        return {};
+    }
+
+    uint8 element = 0;
+
+    // Set element by weather
+    if (const Weather weather = loc.zone->GetWeather(); weather >= Weather::HotSpell && weather <= Weather::Darkness)
+    {
+        /*
+        element = zoneutils::GetWeatherElement(weather);
+        Can't use this because of the TODO in zoneutils about broken element order >.<
+        So we have this ugly switch until then.
+        */
+        switch (weather)
+        {
+            case Weather::HotSpell:
+            case Weather::HeatWave:
+                element = ELEMENT_FIRE;
+                break;
+            case Weather::Rain:
+            case Weather::Squall:
+                element = ELEMENT_WATER;
+                break;
+            case Weather::DustStorm:
+            case Weather::SandStorm:
+                element = ELEMENT_EARTH;
+                break;
+            case Weather::Wind:
+            case Weather::Gales:
+                element = ELEMENT_WIND;
+                break;
+            case Weather::Snow:
+            case Weather::Blizzards:
+                element = ELEMENT_ICE;
+                break;
+            case Weather::Thunder:
+            case Weather::Thunderstorms:
+                element = ELEMENT_THUNDER;
+                break;
+            case Weather::Auroras:
+            case Weather::StellarGlare:
+                element = ELEMENT_LIGHT;
+                break;
+            case Weather::Gloom:
+            case Weather::Darkness:
+                element = ELEMENT_DARK;
+                break;
+            default:
+                break;
+        }
+    }
+    // Set element from day instead
+    else
+    {
+        element = battleutils::GetDayElement();
+    }
+
+    if (GetMLevel() >= 80)
+    {
+        return { geodeMap[element], avatariteMap[element] };
+    }
+
+    if (GetMLevel() >= 50)
+    {
+        return { geodeMap[element] };
+    }
+
+    return {};
+}
+
 void CMobEntity::DropItems(CCharEntity* PChar)
 {
     TracyZoneScoped;
-    // Adds an item to the treasure pool and returns true if the pool has been filled
-    auto AddItemToPool = [this, PChar](uint16 ItemID, uint8 dropCount)
+    // Adds an item to the treasure pool. Treasure pool will automatically kick out items if the pool is full (prioritizing non rare non ex items)
+    auto AddItemToPool = [this, PChar](uint16 ItemID)
     {
-        PChar->PTreasurePool->AddItem(ItemID, this);
-        return dropCount >= TREASUREPOOL_SIZE;
+        PChar->PTreasurePool->addItem(ItemID, this);
+        PAI->EventHandler.triggerListener("TREASUREPOOL", CLuaBaseEntity(this), CLuaBaseEntity(PChar), ItemID);
     };
 
-    // Limit number of items that can drop to the treasure pool size
-    uint8 dropCount = 0;
+    // Checks if the party is eligible for adding global drops (seals, geodes, avatarites)
+    auto CanAddSpecial = [PChar](LootRecastID id)
+    {
+        const auto PParty = PChar->PParty;
+
+        if (!PParty || !PChar->PTreasurePool)
+        {
+            return !PChar->PRecastContainer->HasLootRecast(id);
+        }
+
+        for (const auto& member : PChar->PTreasurePool->getMembers())
+        {
+            if (member->PParty == PParty)
+            {
+                if (member->PRecastContainer->HasLootRecast(id))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    };
+
+    // Seals are limited to one every 5 minutes per party.
+    // Geodes and avatarites are limited to one every 5 minutes per party.
+    // Cooldown is applied to members (in zone) of the party that delivered the killing blow.
+    // Note that the following has been verified to be retail accurate:
+    // - Other alliance parties are NOT included in that cooldown.
+    // - The cooldown does reset when zoning.
+    auto AddSpecialRecast = [PChar](LootRecastID id)
+    {
+        const auto PParty = PChar->PParty;
+
+        if (!PParty || !PChar->PTreasurePool)
+        {
+            PChar->PRecastContainer->AddLootRecast(id, SPECIAL_DROP_COOLDOWN);
+            return;
+        }
+
+        for (const auto& member : PChar->PTreasurePool->getMembers())
+        {
+            if (member->PParty == PParty)
+            {
+                member->PRecastContainer->AddLootRecast(id, SPECIAL_DROP_COOLDOWN);
+            }
+        }
+    };
 
     DropList_t* dropList = itemutils::GetDropList(m_DropID);
 
     if (!getMobMod(MOBMOD_NO_DROPS) && dropList != nullptr && (!dropList->Items.empty() || !dropList->Groups.empty() || PAI->EventHandler.hasListener("ITEM_DROPS")))
     {
-        // THLvl is the number of 'extra chances' at an item. If the item is obtained, then break out.
-        int16 maxRolls = 1 + (m_THLvl > 2 ? 2 : m_THLvl);
-        int16 bonus    = (m_THLvl > 2 ? (m_THLvl - 2) * 10 : 0);
+        // THLvl determines the drop rate.
+        auto thDropRateFunction = lua["xi"]["combat"]["treasureHunter"]["getDropRate"];
 
         LootContainer loot(dropList);
 
-        PAI->EventHandler.triggerListener("ITEM_DROPS", CLuaBaseEntity(this), CLuaLootContainer(&loot));
+        PAI->EventHandler.triggerListener("ITEM_DROPS", this, &loot);
 
         // clang-format off
         loot.ForEachGroup([&](const DropGroup_t& group)
@@ -715,50 +966,46 @@ void CMobEntity::DropItems(CCharEntity* PChar)
                 total += item.DropRate;
             }
 
-            // NOTE: When switching over to the correct TH table method fixed rate means to not use the TH table
-            int16 rolls = group.hasFixedRate ? 1 : maxRolls;
+            uint16 groupDropRate = group.GroupRate * 10;
 
-            for (int16 roll = 0; roll < rolls; ++roll)
+            if (!group.hasFixedRate)
             {
-                // Determine if this group should drop an item
-                if (group.GroupRate > 0 && xirand::GetRandomNumber(1000) < group.GroupRate * settings::get<float>("map.DROP_RATE_MULTIPLIER") + bonus)
+                groupDropRate = thDropRateFunction(m_THLvl, groupDropRate);
+            }
+
+            // Determine if this group should drop an item.
+            if (groupDropRate > 0 && (1 + xirand::GetRandomNumber(10000)) <= groupDropRate * settings::get<float>("map.DROP_RATE_MULTIPLIER"))
+            {
+                // Each item in the group is given its own weight range which is the previous value to the previous value + item.DropRate
+                // Such as 2 items with drop rates of 200 and 800 would be 0-199 and 200-999 respectively
+                uint16 previousRateValue = 0;
+                uint16 itemRoll          = xirand::GetRandomNumber(total);
+                for (const DropItem_t& item : group.Items)
                 {
-                    // Each item in the group is given its own weight range which is the previous value to the previous value + item.DropRate
-                    // Such as 2 items with drop rates of 200 and 800 would be 0-199 and 200-999 respectively
-                    uint16 previousRateValue = 0;
-                    uint16 itemRoll          = xirand::GetRandomNumber(total);
-                    for (const DropItem_t& item : group.Items)
+                    if (itemRoll < previousRateValue + item.DropRate)
                     {
-                        if (previousRateValue + item.DropRate > itemRoll)
-                        {
-                            if (AddItemToPool(item.ItemID, ++dropCount))
-                            {
-                                return;
-                            }
-                            break;
-                        }
-                        previousRateValue += item.DropRate;
+                        AddItemToPool(item.ItemID);
+
+                        break;
                     }
-                    break;
+                    previousRateValue += item.DropRate;
                 }
             }
         });
 
+        // Ungrouped drops. This are affected by TH UNLESS they have an specified fixed rate.
         loot.ForEachItem([&](const DropItem_t& item)
         {
-            // NOTE: When switching over to the correct TH table method fixed rate means to not use the TH table
-            int16 rolls = item.hasFixedRate ? 1 : maxRolls;
+            uint16 itemDropRate = item.DropRate * 10;
 
-            for (int16 roll = 0; roll < rolls; ++roll)
+            if (!item.hasFixedRate)
             {
-                if (item.DropRate > 0 && xirand::GetRandomNumber(1000) < item.DropRate * settings::get<float>("map.DROP_RATE_MULTIPLIER") + bonus)
-                {
-                    if (AddItemToPool(item.ItemID, ++dropCount))
-                    {
-                        return;
-                    }
-                    break;
-                }
+                itemDropRate = thDropRateFunction(m_THLvl, itemDropRate);
+            }
+
+            if (itemDropRate > 0 && (1 + xirand::GetRandomNumber(10000)) <= itemDropRate * settings::get<float>("map.DROP_RATE_MULTIPLIER"))
+            {
+                AddItemToPool(item.ItemID);
             }
         });
         // clang-format on
@@ -770,225 +1017,23 @@ void CMobEntity::DropItems(CCharEntity* PChar)
     // Check if mob can drop seals -- mobmod to disable drops, zone type isnt battlefield/dynamis, mob is stronger than Too Weak, or mobmod for EXP bonus is -100 or lower (-100% exp)
     if (!getMobMod(MOBMOD_NO_DROPS) && validZone && charutils::CheckMob(m_HiPCLvl, GetMLevel()) > EMobDifficulty::TooWeak && getMobMod(MOBMOD_EXP_BONUS) > -100)
     {
-        // check for seal drops
-        /* MobLvl >= 1 = Beastmen Seals ID=1126
-        >= 50 = Kindred Seals ID=1127
-        >= 75 = Kindred Crests ID=2955
-        >= 90 = High Kindred Crests ID=2956
-        */
-        if (xirand::GetRandomNumber(100) < 20 && PChar->PTreasurePool->CanAddSeal())
+        // Check for seal drops
+        // Only one type of seal can drop per mob
+        if (xirand::GetRandomNumber(100) < 20 && CanAddSpecial(LootRecastID::Seal))
         {
-            // RULES: Only 1 kind may drop per mob
-            if (GetMLevel() >= 75 && luautils::IsContentEnabled("ABYSSEA")) // all 4 types
-            {
-                switch (xirand::GetRandomNumber(4))
-                {
-                    case 0:
-
-                        if (AddItemToPool(1126, ++dropCount))
-                        {
-                            return;
-                        }
-                        break;
-                    case 1:
-                        if (AddItemToPool(1127, ++dropCount))
-                        {
-                            return;
-                        }
-                        break;
-                    case 2:
-                        if (AddItemToPool(2955, ++dropCount))
-                        {
-                            return;
-                        }
-                        break;
-                    case 3:
-                        if (AddItemToPool(2956, ++dropCount))
-                        {
-                            return;
-                        }
-                        break;
-                }
-            }
-            else if (GetMLevel() >= 70 && luautils::IsContentEnabled("ABYSSEA")) // b.seal & k.seal & k.crest
-            {
-                switch (xirand::GetRandomNumber(3))
-                {
-                    case 0:
-                        if (AddItemToPool(1126, ++dropCount))
-                        {
-                            return;
-                        }
-                        break;
-                    case 1:
-                        if (AddItemToPool(1127, ++dropCount))
-                        {
-                            return;
-                        }
-                        break;
-                    case 2:
-                        if (AddItemToPool(2955, ++dropCount))
-                        {
-                            return;
-                        }
-                        break;
-                }
-            }
-            else if (GetMLevel() >= 50) // b.seal & k.seal only
-            {
-                if (xirand::GetRandomNumber(2) == 0)
-                {
-                    if (AddItemToPool(1126, ++dropCount))
-                    {
-                        return;
-                    }
-                }
-                else
-                {
-                    if (AddItemToPool(1127, ++dropCount))
-                    {
-                        return;
-                    }
-                }
-            }
-            else
-            {
-                // b.seal only
-                if (AddItemToPool(1126, ++dropCount))
-                {
-                    return;
-                }
-            }
+            const auto seals = GetEligibleSeals();
+            AddItemToPool(seals[xirand::GetRandomNumber(seals.size())]);
+            AddSpecialRecast(LootRecastID::Seal);
         }
 
-        /* check for Avatarite/Geode Drops.
-            LV >= 50 = Geodes can drop IF matching weather or day.
-            Weather gets priority e.g. rainstorm on firesday would get Water Geode instead of fire
-            LV >= 80 = Avatrites can also drop, same rules. If one drops, the other does not.
-            unfortunately, the order of the items/weathers/days don't match.
-        */
-        if (GetMLevel() >= 50)
+        // Check for geode/avatarites drops
+        // Only one type of geode can drop per mob
+        if (xirand::GetRandomNumber(100) < 20 && CanAddSpecial(LootRecastID::Geode))
         {
-            uint8 weather = PChar->loc.zone->GetWeather();
-            uint8 element = 0;
-
-            // Set element by weather
-            if (weather >= 4 && weather <= 19)
+            if (const auto geodes = GetEligibleGeodes(); !geodes.empty())
             {
-                /*
-                element = zoneutils::GetWeatherElement(weather);
-                Can't use this because of the TODO in zoneutils about broken element order >.<
-                So we have this ugly switch until then.
-                */
-                switch (weather)
-                {
-                    case 4:
-                    case 5:
-                        element = ELEMENT_FIRE;
-                        break;
-                    case 6:
-                    case 7:
-                        element = ELEMENT_WATER;
-                        break;
-                    case 8:
-                    case 9:
-                        element = ELEMENT_EARTH;
-                        break;
-                    case 10:
-                    case 11:
-                        element = ELEMENT_WIND;
-                        break;
-                    case 12:
-                    case 13:
-                        element = ELEMENT_ICE;
-                        break;
-                    case 14:
-                    case 15:
-                        element = ELEMENT_THUNDER;
-                        break;
-                    case 16:
-                    case 17:
-                        element = ELEMENT_LIGHT;
-                        break;
-                    case 18:
-                    case 19:
-                        element = ELEMENT_DARK;
-                        break;
-                    default:
-                        break;
-                }
-            }
-            // Set element from day instead
-            else
-            {
-                element = battleutils::GetDayElement();
-            }
-
-            // Roll for Geode, dude!
-            if (xirand::GetRandomNumber(100) < 20)
-            {
-                switch (element)
-                {
-                    case ELEMENT_FIRE:
-                        AddItemToPool(3297, ++dropCount); // Flame Geode
-                        break;
-                    case ELEMENT_EARTH:
-                        AddItemToPool(3300, ++dropCount); // Soil Geode
-                        break;
-                    case ELEMENT_WATER:
-                        AddItemToPool(3302, ++dropCount); // Aqua Geode
-                        break;
-                    case ELEMENT_WIND:
-                        AddItemToPool(3299, ++dropCount); // Breeze Geode
-                        break;
-                    case ELEMENT_ICE:
-                        AddItemToPool(3298, ++dropCount); // Snow Geode
-                        break;
-                    case ELEMENT_THUNDER:
-                        AddItemToPool(3301, ++dropCount); // Thunder Geode
-                        break;
-                    case ELEMENT_LIGHT:
-                        AddItemToPool(3303, ++dropCount); // Light Geode
-                        break;
-                    case ELEMENT_DARK:
-                        AddItemToPool(3304, ++dropCount); // Shadow Geode
-                        break;
-                    default:
-                        break;
-                }
-            }
-            // At LV 80 and above, you may get Avatarite if a Geode didn't drop
-            else if (GetMLevel() >= 80 && xirand::GetRandomNumber(100) < 20)
-            {
-                switch (element)
-                {
-                    case ELEMENT_FIRE:
-                        AddItemToPool(3520, ++dropCount); // Ifritite
-                        break;
-                    case ELEMENT_EARTH:
-                        AddItemToPool(3523, ++dropCount); // Titanite
-                        break;
-                    case ELEMENT_WATER:
-                        AddItemToPool(3525, ++dropCount); // Leviatite
-                        break;
-                    case ELEMENT_WIND:
-                        AddItemToPool(3522, ++dropCount); // Garudite
-                        break;
-                    case ELEMENT_ICE:
-                        AddItemToPool(3521, ++dropCount); // Shivite
-                        break;
-                    case ELEMENT_THUNDER:
-                        AddItemToPool(3524, ++dropCount); // Ramuite
-                        break;
-                    case ELEMENT_LIGHT:
-                        AddItemToPool(3526, ++dropCount); // Carbit
-                        break;
-                    case ELEMENT_DARK:
-                        AddItemToPool(3527, ++dropCount); // Fenrite
-                        break;
-                    default:
-                        break;
-                }
+                AddItemToPool(geodes[xirand::GetRandomNumber(geodes.size())]);
+                AddSpecialRecast(LootRecastID::Geode);
             }
         }
 
@@ -997,6 +1042,7 @@ void CMobEntity::DropItems(CCharEntity* PChar)
         if (m_Element > 0)
         {
             REGION_TYPE regionID = PChar->loc.zone->GetRegionID();
+
             switch (regionID)
             {
                 // Sanction Regions
@@ -1004,8 +1050,10 @@ void CMobEntity::DropItems(CCharEntity* PChar)
                 case REGION_TYPE::MAMOOL_JA_SAVAGE:
                 case REGION_TYPE::HALVUNG:
                 case REGION_TYPE::ARRAPAGO:
+                case REGION_TYPE::ALZADAAL:
                     effect = 2;
                     break;
+
                 // Sigil Regions
                 case REGION_TYPE::RONFAURE_FRONT:
                 case REGION_TYPE::NORVALLEN_FRONT:
@@ -1017,12 +1065,20 @@ void CMobEntity::DropItems(CCharEntity* PChar)
                 case REGION_TYPE::VALDEAUNIA_FRONT:
                     effect = 3;
                     break;
+
+                // Ionis Regions
+                case REGION_TYPE::ADOULIN_ISLANDS:
+                case REGION_TYPE::EAST_ULBUKA:
+                    effect = 4;
+                    break;
+
                 // Signet Regions
                 default:
-                    effect = (conquest::GetRegionOwner(PChar->loc.zone->GetRegionID()) <= 2) ? 1 : 0;
+                    effect = (regionID < REGION_TYPE::TAVNAZIA && conquest::GetRegionOwner(regionID) <= 2) ? 1 : 0;
                     break;
             }
         }
+
         uint8 crystalRolls = 0;
         // clang-format off
         PChar->ForParty([this, &crystalRolls, &effect](CBattleEntity* PMember)
@@ -1050,17 +1106,26 @@ void CMobEntity::DropItems(CCharEntity* PChar)
                         crystalRolls++;
                     }
                     break;
+                case 4:
+                    if (PMember->StatusEffectContainer->HasStatusEffect(EFFECT_IONIS) && PMember->getZone() == getZone() &&
+                        distance(PMember->loc.p, loc.p) < 100)
+                    {
+                        crystalRolls++;
+                    }
+                    break;
                 default:
                     break;
             }
         });
         // clang-format on
 
+        // Is this really checked last? Would crystals actually kick out non-rare/ex items from the same mob dropping a large pool?
         for (uint8 i = 0; i < crystalRolls; i++)
         {
-            if (xirand::GetRandomNumber(100) < 20 && AddItemToPool(4095 + m_Element, ++dropCount))
+            // TODO: implement nation aketon crystal bonus (per member?)
+            if (xirand::GetRandomNumber(100) < 20)
             {
-                return;
+                AddItemToPool(4095 + m_Element);
             }
         }
     }
@@ -1072,17 +1137,23 @@ bool CMobEntity::CanAttack(CBattleEntity* PTarget, std::unique_ptr<CBasicPacket>
     auto skill_list_id{ getMobMod(MOBMOD_ATTACK_SKILL_LIST) };
     if (skill_list_id)
     {
-        auto attack_range{ GetMeleeRange() };
+        auto attack_range{ GetMeleeRange(PTarget) };
         auto skillList{ battleutils::GetMobSkillList(skill_list_id) };
+
         if (!skillList.empty())
         {
             auto* skill{ battleutils::GetMobSkill(skillList.front()) };
             if (skill)
             {
-                attack_range = (uint8)skill->getDistance();
+                attack_range = modelHitboxSize + skill->getDistance() + PTarget->modelHitboxSize;
             }
         }
-        return !((distance(loc.p, PTarget->loc.p) - PTarget->m_ModelRadius) > attack_range || !PAI->GetController()->IsAutoAttackEnabled());
+
+        bool  autoAttackEnabled  = PAI->GetController()->IsAutoAttackEnabled();
+        float distanceFromTarget = distance(loc.p, PTarget->loc.p);
+        bool  tooFar             = distanceFromTarget > attack_range;
+
+        return !tooFar && autoAttackEnabled;
     }
     else
     {
@@ -1138,7 +1209,7 @@ void CMobEntity::FadeOut()
 void CMobEntity::OnDeathTimer()
 {
     TracyZoneScoped;
-    if (!(m_Behaviour & BEHAVIOUR_RAISABLE))
+    if (!(m_Behavior & BEHAVIOR_RAISABLE))
     {
         PAI->Despawn();
     }
@@ -1148,10 +1219,9 @@ void CMobEntity::OnDespawn(CDespawnState& /*unused*/)
 {
     TracyZoneScoped;
     FadeOut();
-    PAI->Internal_Respawn(std::chrono::milliseconds(m_RespawnTime));
+
     luautils::OnMobDespawn(this);
-    // #event despawn
-    PAI->EventHandler.triggerListener("DESPAWN", CLuaBaseEntity(this));
+    PAI->EventHandler.triggerListener("DESPAWN", this);
 }
 
 void CMobEntity::Die()
@@ -1173,22 +1243,24 @@ void CMobEntity::Die()
     CBattleEntity::Die();
 
     // clang-format off
-    PAI->QueueAction(queueAction_t(std::chrono::milliseconds(m_DropItemTime), false, [this](CBaseEntity* PEntity)
+    PAI->QueueAction(queueAction_t(m_DropItemTime, false, [this](CBaseEntity* PEntity)
     {
         if (static_cast<CMobEntity*>(PEntity)->isDead())
         {
-            if (PLastAttacker)
+            if (auto* PLastAttacker = GetEntity(lastAttackerId_.targid); PLastAttacker && PLastAttacker->id == lastAttackerId_.id)
             {
-                loc.zone->PushPacket(this, CHAR_INRANGE, new CMessageBasicPacket(PLastAttacker, this, 0, 0, MSGBASIC_DEFEATS_TARG));
+                loc.zone->PushPacket(this, CHAR_INRANGE, std::make_unique<GP_SERV_COMMAND_BATTLE_MESSAGE>(PLastAttacker, this, 0, 0, MsgBasic::DefeatsTarget));
             }
             else
             {
-                loc.zone->PushPacket(this, CHAR_INRANGE, new CMessageBasicPacket(this, this, 0, 0, MSGBASIC_FALLS_TO_GROUND));
+                loc.zone->PushPacket(this, CHAR_INRANGE, std::make_unique<GP_SERV_COMMAND_BATTLE_MESSAGE>(this, this, 0, 0, MsgBasic::FallsToGround));
             }
 
             DistributeRewards();
             m_OwnerID.clean();
-            m_THLvl = 0;
+
+            m_THLvl          = 0;
+            m_GilfinderLevel = 0;
         }
     }));
     // clang-format on
@@ -1224,7 +1296,25 @@ void CMobEntity::OnCastFinished(CMagicState& state, action_t& action)
     TracyZoneScoped;
     CBattleEntity::OnCastFinished(state, action);
 
+    CMobController* mobController = dynamic_cast<CMobController*>(PAI->GetController());
+    if (mobController)
+    {
+        mobController->OnCastStopped(state, action);
+    }
+
     TapDeaggroTime();
+}
+
+void CMobEntity::OnCastInterrupted(CMagicState& state, action_t& action, MsgBasic msg, bool blockedCast)
+{
+    TracyZoneScoped;
+    CBattleEntity::OnCastInterrupted(state, action, msg, blockedCast);
+
+    CMobController* mobController = dynamic_cast<CMobController*>(PAI->GetController());
+    if (mobController)
+    {
+        mobController->OnCastStopped(state, action);
+    }
 }
 
 bool CMobEntity::OnAttack(CAttackState& state, action_t& action)

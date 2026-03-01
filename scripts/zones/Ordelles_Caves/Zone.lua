@@ -1,14 +1,10 @@
 -----------------------------------
 -- Zone: Ordelles Caves (193)
 -----------------------------------
-local ID = zones[xi.zone.ORDELLES_CAVES]
------------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    UpdateNMSpawnPoint(ID.mob.MORBOLGER)
-    GetMobByID(ID.mob.MORBOLGER):setRespawnTime(math.random(900, 10800))
-
     xi.treasure.initZone(zone)
 end
 
@@ -27,7 +23,7 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

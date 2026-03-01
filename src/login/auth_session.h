@@ -1,20 +1,20 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2023 LandSandBoat Dev Teams
+  Copyright (c) 2023 LandSandBoat Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
@@ -28,32 +28,44 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include "handler_session.h"
 #include "login_helpers.h"
 
-// TODO: Move to enum
-#define LOGIN_ATTEMPT         0x10
-#define LOGIN_CREATE          0x20
-#define LOGIN_CHANGE_PASSWORD 0x30
+#include "common/zmq_dealer_wrapper.h"
+
+enum class login_cmd : uint8_t
+{
+    LOGIN_NOOP            = 0x00,
+    LOGIN_ATTEMPT         = 0x10,
+    LOGIN_CREATE          = 0x20,
+    LOGIN_CHANGE_PASSWORD = 0x30,
+
+    // json xiloader
+    LOGIN_CREATE_TOTP         = 0x31,
+    LOGIN_REMOVE_TOTP         = 0x32,
+    LOGIN_REGENERATE_RECOVERY = 0x33,
+    LOGIN_VERIFY_TOTP         = 0x34,
+};
 
 /*return result*/
-#define LOGIN_FAIL                    0x00
-#define LOGIN_SUCCESS                 0x01
-#define LOGIN_SUCCESS_CREATE          0x03
-#define LOGIN_SUCCESS_CHANGE_PASSWORD 0x06
+enum class login_result : uint8_t
+{
+    LOGIN_FAIL                      = 0x00,
+    LOGIN_SUCCESS                   = 0x01,
+    LOGIN_ERROR                     = 0x02,
+    LOGIN_SUCCESS_CREATE            = 0x03,
+    LOGIN_ERROR_CREATE_TAKEN        = 0x04,
+    LOGIN_REQUEST_NEW_PASSWORD      = 0x05, // is this used?
+    LOGIN_SUCCESS_CHANGE_PASSWORD   = 0x06,
+    LOGIN_ERROR_CHANGE_PASSWORD     = 0x07,
+    LOGIN_ERROR_CREATE_DISABLED     = 0x08,
+    LOGIN_ERROR_CREATE              = 0x09,
+    LOGIN_ERROR_ALREADY_LOGGED_IN   = 0x0A,
+    LOGIN_ERROR_VERSION_UNSUPPORTED = 0x0B,
+    LOGIN_SUCCESS_CREATE_TOTP       = 0x10,
+    LOGIN_SUCCESS_VERIFY_TOTP       = 0x11,
+    LOGIN_SUCCESS_REMOVE_TOTP       = 0x12,
+    LOGIN_ERROR_TRUST_TOKEN_INVALID = 0x13,
+};
 
-#define LOGIN_REQUEST_NEW_PASSWORD 0x05
-
-#define LOGIN_ERROR                     0x02
-#define LOGIN_ERROR_CREATE              0x09
-#define LOGIN_ERROR_CREATE_TAKEN        0x04
-#define LOGIN_ERROR_CREATE_DISABLED     0x08
-#define LOGIN_ERROR_CHANGE_PASSWORD     0x07
-#define LOGIN_ERROR_ALREADY_LOGGED_IN   0x0A
-#define LOGIN_ERROR_VERSION_UNSUPPORTED 0x0B
-
-// Only the first 3 characters of the version string are matched
-// ie. 1.1.1 -> 1.1.x
-// Major.Minor.Patch
-// Major and minor version changes should be breaking, patch should not.
-#define SUPPORTED_XILOADER_VERSION "1.1.x"
+constexpr std::array<uint8, 3> SupportedXiloaderVersion = { 2, 1, 0 };
 
 // NOTE: This collection of flags is 64-bits wide!
 enum AUTH_COMPONENTS
@@ -94,8 +106,9 @@ DECLARE_FORMAT_AS_UNDERLYING(ACCOUNT_PRIVILEGE_CODE);
 class auth_session : public handler_session
 {
 public:
-    auth_session(asio::ssl::stream<asio::ip::tcp::socket> socket)
+    auth_session(asio::ssl::stream<asio::ip::tcp::socket> socket, ZMQDealerWrapper& zmqDealerWrapper)
     : handler_session(std::move(socket))
+    , zmqDealerWrapper_(zmqDealerWrapper)
     {
         DebugSockets(fmt::format("auth_session from {}", ipAddress));
     }
@@ -120,4 +133,9 @@ protected:
     }
 
     void do_write(std::size_t length);
+
+private:
+    ZMQDealerWrapper& zmqDealerWrapper_;
+
+    std::optional<std::pair<uint32, uint32>> validatePassword(std::string username, std::string password);
 };

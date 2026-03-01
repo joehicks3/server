@@ -1,20 +1,24 @@
 -----------------------------------
 -- Area: Mhaura
---  NPC: Mauh Halaapah
+-- NPC: Mauh Halaapah
+-- !pos 30.003 -8.000 49.514
+-- Shared unique event with Somo Aatsula
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    player:startEvent(40)
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
+    if not player:hasCompletedUniqueEvent(xi.uniqueEvent.MHAURA_INTRODUCTION) then
+        player:startEvent(40)
+    else
+        player:startEvent(41)
+    end
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
+    if csid == 40 then
+        player:setUniqueEvent(xi.uniqueEvent.MHAURA_INTRODUCTION)
+    end
 end
 
 return entity

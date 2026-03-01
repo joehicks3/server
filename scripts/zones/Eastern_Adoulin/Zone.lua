@@ -1,10 +1,11 @@
 -----------------------------------
 -- Zone: Eastern Adoulin (257)
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 local defineZoneAroundXYZ = function(zone, id, x, y, z, distance)
-    zone:registerTriggerArea(id,
+    zone:registerCuboidTriggerArea(id,
         x - distance, y - distance, z - distance,
         x + distance, y + distance, z + distance)
 end
@@ -16,17 +17,7 @@ zoneObject.onInitialize = function(zone)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
-    local cs = -1
-
-    if
-        player:getXPos() == 0 and
-        player:getYPos() == 0 and
-        player:getZPos() == 0
-    then
-        player:setPos(-155, 0, -19, 250)
-    end
-
-    return cs
+    return xi.moghouse.onMoghouseZoneEvent(player, prevZone)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

@@ -5,15 +5,8 @@
 -----------------------------------
 local ID = zones[xi.zone.KUFTAL_TUNNEL]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
-
-local arachnePHTable =
-{
-    [ID.mob.ARACHNE + 5] = ID.mob.ARACHNE, -- 19.000 20.000 37.000
-    [ID.mob.ARACHNE + 4] = ID.mob.ARACHNE, -- -10.000 20.000 14.000
-    [ID.mob.ARACHNE + 2] = ID.mob.ARACHNE, -- -20.000 21.000 1.000
-    [ID.mob.ARACHNE + 3] = ID.mob.ARACHNE, -- -20.000 20.000 38.000
-}
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 737, 2, xi.regime.type.GROUNDS)
@@ -21,7 +14,8 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, arachnePHTable, 5, math.random(7200, 28800)) -- 2 to 8 hours
+    local params = {}
+    xi.mob.phOnDespawn(mob, ID.mob.ARACHNE, 5, 7200, params) -- 2 hours
 end
 
 return entity

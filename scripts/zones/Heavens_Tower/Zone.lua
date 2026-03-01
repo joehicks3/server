@@ -1,11 +1,12 @@
 -----------------------------------
 -- Zone: Heavens_Tower
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    zone:registerTriggerArea(1, -1, -1, -35, 1, 1, -33)
-    zone:registerTriggerArea(2, 6, -46, -30, 8, -44, -28)
+    zone:registerCuboidTriggerArea(1, -1, -1, -35, 1, 1, -33)
+    zone:registerCuboidTriggerArea(2, 6, -46, -30, 8, -44, -28)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -23,11 +24,11 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
-    switch (triggerArea:GetTriggerAreaID()): caseof
+    switch (triggerArea:getTriggerAreaID()): caseof
     {
         [1] = function()  -- Heaven's Tower exit portal
             player:startEvent(41)

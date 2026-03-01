@@ -27,7 +27,7 @@ mission.sections =
                     if player:getMissionStatus(mission.areaId) == 9 then
                         return mission:progressEvent(426, 1)
                     else
-                        return mission:progressEvent(427, 1)
+                        return mission:event(427)
                     end
                 end,
             },
@@ -40,7 +40,7 @@ mission.sections =
                     if missionStatus == 8 then
                         return mission:progressEvent(355, 1)
                     elseif missionStatus < 11 then
-                        return mission:progressEvent(356)
+                        return mission:event(356)
                     end
                 end,
             },
@@ -53,7 +53,7 @@ mission.sections =
                     if missionStatus == 11 then
                         return mission:progressEvent(257)
                     else
-                        return mission:progressEvent(258)
+                        return mission:event(258)
                     end
                 end,
             },
@@ -86,7 +86,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 10 and
-                        player:getLocalVar('battlefieldWin') == 64
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.RANK_2_MISSION_2
                     then
                         npcUtil.giveKeyItem(player, xi.ki.KINDRED_CREST)
                         player:delKeyItem(xi.ki.DARK_KEY)

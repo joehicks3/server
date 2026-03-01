@@ -4,6 +4,7 @@
 -- Starts & Finishes Repeatable Quest: Paying Lip Service
 -- !pos 51.011 -3.749 54.402 241
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -50,9 +51,6 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     -- CHOCOBILIOUS
     if csid == 227 then
@@ -70,10 +68,10 @@ entity.onEventFinish = function(player, csid, option, npc)
             player:addFame(xi.fameArea.WINDURST, 8)
         end
 
-        if option == 1 then
-            npcUtil.giveCurrency(player, 'gil', 150)
-        else
+        if option == 1 then -- remi_shell
             npcUtil.giveCurrency(player, 'gil', 200)
+        else -- beehive_chip
+            npcUtil.giveCurrency(player, 'gil', 150)
         end
 
         player:confirmTrade()

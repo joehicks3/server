@@ -19,154 +19,19 @@
 ===========================================================================
 */
 
-#ifndef _MMO_H
-#define _MMO_H
+#pragma once
 
 #include "cbasetypes.h"
+#include "timer.h"
+#include "xi.h"
 
 #include <array>
 #include <bitset>
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstring>
 #include <string>
-#include <time.h>
-
-#define FIFOSIZE_SERVERLINK 256 * 1024
 
 #define FFXI_HEADER_SIZE 0x1C // common packet header size
-
-enum MSGSERVTYPE : uint8
-{
-    MSG_LOGIN,
-    MSG_CHAT_TELL,
-    MSG_CHAT_PARTY,
-    MSG_CHAT_ALLIANCE,
-    MSG_CHAT_LINKSHELL,
-    MSG_CHAT_UNITY,
-    MSG_CHAT_YELL,
-    MSG_CHAT_SERVMES,
-    MSG_PT_INVITE,
-    MSG_PT_INV_RES,
-    MSG_PT_RELOAD,
-    MSG_PT_DISBAND,
-    MSG_ALLIANCE_RELOAD,
-    MSG_ALLIANCE_DISSOLVE,
-    MSG_PLAYER_KICK,
-    MSG_DIRECT,
-    MSG_LINKSHELL_RANK_CHANGE,
-    MSG_LINKSHELL_REMOVE,
-    MSG_LUA_FUNCTION,
-    MSG_CHARVAR_UPDATE,
-
-    // conquest, besieged, campaign..
-    MSG_WORLD2MAP_REGIONAL_EVENT,
-    MSG_MAP2WORLD_REGIONAL_EVENT,
-
-    // gm commands
-    MSG_SEND_TO_ZONE,
-    MSG_SEND_TO_ENTITY,
-
-    // rpc
-    MSG_RPC_SEND, // sent by sender -> reciever
-    MSG_RPC_RECV, // sent by reciever -> sender
-};
-DECLARE_FORMAT_AS_UNDERLYING(MSGSERVTYPE);
-
-enum REGIONALMSGTYPE : uint8
-{
-    REGIONAL_EVT_MSG_CONQUEST,
-    REGIONAL_EVT_MSG_BESIEGED,
-    REGIONAL_EVT_MSG_CAMPAIGN,
-    REGIONAL_EVT_MSG_COLONIZATION,
-};
-DECLARE_FORMAT_AS_UNDERLYING(REGIONALMSGTYPE);
-
-enum CONQUESTMSGTYPE : uint8
-{
-    // WORLD --------> MAP
-
-    // World map broadcasts weekly update started to all zones
-    CONQUEST_WORLD2MAP_WEEKLY_UPDATE_START,
-    // World map broadcasts that update is done, with the respective tally
-    CONQUEST_WORLD2MAP_WEEKLY_UPDATE_END,
-    // World map broadcasts influence point updates to all zones.
-    // Used for periodic updates or initialization.
-    CONQUEST_WORLD2MAP_INFLUENCE_POINTS,
-    // World map broadcasts region control data to all zones.
-    // Used for initialization.
-    CONQUEST_WORLD2MAP_REGION_CONTROL,
-
-    // MAP ----------> WORLD
-
-    // A GM Triggers a weekly update. From one zone to world.
-    // World should send CONQUEST_WORLD2MAP_WEEKLY_UPDATE_START and
-    // CONQUEST_WORLD2MAP_WEEKLY_UPDATE_END when done
-    CONQUEST_MAP2WORLD_GM_WEEKLY_UPDATE,
-    // A GM requests houry conquest data (just influence points).
-    // World server should respond with CONQUEST_WORLD2MAP_INFLUENCE_POINTS triggering a zone update
-    CONQUEST_MAP2WORLD_GM_CONQUEST_UPDATE,
-    // Influence point update from any zone to world.
-    CONQUEST_MAP2WORLD_ADD_INFLUENCE_POINTS,
-};
-DECLARE_FORMAT_AS_UNDERLYING(CONQUESTMSGTYPE);
-
-constexpr auto msgTypeToStr = [](uint8 msgtype)
-{
-    switch (msgtype)
-    {
-        case MSG_LOGIN:
-            return "MSG_LOGIN";
-        case MSG_CHAT_TELL:
-            return "MSG_CHAT_TELL";
-        case MSG_CHAT_PARTY:
-            return "MSG_CHAT_PARTY";
-        case MSG_CHAT_ALLIANCE:
-            return "MSG_CHAT_ALLIANCE";
-        case MSG_CHAT_LINKSHELL:
-            return "MSG_CHAT_LINKSHELL";
-        case MSG_CHAT_UNITY:
-            return "MSG_CHAT_UNITY";
-        case MSG_CHAT_YELL:
-            return "MSG_CHAT_YELL";
-        case MSG_CHAT_SERVMES:
-            return "MSG_CHAT_SERVMES";
-        case MSG_PT_INVITE:
-            return "MSG_PT_INVITE";
-        case MSG_PT_INV_RES:
-            return "MSG_PT_INV_RES";
-        case MSG_PT_RELOAD:
-            return "MSG_PT_RELOAD";
-        case MSG_PT_DISBAND:
-            return "MSG_PT_DISBAND";
-        case MSG_ALLIANCE_RELOAD:
-            return "MSG_ALLIANCE_RELOAD";
-        case MSG_ALLIANCE_DISSOLVE:
-            return "MSG_ALLIANCE_DISSOLVE";
-        case MSG_PLAYER_KICK:
-            return "MSG_PLAYER_KICK";
-        case MSG_DIRECT:
-            return "MSG_DIRECT";
-        case MSG_LINKSHELL_RANK_CHANGE:
-            return "MSG_LINKSHELL_RANK_CHANGE";
-        case MSG_LINKSHELL_REMOVE:
-            return "MSG_LINKSHELL_REMOVE";
-        case MSG_LUA_FUNCTION:
-            return "MSG_LUA_FUNCTION";
-        case MSG_CHARVAR_UPDATE:
-            return "MSG_CHARVAR_UPDATE";
-        case MSG_SEND_TO_ZONE:
-            return "MSG_SEND_TO_ZONE";
-        case MSG_SEND_TO_ENTITY:
-            return "MSG_SEND_TO_ENTITY";
-        case MSG_RPC_SEND:
-            return "MSG_RPC_SEND";
-        case MSG_RPC_RECV:
-            return "MSG_RPC_RECV";
-        case MSG_WORLD2MAP_REGIONAL_EVENT:
-            return "MSG_WORLD2MAP_REGIONAL_EVENT";
-        default:
-            return "Unknown";
-    };
-};
 
 // For filters1_t, filters2_t and SAVE_CONF:
 // See https://github.com/atom0s/XiPackets/tree/main/world/server/0x00B4
@@ -242,6 +107,7 @@ struct filters2_t
     uint32_t unused31 : 1;
 };
 
+#pragma pack(push, 1)
 struct SAVE_CONF
 {
     uint8_t InviteFlg : 1;
@@ -268,11 +134,12 @@ struct SAVE_CONF
     uint8_t RecruitFlg : 1;
     uint8_t unused : 2;
 
-    filters1_t MassageFilter;
-    filters2_t MassageFilter2;
+    filters1_t MessageFilter;
+    filters2_t MessageFilter2;
     uint16_t   PvpFlg;
     uint8_t    AreaCode;
 };
+#pragma pack(pop)
 
 struct languages_t
 {
@@ -365,31 +232,17 @@ struct skills_t
     };
     // Rank is used for crafts and loads main job or sub job skill rank, prioritizing main job skill rank.
     uint8 rank[64];
-
-    skills_t()
-    {
-        std::memset(&skill, 0, sizeof(skill));
-        std::memset(&rank, 0, sizeof(rank));
-    }
 };
 
 struct keyitems_table_t
 {
-    std::bitset<512> keyList;
-    std::bitset<512> seenList;
-
-    keyitems_table_t()
-    {
-    }
+    xi::bitset<512> keyList;
+    xi::bitset<512> seenList;
 };
 
 struct keyitems_t
 {
-    std::array<keyitems_table_t, 7> tables;
-
-    keyitems_t()
-    {
-    }
+    std::array<keyitems_table_t, 8> tables; // 8 tables of key items as of December 2025
 };
 
 struct position_t
@@ -407,11 +260,6 @@ struct position_t
 
     position_t()
     {
-        x        = 0.f;
-        y        = 0.f;
-        z        = 0.f;
-        moving   = 0;
-        rotation = 0;
     }
 
     position_t(float _x, float _y, float _z, uint16 _moving, uint8 _rotation)
@@ -433,29 +281,12 @@ struct stats_t
     uint16 INT;
     uint16 MND;
     uint16 CHR;
-
-    stats_t()
-    {
-        STR = 0;
-        DEX = 0;
-        VIT = 0;
-        AGI = 0;
-        INT = 0;
-        MND = 0;
-        CHR = 0;
-    }
 };
 
 struct questlog_t
 {
     uint8 current[32];
     uint8 complete[32];
-
-    questlog_t()
-    {
-        std::memset(&current, 0, sizeof(current));
-        std::memset(&complete, 0, sizeof(complete));
-    }
 };
 
 struct missionlog_t
@@ -464,39 +295,18 @@ struct missionlog_t
     uint16 statusUpper;
     uint16 statusLower;
     bool   complete[64];
-
-    missionlog_t()
-    {
-        current     = 0;
-        statusUpper = 0;
-        statusLower = 0;
-
-        std::memset(&complete, 0, sizeof(complete));
-    }
 };
 
 struct assaultlog_t
 {
     uint16 current;
     bool   complete[128];
-
-    assaultlog_t()
-    {
-        current = 0;
-        std::memset(&complete, 0, sizeof(complete));
-    }
 };
 
 struct campaignlog_t
 {
     uint16 current;
     bool   complete[512];
-
-    campaignlog_t()
-    {
-        current = 0;
-        std::memset(&complete, 0, sizeof(complete));
-    }
 };
 
 struct eminencelog_t
@@ -504,27 +314,13 @@ struct eminencelog_t
     uint16 active[31]; // slot 31 is for time-limited records
     uint32 progress[31];
     uint8  complete[512]; // bitmap of all 4096 possible records.
-
-    eminencelog_t()
-    {
-        std::memset(&active, 0, sizeof(active));
-        std::memset(&progress, 0, sizeof(progress));
-        std::memset(&complete, 0, sizeof(complete));
-    }
 };
 
 struct eminencecache_t
 {
-    std::bitset<4096> activemap;
-    uint32            lastWriteout;
+    xi::bitset<4096>  activemap;
+    timer::time_point lastWriteout;
     bool              notifyTimedRecord;
-    ;
-
-    eminencecache_t()
-    {
-        lastWriteout      = 0;
-        notifyTimedRecord = false;
-    }
 };
 
 struct nameflags_t
@@ -540,11 +336,6 @@ struct nameflags_t
         };
         uint32 flags;
     };
-
-    nameflags_t()
-    {
-        flags = 0;
-    }
 };
 
 struct search_t
@@ -552,28 +343,18 @@ struct search_t
     uint8       language;
     uint8       messagetype;
     std::string message;
-
-    search_t()
-    {
-        language    = 0;
-        messagetype = 0;
-    }
 };
 
 struct bazaar_t
 {
     std::string message;
-
-    bazaar_t()
-    {
-    }
 };
 
 struct pathpoint_t
 {
-    position_t position{};
-    uint32     wait        = 0;
-    bool       setRotation = false;
+    position_t      position;
+    timer::duration wait;
+    bool            setRotation;
 };
 
 // A comment on the packets below, defined as macros.
@@ -585,56 +366,56 @@ struct pathpoint_t
 //     Other
 
 // clang-format off
-#define LOBBY_A1_RESERVEPACKET(a)\
-unsigned char a[] = { \
-        0xc4, 0x01, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x20, 0x00, 0x00, 0x00, 0x2a, 0x72, 0x4a, 0x94,\
-        0x4f, 0x60, 0x27, 0xc4, 0x45, 0x4b, 0x7d, 0xcf, 0x27, 0x8e, 0x6d, 0xcd, 0x03, 0x00, 0x00, 0x00,\
-        0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,\
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x56, 0x61, 0x6c, 0x65, 0x00, 0x00, 0x00, 0x00,\
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x05, 0x00,\
-        0x07, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x02, 0x00, 0x10, 0x00, 0x20, 0x00, 0x30,\
-        0x00, 0x40, 0x00, 0x50, 0x00, 0x60, 0x00, 0x70, 0x00, 0x01, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00,\
-        0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0xb5, 0xfa, 0x01, 0x00,\
-        0x7e, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,\
-        0x01, 0x01, 0x01, 0x01, 0x46, 0x6e, 0xcf, 0x09, 0xde, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,\
-        0x0a, 0x52, 0x03, 0x00, 0x0e, 0x08, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00\
-}
-
-#define LOBBY_A2_RESERVEPACKET(a)\
-unsigned char a[]={ \
-        0x48, 0x00, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x0b, 0x00, 0x00, 0x00, 0x30, 0xD0, 0x10, 0xDC,\
-        0x87, 0x64, 0x4B, 0x34, 0x72, 0x9A, 0x51, 0x23, 0x54, 0x14, 0x67, 0xF0, 0x82, 0xB2, 0xc0, 0x00,\
-        0xC3, 0x57, 0x00, 0x00, 0x52, 0x65, 0x67, 0x69, 0x75, 0x7A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,\
-        0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x7F, 0x00, 0x00, 0x01, 0xd6, 0xd3, 0x00, 0x00,\
-        0x7F, 0x00, 0x00, 0x01, 0xf2, 0xd2, 0x00, 0x00\
+#define LOBBY_A1_RESERVEPACKET(a)                                                                       \
+    unsigned char a[] = {                                                                               \
+        0xc4, 0x01, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x20, 0x00, 0x00, 0x00, 0x2a, 0x72, 0x4a, 0x94, \
+        0x4f, 0x60, 0x27, 0xc4, 0x45, 0x4b, 0x7d, 0xcf, 0x27, 0x8e, 0x6d, 0xcd, 0x03, 0x00, 0x00, 0x00, \
+        0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, \
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x56, 0x61, 0x6c, 0x65, 0x00, 0x00, 0x00, 0x00, \
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x05, 0x00, \
+        0x07, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x02, 0x00, 0x10, 0x00, 0x20, 0x00, 0x30, \
+        0x00, 0x40, 0x00, 0x50, 0x00, 0x60, 0x00, 0x70, 0x00, 0x01, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, \
+        0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0xb5, 0xfa, 0x01, 0x00, \
+        0x7e, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, \
+        0x01, 0x01, 0x01, 0x01, 0x46, 0x6e, 0xcf, 0x09, 0xde, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+        0x0a, 0x52, 0x03, 0x00, 0x0e, 0x08, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00                          \
     }
 
-#define LOBBY_026_RESERVEPACKET(a) \
-unsigned char a[]={\
-        0x28, 0x00, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,\
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4f, 0xe0, 0x5d, 0xad,\
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00\
+#define LOBBY_A2_RESERVEPACKET(a)                                                                       \
+    unsigned char a[] = {                                                                               \
+        0x48, 0x00, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x0b, 0x00, 0x00, 0x00, 0x30, 0xD0, 0x10, 0xDC, \
+        0x87, 0x64, 0x4B, 0x34, 0x72, 0x9A, 0x51, 0x23, 0x54, 0x14, 0x67, 0xF0, 0x82, 0xB2, 0xc0, 0x00, \
+        0xC3, 0x57, 0x00, 0x00, 0x52, 0x65, 0x67, 0x69, 0x75, 0x7A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+        0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x7F, 0x00, 0x00, 0x01, 0xd6, 0xd3, 0x00, 0x00, \
+        0x7F, 0x00, 0x00, 0x01, 0xf2, 0xd2, 0x00, 0x00                                                  \
     }
 
-#define LOBBY_024_RESERVEPACKET(a) \
-unsigned char a[]={ \
-        0x40, 0x00, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,\
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,\
-        0x64, 0x00, 0x00, 0x00, 0x70, 0x58, 0x49, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,\
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00\
+#define LOBBY_026_RESERVEPACKET(a)                                                                      \
+    unsigned char a[] = {                                                                               \
+        0x28, 0x00, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4f, 0xe0, 0x5d, 0xad, \
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00                                                  \
     }
 
-#define LOBBY_ACTION_DONE(a)\
-unsigned char a[]={\
-        0x20, 0x00, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,\
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00\
+#define LOBBY_024_RESERVEPACKET(a)                                                                      \
+    unsigned char a[] = {                                                                               \
+        0x40, 0x00, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, \
+        0x64, 0x00, 0x00, 0x00, 0x70, 0x58, 0x49, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  \
     }
 
-#define LOBBBY_ERROR_MESSAGE(a)\
-unsigned char a[]={\
-        0x24, 0x00, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,\
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,\
-        0x00, 0x00, 0x00, 0x00\
+#define LOBBY_ACTION_DONE(a)                                                                            \
+    unsigned char a[] = {                                                                               \
+        0x20, 0x00, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  \
+    }
+
+#define LOBBBY_ERROR_MESSAGE(a)                                                                         \
+    unsigned char a[] = {                                                                               \
+        0x24, 0x00, 0x00, 0x00, 0x49, 0x58, 0x46, 0x46, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+        0x00, 0x00, 0x00, 0x00                                                                          \
     }
 // clang-format on
 
@@ -648,16 +429,26 @@ public:
     uint8  m_nation;
 
     look_t m_look;
-
-    char_mini()
-    {
-        std::memset(&m_name, 0, sizeof(m_name));
-
-        m_mjob   = 0;
-        m_zone   = 0;
-        m_nation = 0;
-    };
-    ~char_mini(){};
 };
 
-#endif // _MMO_H
+// https://github.com/atom0s/XiPackets/tree/main/world/client/0x000A
+// Defined here for use in both map.cpp and packet_system.cpp
+struct GP_CLI_LOGIN
+{
+    uint16_t id : 9;
+    uint16_t size : 7;
+    uint16_t sync;
+    uint8_t  LoginPacketCheck; // PS2: LoginPacketCheck
+    uint8_t  padding00;        // PS2: dam__
+    uint16_t unknown00;        // PS2: MyPort
+    uint32_t unknown01;        // PS2: MyIP
+    uint32_t UniqueNo;         // PS2: UniqueNo
+    uint16_t GrapIDTbl[9];     // PS2: GrapIDTbl
+    char     sName[15];        // PS2: sName
+    char     sAccunt[15];      // PS2: sAccunt
+    uint8_t  Ticket[16];       // PS2: Ticket
+    uint32_t Ver;              // PS2: Ver
+    uint8_t  sPlatform[4];     // PS2: sPlatform
+    uint16_t uCliLang;         // PS2: uCliLang
+    uint16_t dammyArea;        // PS2: dammyArea
+};

@@ -9,7 +9,7 @@ entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
-    player:startEvent(1)
+    xi.barge.timekeeperOnTrigger(player, xi.barge.location.PHANAUET_CHANNEL, 2)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)

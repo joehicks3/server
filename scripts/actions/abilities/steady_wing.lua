@@ -5,6 +5,7 @@
 -- Recast Time: 05:00
 -- Duration:    03:00
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -14,7 +15,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability, action)
-    xi.job_utils.dragoon.useSteadyWing(player, target, ability, action)
+    return xi.job_utils.dragoon.useSteadyWing(player, target, ability, action)
 end
 
 return abilityObject

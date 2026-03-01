@@ -7,17 +7,11 @@
 --                        'Wayward Waypoints'
 -- !pos 84 0 -60 256
 -----------------------------------
-local ID = zones[xi.zone.WESTERN_ADOULIN]
------------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local fertileGround    = player:getQuestStatus(xi.questLog.ADOULIN, xi.quest.id.adoulin.FERTILE_GROUND)
-    local waywardWaypoints = player:getQuestStatus(xi.questLog.ADOULIN, xi.quest.id.adoulin.WAYWARD_WAYPOINTS)
-    waywardWaypoints       = waywardWaypoints == xi.questStatus.QUEST_ACCEPTED and player:getCharVar('WW_Need_Shipilolo') > 0
 
     if player:getCurrentMission(xi.mission.log_id.SOA) >= xi.mission.id.soa.LIFE_ON_THE_FRONTIER then
         if
@@ -33,7 +27,8 @@ entity.onTrigger = function(player, npc)
             -- Progresses Quest: 'Fertile Ground'
             player:startEvent(2850)
         elseif
-            waywardWaypoints and
+            player:getQuestStatus(xi.questLog.ADOULIN, xi.quest.id.adoulin.WAYWARD_WAYPOINTS) == xi.questStatus.QUEST_ACCEPTED and
+            player:getCharVar('WW_Need_Shipilolo') > 0 and
             not player:hasKeyItem(xi.ki.WAYPOINT_RECALIBRATION_KIT)
         then
             -- Progresses Quest: 'Wayward Waypoints'
@@ -42,17 +37,13 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 2543 then
         -- Progresses Quest: 'The Old Man and the Harpoon'
         player:delKeyItem(xi.ki.BROKEN_HARPOON)
-        player:addKeyItem(xi.ki.EXTRAVAGANT_HARPOON)
-        player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.EXTRAVAGANT_HARPOON)
+        npcUtil.giveKeyItem(player, xi.ki.EXTRAVAGANT_HARPOON)
     elseif csid == 2850 then
-        -- Progresses Quest: 'Fertile Ground'
+        -- Progresses Quest: 'Fertile Ground' TODO: Should this also give the player a message?
         player:addKeyItem(xi.ki.BOTTLE_OF_FERTILIZER_X)
     elseif csid == 79 then
         player:addKeyItem(xi.ki.WAYPOINT_RECALIBRATION_KIT)

@@ -1,34 +1,45 @@
 -----------------------------------
 -- Red lotus Blade
---
--- Description: Deals fire elemental damage. Damage varies with TP.
--- Type: Physical
--- Utsusemi/Blink absorb: 1 Shadow?
--- Range: Melee
+-- Family: Humanoid Sword Weaponskill
+-- Description: Deals Fire elemental damage. Damage varies with TP.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
-    if mob:getPool() ~= 4006 and mob:getPool() ~= 4249 then
+    if
+        mob:getPool() ~= xi.mobPool.QUBIA_ARENA_TRION and
+        mob:getPool() ~= xi.mobPool.THRONE_ROOM_VOLKER
+    then
         mob:messageBasic(xi.msg.basic.READIES_WS, 0, 34)
     end
 
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    if mob:getPool() == 4006 then -- Trion@QuBia_Arena only
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
+
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 5.0, 5.0, 5.0 } -- TODO: Capture fTPs
+    params.element        = xi.element.FIRE
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.FIRE
+    params.shadowBehavior = xi.mobskills.shadowBehavior.NUMSHADOWS_1
+
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+    end
+
+    if mob:getPool() == xi.mobPool.QUBIA_ARENA_TRION then -- Trion: QuBia_Arena only
         target:showText(mob, zones[xi.zone.QUBIA_ARENA].text.RLB_LAND)
-    elseif mob:getPool() == 4249 then -- Volker@Throne_Room only
+    elseif mob:getPool() == xi.mobPool.THRONE_ROOM_VOLKER then -- Volker: Throne_Room only
         target:showText(mob, zones[xi.zone.THRONE_ROOM].text.FEEL_MY_PAIN)
     end
 
-    local dmgmod = 1.25
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 4, xi.element.FIRE, dmgmod, xi.mobskills.magicalTpBonus.DMG_BONUS, 1)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.FIRE, xi.mobskills.shadowBehavior.NUMSHADOWS_1)
-
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.FIRE)
-    return dmg
+    return info.damage
 end
 
 return mobskillObject

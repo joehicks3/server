@@ -1,24 +1,34 @@
 -----------------------------------
---  Crystal Weapon
---
---  Description: Invokes the power of a crystal to deal magical damage of a random element to a single target.
---  Type: Magical
---  Utsusemi/Blink absorb: Ignores shadows
---  Range: Unknown
---  Notes: Can be Fire, Earth, Wind, or Water element.  Functions even at a distance (outside of melee range).
+-- Crystal Weapon (Wind)
+-- Family: Golems
+-- Description: Invokes the power of a crystal to deal Wind damage to a single target.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 3, xi.element.WIND, dmgmod, xi.mobskills.magicalTpBonus.MAB_BONUS, 1)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.WIND, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.WIND)
-    return dmg
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
+
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 2, 2, 2 }
+    params.element        = xi.element.WIND
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.WIND
+    params.shadowBehavior = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
+
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        -- TODO: Dynamis NM: Suttung applies Weight debuff.
+    end
+
+    return info.damage
 end
 
 return mobskillObject

@@ -2,6 +2,7 @@
 -- Sand Pit
 -- Single target bind
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -9,7 +10,7 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    skill:setMsg(xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.BIND, 1, 0, 30))
+    skill:setMsg(xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.BIND, 1, 0, 60))
 
     -- Different mechanics based on the antlion using it
     local poolID = mob:getPool()
@@ -35,8 +36,10 @@ mobskillObject.onMobWeaponSkill = function(target, mob, skill)
 
         if spawnId > 0 then
             local executioner = GetMobByID(spawnId)
-            executioner:setSpawn(npcX-1, npcY-2, npcZ-1) -- Set its spawn location.
-            SpawnMob(spawnId):updateEnmity(target)
+            if executioner then
+                executioner:setSpawn(npcX-1, npcY-2, npcZ-1) -- Set its spawn location.
+                SpawnMob(spawnId):updateEnmity(target)
+            end
         end
     elseif poolID == 4046 then
         -- Tuchulcha (Sheep in Antlion's Clothing)

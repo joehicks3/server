@@ -6,43 +6,11 @@
 -----------------------------------
 require('scripts/quests/flyers_for_regine')
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
     quests.ffr.onTrade(player, npc, trade, 6) -- FLYERS FOR REGINE
-end
-
-entity.onTrigger = function(player, npc)
-    local exitTheGambler = player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.EXIT_THE_GAMBLER)
-    local exitTheGamblerStat = player:getCharVar('exitTheGamblerStat')
-
-    if
-        exitTheGambler < xi.questStatus.QUEST_COMPLETED and
-        exitTheGamblerStat == 0
-    then
-        player:startEvent(522)
-    elseif
-        exitTheGambler == xi.questStatus.QUEST_ACCEPTED and
-        exitTheGamblerStat == 1
-    then
-        player:startEvent(518)
-    else
-        player:startEvent(514)
-    end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
-    if
-        csid == 522 and
-        player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.EXIT_THE_GAMBLER) == xi.questStatus.QUEST_AVAILABLE
-    then
-        player:addQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.EXIT_THE_GAMBLER)
-    elseif csid == 518 then
-        npcUtil.completeQuest(player, xi.questLog.SANDORIA, xi.quest.id.sandoria.EXIT_THE_GAMBLER, { ki = xi.ki.MAP_OF_KING_RANPERRES_TOMB, title = xi.title.DAYBREAK_GAMBLER, xp = 2000 })
-    end
 end
 
 return entity

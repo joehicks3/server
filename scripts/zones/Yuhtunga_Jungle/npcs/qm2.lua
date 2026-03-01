@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.YUHTUNGA_JUNGLE]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local function isFightInProgress()
@@ -15,14 +16,13 @@ local function isFightInProgress()
         GetMobByID(ID.mob.NASUS_OFFSET + 4):isAlive()
 end
 
-local function spawnNMs(player)
-    local qm = GetNPCByID(ID.npc.TUNING_OUT_QM)
+local function spawnNMs(player, npc)
     if not isFightInProgress() then
-        qm:setLocalVar('cooldown', os.time() + 900) -- 15 minutes between repops
-        qm:setLocalVar('NasusKilled', 0)
-        qm:setLocalVar('QuestPlayer', player:getID()) -- only the person who pops will complete quest
+        npc:setLocalVar('cooldown', GetSystemTime() + 900) -- 15 minutes between repops
+        npc:setLocalVar('NasusKilled', 0)
+        npc:setLocalVar('QuestPlayer', player:getID()) -- only the person who pops will complete quest
 
-        npcUtil.popFromQM(player, qm, {
+        npcUtil.popFromQM(player, npc, {
             ID.mob.NASUS_OFFSET,
             ID.mob.NASUS_OFFSET + 1,
             ID.mob.NASUS_OFFSET + 2,
@@ -30,7 +30,7 @@ local function spawnNMs(player)
             ID.mob.NASUS_OFFSET + 4
         }, { claim = true, hide = 0 })
 
-        player:messageText(qm, ID.text.SWARM_APPEARED, false)
+        player:messageText(npc, ID.text.SWARM_APPEARED, false)
     end
 end
 
@@ -45,12 +45,12 @@ entity.onTrigger = function(player, npc)
         player:startEvent(29)
 
     elseif tuningOutProgress == 3 or tuningOutProgress == 4 then
-        if os.time() >= npc:getLocalVar('cooldown') then
+        if GetSystemTime() >= npc:getLocalVar('cooldown') then
             -- Only show CS if first time spawning mobs
             if tuningOutProgress == 3 then
                 player:startEvent(28)
             else
-                spawnNMs(player)
+                spawnNMs(player, npc)
             end
         else
             player:messageSpecial(ID.text.NOTHING_HAPPENS)

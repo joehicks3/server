@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.CAPE_TERIGGAN]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobDeath = function(mob, player, optParams)
@@ -12,7 +13,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.FROSTMANE_PH, 5, math.random(3600, 21600)) -- 1 to 6 hours
+    xi.mob.phOnDespawn(mob, ID.mob.FROSTMANE, 5, 3600) -- 1 hour
 end
 
 return entity

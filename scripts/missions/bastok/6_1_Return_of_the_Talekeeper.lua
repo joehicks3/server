@@ -167,12 +167,14 @@ mission.sections =
                         player:setMissionStatus(mission.areaId, 3)
                         return mission:keyItem(xi.ki.ALTEPA_MOONPEBBLE)
                     elseif
+                        mobEasternSphinx and
+                        mobWesternSphinx and
                         player:getMissionStatus(mission.areaId) == 2 and
                         (not mobEasternSphinx:isSpawned() or mobEasternSphinx:isDead()) and
                         (not mobWesternSphinx:isSpawned() or mobWesternSphinx:isDead())
                     then
-                        SpawnMob(westernAltepaID.mob.EASTERN_SPHINX)
-                        SpawnMob(westernAltepaID.mob.WESTERN_SPHINX)
+                        SpawnMob(westernAltepaID.mob.EASTERN_SPHINX):updateClaim(player)
+                        SpawnMob(westernAltepaID.mob.WESTERN_SPHINX):updateClaim(player)
                         return mission:messageSpecial(westernAltepaID.text.EVIL_LOOMING_ABOVE_YOU)
                     end
                 end,
@@ -185,6 +187,7 @@ mission.sections =
 
                     if
                         player:getMissionStatus(mission.areaId) == 2 and
+                        mobWesternSphinx and
                         (mobWesternSphinx:isDead() or not mobWesternSphinx:isSpawned())
                     then
                         mission:setLocalVar(player, 'nmDefeated', 1)
@@ -199,6 +202,7 @@ mission.sections =
 
                     if
                         player:getMissionStatus(mission.areaId) == 2 and
+                        mobEasternSphinx and
                         (mobEasternSphinx:isDead() or not mobEasternSphinx:isSpawned())
                     then
                         mission:setLocalVar(player, 'nmDefeated', 1)

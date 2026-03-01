@@ -6,6 +6,7 @@
 mixins = { require('scripts/mixins/families/tonberry') }
 local ID = zones[xi.zone.DEN_OF_RANCOR]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobDeath = function(mob, player, optParams)
@@ -15,7 +16,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.CELESTE_EYED_TOZBERRY_PH, 10, 7200) -- 2 hours
+    xi.mob.phOnDespawn(mob, ID.mob.CELESTE_EYED_TOZBERRY, 10, 7200) -- 2 hours
 end
 
 return entity

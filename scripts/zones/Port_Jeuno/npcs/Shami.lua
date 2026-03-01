@@ -4,18 +4,11 @@
 -- Orb Seller (BCNM)
 -- !pos -53.9 0 10.8 246
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-local shamiSealItems =
-{
-    -- Trade Item ID              Seal ID, Retrieve Option
-    [xi.item.BEASTMENS_SEAL       ] = { 0, 2 },
-    [xi.item.KINDREDS_SEAL        ] = { 1, 1 },
-    [xi.item.KINDREDS_CREST       ] = { 2, 3 },
-    [xi.item.HIGH_KINDREDS_CREST  ] = { 3, 4 },
-    [xi.item.SACRED_KINDREDS_CREST] = { 4, 5 },
-}
-
+---@class shamiOrbItems
+---@field [xi.item] { [integer]: integer, [integer]: integer, [integer]: integer, [integer]: integer } }
 local shamiOrbItems =
 {
     -- Item ID                    CS, PO, SealID, Cost
@@ -36,18 +29,11 @@ local shamiOrbItems =
     [xi.item.MACROCOSMIC_ORB] = { 11, 15,      4,   20 },
 }
 
-local function getSealTradeOption(trade)
-    for itemID, sealData in pairs(shamiSealItems) do
-        if npcUtil.tradeHasOnly(trade, itemID) then
-            return sealData[1]
-        end
-    end
-
-    return nil
-end
-
+---@nodiscard
+---@param option integer
+---@return xi.item?, integer?, integer?
 local function convertSealRetrieveOption(option)
-    for itemID, sealData in pairs(shamiSealItems) do
+    for itemID, sealData in pairs(xi.seals.sealItems) do
         if (option + sealData[2]) % 256 == 0 then
             local sealCount = (option + sealData[2]) / 256 - 1
 
@@ -60,6 +46,10 @@ end
 
 -- Returns the event ID associated for displaying where the player can
 -- use the orbs (BCNMs).  Event 22 is the generic cracked orb CS
+---@nodiscard
+---@param player CBaseEntity
+---@param trade CTradeContainer
+---@return integer?
 local function getOrbEvent(player, trade)
     for itemID, orbData in pairs(shamiOrbItems) do
         if npcUtil.tradeHasExactly(trade, itemID) then
@@ -74,6 +64,9 @@ local function getOrbEvent(player, trade)
     return nil
 end
 
+---@nodiscard
+---@param option integer
+---@return xi.item?, integer?, integer?
 local function getOrbDataFromOption(option)
     for itemID, orbData in pairs(shamiOrbItems) do
         if orbData[2] == option then
@@ -81,23 +74,13 @@ local function getOrbDataFromOption(option)
         end
     end
 
-    return nil
+    return nil, nil, nil
 end
 
 entity.onTrade = function(player, npc, trade)
-    -- Trading Seals/Crests
-    local sealOption = getSealTradeOption(trade)
+    local eventParams = { 321, 0, 0, 0, 0, 0 }
 
-    if sealOption ~= nil then
-        local eventParams = { 321, 0, 0, 0, 0, 0 }
-        local storedSeals = player:getSeals(sealOption)
-        local itemCount   = trade:getItemCount()
-
-        eventParams[sealOption + 2] = bit.lshift(storedSeals + itemCount, 16)
-        player:startEvent(unpack(eventParams))
-        player:addSeals(itemCount, sealOption)
-        player:confirmTrade()
-
+    if xi.seals.onTrade(player, npc, trade, eventParams) then
         return
     end
 
@@ -119,11 +102,9 @@ entity.onTrigger = function(player, npc)
     if beastmensSeal + kindredsSeal + kindredsCrest + highKindredsCrest + sacredKindredsCrest == 0 then
         player:startEvent(23) -- Standard dialog ?
     else
-        player:startEvent(322, (kindredsSeal * 65536) + beastmensSeal, (highKindredsCrest * 65536) + kindredsCrest, sacredKindredsCrest, 0, 1, 0, 0) -- Standard dialog with menu
+        local purchasedOrbs = player:getCharVar('ShamiPurchasedOrbs') -- Skips the first longer dialog if the player has already purchased orbs
+        player:startEvent(322, (kindredsSeal * 65536) + beastmensSeal, (highKindredsCrest * 65536) + kindredsCrest, sacredKindredsCrest, 0, 1, 0, 0, math.min(purchasedOrbs, 1)) -- Standard dialog with menu
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
@@ -163,8 +144,13 @@ entity.onEventFinish = function(player, csid, option, npc)
             sealType ~= nil and
             player:getSeals(sealType) >= sealCost
         then
-            if npcUtil.giveItem(player, itemID) then
+            if
+                itemID and
+                sealCost and
+                npcUtil.giveItem(player, itemID)
+            then
                 player:delSeals(sealCost, sealType)
+                player:incrementCharVar('ShamiPurchasedOrbs', 1)
             end
         end
     end

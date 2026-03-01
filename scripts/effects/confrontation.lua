@@ -1,11 +1,12 @@
 -----------------------------------
 -- xi.effect.CONFRONTATION
 -----------------------------------
+---@type TEffect
 local effectObject = {}
 
 effectObject.onEffectGain = function(target, effect)
     if target:getPet() then
-        target:getPet():addStatusEffect(effect)
+        target:getPet():copyStatusEffect(effect)
     end
 end
 

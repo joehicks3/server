@@ -4,29 +4,29 @@
 -- Item Effect: HP +7, MP +7
 -- Duration: 30 Minutes
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
-    local effect = target:getStatusEffect(xi.effect.ENCHANTMENT)
-    if effect ~= nil and effect:getSubType() == 15611 then
-        target:delStatusEffect(xi.effect.ENCHANTMENT)
+itemObject.onItemCheck = function(target, item, param, caster)
+    if target:getStatusEffectBySource(xi.effect.ENCHANTMENT, xi.effectSourceType.EQUIPPED_ITEM, xi.item.STURDY_SLACKS) ~= nil then
+        target:delStatusEffect(xi.effect.ENCHANTMENT, nil, xi.effectSourceType.EQUIPPED_ITEM, xi.item.STURDY_SLACKS)
     end
 
     return 0
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffect(xi.effect.ENCHANTMENT, 0, 0, 1800, 15611)
+itemObject.onItemUse = function(target, user)
+    if target:hasEquipped(xi.item.STURDY_SLACKS) then
+        target:addStatusEffect(xi.effect.ENCHANTMENT, { duration = 1800, origin = user, sourceType = xi.effectSourceType.EQUIPPED_ITEM, sourceTypeParam = xi.item.STURDY_SLACKS })
+    end
 end
 
 itemObject.onEffectGain = function(target, effect)
-    target:addMod(xi.mod.HP, 7)
-    target:addMod(xi.mod.MP, 7)
+    effect:addMod(xi.mod.HP, 7)
+    effect:addMod(xi.mod.MP, 7)
 end
 
 itemObject.onEffectLose = function(target, effect)
-    target:delMod(xi.mod.HP, 7)
-    target:delMod(xi.mod.MP, 7)
 end
 
 return itemObject

@@ -3,17 +3,10 @@
 -----------------------------------
 local ID = zones[xi.zone.BOSTAUNIEUX_OUBLIETTE]
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    UpdateNMSpawnPoint(ID.mob.DREXERION_THE_CONDEMNED)
-    GetMobByID(ID.mob.DREXERION_THE_CONDEMNED):setRespawnTime(math.random(900, 10800))
-
-    UpdateNMSpawnPoint(ID.mob.PHANDURON_THE_CONDEMNED)
-    GetMobByID(ID.mob.PHANDURON_THE_CONDEMNED):setRespawnTime(math.random(900, 10800))
-
-    UpdateNMSpawnPoint(ID.mob.BLOODSUCKER)
-    GetMobByID(ID.mob.BLOODSUCKER):setRespawnTime(3600)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -31,7 +24,7 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

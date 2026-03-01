@@ -78,14 +78,29 @@ mission.sections =
                 end,
             },
 
-            onZoneIn =
+            ['_6h0'] =
             {
-                function(player, prevZone)
-                    if player:getMissionStatus(mission.areaId) == 0 then
-                        return 116
+                onTrigger = function(player, npc)
+                    if player:getMissionStatus(mission.areaId) >= 2 then
+                        return mission:event(64)
                     end
                 end,
             },
+
+            ['_6h1'] =
+            {
+                onTrigger = function(player, npc)
+                    if player:getMissionStatus(mission.areaId) >= 2 then
+                        return mission:event(75)
+                    end
+                end,
+            },
+
+            onZoneIn = function(player, prevZone)
+                if player:getMissionStatus(mission.areaId) == 0 then
+                    return 116
+                end
+            end,
 
             onEventFinish =
             {
@@ -98,7 +113,7 @@ mission.sections =
                         -- This cutscene is blocking after the mission has been completed.  Check this
                         -- before allowing further gate guard interaction (Mission[0][20]Progress).  Required
                         -- final CS will set this to 0, and we should disallow on non-zero values
-                        mission:setVar(player, 'Progress', os.time() + 60)
+                        mission:setVar(player, 'Progress', GetSystemTime() + 60)
                         player:delKeyItem(xi.ki.DROPS_OF_AMNIO)
                     end
                 end,
@@ -118,6 +133,8 @@ mission.sections =
                     local mobValor = GetMobByID(quicksandCavesID.mob.HONOR)
 
                     if
+                        mobHonor and
+                        mobValor and
                         (not mobHonor:isSpawned() or mobHonor:isDead()) and
                         (not mobValor:isSpawned() or mobValor:isDead())
                     then
@@ -143,6 +160,7 @@ mission.sections =
 
                     if
                         player:getMissionStatus(mission.areaId) == 2 and
+                        mobValor and
                         (mobValor:isDead() or not mobValor:isSpawned())
                     then
                         player:setMissionStatus(mission.areaId, 3)
@@ -156,6 +174,7 @@ mission.sections =
                     local mobHonor = GetMobByID(quicksandCavesID.mob.VALOR)
                     if
                         player:getMissionStatus(mission.areaId) == 2 and
+                        mobHonor and
                         (mobHonor:isDead() or not mobHonor:isSpawned())
                     then
                         player:setMissionStatus(mission.areaId, 3)
@@ -178,17 +197,14 @@ mission.sections =
         {
             ['Grilau'] = mission:messageSpecial(northernSandoriaID.text.ORIGINAL_MISSION_OFFSET + 127):setPriority(1000),
 
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if
-                        mission:getVar(player, 'Progress') < os.time() and
-                        not player:isInMogHouse()
-                    then
-                        return 16
-                    end
+            onZoneIn = function(player, prevZone)
+                if
+                    mission:getVar(player, 'Progress') < GetSystemTime() and
+                    not player:inMogHouse()
+                then
+                    return 16
                 end
-            },
+            end,
 
             onEventFinish =
             {

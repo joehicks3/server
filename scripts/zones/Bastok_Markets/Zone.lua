@@ -1,6 +1,7 @@
 -----------------------------------
 -- Zone: Bastok_Markets (235)
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
@@ -8,19 +9,11 @@ zoneObject.onInitialize = function(zone)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
-    -- MOG HOUSE EXIT
-    if
-        player:getXPos() == 0 and
-        player:getYPos() == 0 and
-        player:getZPos() == 0
-    then
-        local position = math.random(1, 5) - 33
-        player:setPos(-177, -8, position, 127)
-    end
+    return xi.moghouse.onMoghouseZoneEvent(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

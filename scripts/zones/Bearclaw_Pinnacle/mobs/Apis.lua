@@ -3,6 +3,7 @@
 --  Mob: Apis
 --  ENM: Holy Cow
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobInitialize = function(mob)
@@ -16,7 +17,7 @@ entity.onMobSpawn = function(mob)
 end
 
 entity.onMobEngage = function(mob, target)
-    mob:setLocalVar('colorChange', os.time() + 60)
+    mob:setLocalVar('colorChange', GetSystemTime() + 60)
     mob:setLocalVar('currentColor', math.random(1, 3))
 end
 
@@ -25,11 +26,11 @@ entity.onMobFight = function(mob, target)
     local currentColor = mob:getLocalVar('currentColor')
     local abilities = { 624, 625, 627 }
 
-    if os.time() > mob:getLocalVar('colorChange') then
-        mob:setLocalVar('colorChange', os.time() + math.random(60, 90))
+    if GetSystemTime() > mob:getLocalVar('colorChange') then
+        mob:setLocalVar('colorChange', GetSystemTime() + math.random(60, 90))
         mob:setLocalVar('twohour_tp', mob:getTP())
         table.remove(indicies, currentColor)
-        local index = indicies[math.random(#indicies)]
+        local index = indicies[math.random(1, #indicies)]
         mob:useMobAbility(abilities[index])
         mob:setLocalVar('currentColor', index)
     end

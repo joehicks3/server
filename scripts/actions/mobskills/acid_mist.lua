@@ -1,26 +1,38 @@
 -----------------------------------
 -- Acid Mist
--- Deals Water damage to enemies within an area of effect. Additional effect: Attack Down
+-- Family: Leech
+-- Description: Deals Water damage to enemies within an area of effect. Additional Effect: Attack Down
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local power    = 50
-    local duration = 120
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.ATTACK_DOWN, power, 0, duration)
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 1.75, 2.00, 2.25 }
+    params.element        = xi.element.WATER
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.WATER
+    params.shadowBehavior = xi.mobskills.shadowBehavior.WIPE_SHADOWS
 
-    local dmgmod = 1
-    local info   = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 3.2, xi.element.WATER, dmgmod, xi.mobskills.magicalTpBonus.MAB_BONUS, 1)
-    local dmg    = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.WATER, xi.mobskills.shadowBehavior.WIPE_SHADOWS)
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
 
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.WATER)
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
 
-    return dmg
+        local power    = 50
+        local duration = 120
+        -- TODO: Leeches in Dynamis lower attack to 1.
+
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.ATTACK_DOWN, power, 0, duration)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

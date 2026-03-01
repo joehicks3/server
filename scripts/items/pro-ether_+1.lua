@@ -3,9 +3,10 @@
 -- Item: Pro-Ether +1
 -- Item Effect: Restores 280 MP
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     if target:getMP() == target:getMaxMP() then
         return xi.msg.basic.ITEM_UNABLE_TO_USE
     elseif target:hasStatusEffect(xi.effect.MEDICINE) then
@@ -15,9 +16,9 @@ itemObject.onItemCheck = function(target)
     return 0
 end
 
-itemObject.onItemUse = function(target)
+itemObject.onItemUse = function(target, user)
     target:messageBasic(xi.msg.basic.RECOVERS_MP, 0, target:addMP(280 * xi.settings.main.ITEM_POWER))
-    target:addStatusEffect(xi.effect.MEDICINE, 0, 0, 900)
+    target:addStatusEffect(xi.effect.MEDICINE, { duration = 900, origin = user })
 end
 
 return itemObject

@@ -6,10 +6,11 @@
 -- Utsusemi/Blink absorb: Shadow per hit
 -- Range: Melee
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
-    if mob:getPool() ~= 4006 then
+    if mob:getPool() ~= xi.mobPool.QUBIA_ARENA_TRION then
         mob:messageBasic(xi.msg.basic.READIES_WS, 0, 42)
     end
 
@@ -17,15 +18,15 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    if mob:getPool() == 4006 then -- Trion@QuBia_Arena only
+    if mob:getPool() == xi.mobPool.QUBIA_ARENA_TRION then -- Trion@QuBia_Arena only
         target:showText(mob, zones[xi.zone.QUBIA_ARENA].text.SAVAGE_LAND)
     end
 
     local numhits = 2
     local accmod = 1
-    local dmgmod = 2.0
-    local info = xi.mobskills.mobPhysicalMove(mob, target, skill, numhits, accmod, dmgmod, xi.mobskills.physicalTpBonus.DMG_VARIES, 1.1, 1.2, 1.3)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.PHYSICAL, xi.damageType.SLASHING, info.hitslanded)
+    local ftp    = 2.0 -- fTP and fTP scaling unknown. TODO: capture ftp
+    local info = xi.mobskills.mobPhysicalMove(mob, target, skill, numhits, accmod, ftp, xi.mobskills.physicalTpBonus.NO_EFFECT, 0, 0, 0)
+    local dmg = xi.mobskills.mobFinalAdjustments(info, mob, skill, target, xi.attackType.PHYSICAL, xi.damageType.SLASHING, info.hitslanded)
 
     -- AA EV: Approx 900 damage to 75 DRG/35 THF.  400 to a NIN/WAR in Arhat, but took shadows.
     target:takeDamage(dmg, mob, xi.attackType.PHYSICAL, xi.damageType.SLASHING)

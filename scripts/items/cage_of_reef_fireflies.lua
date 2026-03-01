@@ -3,9 +3,10 @@
 -- Reef Fireflies
 -- Transports the user to Ilrusi Atoll Staging Point
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     if target:getZoneID() == xi.zone.ILRUSI_ATOLL then
         return 0
     end
@@ -13,8 +14,8 @@ itemObject.onItemCheck = function(target)
     return xi.msg.basic.ITEM_UNABLE_TO_USE_2
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffectEx(xi.effect.TELEPORT, 0, xi.teleport.id.REEF, 0, 1)
+itemObject.onItemUse = function(target, user)
+    target:addStatusEffect(xi.effect.TELEPORT, { power = xi.teleport.id.REEF, duration = 1, origin = user, icon = 0 })
 end
 
 itemObject.onItemDrop = function(target, item)

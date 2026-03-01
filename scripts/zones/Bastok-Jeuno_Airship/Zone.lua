@@ -1,6 +1,7 @@
 -----------------------------------
 -- Zone: Bastok-Jeuno_Airship
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
@@ -16,7 +17,7 @@ zoneObject.onZoneIn = function(player, prevZone)
     return cs
 end
 
-zoneObject.onTransportEvent = function(player, transport)
+zoneObject.onTransportEvent = function(player, prevZoneId, transportId)
     player:startEvent(100)
 end
 

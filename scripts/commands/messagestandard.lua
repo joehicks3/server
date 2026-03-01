@@ -2,6 +2,7 @@
 -- func: messagestandard
 -- desc: Injects a standard message packet.
 -----------------------------------
+---@type TCommand
 local commandObj = {}
 
 commandObj.cmdprops =
@@ -23,7 +24,7 @@ commandObj.onTrigger = function(player, msgId)
     end
 
     -- inject message packet
-    player:messageBasic(msgId)
+    player:messageStandard(msgId)
 end
 
 return commandObj

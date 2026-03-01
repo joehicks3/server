@@ -3,13 +3,14 @@
 -----------------------------------
 local ID = zones[xi.zone.KORROLOKA_TUNNEL]
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
     -- Waterfalls (ID, X, Radius, Z)
-    zone:registerTriggerArea(1,  -87, 4, -105, 0, 0, 0) -- Left pool
-    zone:registerTriggerArea(2, -101, 7, -114, 0, 0, 0) -- Center Pool
-    zone:registerTriggerArea(3, -112, 3, -103, 0, 0, 0) -- Right Pool
+    zone:registerCylindricalTriggerArea(1, -87, -105, 4) -- Left pool
+    zone:registerCylindricalTriggerArea(2, -101, -114, 7) -- Center Pool
+    zone:registerCylindricalTriggerArea(3, -112, -103, 3) -- Right Pool
 
     xi.helm.initZone(zone, xi.helmType.EXCAVATION)
 end
@@ -29,34 +30,34 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
     if player:getCharVar('BathedInScent') == 1 then  -- pollen scent from touching all 3 Blue Rafflesias in Yuhtunga
-        switch (triggerArea:GetTriggerAreaID()): caseof
+        switch (triggerArea:getTriggerAreaID()): caseof
         {
             [1] = function()  -- Left Pool
                 player:messageSpecial(ID.text.ENTERED_SPRING)
-                player:setLocalVar('POOL_TIME', os.time())
+                player:setLocalVar('POOL_TIME', GetSystemTime())
             end,
 
             [2] = function()  -- Center Pool
                 player:messageSpecial(ID.text.ENTERED_SPRING)
-                player:setLocalVar('POOL_TIME', os.time())
+                player:setLocalVar('POOL_TIME', GetSystemTime())
             end,
 
             [3] = function()  -- Right pool
                 player:messageSpecial(ID.text.ENTERED_SPRING)
-                player:setLocalVar('POOL_TIME', os.time())
+                player:setLocalVar('POOL_TIME', GetSystemTime())
             end,
         }
     end
 end
 
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
-    local triggerAreaID = triggerArea:GetTriggerAreaID()
-    local pooltime = os.time() - player:getLocalVar('POOL_TIME')
+    local triggerAreaID = triggerArea:getTriggerAreaID()
+    local pooltime = GetSystemTime() - player:getLocalVar('POOL_TIME')
 
     if triggerAreaID <= 3 and player:getCharVar('BathedInScent') == 1 then
         if pooltime >= 300 then

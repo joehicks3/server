@@ -4,66 +4,65 @@
 -- Note: Spawned by Rubious Crystals for PM 8-1
 -----------------------------------
 mixins = { require('scripts/mixins/job_special') }
-local ID = zones[xi.zone.ALTAIEU]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
-local function clearTowerVars(player, towerNum)
-    player:setCharVar('Ru_aern_'..towerNum..'-1KILL', 0)
-    player:setCharVar('Ru_aern_'..towerNum..'-2KILL', 0)
-    player:setCharVar('Ru_aern_'..towerNum..'-3KILL', 0)
+local function activateBracelets(mob)
+    local originalAcc = mob:getLocalVar('originalACC')
+    mob:setLocalVar('braceletTimer', GetSystemTime() + 30)
+    mob:setAnimationSub(6)
+    mob:setMod(xi.mod.ACC, originalAcc + 40)
+    mob:setMod(xi.mod.ATTP, 30)
+    mob:setMod(xi.mod.DELAYP, -33)
 end
 
-entity.onMobDeath = function(mob, player, optParams)
-    if
-        player:getCurrentMission(xi.mission.log_id.COP) == xi.mission.id.cop.GARDEN_OF_ANTIQUITY and
-        player:getCharVar('PromathiaStatus') < 3
-    then
-        local aernKills =
-        {
-            [ID.mob.RUAERN_OFFSET + 0] = 'Ru_aern_1-1KILL',
-            [ID.mob.RUAERN_OFFSET + 1] = 'Ru_aern_1-2KILL',
-            [ID.mob.RUAERN_OFFSET + 2] = 'Ru_aern_1-3KILL',
-            [ID.mob.RUAERN_OFFSET + 3] = 'Ru_aern_2-1KILL',
-            [ID.mob.RUAERN_OFFSET + 4] = 'Ru_aern_2-2KILL',
-            [ID.mob.RUAERN_OFFSET + 5] = 'Ru_aern_2-3KILL',
-            [ID.mob.RUAERN_OFFSET + 6] = 'Ru_aern_3-1KILL',
-            [ID.mob.RUAERN_OFFSET + 7] = 'Ru_aern_3-2KILL',
-            [ID.mob.RUAERN_OFFSET + 8] = 'Ru_aern_3-3KILL',
-        }
+local function deactivateBracelets(mob)
+    local originalAcc = mob:getLocalVar('originalACC')
+    mob:setLocalVar('braceletTimer', GetSystemTime() + math.random(60, 80))
+    mob:setAnimationSub(5)
+    mob:setMod(xi.mod.ACC, originalAcc)
+    mob:setMod(xi.mod.ATTP, 0)
+    mob:setMod(xi.mod.DELAYP, 0)
+end
 
-        local varToSet = aernKills[mob:getID()]
+entity.onMobInitialize = function(mob)
+    mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 180)
+    mob:addImmunity(xi.immunity.DARK_SLEEP)
+    mob:addImmunity(xi.immunity.LIGHT_SLEEP)
+    mob:addImmunity(xi.immunity.TERROR)
+end
 
-        if varToSet ~= nil then
-            player:setCharVar(varToSet, 1)
+entity.onMobSpawn = function(mob)
+    mob:setLocalVar('originalACC', mob:getMod(xi.mod.ACC))
+
+    if mob:getAnimationSub() == 6 then
+        deactivateBracelets(mob)
+    end
+end
+
+entity.onMobEngage = function(mob, target)
+    mob:setLocalVar('braceletTimer', GetSystemTime() + math.random(60, 80))
+end
+
+entity.onMobFight = function(mob, target)
+    if xi.combat.behavior.isEntityBusy(mob) then
+        return
+    end
+
+    if GetSystemTime() > mob:getLocalVar('braceletTimer') then
+        if mob:getAnimationSub() == 5 then
+            activateBracelets(mob)
+        else
+            deactivateBracelets(mob)
         end
+    end
+end
 
-        if
-            player:getCharVar('Ru_aern_1-1KILL') == 1 and
-            player:getCharVar('Ru_aern_1-2KILL') == 1 and
-            player:getCharVar('Ru_aern_1-3KILL') == 1
-        then
-            player:setCharVar('[SEA][AlTieu]SouthTower', 1)
-            clearTowerVars(player, 1)
-        end
-
-        if
-            player:getCharVar('Ru_aern_2-1KILL') == 1 and
-            player:getCharVar('Ru_aern_2-2KILL') == 1 and
-            player:getCharVar('Ru_aern_2-3KILL') == 1
-        then
-            player:setCharVar('[SEA][AlTieu]WestTower', 1)
-            clearTowerVars(player, 2)
-        end
-
-        if
-            player:getCharVar('Ru_aern_3-1KILL') == 1 and
-            player:getCharVar('Ru_aern_3-2KILL') == 1 and
-            player:getCharVar('Ru_aern_3-3KILL') == 1
-        then
-            player:setCharVar('[SEA][AlTieu]EastTower', 1)
-            clearTowerVars(player, 3)
-        end
+entity.onMobDisengage = function(mob)
+    -- Reset bracelets when out of combat
+    if mob:getAnimationSub() == 6 then
+        deactivateBracelets(mob)
     end
 end
 

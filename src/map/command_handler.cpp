@@ -23,12 +23,12 @@
 
 #include "autotranslate.h"
 #include "common/async.h"
+#include "common/database.h"
 #include "common/utils.h"
 #include "entities/charentity.h"
 #include "lua/lua_baseentity.h"
 #include "lua/luautils.h"
 
-#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -214,20 +214,15 @@ int32 CCommandHandler::call(sol::state& lua, CCharEntity* PChar, const std::stri
             std::string name       = PChar->name;
             std::string cmdlinestr = autotranslate::replaceBytes(commandline);
 
-            // clang-format off
-            Async::getInstance()->query([name, cmdname, cmdlinestr](SqlConnection* _sql)
-            {
-                auto escaped_name        = _sql->EscapeString(name);
-                auto escaped_cmdname     = _sql->EscapeString(cmdname);
-                auto escaped_commandline = _sql->EscapeString(cmdlinestr);
-
-                const char* fmtQuery = "INSERT into audit_gm (date_time,gm_name,command,full_string) VALUES(current_timestamp(),'%s','%s','%s')";
-                if (_sql->Query(fmtQuery, escaped_name.data(), escaped_cmdname.data(), escaped_commandline.data()) == SQL_ERROR)
+            Async::getInstance()->submit(
+                [name, cmdname, cmdlinestr]()
                 {
-                    ShowError("cmdhandler::call: Failed to log GM command.");
-                }
-            });
-            // clang-format on
+                    const auto query = "INSERT into audit_gm (date_time, gm_name, command, full_string) VALUES(CURRENT_TIMESTAMP(3), ?, ?, ?)";
+                    if (!db::preparedStmt(query, db::escapeString(name), db::escapeString(cmdname), db::escapeString(cmdlinestr)))
+                    {
+                        ShowError("cmdhandler::call: Failed to log GM command.");
+                    }
+                });
         }
     }
 
@@ -280,7 +275,7 @@ int32 CCommandHandler::call(sol::state& lua, CCharEntity* PChar, const std::stri
                 break;
 
             default:
-                ShowError("cmdhandler::call: (%s) undefined type for param; symbol: %s", cmdname.c_str(), *parameter);
+                ShowError("cmdhandler::call: (%s) undefined type for param: symbol: %s", cmdname.c_str(), *parameter);
                 break;
         }
 
@@ -288,7 +283,7 @@ int32 CCommandHandler::call(sol::state& lua, CCharEntity* PChar, const std::stri
     }
 
     // Call the function
-    auto result = onTrigger(CLuaBaseEntity(PChar), sol::as_args(args));
+    auto result = onTrigger(PChar, sol::as_args(args));
     if (!result.valid())
     {
         sol::error err = result;

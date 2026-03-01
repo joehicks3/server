@@ -1,28 +1,35 @@
 -----------------------------------
---  Corrosive Ooze
---  Family: Slugs
---  Description: Deals water damage to an enemy. Additional Effect: Attack Down and Defense Down.
---  Type: Magical
---  Utsusemi/Blink absorb: Ignores shadows
---  Range: Radial
---  Notes:
+-- Corrosive Ooze
+-- Family: Slugs
+-- Description: Deals Water damage to an enemy. Additional Effect: Attack Down, Defense Down
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.ATTACK_DOWN, 15, 0, 120)
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.DEFENSE_DOWN, 15, 0, 120)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    local dmgmod = 1
-    local baseDamage = mob:getWeaponDmg() * 4.2
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, baseDamage, xi.element.WATER, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.WATER, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.WATER)
-    return dmg
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 1.5, 1.5, 1.5 }
+    params.element        = xi.element.WATER
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.WATER
+    params.shadowBehavior = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
+
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.ATTACK_DOWN, 33, 0, 120)
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.DEFENSE_DOWN, 33, 0, 120)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

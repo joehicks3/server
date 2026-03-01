@@ -4,7 +4,6 @@
 require('scripts/globals/battlefield')
 require('scripts/globals/missions')
 require('scripts/globals/npc_util')
-require('scripts/globals/utils')
 -----------------------------------
 xi = xi or {}
 xi.dynamis = xi.dynamis or {}
@@ -290,10 +289,10 @@ local function arg3(player, bit)
 end
 
 local function handleEntryTime(player)
-    local realDay = os.time()
+    local realDay = GetSystemTime()
 
     if xi.settings.main.DYNA_MIDNIGHT_RESET then
-        realDay = getMidnight() - 86400
+        realDay = JstMidnight() - 86400
     end
 
     local dynaWaitxDay = player:getCharVar('dynaWaitxDay')
@@ -361,7 +360,7 @@ xi.dynamis.entryNpcOnTrigger = function(player, npc)
 
         -- dynamis entry
         elseif not info.reqs or info.reqs(player) then
-            local realDay      = os.time()
+            local realDay      = GetSystemTime()
             local dynaWaitxDay = player:getCharVar('dynaWaitxDay')
             local sjobOption   = info.csBit > 6 and 1 or 0
 
@@ -466,10 +465,10 @@ xi.dynamis.zoneOnZoneIn = function(player, prevZone)
                 playerArg:messageBasic(xi.msg.basic.UNABLE_TO_ACCESS_SJ)
             end)
 
-            player:addStatusEffect(xi.effect.SJ_RESTRICTION, 0, 0, 0, 7200)
+            player:addStatusEffect(xi.effect.SJ_RESTRICTION, { origin = player })
         end
 
-        player:addStatusEffectEx(xi.effect.DYNAMIS, 0, 0, 3, 3600)
+        player:addStatusEffect(xi.effect.DYNAMIS, { duration = 3600, origin = player, tick = 3, icon = 0 })
         player:timer(5500, function(playerArg)
             playerArg:messageSpecial(ID.text.DYNAMIS_TIME_BEGIN, 60, xi.ki.PRISMATIC_HOURGLASS)
         end)
@@ -569,13 +568,18 @@ xi.dynamis.timeExtensionOnDeath = function(mob, player, optParams)
             end
         end
 
-        if found then
+        -- TODO: Refactor the above loops to not need the 'found' variable, and only use
+        -- non-nil te value.
+        if
+            found and
+            te
+        then
             -- award KI and extension to those who have not yet received it
             local effect = player:getStatusEffect(xi.effect.DYNAMIS)
             if effect and not player:hasKeyItem(te.ki) then
                 npcUtil.giveKeyItem(player, te.ki)
                 local oldDuration = effect:getDuration()
-                effect:setDuration((oldDuration + (te.minutes * 60)) * 1000)
+                effect:setDuration(oldDuration + te.minutes * 60 * 1000)
                 player:setLocalVar('dynamis_lasttimeupdate', effect:getTimeRemaining() / 1000)
                 player:messageSpecial(ID.text.DYNAMIS_TIME_EXTEND, te.minutes)
             end
@@ -818,21 +822,24 @@ xi.dynamis.procMonster = function(mob, player)
 
         local extensions = getExtensions(player)
         if extensions > 2 then
-            if player:getSubJob() == xi.job.NONE and math.random(1, 100) == 1 then
+            if
+                player:hasStatusEffect(xi.effect.SJ_RESTRICTION) and
+                math.random(1, 100) == 1
+            then
                 mob:setLocalVar('dynamis_proc', 4)
-                mob:addStatusEffect(xi.effect.TERROR, 0, 0, 30)
+                mob:addStatusEffect(xi.effect.TERROR, { duration = 30, origin = player })
                 mob:weaknessTrigger(3)
             elseif extensions == 5 then
                 mob:setLocalVar('dynamis_proc', 3)
-                mob:addStatusEffect(xi.effect.TERROR, 0, 0, 30)
+                mob:addStatusEffect(xi.effect.TERROR, { duration = 30, origin = player })
                 mob:weaknessTrigger(2)
             elseif extensions == 4 then
                 mob:setLocalVar('dynamis_proc', 2)
-                mob:addStatusEffect(xi.effect.TERROR, 0, 0, 30)
+                mob:addStatusEffect(xi.effect.TERROR, { duration = 30, origin = player })
                 mob:weaknessTrigger(1)
             elseif extensions == 3 then
                 mob:setLocalVar('dynamis_proc', 1)
-                mob:addStatusEffect(xi.effect.TERROR, 0, 0, 30)
+                mob:addStatusEffect(xi.effect.TERROR, { duration = 30, origin = player })
                 mob:weaknessTrigger(0)
             end
         end
@@ -1038,8 +1045,7 @@ xi.dynamis.hourglassAndCurrencyExchangeNPCOnEventUpdate = function(player, csid,
                 player:messageSpecial(ID.text.NOT_ENOUGH_GIL)
             else
                 player:delGil(price)
-                player:addKeyItem(option)
-                player:messageSpecial(ID.text.KEYITEM_OBTAINED, option)
+                npcUtil.giveKeyItem(player, option)
             end
 
             player:updateEvent(xi.dynamis.getDynamisMapList(player), player:getGil())
@@ -1056,8 +1062,7 @@ xi.dynamis.hourglassAndCurrencyExchangeNPCOnEventFinish = function(player, csid,
     -- bought prismatic hourglass
     if csid == baseCs + 4 then
         player:tradeComplete()
-        player:addKeyItem(xi.ki.PRISMATIC_HOURGLASS)
-        player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.PRISMATIC_HOURGLASS)
+        npcUtil.giveKeyItem(player, xi.ki.PRISMATIC_HOURGLASS)
 
     -- refund timeless hourglass
     elseif csid == baseCs + 13 then

@@ -4,6 +4,8 @@ set(SOURCES
     besieged_system.h
     campaign_system.cpp
     campaign_system.h
+    character_cache.cpp
+    character_cache.h
     colonization_system.cpp
     colonization_system.h
     conquest_system.cpp
@@ -12,23 +14,18 @@ set(SOURCES
     daily_tally.cpp
     http_server.cpp
     http_server.h
-    main.cpp
-    message_handler.h
-    message_server.cpp
-    message_server.h
+    ipc_server.cpp
+    ipc_server.h
+    party_system.cpp
+    party_system.h
     time_server.h
     time_server.cpp
-    world_server.cpp
-    world_server.h
+    world_application.cpp
+    world_application.h
+    world_engine.cpp
+    world_engine.h
+    zone_settings.h
 )
-
-# Temporarily remove clashing old code
-# TODO: Remove this block
-list(REMOVE_ITEM SOURCES
-    ${CMAKE_SOURCE_DIR}/src/common/kernel.cpp
-    ${CMAKE_SOURCE_DIR}/src/common/kernel.h
-    ${CMAKE_SOURCE_DIR}/src/common/socket.cpp
-    ${CMAKE_SOURCE_DIR}/src/common/socket.h)
 
 if(UNIX)
     set(resource "")
@@ -37,18 +34,24 @@ else()
 endif()
 
 add_executable(xi_world
-    ${SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${resource})
 
-target_link_libraries(xi_world
+set(WORLD_LIB_SOURCES ${SOURCES})
+add_library(xi_world_lib
+    STATIC
+        ${WORLD_LIB_SOURCES})
+
+target_link_libraries(xi_world_lib
     PUBLIC
-        ${EXTERNAL_LIBS}
+        ${SHARED_EXTERNAL_LIBS}
+        ${WORLD_ONLY_EXTERNAL_LIBS}
         project_options
     PRIVATE
         project_warnings
 )
 
-target_include_directories(xi_world
+target_include_directories(xi_world_lib
     PUBLIC
         ${CMAKE_SOURCE_DIR}
         ${CMAKE_SOURCE_DIR}/src
@@ -58,5 +61,9 @@ target_include_directories(xi_world
 if (APPLE)
     disable_lto(xi_world)
 endif()
+
+target_link_libraries(xi_world
+    PUBLIC
+        xi_world_lib)
 
 set_target_output_directory(xi_world)

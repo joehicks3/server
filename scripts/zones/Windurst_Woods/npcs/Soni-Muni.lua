@@ -4,6 +4,7 @@
 -- Starts & Finishes Quest: The Amazin' Scorpio
 -- !pos -17.073 1.749 -59.327 241
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local pathNodes =
@@ -56,9 +57,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(421)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

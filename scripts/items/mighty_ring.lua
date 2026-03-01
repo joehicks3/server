@@ -4,29 +4,29 @@
 -- Item Effect: Attack +5, Ranged Attack +5
 -- Duration: 30 Minutes
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
-    local effect = target:getStatusEffect(xi.effect.ENCHANTMENT)
-    if effect ~= nil and effect:getSubType() == 15558 then
-        target:delStatusEffect(xi.effect.ENCHANTMENT)
+itemObject.onItemCheck = function(target, item, param, caster)
+    if target:getStatusEffectBySource(xi.effect.ENCHANTMENT, xi.effectSourceType.EQUIPPED_ITEM, xi.item.MIGHTY_RING) ~= nil then
+        target:delStatusEffect(xi.effect.ENCHANTMENT, nil, xi.effectSourceType.EQUIPPED_ITEM, xi.item.MIGHTY_RING)
     end
 
     return 0
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffect(xi.effect.ENCHANTMENT, 0, 0, 1800, 15558)
+itemObject.onItemUse = function(target, user)
+    if target:hasEquipped(xi.item.MIGHTY_RING) then
+        target:addStatusEffect(xi.effect.ENCHANTMENT, { duration = 1800, origin = user, sourceType = xi.effectSourceType.EQUIPPED_ITEM, sourceTypeParam = xi.item.MIGHTY_RING })
+    end
 end
 
 itemObject.onEffectGain = function(target, effect)
-    target:addMod(xi.mod.ATT, 5)
-    target:addMod(xi.mod.RATT, 5)
+    effect:addMod(xi.mod.ATT, 5)
+    effect:addMod(xi.mod.RATT, 5)
 end
 
 itemObject.onEffectLose = function(target, effect)
-    target:delMod(xi.mod.ATT, 5)
-    target:delMod(xi.mod.RATT, 5)
 end
 
 return itemObject

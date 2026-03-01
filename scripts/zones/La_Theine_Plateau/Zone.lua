@@ -3,13 +3,9 @@
 -----------------------------------
 local ID = zones[xi.zone.LA_THEINE_PLATEAU]
 local laTheineGlobal = require('scripts/zones/La_Theine_Plateau/globals')
-require('scripts/quests/i_can_hear_a_rainbow')
 -----------------------------------
+---@type TZone
 local zoneObject = {}
-
-zoneObject.onChocoboDig = function(player, precheck)
-    return xi.chocoboDig.start(player, precheck)
-end
 
 zoneObject.onInitialize = function(zone)
     laTheineGlobal.moveFallenEgg()
@@ -28,24 +24,21 @@ zoneObject.onZoneIn = function(player, prevZone)
         player:setPos(-559, 0, 680, 73)
     end
 
-    if quests.rainbow.onZoneIn(player) then
-        cs = 123
-    end
-
     return cs
 end
 
+zoneObject.afterZoneIn = function(player)
+    xi.chocoboGame.handleMessage(player)
+end
+
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)
-    if csid == 123 then
-        quests.rainbow.onEventUpdate(player)
-    end
 end
 
 zoneObject.onEventFinish = function(player, csid, option, npc)
@@ -53,9 +46,12 @@ end
 
 zoneObject.onZoneWeatherChange = function(weather)
     local rainbow = GetNPCByID(ID.npc.RAINBOW)
-    local timeOfTheDay = VanadielTOTD()
-    local setRainbow = rainbow:getLocalVar('setRainbow')
+    if not rainbow then
+        return
+    end
 
+    local timeOfTheDay = VanadielTOTD()
+    local setRainbow   = rainbow:getLocalVar('setRainbow')
     if
         setRainbow == 1 and
         weather ~= xi.weather.RAIN and
@@ -76,6 +72,10 @@ end
 
 zoneObject.onTOTDChange = function(timeOfTheDay)
     local rainbow = GetNPCByID(ID.npc.RAINBOW)
+    if not rainbow then
+        return
+    end
+
     local setRainbow = rainbow:getLocalVar('setRainbow')
 
     if

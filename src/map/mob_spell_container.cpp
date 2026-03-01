@@ -19,8 +19,10 @@
 ===========================================================================
 */
 
-#include "mob_spell_container.h"
+#include <algorithm>
+
 #include "mob_modifier.h"
+#include "mob_spell_container.h"
 #include "recast_container.h"
 #include "status_effect_container.h"
 #include "utils/battleutils.h"
@@ -40,6 +42,7 @@ void CMobSpellContainer::ClearSpells()
     m_healList.clear();
     m_naList.clear();
     m_raiseList.clear();
+    m_severeList.clear();
     m_hasSpells = false;
 }
 
@@ -58,7 +61,7 @@ void CMobSpellContainer::AddSpell(SpellID spellId)
 
     // add spell to correct vector
     // try to add it to ga list first
-    uint8 aoe = battleutils::GetSpellAoEType(m_PMob, spell);
+    const uint8 aoe = spell->getAOE();
     if (aoe > 0 && spell->canTargetEnemy())
     {
         m_gaList.emplace_back(spellId);
@@ -106,7 +109,9 @@ void CMobSpellContainer::AddSpell(SpellID spellId)
 void CMobSpellContainer::RemoveSpell(SpellID spellId)
 {
     auto findAndRemove = [](std::vector<SpellID>& list, SpellID id)
-    { list.erase(std::remove(list.begin(), list.end(), id), list.end()); };
+    {
+        list.erase(std::remove(list.begin(), list.end(), id), list.end());
+    };
 
     findAndRemove(m_gaList, spellId);
     findAndRemove(m_damageList, spellId);
@@ -120,6 +125,7 @@ void CMobSpellContainer::RemoveSpell(SpellID spellId)
 }
 
 // Used in Gambits to see if the Trust can cast the spell
+// Used in mob/automaton AI to see if the spell is castable
 std::optional<SpellID> CMobSpellContainer::GetAvailable(SpellID spellId)
 {
     auto* spell    = spell::GetSpell(spellId);
@@ -128,8 +134,10 @@ std::optional<SpellID> CMobSpellContainer::GetAvailable(SpellID spellId)
                     spell->getSkillType() == SKILL_SINGING ||
                     spell->getSkillType() == SKILL_WIND_INSTRUMENT ||
                     spell->getSkillType() == SKILL_STRING_INSTRUMENT ||
-                    spell->getSkillType() == SKILL_GEOMANCY;
-    bool isNotInRecast = !m_PMob->PRecastContainer->Has(RECAST_MAGIC, static_cast<uint16>(spellId));
+                    spell->getSkillType() == SKILL_GEOMANCY ||
+                    m_PMob->StatusEffectContainer->HasStatusEffect(EFFECT_MANAFONT);
+
+    bool isNotInRecast = !m_PMob->PRecastContainer->Has(RECAST_MAGIC, static_cast<Recast>(spellId));
 
     return (isNotInRecast && enoughMP) ? std::optional<SpellID>(spellId) : std::nullopt;
 }
@@ -150,7 +158,7 @@ std::optional<SpellID> CMobSpellContainer::GetBestAvailable(SPELLFAMILY family)
                             spell->getSkillType() == SKILL_WIND_INSTRUMENT ||
                             spell->getSkillType() == SKILL_STRING_INSTRUMENT ||
                             spell->getSkillType() == SKILL_GEOMANCY;
-            bool isNotInRecast = !m_PMob->PRecastContainer->Has(RECAST_MAGIC, static_cast<uint16>(id));
+            bool isNotInRecast = !m_PMob->PRecastContainer->Has(RECAST_MAGIC, static_cast<Recast>(id));
             if (sameFamily && enoughMP && isNotInRecast)
             {
                 matches.emplace_back(id);
@@ -328,7 +336,7 @@ std::optional<SpellID> CMobSpellContainer::GetBestEntrustedSpell(CBattleEntity* 
     return choice;
 }
 
-std::optional<SpellID> CMobSpellContainer::GetBestAgainstTargetWeakness(CBattleEntity* PTarget)
+std::optional<SpellID> CMobSpellContainer::GetBestAgainstTargetWeakness(CBattleEntity* PTarget, SpellID spellId)
 {
     // Look up what the target has the _least resistance to_:
     // clang-format off
@@ -345,11 +353,18 @@ std::optional<SpellID> CMobSpellContainer::GetBestAgainstTargetWeakness(CBattleE
     };
     // clang-format on
 
-    std::size_t weakestIndex = std::distance(resistances.begin(), std::min_element(resistances.begin(), resistances.end()));
-
-    // TODO: Figure this out properly:
-    std::optional<SpellID> choice = std::nullopt;
-    switch (weakestIndex + 1) // Adjust to ignore ELEMENT_NONE
+    std::size_t            weakestIndex     = std::distance(resistances.begin(), std::min_element(resistances.begin(), resistances.end()));
+    std::optional<SpellID> choice           = std::nullopt;
+    auto                   Weakness_Element = weakestIndex + 1;
+    if (spell::GetSpell(spellId) != nullptr)
+    {
+        auto Spell_Element = spell::GetSpell(spellId)->getElement();
+        if (Spell_Element == Weakness_Element)
+        {
+            return spellId;
+        }
+    }
+    switch (Weakness_Element) // Adjust to ignore ELEMENT_NONE
     {
         case ELEMENT_FIRE:
         {
@@ -392,9 +407,199 @@ std::optional<SpellID> CMobSpellContainer::GetBestAgainstTargetWeakness(CBattleE
             break;
         }
     }
-
     // If all else fails, just cast the best you have!
     return !choice ? GetBestAvailable(SPELLFAMILY_NONE) : choice;
+}
+
+std::optional<SpellID> CMobSpellContainer::EnSpellAgainstTargetWeakness(CBattleEntity* PTarget)
+{
+    // Look up what the target has the _least resistance to_:
+    // clang-format off
+    std::vector<int16> resistances
+    {
+        PTarget->getMod(Mod::FIRE_RES_RANK),
+        PTarget->getMod(Mod::ICE_RES_RANK),
+        PTarget->getMod(Mod::WIND_RES_RANK),
+        PTarget->getMod(Mod::EARTH_RES_RANK),
+        PTarget->getMod(Mod::THUNDER_RES_RANK),
+        PTarget->getMod(Mod::WATER_RES_RANK),
+        PTarget->getMod(Mod::LIGHT_RES_RANK),
+        PTarget->getMod(Mod::DARK_RES_RANK),
+    };
+    // clang-format on
+
+    std::size_t weakestIndex = std::distance(resistances.begin(), std::min_element(resistances.begin(), resistances.end()));
+
+    // TODO: Figure this out properly:
+    std::optional<SpellID> choice = std::nullopt;
+    switch (weakestIndex + 1) // Adjust to ignore ELEMENT_NONE
+    {
+        case ELEMENT_FIRE:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_ENFIRE);
+            break;
+        }
+        case ELEMENT_ICE:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_ENBLIZZARD);
+            break;
+        }
+        case ELEMENT_WIND:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_ENAERO);
+            break;
+        }
+        case ELEMENT_EARTH:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_ENSTONE);
+            break;
+        }
+        case ELEMENT_THUNDER:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_ENTHUNDER);
+            break;
+        }
+        case ELEMENT_WATER:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_ENWATER);
+            break;
+        }
+    }
+    return choice;
+}
+
+std::optional<SpellID> CMobSpellContainer::StormDayAgainstTargetWeakness(CBattleEntity* PTarget)
+{
+    // Look up what the target has the _least resistance to_:
+    // clang-format off
+    std::vector<int16> resistances
+    {
+        PTarget->getMod(Mod::FIRE_RES_RANK),
+        PTarget->getMod(Mod::ICE_RES_RANK),
+        PTarget->getMod(Mod::WIND_RES_RANK),
+        PTarget->getMod(Mod::EARTH_RES_RANK),
+        PTarget->getMod(Mod::THUNDER_RES_RANK),
+        PTarget->getMod(Mod::WATER_RES_RANK),
+        PTarget->getMod(Mod::LIGHT_RES_RANK),
+        PTarget->getMod(Mod::DARK_RES_RANK),
+    };
+    // clang-format on
+
+    std::size_t weakestIndex = std::distance(resistances.begin(), std::min_element(resistances.begin(), resistances.end()));
+
+    // TODO: Figure this out properly:
+    std::optional<SpellID> choice = std::nullopt;
+    switch (weakestIndex + 1) // Adjust to ignore ELEMENT_NONE
+    {
+        case ELEMENT_FIRE:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_FIRESTORM);
+            break;
+        }
+        case ELEMENT_ICE:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_HAILSTORM);
+            break;
+        }
+        case ELEMENT_WIND:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_WINDSTORM);
+            break;
+        }
+        case ELEMENT_EARTH:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_SANDSTORM);
+            break;
+        }
+        case ELEMENT_THUNDER:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_THUNDERSTORM);
+            break;
+        }
+        case ELEMENT_WATER:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_RAINSTORM);
+            break;
+        }
+        case ELEMENT_LIGHT:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_AURORASTORM);
+            break;
+        }
+        case ELEMENT_DARK:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_VOIDSTORM);
+            break;
+        }
+    }
+    return choice;
+}
+
+std::optional<SpellID> CMobSpellContainer::HelixAgainstTargetWeakness(CBattleEntity* PTarget)
+{
+    // Look up what the target has the _least resistance to_:
+    // clang-format off
+    std::vector<int16> resistances
+    {
+        PTarget->getMod(Mod::FIRE_RES_RANK),
+        PTarget->getMod(Mod::ICE_RES_RANK),
+        PTarget->getMod(Mod::WIND_RES_RANK),
+        PTarget->getMod(Mod::EARTH_RES_RANK),
+        PTarget->getMod(Mod::THUNDER_RES_RANK),
+        PTarget->getMod(Mod::WATER_RES_RANK),
+        PTarget->getMod(Mod::LIGHT_RES_RANK),
+        PTarget->getMod(Mod::DARK_RES_RANK),
+    };
+    // clang-format on
+
+    std::size_t weakestIndex = std::distance(resistances.begin(), std::min_element(resistances.begin(), resistances.end()));
+
+    // TODO: Figure this out properly:
+    std::optional<SpellID> choice = std::nullopt;
+    switch (weakestIndex + 1) // Adjust to ignore ELEMENT_NONE
+    {
+        case ELEMENT_FIRE:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_PYROHELIX);
+            break;
+        }
+        case ELEMENT_ICE:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_CRYOHELIX);
+            break;
+        }
+        case ELEMENT_WIND:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_ANEMOHELIX);
+            break;
+        }
+        case ELEMENT_EARTH:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_GEOHELIX);
+            break;
+        }
+        case ELEMENT_THUNDER:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_IONOHELIX);
+            break;
+        }
+        case ELEMENT_WATER:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_HYDROHELIX);
+            break;
+        }
+        case ELEMENT_LIGHT:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_LUMINOHELIX);
+            break;
+        }
+        case ELEMENT_DARK:
+        {
+            choice = GetBestAvailable(SPELLFAMILY_NOCTOHELIX);
+            break;
+        }
+    }
+    return choice;
 }
 
 std::optional<SpellID> CMobSpellContainer::GetStormDay()
@@ -604,6 +809,32 @@ std::optional<SpellID> CMobSpellContainer::GetSpell()
     return {};
 }
 
+bool CMobSpellContainer::IsAnySpellAvailable()
+{
+    const auto isSpellAvailable = [&](auto spell) -> bool
+    {
+        return GetAvailable(spell).has_value();
+    };
+
+    const auto hasAvailableSpell = [&](const std::vector<SpellID>& list) -> bool
+    {
+        return std::ranges::any_of(list, isSpellAvailable);
+    };
+
+    const auto allLists = {
+        std::cref(m_gaList),
+        std::cref(m_damageList),
+        std::cref(m_buffList),
+        std::cref(m_debuffList),
+        std::cref(m_healList),
+        std::cref(m_naList),
+        std::cref(m_raiseList),
+        std::cref(m_severeList),
+    };
+
+    return std::ranges::any_of(allLists, hasAvailableSpell);
+}
+
 std::optional<SpellID> CMobSpellContainer::GetGaSpell()
 {
     if (m_gaList.empty())
@@ -646,7 +877,7 @@ std::optional<SpellID> CMobSpellContainer::GetDebuffSpell()
 
 std::optional<SpellID> CMobSpellContainer::GetHealSpell()
 {
-    if (m_PMob->m_EcoSystem == ECOSYSTEM::UNDEAD || m_healList.empty())
+    if (m_healList.empty())
     {
         return {};
     }

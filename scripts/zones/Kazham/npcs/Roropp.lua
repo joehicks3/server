@@ -2,6 +2,7 @@
 -- Area: Kazham
 --  NPC: Roropp
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local pathNodes =
@@ -78,12 +79,7 @@ entity.onTrigger = function(player, npc)
         elseif progress >= 4 or failed >= 5 then
             player:startEvent(245) -- happy with sands of silence
         end
-    else
-        player:startEvent(200)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

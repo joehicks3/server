@@ -7,6 +7,7 @@
 -- Range: Self
 -- Notes: 25% Attack UP, -25% defense DOWN
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -14,7 +15,7 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    skill:setMsg(xi.mobskills.mobBuffMove(mob, xi.effect.BERSERK, 1, 0, 60))
+    skill:setMsg(xi.mobskills.mobBuffMove(target, xi.effect.BERSERK, 45, 0, 120))
 
     return xi.effect.BERSERK
 end

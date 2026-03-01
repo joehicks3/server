@@ -2,6 +2,7 @@
 -- Slumber Powder
 -- 10' Conal sleep
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -9,7 +10,9 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    skill:setMsg(xi.mobskills.mobGazeMove(mob, target, xi.effect.SLEEP_I, 1, 0, 30))
+    local duration = xi.mobskills.calculateDuration(mob:getTP(), 45, 90)
+
+    skill:setMsg(xi.mobskills.mobGazeMove(mob, target, xi.effect.SLEEP_I, 1, 0, duration))
 
     return xi.effect.SLEEP_I
 end

@@ -6,6 +6,7 @@
 -----------------------------------
 local ID = zones[xi.zone.PORT_WINDURST]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -35,9 +36,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(357)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

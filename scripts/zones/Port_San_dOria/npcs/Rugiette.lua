@@ -4,10 +4,8 @@
 -- Involved in Quests: Riding on the Clouds, Lure of the Wildcat (San d'Oria)
 -- !pos 71 -9 -73 232
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local wildcatSandy = player:getCharVar('WildcatSandy')
@@ -20,9 +18,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(601)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

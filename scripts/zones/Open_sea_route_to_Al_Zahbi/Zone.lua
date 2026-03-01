@@ -3,6 +3,7 @@
 -----------------------------------
 local ID = zones[xi.zone.OPEN_SEA_ROUTE_TO_AL_ZAHBI]
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
@@ -23,7 +24,7 @@ zoneObject.onZoneIn = function(player, prevZone)
     return cs
 end
 
-zoneObject.onTransportEvent = function(player, transport)
+zoneObject.onTransportEvent = function(player, prevZoneId, transportId)
     player:startEvent(1028)
     player:messageSpecial(ID.text.DOCKING_IN_AL_ZAHBI)
 end
@@ -36,7 +37,7 @@ end
 
 zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 1028 then
-        player:setPos(0, 0, 0, 0, 50)
+        player:setPos(0, 0, 0, 0, xi.zone.AHT_URHGAN_WHITEGATE)
     end
 end
 

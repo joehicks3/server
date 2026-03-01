@@ -5,6 +5,7 @@
 -- Involved in Quests: Beat Around the Bushin
 -- !pos -175 2 -135 235
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -22,9 +23,6 @@ entity.onTrigger = function(player, npc)
     elseif player:getCharVar('BeatAroundTheBushin') == 3 then
         player:startEvent(342)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

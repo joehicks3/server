@@ -2,20 +2,24 @@
 -- Area: Tavnazian Safehold
 --  NPC: Havillione
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    -- TODO: Alternates between 383 and 320
-    player:startEvent(320)
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
+    -- Dialgoue cycles
+    if player:getLocalVar('spokenHavillione') == 0 then
+        player:startEvent(383)
+    else
+        player:startEvent(320)
+    end
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
+    if csid == 383 then
+        player:setLocalVar('spokenHavillione', 1)
+    else
+        player:setLocalVar('spokenHavillione', 0)
+    end
 end
 
 return entity

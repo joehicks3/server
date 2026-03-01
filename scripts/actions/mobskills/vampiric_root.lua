@@ -1,25 +1,45 @@
 -----------------------------------
 -- Vampiric Root
--- Deals dark damage to a single target. Additional effect: Drain
+-- Steals HP from a single target and absorbs positive status effects.
 -- Type: Magical
 -- Utsusemi/Blink absorb: 1 shadow
 -- Range: Melee
--- Notes: If used against undead, it will simply do damage and not drain HP.
+-- Notes: (Unverified) If used against undead, it will simply do damage and not drain HP.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
-    return 0
+    -- Will only use vampiric root if there are buffs to steal
+    return target:countEffectWithFlag(xi.effectFlag.DISPELABLE) > 0 and 0 or 1
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 3, xi.element.DARK, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.DARK, xi.mobskills.shadowBehavior.NUMSHADOWS_1)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    skill:setMsg(xi.mobskills.mobPhysicalDrainMove(mob, target, skill, xi.mobskills.drainType.HP, dmg))
+    -- TODO: This is a physical skill. Will fix in mobPhysicalMove() PR
+    params.baseDamage     = mob:getWeaponDmg()
+    params.fTP            = { 2.00, 2.00, 2.00 }
+    params.element        = xi.element.DARK
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.DARK
+    params.shadowBehavior = xi.mobskills.shadowBehavior.IGNORE_SHADOWS -- TODO: Capture shadowBehavior
+    -- Note: Ignores PDIF
 
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        skill:setMsg(xi.mobskills.mobDrainMove(mob, target, xi.mobskills.drainType.HP, info.damage))
+
+        -- Absorb ALL positive status effects
+        -- Note: Some sources claim this includes food and reraise which has been proven to be false
+        local result = mob:stealStatusEffect(target)
+        while result ~= 0 do
+            result = mob:stealStatusEffect(target)
+        end
+    end
+
+    return info.damage
 end
 
 return mobskillObject

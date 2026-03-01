@@ -2,6 +2,7 @@
 -- func: petgodmode
 -- desc: Toggles god mode on the player's pet, granting them several special abilities.
 -----------------------------------
+---@type TCommand
 local commandObj = {}
 
 commandObj.cmdprops =
@@ -12,23 +13,27 @@ commandObj.cmdprops =
 
 commandObj.onTrigger = function(player)
     local pet = player:getPet()
-    if pet and pet:getLocalVar('GodMode') == 0 then
+    if not pet then
+        return
+    end
+
+    if pet:getLocalVar('GodMode') == 0 then
         -- Toggle GodMode on..
         pet:setLocalVar('GodMode', 1)
 
         -- Add bonus effects to the pet..
-        pet:addStatusEffect(xi.effect.MAX_HP_BOOST, 1000, 0, 0)
-        pet:addStatusEffect(xi.effect.MAX_MP_BOOST, 1000, 0, 0)
-        pet:addStatusEffect(xi.effect.SENTINEL, 100, 0, 0)
-        pet:addStatusEffect(xi.effect.MIGHTY_STRIKES, 1, 0, 0)
-        pet:addStatusEffect(xi.effect.HUNDRED_FISTS, 1, 0, 0)
-        pet:addStatusEffect(xi.effect.CHAINSPELL, 1, 0, 0)
-        pet:addStatusEffect(xi.effect.PERFECT_DODGE, 1, 0, 0)
-        pet:addStatusEffect(xi.effect.INVINCIBLE, 1, 0, 0)
-        pet:addStatusEffect(xi.effect.MANAFONT, 1, 0, 0)
-        pet:addStatusEffect(xi.effect.REGAIN, 150, 1, 0)
-        pet:addStatusEffect(xi.effect.REFRESH, 99, 0, 0)
-        pet:addStatusEffect(xi.effect.REGEN, 99, 0, 0)
+        pet:addStatusEffect(xi.effect.MAX_HP_BOOST, { power = 1000, origin = player })
+        pet:addStatusEffect(xi.effect.MAX_MP_BOOST, { power = 1000, origin = player })
+        pet:addStatusEffect(xi.effect.SENTINEL, { power = 100, origin = player })
+        pet:addStatusEffect(xi.effect.MIGHTY_STRIKES, { power = 1, origin = player })
+        pet:addStatusEffect(xi.effect.HUNDRED_FISTS, { power = 1, origin = player })
+        pet:addStatusEffect(xi.effect.CHAINSPELL, { power = 1, origin = player })
+        pet:addStatusEffect(xi.effect.PERFECT_DODGE, { power = 1, origin = player })
+        pet:addStatusEffect(xi.effect.INVINCIBLE, { power = 1, origin = player })
+        pet:addStatusEffect(xi.effect.MANAFONT, { power = 1, origin = player })
+        pet:addStatusEffect(xi.effect.REGAIN, { power = 150, origin = player, tick = 1 })
+        pet:addStatusEffect(xi.effect.REFRESH, { power = 99, origin = player })
+        pet:addStatusEffect(xi.effect.REGEN, { power = 99, origin = player })
 
         -- Add bonus mods to the pet..
         pet:addMod(xi.mod.RACC, 2500)

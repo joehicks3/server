@@ -4,6 +4,7 @@
 -- Starts and Finishes Quest: Donate to Recycling
 -- !pos -11 -11 -6 248
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -33,15 +34,12 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 20 then
         player:addQuest(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.DONATE_TO_RECYCLING)
     elseif
         csid == 21 and
-        npcUtil.completeQuest(player, xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.DONATE_TO_RECYCLING, { item = 89, fame_area = xi.fameArea.SELBINA_RABAO, title = xi.title.ECOLOGIST })
+        npcUtil.completeQuest(player, xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.DONATE_TO_RECYCLING, { item = xi.item.WASTEBASKET, fame_area = xi.fameArea.SELBINA_RABAO, title = xi.title.ECOLOGIST })
     then
         player:confirmTrade()
     end

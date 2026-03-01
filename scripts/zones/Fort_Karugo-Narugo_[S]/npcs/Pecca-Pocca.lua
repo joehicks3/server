@@ -4,10 +4,8 @@
 -- Involved In Quest: REQUIEM_FOR_THE_DEPARTED
 -- !pos -163 -68 -155 96
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     if player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.REQUIEM_FOR_THE_DEPARTED) == xi.questStatus.QUEST_ACCEPTED then
@@ -19,9 +17,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(233)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

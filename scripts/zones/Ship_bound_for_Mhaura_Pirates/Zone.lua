@@ -1,6 +1,7 @@
 -----------------------------------
 -- Zone: Ship_bound_for_Mhaura_Pirates (228)
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
@@ -21,8 +22,11 @@ zoneObject.onZoneIn = function(player, prevZone)
     return cs
 end
 
-zoneObject.onTransportEvent = function(player, transport)
-    player:startEvent(512)
+zoneObject.onTransportEvent = function(player, prevZoneId, transportId)
+    -- don't take action on pirate ship transport departure
+    if prevZoneId > 0 then
+        player:startEvent(512)
+    end
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)

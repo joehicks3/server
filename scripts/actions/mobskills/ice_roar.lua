@@ -1,26 +1,34 @@
 -----------------------------------
 -- Ice Roar
--- Emits the roar of an impact event, dealing damage in a fan-shaped area of effect. Ice damage
--- Ignores Shadows
+-- Family: Gigas
+-- Description: Emits the roar of an impact event, dealing damage in a fan-shaped area of effect. Ice damage
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
-    if mob:getZoneID() == 135 or mob:getZoneID() == 111 then
-        return 0
-    end
-
-    return 1
+    return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 4, xi.element.ICE, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.ICE, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.ICE)
+    -- TODO: Need more research on if this is a magical or physical skill
+    -- TODO : Verify spell interrupt effect (If interrupt, then likely physical)
+    params.baseDamage      = mob:getMainLvl() + 2
+    params.fTP             = { 1.5, 1.5, 1.5 } -- TODO: Capture fTP scalings
+    params.element         = xi.element.ICE
+    params.attackType      = xi.attackType.MAGICAL
+    params.damageType      = xi.damageType.ICE
+    params.shadowBehavior  = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
 
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

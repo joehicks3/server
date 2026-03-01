@@ -2,6 +2,7 @@
 -- func: addallmounts
 -- desc: Adds all mount key items to player, granting access to their associated mounts
 -----------------------------------
+---@type TCommand
 local commandObj = {}
 
 commandObj.cmdprops =
@@ -29,7 +30,7 @@ commandObj.onTrigger = function(player, target)
     end
 
     -- add all mount key items
-    for i = xi.ki.CHOCOBO_COMPANION, xi.ki.CHOCOBO_COMPANION + 26 do
+    for i = xi.ki.CHOCOBO_COMPANION, xi.ki.CRAKLAW_COMPANION do
         targ:addKeyItem(i)
     end
 

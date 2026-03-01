@@ -3,14 +3,14 @@
 -- Area: Nyzul Isle
 -- Info: Specified Mob Group and Eliminate all Group
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobSpawn = function(mob)
     xi.nyzul.specifiedEnemySet(mob)
 
-    if mob:getPool() == 8072 then
-        mob:setMobMod(xi.mobMod.CHECK_AS_NM, 1)
-    end
+    -- There was a mob pool check for 8072 here but that doesn't exist anymore so it was removed.
+    -- If I had to guess it was for Nyzul Isle and is now obsolete?
 end
 
 entity.onMobDeath = function(mob, player, optParams)

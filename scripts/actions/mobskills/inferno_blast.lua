@@ -1,28 +1,37 @@
 -----------------------------------
---  Fiery Blast
---
---  Description: Deals fire damage to enemies in area of effect.
---  Type: Magical
---  Utsusemi/Blink absorb: Wipes shadows
---  Range: 18' radial.
---  Notes: Used only by Tiamat, Smok and Ildebrann while flying.
+-- Inferno Blast
+-- Family: Wyrms (Tiamat)
+-- Description: Deals Fire damage to enemies in area of effect.
+-- Notes: Used by Tiamat, Smok and Ildebrann while flying.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
-    if mob:getAnimationSub() ~= 1 then
+    if mob:getAnimationSub() ~= 1 then -- Only use while flying
         return 1
     end
 
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 8, xi.element.FIRE, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.FIRE, xi.mobskills.shadowBehavior.WIPE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.FIRE)
-    return dmg
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
+
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 7, 7, 7 }
+    params.element        = xi.element.FIRE
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.FIRE
+    params.shadowBehavior = xi.mobskills.shadowBehavior.WIPE_SHADOWS
+
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

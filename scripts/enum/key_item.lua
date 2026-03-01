@@ -3,8 +3,10 @@
 -----------------------------------
 xi = xi or {}
 
+---@enum xi.keyItem
 xi.keyItem =
 {
+    NONE                                     = 0,
     ZERUHN_REPORT                            = 1,
     PALBOROUGH_MINES_LOGS                    = 2,
     BLUE_ACIDITY_TESTER                      = 3,
@@ -3006,7 +3008,8 @@ xi.keyItem =
     BYAKKO_COMPANION                         = 3104,
     NOBLE_CHOCOBO_COMPANION                  = 3105,
     IXION_COMPANION                          = 3106,
-
+    PHUABO_COMPANION                         = 3107,
+    CRAKLAW_COMPANION                        = 3108,
     SHEET_OF_SHADOW_LORD_TUNES               = 3136,
     MYSTICAL_CANTEEN                         = 3137,
     YGNASS_INSIGNIA                          = 3138,
@@ -3218,6 +3221,21 @@ xi.keyItem =
     SHEET_OF_CHOCOBO_TUNES                   = 3344,
     MOG_KUPON_W_ETH                          = 3345,
     MOG_KUPON_I_ABY                          = 3346,
+    MOG_KUPON_A_DIA                          = 3347,
+    MOG_KUPON_A_EME                          = 3348,
+    WING_OF_WAR                              = 3349,
+    SHEET_OF_NEAR_EAST_TUNES                 = 3350,
+    MOG_KUPON_A_AEV                          = 3351,
+    MOG_KUPON_A_AHM                          = 3352,
+    MOG_KUPON_A_ATT                          = 3353,
+    MOG_KUPON_A_AMR                          = 3354,
+    MOG_KUPON_A_AGK                          = 3355,
+    ORB_OF_RADIANCE_PHANTOM_GEM              = 3356,
+    RAKAZNAR_PLATE_FRAGMENT                  = 3357,
+    -- NULL ENTRY                            = 3358,
+    -- NULL ENTRY                            = 3359,
+    SHEET_OF_DIVINE_TUNES                    = 3360,
 }
 
+---@alias xi.ki xi.keyItem
 xi.ki = xi.keyItem

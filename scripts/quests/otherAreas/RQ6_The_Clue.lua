@@ -5,8 +5,8 @@
 -- ZONE,   NPC,      POS
 -- Mhaura, Rycharde, !pos 17.451 -16.000 88.815 249
 -----------------------------------
+
 local quest = Quest:new(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.THE_CLUE)
------------------------------------
 
 quest.reward =
 {
@@ -21,7 +21,7 @@ quest.sections =
     -- Section: Quest is available and never interacted.
     {
         check = function(player, status, vars)
-            return status == xi.questStatus.QUEST_AVAILABLE and player:getFameLevel(xi.fameArea.WINDURST) > 4 and
+            return status == xi.questStatus.QUEST_AVAILABLE and player:getFameLevel(xi.fameArea.WINDURST) >= 5 and
                 player:getQuestStatus(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.EXPERTISE) == xi.questStatus.QUEST_COMPLETED
         end,
 

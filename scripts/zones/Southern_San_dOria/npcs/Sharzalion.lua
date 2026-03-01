@@ -3,10 +3,8 @@
 --  NPC: Sharzalion
 -- !pos 95 0 111 230
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local envelopedInDarkness = player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.ENVELOPED_IN_DARKNESS)
@@ -36,9 +34,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(15)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

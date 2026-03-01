@@ -1,20 +1,20 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2010-2015 Darkstar Dev Teams
+  Copyright (c) 2010-2015 Darkstar Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
@@ -31,7 +31,6 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include "helpers/event_handler.h"
 #include "helpers/pathfind.h"
 #include "helpers/targetfind.h"
-#include "packets/message_basic.h"
 #include "states/state.h"
 
 class CBaseEntity;
@@ -55,14 +54,14 @@ public:
     bool ChangeTarget(uint16 targid);
     bool Disengage();
     bool WeaponSkill(uint16 targid, uint16 wsid);
-    bool MobSkill(uint16 targid, uint16 wsid);
+    bool MobSkill(uint16 targid, uint16 wsid, std::optional<timer::duration> castTimeOverride);
     bool PetSkill(uint16 targid, uint16 wsid);
     bool Ability(uint16 targid, uint16 abilityid);
     bool RangedAttack(uint16 targid);
     bool Trigger(CCharEntity* player);
     bool UseItem(uint16 targid, uint8 loc, uint8 slotid);
-    bool Inactive(duration _duration, bool canChangeState);
-    bool Untargetable(duration _duration, bool canChangeState); // Used to make owner entity untargetable & inactionable in TargetFind for _duration
+    bool Inactive(timer::duration _duration, bool canChangeState);
+    bool Untargetable(timer::duration _duration, bool canChangeState); // Used to make owner entity untargetable & inactionable in TargetFind for _duration
 
     /* Internal Controller functions */
     bool Internal_Engage(uint16 targetid);
@@ -70,18 +69,18 @@ public:
     bool Internal_ChangeTarget(uint16 targetid);
     bool Internal_Disengage();
     bool Internal_WeaponSkill(uint16 targid, uint16 wsid);
-    bool Internal_MobSkill(uint16 targid, uint16 wsid);
+    bool Internal_MobSkill(uint16 targid, uint16 wsid, std::optional<timer::duration> castTimeOverride);
     bool Internal_PetSkill(uint16 targid, uint16 abilityid);
     bool Internal_Ability(uint16 targetid, uint16 abilityid);
     bool Internal_RangedAttack(uint16 targetid);
-    bool Internal_Die(duration);
-    bool Internal_Raise();
+    bool Internal_Die(timer::duration);
     bool Internal_UseItem(uint16 targetid, uint8 loc, uint8 slotid);
     bool Internal_Despawn(bool instantDespawn = false);
-    bool Internal_Respawn(duration _duration);
+    bool Internal_Synth(SKILLTYPE synthSkill);
+    bool Accept_Raise();
 
     void    Reset();
-    void    Tick(time_point _tick);
+    void    Tick(timer::time_point _tick);
     CState* GetCurrentState();
     bool    IsStateStackEmpty();
     void    ClearStateStack();
@@ -115,8 +114,8 @@ public:
     void         SetController(std::unique_ptr<CController> controller);
     CController* GetController();
 
-    time_point getTick();
-    time_point getPrevTick();
+    timer::time_point getTick();
+    timer::time_point getPrevTick();
 
     void Despawn();
 
@@ -137,8 +136,8 @@ protected:
     // input controller
     std::unique_ptr<CController> Controller;
     // current synchronized server time (before AI loop execution)
-    time_point m_Tick;
-    time_point m_PrevTick;
+    timer::time_point m_Tick;
+    timer::time_point m_PrevTick;
     // entity who holds this AI
     CBaseEntity* PEntity;
 

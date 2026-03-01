@@ -3,14 +3,15 @@
 -- Item: Nexus Cape
 -- Enchantment: "Teleport" (Party Leader)
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     local result = xi.msg.basic.ITEM_UNABLE_TO_USE
     local leader = target:getPartyLeader()
     -- In a party and we were able to find the leader
     -- (currently fails in cross map server situations)
-    if leader ~= nil and not leader:isInMogHouse() then
+    if leader ~= nil and not leader:inMogHouse() then
         -- Don't try to teleport to self!
         if target:getID() ~= leader:getID() then
             local leaderZone = leader:getZoneID()
@@ -133,8 +134,8 @@ itemObject.onItemCheck = function(target)
     return result
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffectEx(xi.effect.TELEPORT, 0, xi.teleport.id.LEADER, 0, 4)
+itemObject.onItemUse = function(target, user)
+    target:addStatusEffect(xi.effect.TELEPORT, { power = xi.teleport.id.LEADER, duration = 4, origin = user, icon = 0 })
 end
 
 return itemObject

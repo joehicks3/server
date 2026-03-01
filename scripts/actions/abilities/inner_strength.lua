@@ -5,6 +5,7 @@
 -- Recast Time: 01:00:00
 -- Duration: 0:00:30
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -12,7 +13,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    xi.job_utils.monk.useInnerStrength(player, target, ability)
+    return xi.job_utils.monk.useInnerStrength(player, target, ability)
 end
 
 return abilityObject

@@ -4,27 +4,21 @@
 -- Item Effect: STR +10
 -- Duration: 60 seconds
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
-    local effect = target:getStatusEffect(xi.effect.ENCHANTMENT)
-    if effect ~= nil and effect:getSubType() == 15867 then
-        target:delStatusEffect(xi.effect.ENCHANTMENT)
+itemObject.onItemCheck = function(target, item, param, caster)
+    if target:getStatusEffectBySource(xi.effect.STR_BOOST, xi.effectSourceType.EQUIPPED_ITEM, xi.item.SULTANS_BELT) ~= nil then
+        target:delStatusEffect(xi.effect.STR_BOOST, nil, xi.effectSourceType.EQUIPPED_ITEM, xi.item.SULTANS_BELT)
     end
 
     return 0
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffect(xi.effect.ENCHANTMENT, 0, 0, 60, 15867)
-end
-
-itemObject.onEffectGain = function(target, effect)
-    target:addMod(xi.mod.STR, 10)
-end
-
-itemObject.onEffectLose = function(target, effect)
-    target:delMod(xi.mod.STR, 10)
+itemObject.onItemUse = function(target, user)
+    if target:hasEquipped(xi.item.SULTANS_BELT) then
+        target:addStatusEffect(xi.effect.STR_BOOST, { power = 10, duration = 60, origin = user, sourceType = xi.effectSourceType.EQUIPPED_ITEM, sourceTypeParam = xi.item.SULTANS_BELT })
+    end
 end
 
 return itemObject

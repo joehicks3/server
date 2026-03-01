@@ -10,8 +10,8 @@ local quest = Quest:new(xi.questLog.ADOULIN, xi.quest.id.adoulin.HUNGER_STRIKES)
 quest.reward =
 {
     fameArea = xi.fameArea.ADOULIN,
-    xp       = 1000,
     bayld    = 500,
+    exp      = 1000,
 }
 
 quest.sections =
@@ -52,8 +52,8 @@ quest.sections =
                     local auctionCategory = itemObj:getAHCat()
 
                     if
-                        auctionCategory >= 52 and
-                        auctionCategory <= 57
+                        auctionCategory >= xi.itemAHCategory.MEAT_EGGS and
+                        auctionCategory <= xi.itemAHCategory.SWEETS
                     then
                         return quest:event(2533)
                     end

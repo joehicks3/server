@@ -3,18 +3,19 @@
 -----------------------------------
 local ID = zones[xi.zone.MAZE_OF_SHAKHRAMI]
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    if math.random(1, 2) == 1 then
+    if math.random(1, 100) <= 50 then
         DisallowRespawn(ID.mob.LEECH_KING, true)
         DisallowRespawn(ID.mob.ARGUS, false)
-        UpdateNMSpawnPoint(ID.mob.ARGUS)
+        xi.mob.updateNMSpawnPoint(ID.mob.ARGUS)
         GetMobByID(ID.mob.ARGUS):setRespawnTime(math.random(900, 7200))
     else
         DisallowRespawn(ID.mob.ARGUS, true)
         DisallowRespawn(ID.mob.LEECH_KING, false)
-        UpdateNMSpawnPoint(ID.mob.LEECH_KING)
+        xi.mob.updateNMSpawnPoint(ID.mob.LEECH_KING)
         GetMobByID(ID.mob.LEECH_KING):setRespawnTime(math.random(900, 7200))
     end
 
@@ -37,7 +38,7 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

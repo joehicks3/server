@@ -23,7 +23,8 @@ quest.sections =
     {
         check = function(player, status, vars)
             return status == xi.questStatus.QUEST_AVAILABLE and
-                player:getCurrentMission(xi.mission.log_id.WOTG) == xi.mission.id.wotg.CAIT_SITH
+                player:hasCompletedMission(xi.mission.log_id.WOTG, xi.mission.id.wotg.BACK_TO_THE_BEGINNING) and -- WotG mission requirement.
+                player:hasCompletedQuest(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.FIRES_OF_DISCONTENT)    -- WotG nation quest requirement.
         end,
 
         [xi.zone.BASTOK_MARKETS_S] =
@@ -149,14 +150,11 @@ quest.sections =
 
         [xi.zone.PASHHOW_MARSHLANDS_S] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if prevZone == xi.zone.GRAUBERG_S then
-                        return 901
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if prevZone == xi.zone.GRAUBERG_S then
+                    return 901
+                end
+            end,
 
             onEventFinish =
             {
@@ -202,12 +200,9 @@ quest.sections =
 
         [xi.zone.PASHHOW_MARSHLANDS_S] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    return 902
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                return 902
+            end,
 
             onEventFinish =
             {

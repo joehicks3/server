@@ -4,6 +4,7 @@
 -- Type: Warp NPC
 -- !pos -292.779 6.999 -263.153 11
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrigger = function(player, npc)
@@ -95,9 +96,6 @@ entity.onTrade = function(player, npc, trade)
         -- Trying to trade for a key item, but didn't match anything above. Give generic onTrigger message from logic above
         entity.onTrigger(player, npc)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option)
 end
 
 entity.onEventFinish = function(player, csid, option)

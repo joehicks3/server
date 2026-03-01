@@ -18,6 +18,7 @@ quest.sections =
     {
         check = function(player, status, vars)
             return status == xi.questStatus.QUEST_AVAILABLE and
+                player:hasCompletedQuest(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.ON_SABBATICAL) and
                 xi.quest.getVar(player, xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.ON_SABBATICAL, 'Timer') <= VanadielUniqueDay() and
                 player:getMainJob() == xi.job.SCH and
                 player:getMainLvl() >= xi.settings.main.AF2_QUEST_LEVEL
@@ -47,17 +48,14 @@ quest.sections =
 
         [xi.zone.SOUTHERN_SAN_DORIA_S] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if
-                        prevZone == xi.zone.EAST_RONFAURE_S and
-                        quest:getVar(player, 'Prog') == 0
-                    then
-                        return 65
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if
+                    prevZone == xi.zone.EAST_RONFAURE_S and
+                    quest:getVar(player, 'Prog') == 0
+                then
+                    return 65
+                end
+            end,
 
             onEventFinish =
             {
@@ -102,17 +100,14 @@ quest.sections =
 
         [xi.zone.SAUROMUGUE_CHAMPAIGN_S] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if
-                        prevZone == xi.zone.ROLANBERRY_FIELDS_S and
-                        quest:getVar(player, 'Prog') == 2
-                    then
-                        return 3
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if
+                    prevZone == xi.zone.ROLANBERRY_FIELDS_S and
+                    quest:getVar(player, 'Prog') == 2
+                then
+                    return 3
+                end
+            end,
 
             ['Indescript_Markings'] =
             {

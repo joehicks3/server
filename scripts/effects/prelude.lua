@@ -1,7 +1,8 @@
 -----------------------------------
 -- xi.effect.PRELUDE
--- getPower returns the TIER (e.g. 1, 2, 3, 4)
+-- Notes: getPower returns the TIER (e.g. 1, 2, 3, 4)
 -----------------------------------
+---@type TEffect
 local effectObject = {}
 
 effectObject.onEffectGain = function(target, effect)

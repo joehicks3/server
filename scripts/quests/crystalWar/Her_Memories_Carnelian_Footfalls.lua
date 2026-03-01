@@ -37,17 +37,14 @@ quest.sections =
                 end,
             },
 
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if
-                        prevZone == xi.zone.EAST_RONFAURE_S and
-                        quest:getVar(player, 'Prog') == 0
-                    then
-                        return 170
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if
+                    prevZone == xi.zone.EAST_RONFAURE_S and
+                    quest:getVar(player, 'Prog') == 0
+                then
+                    return 170
+                end
+            end,
 
             onEventFinish =
             {
@@ -83,8 +80,9 @@ quest.sections =
             onEventFinish =
             {
                 [172] = function(player, csid, option, npc)
-                    xi.wotg.helpers.checkMemoryFragments(player)
-                    quest:complete(player)
+                    if quest:complete(player) then
+                        xi.wotg.helpers.checkMemoryFragments(player)
+                    end
                 end,
             },
         },
@@ -124,17 +122,14 @@ quest.sections =
                 end,
             },
 
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if
-                        prevZone == xi.zone.SOUTHERN_SAN_DORIA_S and
-                        quest:getVar(player, 'Prog') == 1
-                    then
-                        return 12
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if
+                    prevZone == xi.zone.SOUTHERN_SAN_DORIA_S and
+                    quest:getVar(player, 'Prog') == 1
+                then
+                    return 12
+                end
+            end,
 
             onEventFinish =
             {

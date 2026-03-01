@@ -20,25 +20,29 @@ mission.sections =
             return currentMission == mission.missionId
         end,
 
-        [xi.zone.ARRAPAGO_REEF] =
+        [xi.zone.AHT_URHGAN_WHITEGATE] =
         {
-            onZoneIn =
+            ['Naja_Salaheem'] =
             {
-                function(player, prevZone)
-                    if
-                        prevZone == xi.zone.CAEDARVA_MIRE and
-                        player:getMissionStatus(mission.areaId) == 0
-                    then
-                        return 13
-                    end
+                onTrigger = function(player, npc)
+                    return mission:event(3118, xi.besieged.getMercenaryRank(player), 1, 0, 0, 0, 0, 0, 0, 0)
                 end,
             },
+        },
+
+        [xi.zone.ARRAPAGO_REEF] =
+        {
+            onZoneIn = function(player, prevZone)
+                if player:getMissionStatus(mission.areaId) == 0 then -- Works from any survival guide.
+                    return 13
+                end
+            end,
 
             onTriggerAreaEnter =
             {
                 [1] = function(player, triggerArea)
                     if player:getMissionStatus(mission.areaId) == 1 then
-                        return mission:progressEvent(14)
+                        return mission:progressEvent(14, 0, 4, 0, 0, 0, 0, 0, 0)
                     end
                 end,
             },

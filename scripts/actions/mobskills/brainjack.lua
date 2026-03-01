@@ -1,6 +1,9 @@
 -----------------------------------
 -- BrainJack
+-- Charms a player and inflicts a 25/tick dot while charmed
+-- Brainjack is single target Charm plus DoT (-25 HP/tick) for 60 seconds
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -8,16 +11,20 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local numhits = 1
-    local accmod = 1
-    local dmgmod = 2.3
-    local info = xi.mobskills.mobPhysicalMove(mob, target, skill, numhits, accmod, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.PHYSICAL, xi.damageType.BLUNT, info.hitslanded)
+    local typeEffect = xi.effect.CHARM_I
+    local duration = 60
 
-    xi.mobskills.mobPhysicalStatusEffectMove(mob, target, skill, xi.effect.CHARM_I, 0, 0, 60)
-    target:takeDamage(dmg, mob, xi.attackType.PHYSICAL, xi.damageType.BLUNT)
+    skill:setMsg(xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.CHARM_I, 0, 3, duration))
+    if skill:getMsg() == xi.msg.basic.SKILL_ENFEEB_IS then
+        mob:charm(target)
+        mob:resetEnmity(target)
+        local effect = target:getStatusEffect(typeEffect)
+        if effect then
+            effect:addMod(xi.mod.REGEN_DOWN, 25)
+        end
+    end
 
-    return dmg
+    return typeEffect
 end
 
 return mobskillObject

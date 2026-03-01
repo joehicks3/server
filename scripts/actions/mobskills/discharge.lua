@@ -1,24 +1,35 @@
 -----------------------------------
---  Discharge
---  Description: Deals lightning damage. Additional effect: "Paralysis"
---  Type: Magical (lightning)
---  Utsusemi/Blink absorb: Wipes shadows
---  Range: Aoe
+-- Discharge
+-- Family: Chariot
+-- Description: Deals Thunder damage. Additional Effect: Paralysis
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.PARALYSIS, 20, 0, 180)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    local dmgmod = 1.75
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 4, xi.element.THUNDER, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.THUNDER, xi.mobskills.shadowBehavior.WIPE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.THUNDER)
-    return dmg
+    params.baseDamage      = mob:getMainLvl() + 2
+    params.fTP             = { 4.0, 4.0, 4.0 }
+    params.element         = xi.element.THUNDER
+    params.attackType      = xi.attackType.MAGICAL
+    params.damageType      = xi.damageType.THUNDER
+    params.shadowBehavior  = xi.mobskills.shadowBehavior.WIPE_SHADOWS
+    params.dStatMultiplier = 1
+
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.PARALYSIS, 20, 0, 180) -- TODO: Capture poer/duration
+    end
+
+    return info.damage
 end
 
 return mobskillObject

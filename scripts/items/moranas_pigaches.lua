@@ -3,6 +3,7 @@
 -- Morana Pigaches
 -- Pet mod via latent effect
 -----------------------------------
+---@type TItem
 local itemObject = {}
 local listenerPrefix = 'PET_MOD_LATENT'
 local latentPetId = xi.petId.SHIVA
@@ -11,7 +12,7 @@ local latentMods =
     { xi.mod.MACC, 6 },
 }
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     return 0
 end
 

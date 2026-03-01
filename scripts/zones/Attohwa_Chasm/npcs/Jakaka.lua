@@ -4,8 +4,7 @@
 -- Type: ENM
 -- !pos -144.711 6.246 -250.309 7
 -----------------------------------
-local ID = zones[xi.zone.ATTOHWA_CHASM]
------------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -25,9 +24,9 @@ entity.onTrigger = function(player, npc)
     if player:hasKeyItem(xi.ki.MIASMA_FILTER) then
         player:startEvent(11)
     else
-        if miasmaFilterCD >= os.time() then
+        if miasmaFilterCD >= GetSystemTime() then
             -- Both Vanadiel time and unix timestamps are based on seconds. Add the difference to the event.
-            player:startEvent(14, VanadielTime() + (miasmaFilterCD - os.time()))
+            player:startEvent(14, VanadielTime() + (miasmaFilterCD - GetSystemTime()))
         else
             if
                 player:hasItem(xi.item.POUCH_OF_PARRADAMO_STONES) or
@@ -41,22 +40,12 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 12 then
-        player:addKeyItem(xi.ki.MIASMA_FILTER)
-        player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.MIASMA_FILTER)
-        player:setCharVar('[ENM]MiasmaFilter', os.time() + (xi.settings.main.ENM_COOLDOWN * 3600)) -- Current time + (ENM_COOLDOWN*1hr in seconds)
+        npcUtil.giveKeyItem(player, xi.ki.MIASMA_FILTER)
+        player:setCharVar('[ENM]MiasmaFilter', GetSystemTime() + (xi.settings.main.ENM_COOLDOWN * 3600)) -- Current time + (ENM_COOLDOWN*1hr in seconds)
     elseif csid == 13 then
-        if player:getFreeSlotsCount() == 0 then
-            player:messageSpecial(ID.text.ITEM_CANNOT_BE_OBTAINED, xi.item.FLAXEN_POUCH)
-            return
-        else
-            player:addItem(xi.item.FLAXEN_POUCH)
-            player:messageSpecial(ID.text.ITEM_OBTAINED, xi.item.FLAXEN_POUCH)
-        end
+        npcUtil.giveItem(player, xi.item.FLAXEN_POUCH)
     end
 end
 

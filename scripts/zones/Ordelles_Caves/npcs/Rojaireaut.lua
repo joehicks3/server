@@ -3,10 +3,8 @@
 --  NPC: Rojaireaut
 -- !pos -91.781 -0.545 587.944 193
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     if player:getCharVar('EcoStatus') == 1 then
@@ -22,12 +20,9 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 51 and option == 1 then
-        player:addStatusEffect(xi.effect.LEVEL_RESTRICTION, 25, 0, 0)
+        player:addStatusEffect(xi.effect.LEVEL_RESTRICTION, { power = 25, origin = player })
     elseif csid == 54 then
         player:delStatusEffect(xi.effect.LEVEL_RESTRICTION)
         player:setCharVar('EcoStatus', 3)

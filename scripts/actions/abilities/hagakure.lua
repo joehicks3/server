@@ -5,6 +5,7 @@
 -- Recast Time: 3:00
 -- Duration: 1:00 or Next Weaponskill
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -12,8 +13,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    target:delStatusEffect(xi.effect.HAGAKURE)
-    player:addStatusEffect(xi.effect.HAGAKURE, 1, 0, 60)
+    return xi.job_utils.samurai.useHagakure(player, target, ability)
 end
 
 return abilityObject

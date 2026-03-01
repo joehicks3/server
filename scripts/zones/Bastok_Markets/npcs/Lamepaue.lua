@@ -4,10 +4,8 @@
 -- Type: Past Event Watcher
 -- !pos -172.136 -5 -69.632 235
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     -- Bastok Missions.

@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.WESTERN_ADOULIN]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -63,13 +64,13 @@ entity.onTrigger = function(player, npc)
         player:showText(npc, ID.text.FLAPANO_SHOP_TEXT)
         local stock =
         {
-            5943, 125,   -- Smoked Mackerel
-            4415, 124,   -- Roasted Corn
-            4434, 5000,  -- Mushroom Risotto
-            5145, 5600,  -- Fish and Chips
-            4423, 300,   -- Apple Juice
-            4405, 160,   -- Rice Ball
-            5676, 76475, -- Mushroom Saute
+            { 5943,   125, }, -- Smoked Mackerel
+            { 4415,   124, }, -- Roasted Corn
+            { 4434,  5000, }, -- Mushroom Risotto
+            { 5145,  5600, }, -- Fish and Chips
+            { 4423,   300, }, -- Apple Juice
+            { 4405,   160, }, -- Rice Ball
+            { 5676, 76475, }, -- Mushroom Saute
         }
         xi.shop.general(player, stock)
 
@@ -77,9 +78,6 @@ entity.onTrigger = function(player, npc)
             player:setCharVar('Flapano_Odd_Even', 0)
         end
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
@@ -95,7 +93,7 @@ entity.onEventFinish = function(player, csid, option, npc)
     elseif csid == 2860 and option == 1 then
         player:addQuest(xi.questLog.ADOULIN, xi.quest.id.adoulin.EXOTIC_DELICACIES)
     elseif csid == 2861 then
-        if npcUtil.completeQuest(player, xi.questLog.ADOULIN, xi.quest.id.adoulin.EXOTIC_DELICACIES, { bayld = 500, item = xi.item.PLATE_OF_FLAPANOS_PAELLA, xp = 1000 }) then
+        if npcUtil.completeQuest(player, xi.questLog.ADOULIN, xi.quest.id.adoulin.EXOTIC_DELICACIES, { bayld = 500, item = xi.item.PLATE_OF_FLAPANOS_PAELLA, exp = 1000 }) then
             player:confirmTrade()
             player:setCharVar('Flapano_Odd_Even', 0)
         end

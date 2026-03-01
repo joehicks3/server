@@ -1,28 +1,35 @@
 -----------------------------------
---  Cosmic Elucidation
---  Description: Cosmic Elucidation inflicts heavy AOE damage to everyone in the battle.
---  Type:
---  Utsusemi/Blink absorb: Ignores shadows
---  Range:
---  Notes: Ejects all combatants from the battlefield, resulting in a failure.
+-- Cosmic Elucidation
+-- Family: Tenzen
+-- Description: Cosmic Elucidation inflicts heavy AOE damage to everyone in the battle.
+-- Notes: Ejects all combatants from the battlefield, resulting in a failure.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
-    return 1 -- only scripted use
+    return 1 -- Only scripted use
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 2
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 21, xi.element.LIGHT, dmgmod, xi.mobskills.magicalTpBonus.DMG_BONUS, 1)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.LIGHT, 0)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    dmg = math.min(0, dmg) -- Cosmic Elucidation does not have an absorb message
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 14, 14, 14 }
+    params.element        = xi.element.LIGHT
+    params.attackType     = xi.attackType.SPECIAL
+    params.damageType     = xi.damageType.ELEMENTAL
+    params.shadowBehavior = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
 
-    target:takeDamage(dmg, mob, xi.attackType.SPECIAL, xi.damageType.ELEMENTAL)
-    skill:setMsg(302)
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
 
-    return dmg
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        skill:setMsg(xi.msg.basic.SKILLCHAIN_COSMIC_ELUCIDATION)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

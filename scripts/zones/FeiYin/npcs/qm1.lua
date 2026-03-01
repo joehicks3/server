@@ -6,28 +6,28 @@
 -----------------------------------
 local ID = zones[xi.zone.FEIYIN]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
     if
-        player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.PIEUJE_S_DECISION) == xi.questStatus.QUEST_ACCEPTED and
+        player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.PIEUJES_DECISION) == xi.questStatus.QUEST_ACCEPTED and
         npcUtil.tradeHas(trade, xi.item.TAVNAZIA_BELL) and
         not player:hasItem(xi.item.TAVNAZIAN_MASK) and
         not GetMobByID(ID.mob.ALTEDOUR_I_TAVNAZIA):isSpawned()
     then
         player:confirmTrade()
-        player:messageSpecial(ID.text.SENSE_OF_FOREBODING)
+        player:messageSpecial(ID.text.EVIL_PRESENCE)
         SpawnMob(ID.mob.ALTEDOUR_I_TAVNAZIA):updateClaim(player)
     end
 end
 
 entity.onTrigger = function(player, npc)
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
+    if player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.PIEUJES_DECISION) == xi.questStatus.QUEST_ACCEPTED then
+        player:messageSpecial(ID.text.SOUL_OF_TAVNAZIA)
+    else
+        player:messageSpecial(ID.text.YOU_FIND_NOTHING)
+    end
 end
 
 return entity

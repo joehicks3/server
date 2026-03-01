@@ -3,9 +3,10 @@
 -- Scroll of Instant Retrace
 -- Transports the user to their Allied Nation.
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     if target:getCampaignAllegiance() == 0 then
         return 56
     else
@@ -13,9 +14,9 @@ itemObject.onItemCheck = function(target)
     end
 end
 
-itemObject.onItemUse = function(target)
+itemObject.onItemUse = function(target, user)
     if target:getCampaignAllegiance() > 0 then
-        target:addStatusEffectEx(xi.effect.TELEPORT, 0, xi.teleport.id.RETRACE, 0, 3)
+        target:addStatusEffect(xi.effect.TELEPORT, { power = xi.teleport.id.RETRACE, duration = 3, origin = user, icon = 0 })
     end
 end
 

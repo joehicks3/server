@@ -6,24 +6,16 @@
 -----------------------------------
 local ID = zones[xi.zone.ORDELLES_CAVES]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     -- Ruillont Default Actions vary based on Nation
     if player:getNation() == xi.nation.SANDORIA then
-        player:showText(npc, ID.text.RUILLONT_INITIAL_DIALOG + 2)
+        player:showText(npc, ID.text.RUILLONT_INITIAL_DIALOG + 2, 0, 0, 0, 0, true, false)
     else
-        player:showText(npc, ID.text.RUILLONT_INITIAL_DIALOG + 1)
+        player:showText(npc, ID.text.RUILLONT_INITIAL_DIALOG + 1, 0, 0, 0, 0, true, false)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

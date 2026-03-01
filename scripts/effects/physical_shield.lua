@@ -12,16 +12,17 @@
 --  1 - DMG Reduction applies to Physical Damage, Physical WS/TP Moves, and certain Magical TP Moves
 --  2 - DMG Reduction applies to Physical Damage (but not WS/TP Moves, specific to Carnal Incense)
 -----------------------------------
+---@type TEffect
 local effectObject = {}
 
 effectObject.onEffectGain = function(target, effect)
     local power = effect:getPower()
     if power == 2 then
-        target:addMod(xi.mod.PHYS_ABSORB, 100) -- Percent not /10000
+        effect:addMod(xi.mod.PHYS_ABSORB, 100) -- Percent not /10000
     elseif power == 1 then
-        target:addMod(xi.mod.UDMGPHYS, -10000)
+        effect:addMod(xi.mod.UDMGPHYS, -10000)
     else
-        target:addMod(xi.mod.DMGPHYS, -5000)
+        effect:addMod(xi.mod.DMGPHYS, -5000)
     end
 end
 
@@ -29,14 +30,6 @@ effectObject.onEffectTick = function(target, effect)
 end
 
 effectObject.onEffectLose = function(target, effect)
-    local power = effect:getPower()
-    if power == 2 then
-        target:delMod(xi.mod.PHYS_ABSORB, 100) -- Percent not /10000
-    elseif power == 1 then
-        target:delMod(xi.mod.UDMGPHYS, -10000)
-    else
-        target:delMod(xi.mod.DMGPHYS, -5000)
-    end
 end
 
 return effectObject

@@ -6,6 +6,7 @@
 -----------------------------------
 local ID = zones[xi.zone.WINDURST_WATERS]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -26,10 +27,10 @@ entity.onTrade = function(player, npc, trade)
             end
         elseif rand == 3 then
             player:startEvent(657) -- IN A PICKLE: Too Light
-            player:tradeComplete(trade)
+            player:tradeComplete()
         elseif rand == 4 then
             player:startEvent(658) -- IN A PICKLE: Too Small
-            player:tradeComplete(trade)
+            player:tradeComplete()
         end
     end
 end
@@ -66,9 +67,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(651) -- Standard Conversation
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

@@ -3,6 +3,7 @@
 -- Evoker's Gages
 -- Pet mod via latent effect
 -----------------------------------
+---@type TItem
 local itemObject = {}
 local listenerPrefix = 'PET_MOD_LATENT'
 local latentPetId = xi.petId.LEVIATHAN
@@ -11,7 +12,7 @@ local latentMods =
     { xi.mod.ATT, 10 },
 }
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     return 0
 end
 

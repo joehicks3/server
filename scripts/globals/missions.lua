@@ -1,8 +1,7 @@
-require('scripts/globals/utils')
-
 xi = xi or {}
 xi.mission = xi.mission or {}
 
+---@enum xi.mission.log_id
 xi.mission.log_id =
 {
     SANDORIA    =  0,
@@ -409,13 +408,13 @@ xi.mission.id =
         AN_ERRAND_THE_PROFESSORS_PRICE      = 5,  -- ±
         SHOCK_ARRANT_ABUSE_OF_AUTHORITY     = 6,  -- ±
         LENDER_BEWARE_READ_THE_FINE_PRINT   = 7,  -- ±
-        RESCUE_A_MOOGLES_LABOR_OF_LOVE      = 8,
-        ROAR_A_CAT_BURGLAR_BARES_HER_FANGS  = 9,
-        RELIEF_A_TRIUMPHANT_RETURN          = 10,
-        JOY_SUMMONED_TO_A_FABULOUS_FETE     = 11,
-        A_CHALLENGE_YOU_COULD_BE_A_WINNER   = 12,
-        SMASH_A_MALEVOLENT_MENACE           = 13,
-        A_MOOGLE_KUPO_DETAT_FIN             = 14,
+        RESCUE_A_MOOGLES_LABOR_OF_LOVE      = 8,  -- ±
+        ROAR_A_CAT_BURGLAR_BARES_HER_FANGS  = 9,  -- ±
+        RELIEF_A_TRIUMPHANT_RETURN          = 10, -- ±
+        JOY_SUMMONED_TO_A_FABULOUS_FETE     = 11, -- ±
+        A_CHALLENGE_YOU_COULD_BE_A_WINNER   = 12, -- ±
+        SMASH_A_MALEVOLENT_MENACE           = 13, -- ±
+        A_MOOGLE_KUPO_DETAT_FIN             = 14, -- ±
     },
 
     -----------------------------------
@@ -565,7 +564,7 @@ xi.mission.id =
     {
         RHAPSODIES_OF_VANADIEL          = 0,   -- ±
         -- CREATION_AND_REBIRTH         =  -- Category
-        RESONACE                        = 2,   -- ±
+        RESONANCE                       = 2,   -- ±
         EMISSARY_FROM_THE_SEAS          = 3,   -- ±
         SET_FREE                        = 4,   -- ±
         THE_BEGINNING                   = 6,   -- ±
@@ -803,6 +802,8 @@ end
 local function getVarPrefix(areaId, missionId)
     return string.format('Mission[%d][%d]', areaId, missionId)
 end
+
+xi.mission.getVarPrefix = getVarPrefix
 
 xi.mission.incrementVar = function(player, areaId, missionId, name, value)
     return player:incrementCharVar(getVarPrefix(areaId, missionId) .. name, value)

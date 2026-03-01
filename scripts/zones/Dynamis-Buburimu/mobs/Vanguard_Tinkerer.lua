@@ -9,13 +9,14 @@ mixins =
 }
 local ID = zones[xi.zone.DYNAMIS_BUBURIMU]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.SHAMBLIX_ROTTENHEART_PH, 10, 1200) -- 20 minutes
+    xi.mob.phOnDespawn(mob, ID.mob.SHAMBLIX_ROTTENHEART, 10, 1200) -- 20 minutes
 end
 
 return entity

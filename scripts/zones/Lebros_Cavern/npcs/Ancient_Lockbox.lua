@@ -2,6 +2,7 @@
 -- Area: Lebros Cavern
 -- Ancient Lockbox
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrigger = function(player, npc)
@@ -10,26 +11,26 @@ entity.onTrigger = function(player, npc)
         [xi.assault.mission.EXCAVATION_DUTY] =
         {
             {
-                { itemid = xi.item.APPRAISAL_BOX,     droprate = 300 },
-                { itemid = xi.item.APPRAISAL_EARRING, droprate = 700 },
+                { itemId = xi.item.UNAPPRAISED_BOX,     weight = 300 },
+                { itemId = xi.item.UNAPPRAISED_EARRING, weight = 700 },
             },
         },
 
         [xi.assault.mission.LEBROS_SUPPLIES] =
         {
             {
-                { itemid = xi.item.APPRAISAL_BOX,  droprate = 300 },
-                { itemid = xi.item.APPRAISAL_CAPE, droprate = 700 },
+                { itemId = xi.item.UNAPPRAISED_BOX,  weight = 300 },
+                { itemId = xi.item.UNAPPRAISED_CAPE, weight = 700 },
             },
         },
 
         [xi.assault.mission.TROLL_FUGITIVES] =
         {
             {
-                { itemid = xi.item.APPRAISAL_AXE,       droprate = 300 },
-                { itemid = xi.item.APPRAISAL_POLEARM,   droprate = 200 },
-                { itemid = xi.item.APPRAISAL_HEADPIECE, droprate = 100 },
-                { itemid = xi.item.APPRAISAL_BOX,       droprate = 400 },
+                { itemId = xi.item.UNAPPRAISED_AXE,       weight = 300 },
+                { itemId = xi.item.UNAPPRAISED_POLEARM,   weight = 200 },
+                { itemId = xi.item.UNAPPRAISED_HEADPIECE, weight = 100 },
+                { itemId = xi.item.UNAPPRAISED_BOX,       weight = 400 },
             },
         },
     }
@@ -39,76 +40,70 @@ entity.onTrigger = function(player, npc)
         [xi.assault.mission.EXCAVATION_DUTY] =
         {
             {
-                { itemid = xi.item.REMEDY, droprate = 900 },
-                { itemid = 0,               droprate = 100 },
+                { itemId = xi.item.REMEDY, weight = 900 },
+                { itemId = 0,              weight = 100 },
             },
 
             {
-                { itemid = xi.item.REMEDY, droprate = 200 },
-                { itemid = 0,               droprate = 800 },
+                { itemId = xi.item.REMEDY, weight = 200 },
+                { itemId = 0,              weight = 800 },
             },
 
             {
-                { itemid = xi.item.HI_POTION_P3, droprate = 400 },
-                { itemid = 0,                    droprate = 600 },
+                { itemId = xi.item.HI_POTION_P3, weight = 400 },
+                { itemId = 0,                    weight = 600 },
             },
 
             {
-                { itemid = xi.item.HI_POTION_P3, droprate = 200 },
-                { itemid = 0,                      droprate = 800 },
+                { itemId = xi.item.HI_POTION_P3, weight = 200 },
+                { itemId = 0,                    weight = 800 },
             },
         },
 
         [xi.assault.mission.LEBROS_SUPPLIES] =
         {
             {
-                { itemid = xi.item.REMEDY, droprate = 800 },
-                { itemid = 0,               droprate = 200 },
+                { itemId = xi.item.REMEDY, weight = 800 },
+                { itemId = 0,              weight = 200 },
             },
 
             {
-                { itemid = xi.item.RERAISER, droprate = 200 },
-                { itemid = 0,                 droprate = 800 },
+                { itemId = xi.item.RERAISER, weight = 200 },
+                { itemId = 0,                weight = 800 },
             },
 
             {
-                { itemid = xi.item.HI_POTION_TANK, droprate = 100 },
-                { itemid = 0,                       droprate = 900 },
+                { itemId = xi.item.HI_POTION_TANK, weight = 100 },
+                { itemId = 0,                      weight = 900 },
             },
         },
 
         [xi.assault.mission.TROLL_FUGITIVES] =
         {
             {
-                { itemid = xi.item.HI_POTION_P3, droprate = 800 },
-                { itemid = 0,                      droprate = 200 },
+                { itemId = xi.item.HI_POTION_P3, weight = 800 },
+                { itemId = 0,                    weight = 200 },
             },
 
             {
-                { itemid = xi.item.RERAISER, droprate = 200 },
-                { itemid = 0,                 droprate = 800 },
+                { itemId = xi.item.RERAISER, weight = 200 },
+                { itemId = 0,                weight = 800 },
             },
 
             {
-                { itemid = xi.item.HI_POTION_TANK, droprate = 100 },
-                { itemid = 0,                       droprate = 900 },
+                { itemId = xi.item.HI_POTION_TANK, weight = 100 },
+                { itemId = 0,                      weight = 900 },
             },
 
             {
-                { itemid = xi.item.HI_ETHER_TANK, droprate = 100 },
-                { itemid = 0,                      droprate = 900 },
+                { itemId = xi.item.HI_ETHER_TANK, weight = 100 },
+                { itemId = 0,                     weight = 900 },
             },
         },
     }
 
     local area = player:getCurrentAssault()
     xi.appraisal.assaultChestTrigger(player, npc, qItem[area], regItem[area])
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

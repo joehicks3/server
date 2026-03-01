@@ -4,10 +4,8 @@
 --  General Info NPC
 -- !pos -129 -6 90 230
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local aSquiresTest = player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.A_SQUIRES_TEST)
@@ -19,12 +17,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(620) -- says i needs a revival tree root
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

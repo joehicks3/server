@@ -3,10 +3,8 @@
 --  NPC: Shomo Pochachilo
 -- !pos 28.369 -0.199 30.061 231
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     -- TODO: Verify this, and move to quest script
@@ -17,12 +15,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(675)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

@@ -3,11 +3,14 @@
 --  Mob: Diabolos Diamond
 -- Note: Mega Boss
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobDeath = function(mob, player, optParams)
-    xi.dynamis.megaBossOnDeath(mob, player, optParams)
-    player:addTitle(xi.title.NIGHTMARE_AWAKENER)
+    if player then
+        player:addTitle(xi.title.NIGHTMARE_AWAKENER)
+        xi.dynamis.megaBossOnDeath(mob, player, optParams)
+    end
 end
 
 return entity

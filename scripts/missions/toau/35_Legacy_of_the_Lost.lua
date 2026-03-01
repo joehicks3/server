@@ -20,12 +20,22 @@ mission.sections =
             return currentMission == mission.missionId
         end,
 
+        [xi.zone.AHT_URHGAN_WHITEGATE] =
+        {
+            ['Naja_Salaheem'] =
+            {
+                onTrigger = function(player, npc)
+                    return mission:event(3133, xi.besieged.getMercenaryRank(player), 1, 0, 0, 0, 0, 0, 0, 0)
+                end,
+            },
+        },
+
         [xi.zone.TALACCA_COVE] =
         {
             onEventFinish =
             {
                 [32001] = function(player, csid, option, npc)
-                    if player:getLocalVar('battlefieldWin') == 1092 then
+                    if player:getLocalVar('battlefieldWin') == xi.battlefield.id.LEGACY_OF_THE_LOST then
                         mission:complete(player)
                     end
                 end,

@@ -1,10 +1,11 @@
 -----------------------------------
 -- Zone: Abyssea - Misareaux
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    zone:registerTriggerArea(1, 599.7, -20, 265, 690, -5, 640)
+    zone:registerCuboidTriggerArea(1, 599.7, -20, 265, 690, -5, 640)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -28,7 +29,7 @@ zoneObject.afterZoneIn = function(player)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
-    switch (triggerArea:GetTriggerAreaID()): caseof
+    switch (triggerArea:getTriggerAreaID()): caseof
     {
         [1] = function()
             xi.abyssea.onWardTriggerAreaEnter(player)
@@ -37,7 +38,7 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
-    switch (triggerArea:GetTriggerAreaID()): caseof
+    switch (triggerArea:getTriggerAreaID()): caseof
     {
         [1] = function()
             xi.abyssea.onWardTriggerAreaLeave(player)

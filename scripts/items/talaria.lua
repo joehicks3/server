@@ -3,25 +3,26 @@
 -- Item: Talaria
 -- Enchantment: Increases movement speed.
 -- Durration: 60 Mins
+-- Base speed 10% or +5
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     return 0
 end
 
-itemObject.onItemUse = function(target)
+itemObject.onItemUse = function(target, user)
     if not target:hasStatusEffect(xi.effect.ENCHANTMENT) then
-        target:addStatusEffect(xi.effect.ENCHANTMENT, 0, 0, 3600, 11403)
+        target:addStatusEffect(xi.effect.ENCHANTMENT, { duration = 3600, origin = user, subType = 11403 })
     end
 end
 
 itemObject.onEffectGain = function(target, effect)
-    target:addMod(xi.mod.MOVE_SPEED_QUICKENING, 12)
+    effect:addMod(xi.mod.MOVE_SPEED_QUICKENING, 5)
 end
 
 itemObject.onEffectLose = function(target, effect)
-    target:delMod(xi.mod.MOVE_SPEED_QUICKENING, 12)
 end
 
 return itemObject

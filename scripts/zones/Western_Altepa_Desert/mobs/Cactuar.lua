@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.WESTERN_ALTEPA_DESERT]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobDeath = function(mob, player, optParams)
@@ -12,7 +13,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.CACTUAR_CANTAUTOR_PH, 5, math.random(3600, 43200)) -- 1 to 12 hours
+    xi.mob.phOnDespawn(mob, ID.mob.CACTUAR_CANTAUTOR, 5, 3600) -- 1 hour minimum
 end
 
 return entity

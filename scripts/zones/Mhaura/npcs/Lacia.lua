@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.MHAURA]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -39,9 +40,6 @@ entity.onTrigger = function(player, npc)
     elseif trialSizeLightning == xi.questStatus.QUEST_COMPLETED then
         player:startEvent(10028) --Defeated Ramuh
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

@@ -4,6 +4,7 @@
 -----------------------------------
 mixins = { require('scripts/mixins/families/amphiptere') }
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobFight = function(mob, target)
@@ -28,7 +29,9 @@ entity.onSpellPrecast = function(mob, spell)
 end
 
 entity.onMobDeath = function(mob, player, optParams)
-    player:addTitle(xi.title.TURUL_GROUNDER)
+    if player then
+        player:addTitle(xi.title.TURUL_GROUNDER)
+    end
 end
 
 return entity

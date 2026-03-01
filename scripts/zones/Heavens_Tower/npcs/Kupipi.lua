@@ -7,6 +7,7 @@
 -----------------------------------
 local ID = zones[xi.zone.HEAVENS_TOWER]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local trustMemory = function(player)
@@ -23,9 +24,6 @@ local trustMemory = function(player)
     -- 16 - chocobo racing
     --  memories = memories + 16
     return memories
-end
-
-entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
@@ -76,30 +74,27 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     --TRUST
     if csid == 435 then
-        player:addSpell(xi.magic.spell.KUPIPI, true, true)
+        player:addSpell(xi.magic.spell.KUPIPI, { silentLog = true })
         player:messageSpecial(ID.text.YOU_LEARNED_TRUST, 0, xi.magic.spell.KUPIPI)
         player:setCharVar('WindurstFirstTrust', 1)
     elseif csid == 437 then
         player:delKeyItem(xi.ki.GREEN_INSTITUTE_CARD)
         player:messageSpecial(ID.text.KEYITEM_LOST, xi.ki.GREEN_INSTITUTE_CARD)
         npcUtil.completeQuest(player, xi.questLog.WINDURST, xi.quest.id.windurst.TRUST_WINDURST, {
-            ki = xi.ki.WINDURST_TRUST_PERMIT,
+            keyItem = xi.ki.WINDURST_TRUST_PERMIT,
             title = xi.title.THE_TRUSTWORTHY,
             var = 'WindurstFirstTrust' })
         player:messageSpecial(ID.text.CALL_MULTIPLE_ALTER_EGO)
     elseif csid == 439 then
-        player:addSpell(xi.magic.spell.KUPIPI, true, true)
+        player:addSpell(xi.magic.spell.KUPIPI, { silentLog = true })
         player:messageSpecial(ID.text.YOU_LEARNED_TRUST, 0, xi.magic.spell.KUPIPI)
         player:delKeyItem(xi.ki.GREEN_INSTITUTE_CARD)
         player:messageSpecial(ID.text.KEYITEM_LOST, xi.ki.GREEN_INSTITUTE_CARD)
         npcUtil.completeQuest(player, xi.questLog.WINDURST, xi.quest.id.windurst.TRUST_WINDURST, {
-            ki = xi.ki.WINDURST_TRUST_PERMIT })
+            keyItem = xi.ki.WINDURST_TRUST_PERMIT })
     end
 end
 

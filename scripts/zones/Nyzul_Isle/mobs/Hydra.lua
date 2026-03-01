@@ -3,8 +3,13 @@
 -- Area: Nyzul Isle
 -- Info: Floor 60 80 and 100 Boss
 -----------------------------------
-mixins = { require('scripts/mixins/nyzul_boss_drops') }
+mixins =
+{
+    require('scripts/mixins/nyzul_boss_drops'),
+    require('scripts/mixins/families/hydra'),
+}
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 local function handleRegen(mob, broken)
@@ -22,7 +27,7 @@ end
 
 entity.onMobSpawn = function(mob)
     mob:setMod(xi.mod.DOUBLE_ATTACK, 10)
-    mob:setMod(xi.mod.UDMGMAGIC, -90)
+    mob:setMod(xi.mod.UDMGMAGIC, -9000)
     mob:setMod(xi.mod.POISON_MEVA, 100)
     mob:setMod(xi.mod.BLIND_MEVA, 100)
     mob:setMod(xi.mod.SILENCE_MEVA, 100)
@@ -41,27 +46,7 @@ entity.onMobEngage = function(mob)
 end
 
 entity.onMobFight = function(mob, target)
-    local battletime = os.time()
-    local headgrow   = mob:getLocalVar('headgrow')
-    local broken     = mob:getAnimationSub()
-
-    if headgrow < battletime and broken > 0 then
-        mob:setAnimationSub(broken - 1)
-        mob:setLocalVar('headgrow', battletime + 300)
-        mob:setTP(3000)
-        handleRegen(mob, broken - 1)
-    end
-end
-
-entity.onCriticalHit = function(mob)
-    local rand   = math.random(1, 100)
-    local broken = mob:getAnimationSub()
-
-    if rand <= 15 and broken < 2 then
-        mob:setAnimationSub(broken + 1)
-        mob:setLocalVar('headgrow', os.time() + math.random(120, 240))
-        handleRegen(mob, broken + 1)
-    end
+    handleRegen(mob, mob:getAnimationSub())
 end
 
 entity.onMobDeath = function(mob, player, optParams)

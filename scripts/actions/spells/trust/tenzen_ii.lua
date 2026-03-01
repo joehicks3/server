@@ -11,6 +11,7 @@
 -- as other ranged attackers have the amount at level one he doesn't until level 90.
 -- I can't help but wonder if he is simply bugged on retail and nobody ever realized it.
 -----------------------------------
+---@type TSpellTrust
 local spellObject = {}
 
 spellObject.onMagicCastingCheck = function(caster, target, spell)
@@ -34,7 +35,7 @@ spellObject.onMobSpawn = function(mob)
     end)
 
     -- Ranged Attack as much as possible (limited by 'weapon' delay)
-    mob:addSimpleGambit(ai.t.TARGET, ai.c.ALWAYS, 0, ai.r.RATTACK, 0, 0)
+    mob:addGambit(ai.t.TARGET, { ai.c.ALWAYS, 0 }, { ai.r.RATTACK, 0, 0 })
 
     mob:setAutoAttackEnabled(false)
 

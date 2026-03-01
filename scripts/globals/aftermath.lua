@@ -46,7 +46,7 @@ xi.aftermath.effects =
     -----------------------------------
     -- Tier 2 Relic
     -----------------------------------
-    [15] = { mods = { xi.mod.SUBTLE_BLOW, 10, xi.mod.KICK_ATTACK, 15 }, duration = getTier2RelicDuration }, -- Spharai
+    [15] = { mods = { xi.mod.SUBTLE_BLOW, 10, xi.mod.KICK_ATTACK_RATE, 15 }, duration = getTier2RelicDuration }, -- Spharai
     [16] = { mods = { xi.mod.CRITHITRATE, 5, xi.mod.CRIT_DMG_INCREASE, 5 }, duration = getTier2RelicDuration }, -- Mandau
     [17] = { mods = { xi.mod.REGEN, 30, xi.mod.REFRESH, 3 }, duration = getTier2RelicDuration }, -- Excalibur
     [18] = { mods = { xi.mod.CRITHITRATE, 10, xi.mod.ACC, 15 }, duration = getTier2RelicDuration }, -- Ragnarok
@@ -58,7 +58,7 @@ xi.aftermath.effects =
     [24] = { mods = { xi.mod.STORETP, 10, xi.mod.ZANSHIN, 10 }, duration = getTier2RelicDuration }, -- Amanomurakumo
     [25] = { mods = { xi.mod.ACC, 20, xi.mod.MACC, 20, xi.mod.REFRESH, 5 }, duration = getTier2RelicDuration }, -- Mjollnir
     [26] = { mods = { xi.mod.REFRESH, 15, xi.mod.DMG, -2000 }, duration = getTier2RelicDuration }, -- Claustrum
-    [27] = { mods = { xi.mod.RACC, 30, xi.mod.SNAP_SHOT, 5 }, duration = getTier2RelicDuration }, -- Yoichinoyumi
+    [27] = { mods = { xi.mod.RACC, 30, xi.mod.SNAPSHOT, 5 }, duration = getTier2RelicDuration }, -- Yoichinoyumi
     [28] = { mods = { xi.mod.ENMITY, -25, xi.mod.RATTP, 10 }, duration = getTier2RelicDuration }, -- Annihilator
 
     -----------------------------------
@@ -602,21 +602,21 @@ xi.aftermath.addStatusEffect = function(player, tp, weaponSlot, aftermathType)
     {
         -- Relic
         [1] = function(x)
-            player:addStatusEffect(xi.effect.AFTERMATH, id, 0, aftermath.duration(tp), 0, tp, aftermathType)
+            player:addStatusEffect(xi.effect.AFTERMATH, { power = id, duration = aftermath.duration(tp), origin = player, subPower = tp, tier = aftermathType })
         end,
 
         -- Mythic
         [2] = function(x)
             local tier = math.floor(tp / 1000)
             local icon = xi.effect['AFTERMATH_LV'..tier]
-            player:addStatusEffectEx(xi.effect.AFTERMATH, icon, id, 0, aftermath.duration[tier], 0, tp, aftermathType)
+            player:addStatusEffect(xi.effect.AFTERMATH, { power = id, duration = aftermath.duration[tier], origin = player, icon = icon, subPower = tp, tier = aftermathType })
         end,
 
         -- Empyrean
         [3] = function(x)
             local tier = math.floor(tp / 1000)
             local icon = xi.effect['AFTERMATH_LV'..tier]
-            player:addStatusEffectEx(xi.effect.AFTERMATH, icon, id, 0, aftermath.duration[tier], 0, tp, aftermathType)
+            player:addStatusEffect(xi.effect.AFTERMATH, { power = id, duration = aftermath.duration[tier], origin = player, icon = icon, subPower = tp, tier = aftermathType })
         end
     }
 end
@@ -632,16 +632,19 @@ xi.aftermath.onEffectGain = function(target, effect)
     {
         -- Relic
         [1] = function(x)
-            local pet = nil
-            if aftermath.includePets then
-                pet = target:getPet()
+            local pet = target:getPet()
+            if
+                pet and
+                aftermath.includePets
+            then
+                -- pets gain same mods as the player, so give them the effect without a loss message
+                pet:delStatusEffectSilent(xi.effect.AFTERMATH)
+                pet:addStatusEffect(xi.effect.AFTERMATH, { power = effect:getPower(), duration = effect:getDuration() / 1000, origin = target, subPower = effect:getSubPower(), tier = effect:getTier() })
+                pet:getStatusEffect(xi.effect.AFTERMATH):addEffectFlag(xi.effectFlag.NO_LOSS_MESSAGE)
             end
 
             for i = 1, #aftermath.mods, 2 do
-                target:addMod(aftermath.mods[i], aftermath.mods[i + 1])
-                if pet then
-                    pet:addMod(aftermath.mods[i], aftermath.mods[i + 1])
-                end
+                effect:addMod(aftermath.mods[i], aftermath.mods[i + 1])
             end
         end,
 
@@ -650,56 +653,21 @@ xi.aftermath.onEffectGain = function(target, effect)
             local tp = effect:getSubPower()
             local mods = aftermath.mods[math.floor(tp / 1000)]
             local pet = target:getPet()
+            if pet then
+                -- pets gain same mods as the player, so give them the effect without a loss message
+                pet:delStatusEffectSilent(xi.effect.AFTERMATH)
+                pet:addStatusEffect(xi.effect.AFTERMATH, { power = effect:getPower(), duration = effect:getDuration() / 1000, origin = target, subPower = effect:getSubPower(), tier = effect:getTier() })
+                pet:getStatusEffect(xi.effect.AFTERMATH):addEffectFlag(xi.effectFlag.NO_LOSS_MESSAGE)
+            end
+
             for i = 1, #mods, 2 do
-                target:addMod(mods[i], mods[i + 1](tp))
-                if pet then
-                    pet:addMod(mods[i], mods[i + 1](tp))
-                end
+                effect:addMod(mods[i], mods[i + 1](tp))
             end
         end,
 
         -- Empyrean
         [3] = function(x)
-            target:addMod(aftermath.mod, aftermath.power[math.floor(effect:getSubPower() / 1000)])
-        end
-    }
-end
-
-xi.aftermath.onEffectLose = function(target, effect)
-    local aftermath = xi.aftermath.effects[effect:getPower()]
-    switch (effect:getTier()) : caseof
-    {
-        -- Relic
-        [1] = function(x)
-            local pet = nil
-            if aftermath.includePets then
-                pet = target:getPet()
-            end
-
-            for i = 1, #aftermath.mods, 2 do
-                target:delMod(aftermath.mods[i], aftermath.mods[i + 1])
-                if pet then
-                    pet:delMod(aftermath.mods[i], aftermath.mods[i + 1])
-                end
-            end
-        end,
-
-        -- Mythic
-        [2] = function(x)
-            local tp = effect:getSubPower()
-            local mods = aftermath.mods[math.floor(tp / 1000)]
-            local pet = target:getPet()
-            for i = 1, #mods, 2 do
-                target:delMod(mods[i], mods[i + 1](tp))
-                if pet then
-                    pet:delMod(mods[i], mods[i + 1](tp))
-                end
-            end
-        end,
-
-        -- Empyrean
-        [3] = function(x)
-            target:delMod(aftermath.mod, aftermath.power[math.floor(effect:getSubPower() / 1000)])
+            effect:addMod(aftermath.mod, aftermath.power[math.floor(effect:getSubPower() / 1000)])
         end
     }
 end

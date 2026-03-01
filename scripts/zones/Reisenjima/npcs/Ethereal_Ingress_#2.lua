@@ -3,13 +3,11 @@
 -- NPC: Ethereal Ingress #2
 -- !pos -404 -55 85 291
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    xi.escha.portals.eschanPortalOnTrigger(player, npc, 24)
+    xi.escha.portals.eschanPortalOnTrigger(player, npc)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)

@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.ALTAR_ROOM]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -31,9 +32,6 @@ entity.onTrigger = function(player, npc)
     else
         return
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

@@ -6,10 +6,8 @@
 -----------------------------------
 local ID = zones[xi.zone.YHOATOR_JUNGLE]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     if
@@ -20,17 +18,12 @@ entity.onTrigger = function(player, npc)
             npcUtil.giveKeyItem(player, xi.ki.OLD_TRICK_BOX)
             player:setCharVar('trueWillKilledNM', 0)
         else
+            player:messageSpecial(ID.text.CHILL_RUNS_DOWN)
             npcUtil.popFromQM(player, npc, { ID.mob.KAPPA_AKUSO, ID.mob.KAPPA_BONZE, ID.mob.KAPPA_BIWA }, { hide = 0 })
         end
     else
         player:messageSpecial(ID.text.NOTHING_OUT_OF_ORDINARY)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

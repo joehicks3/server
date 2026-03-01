@@ -6,10 +6,8 @@
 -----------------------------------
 local ID = zones[xi.zone.RABAO]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local trialByWind = player:getQuestStatus(xi.questLog.OUTLANDS, xi.quest.id.outlands.TRIAL_BY_WIND)
@@ -37,7 +35,7 @@ entity.onTrigger = function(player, npc)
     -- Trial by Wind
     elseif
         (trialByWind == xi.questStatus.QUEST_AVAILABLE and player:getFameLevel(xi.fameArea.SELBINA_RABAO) >= 5) or
-        (trialByWind == xi.questStatus.QUEST_COMPLETED and os.time() > player:getCharVar('TrialByWind_date'))
+        (trialByWind == xi.questStatus.QUEST_COMPLETED and GetSystemTime() > player:getCharVar('TrialByWind_date'))
     then
         player:startEvent(66, 0, 331) -- Start and restart quest 'Trial by Wind'
     elseif
@@ -83,9 +81,6 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 66 and option == 1 then
         if player:getQuestStatus(xi.questLog.OUTLANDS, xi.quest.id.outlands.TRIAL_BY_WIND) == xi.questStatus.QUEST_COMPLETED then
@@ -94,11 +89,9 @@ entity.onEventFinish = function(player, csid, option, npc)
 
         player:addQuest(xi.questLog.OUTLANDS, xi.quest.id.outlands.TRIAL_BY_WIND)
         player:setCharVar('TrialByWind_date', 0)
-        player:addKeyItem(xi.ki.TUNING_FORK_OF_WIND)
-        player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.TUNING_FORK_OF_WIND)
+        npcUtil.giveKeyItem(player, xi.ki.TUNING_FORK_OF_WIND)
     elseif csid == 107 then
-        player:addKeyItem(xi.ki.TUNING_FORK_OF_WIND)
-        player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.TUNING_FORK_OF_WIND)
+        npcUtil.giveKeyItem(player, xi.ki.TUNING_FORK_OF_WIND)
     elseif csid == 69 then
         local item = 0
         if option == 1 then
@@ -126,7 +119,7 @@ entity.onEventFinish = function(player, csid, option, npc)
 
             player:addTitle(xi.title.HEIR_OF_THE_GREAT_WIND)
             player:delKeyItem(xi.ki.WHISPER_OF_GALES) --Whisper of Gales, as a trade for the above rewards
-            player:setCharVar('TrialByWind_date', getMidnight())
+            player:setCharVar('TrialByWind_date', JstMidnight())
             player:addFame(xi.fameArea.SELBINA_RABAO, 30)
             player:completeQuest(xi.questLog.OUTLANDS, xi.quest.id.outlands.TRIAL_BY_WIND)
         end

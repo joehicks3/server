@@ -24,6 +24,7 @@
 
 #include "common/cbasetypes.h"
 #include "luautils.h"
+#include "status_effect.h"
 
 class CStatusEffect;
 class CLuaStatusEffect
@@ -42,6 +43,9 @@ public:
 
     uint32 getEffectType();
     uint32 getSubType();
+    uint16 getSourceType();
+    uint32 getSourceTypeParam();
+    auto   getOriginID() -> uint32;
     uint16 getPower();
     uint16 getSubPower();
     uint16 getTier();
@@ -54,6 +58,8 @@ public:
     uint16 getIcon();
 
     void setIcon(uint16 icon);
+    void setSource(EffectSourceType sourceType, uint32 sourceTypeParam);
+    auto setOriginID(uint32 originid) -> void;
     void setPower(uint16 power);
     void setSubPower(uint16 subpower);
     void setTier(uint16 tier);

@@ -1,15 +1,12 @@
 -----------------------------------
 -- Zone: Bibiki_Bay (4)
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
-zoneObject.onChocoboDig = function(player, precheck)
-    return xi.chocoboDig.start(player, precheck)
-end
-
 zoneObject.onInitialize = function(zone)
-    zone:registerTriggerArea(1,  474, -10,  667,  511, 10,  708) -- Manaclipper while docked at Sunset Docks
-    zone:registerTriggerArea(2, -410, -10, -385, -371, 10, -343) -- Manaclipper while docked at Purgonorgo Isle
+    zone:registerCuboidTriggerArea(1,  474, -10,  667,  511, 10,  708) -- Manaclipper while docked at Sunset Docks
+    zone:registerCuboidTriggerArea(2, -410, -10, -385, -371, 10, -343) -- Manaclipper while docked at Purgonorgo Isle
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -20,9 +17,9 @@ zoneObject.onZoneIn = function(player, prevZone)
         player:getYPos() == 0 and
         player:getZPos() == 0
     then
-        if prevZone == xi.zone.MANACLIPPER then
-            cs = xi.manaclipper.onZoneIn(player)
-        else
+        cs = xi.manaclipper.onZoneIn(player, prevZone)
+
+        if cs == -1 then
             player:setPos(669.917, -23.138, 911.655, 111)
         end
     end
@@ -31,19 +28,22 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
-    xi.manaclipper.aboard(player, triggerArea:GetTriggerAreaID(), true)
+    local triggerAreaID = triggerArea:getTriggerAreaID()
+    if triggerAreaID <= 2 then
+        player:setLocalVar('[manaclipper]aboard', triggerAreaID)
+    end
 end
 
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
-    xi.manaclipper.aboard(player, triggerArea:GetTriggerAreaID(), false)
+    player:setLocalVar('[manaclipper]aboard', 0)
 end
 
-zoneObject.onTransportEvent = function(player, transport)
-    xi.manaclipper.onTransportEvent(player, transport)
+zoneObject.onTransportEvent = function(player, prevZoneId, transportId)
+    xi.manaclipper.onTransportEvent(player, prevZoneId, transportId)
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)

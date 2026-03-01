@@ -4,10 +4,8 @@
 -- Involved In Quest: Making Headlines, Riding on the Clouds
 -- !pos -246 -5 -308 238
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local makingHeadlines = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.MAKING_HEADLINES)
@@ -19,7 +17,7 @@ entity.onTrigger = function(player, npc)
         local prog = player:getCharVar('QuestMakingHeadlines_var')
 
         if not utils.mask.isFull(prog, 4) then
-            if math.random(1, 2) == 1 then
+            if math.random(1, 100) <= 50 then
                 player:startEvent(666) -- Quest Reminder 1
             else
                 player:startEvent(671) -- Quest Reminder 2
@@ -27,7 +25,7 @@ entity.onTrigger = function(player, npc)
         elseif not utils.mask.getBit(prog, 4) then
             player:startEvent(673) -- Advises to validate story
         else
-            if math.random(1, 2) == 1 then
+            if math.random(1, 100) <= 50 then
                 player:startEvent(674) -- Quest finish 1
             else
                 player:startEvent(670) -- Quest finish 2
@@ -36,9 +34,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(663) -- Standard conversation
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

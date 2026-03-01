@@ -3,6 +3,7 @@
 --  NPC: Kaduru-Haiduru
 -- Teleport NPC
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local function canUse_KaduruHaiduru_Service(player)
@@ -12,8 +13,8 @@ local function canUse_KaduruHaiduru_Service(player)
 
     -- Kaduru-Haiduru can be used unless the following are true.
     if
-        (shihuDanhuEncounters > 1 and os.time() < shihuDanhuDate) or
-        os.time() < caughtUsingShihuDanhuDate
+        (shihuDanhuEncounters > 1 and GetSystemTime() < shihuDanhuDate) or
+        GetSystemTime() < caughtUsingShihuDanhuDate
     then
         return false
     end
@@ -65,9 +66,6 @@ entity.onTrade = function(player, npc, trade)
 
         player:startEvent(155, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

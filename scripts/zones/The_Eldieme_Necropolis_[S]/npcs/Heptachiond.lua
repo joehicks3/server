@@ -4,10 +4,8 @@
 -- Starts and Finishes Quest: REQUIEM_FOR_THE_DEPARTED
 -- !pos 256 -32 20 175
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local rftd = player:getQuestStatus(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.REQUIEM_FOR_THE_DEPARTED)
@@ -32,15 +30,12 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 105 then
         player:addQuest(xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.REQUIEM_FOR_THE_DEPARTED)
     elseif
         csid == 107 and
-        npcUtil.completeQuest(player, xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.REQUIEM_FOR_THE_DEPARTED, { item = 4689 })
+        npcUtil.completeQuest(player, xi.questLog.CRYSTAL_WAR, xi.quest.id.crystalWar.REQUIEM_FOR_THE_DEPARTED, { item = xi.item.SCROLL_OF_RECALL_MERIPH })
     then
         player:delKeyItem(xi.ki.SHEAF_OF_HANDMADE_INCENSE)
     end

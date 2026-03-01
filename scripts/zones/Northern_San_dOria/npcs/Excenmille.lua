@@ -6,6 +6,7 @@
 -----------------------------------
 local ID = zones[xi.zone.NORTHERN_SAN_DORIA]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local trustMemory = function(player)
@@ -25,9 +26,6 @@ local trustMemory = function(player)
     end
 
     return memories
-end
-
-entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
@@ -72,31 +70,28 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     -- TRUST
     if csid == 893 then
-        player:addSpell(xi.magic.spell.EXCENMILLE, true, true)
+        player:addSpell(xi.magic.spell.EXCENMILLE, { silentLog = true })
         player:messageSpecial(ID.text.YOU_LEARNED_TRUST, 0, xi.magic.spell.EXCENMILLE)
         player:setCharVar('SandoriaFirstTrust', 1)
     elseif csid == 895 then
         player:delKeyItem(xi.ki.RED_INSTITUTE_CARD)
         player:messageSpecial(ID.text.KEYITEM_LOST, xi.ki.RED_INSTITUTE_CARD)
         npcUtil.completeQuest(player, xi.questLog.SANDORIA, xi.quest.id.sandoria.TRUST_SANDORIA, {
-            ki = xi.ki.SAN_DORIA_TRUST_PERMIT,
+            keyItem = xi.ki.SAN_DORIA_TRUST_PERMIT,
             title = xi.title.THE_TRUSTWORTHY,
             var = 'SandoriaFirstTrust'
         })
         player:messageSpecial(ID.text.CALL_MULTIPLE_ALTER_EGO)
     elseif csid == 897 then
-        player:addSpell(xi.magic.spell.EXCENMILLE, true, true)
+        player:addSpell(xi.magic.spell.EXCENMILLE, { silentLog = true })
         player:messageSpecial(ID.text.YOU_LEARNED_TRUST, 0, xi.magic.spell.EXCENMILLE)
         player:delKeyItem(xi.ki.RED_INSTITUTE_CARD)
         player:messageSpecial(ID.text.KEYITEM_LOST, xi.ki.RED_INSTITUTE_CARD)
         npcUtil.completeQuest(player, xi.questLog.SANDORIA, xi.quest.id.sandoria.TRUST_SANDORIA, {
-            ki = xi.ki.SAN_DORIA_TRUST_PERMIT
+            keyItem = xi.ki.SAN_DORIA_TRUST_PERMIT
         })
     end
 end

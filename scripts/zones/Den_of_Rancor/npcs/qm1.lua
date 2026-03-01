@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.DEN_OF_RANCOR]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -17,6 +18,7 @@ entity.onTrade = function(player, npc, trade)
 end
 
 entity.onTrigger = function(player, npc)
+    player:messageSpecial(ID.text.FIVE_DRIED_EYEBALLS)
 end
 
 return entity

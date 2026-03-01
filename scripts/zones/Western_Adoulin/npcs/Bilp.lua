@@ -3,10 +3,8 @@
 --  NPC: Bilp
 -- !pos -91 3 0 256
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local scaredyCats       = player:getQuestStatus(xi.questLog.ADOULIN, xi.quest.id.adoulin.SCAREDYCATS)
@@ -30,9 +28,6 @@ entity.onTrigger = function(player, npc)
         -- Dialogue after completeing Quest: 'Scaredy-Cats'
         player:startEvent(5029)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

@@ -3,6 +3,7 @@
 -- Consumes a Water Card to enhance water-based debuffs. Deals water-based magic damage
 -- Drown Effect: Enhanced DoT and STR-
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -35,8 +36,9 @@ abilityObject.onUseAbility = function(player, target, ability, action)
     dmg       = addBonusesAbility(player, xi.element.WATER, target, dmg, params)
 
     local bonusAcc = player:getStat(xi.mod.AGI) / 2 + player:getMerit(xi.merit.QUICK_DRAW_ACCURACY) + player:getMod(xi.mod.QUICK_DRAW_MACC)
-    dmg            = dmg * applyResistanceAbility(player, target, xi.element.WATER, xi.skill.NONE, bonusAcc)
-    dmg            = adjustForTarget(target, dmg, xi.element.WATER)
+    dmg            = math.floor(dmg * xi.combat.magicHitRate.calculateResistRate(player, target, 0, 0, 0, xi.element.WATER, 0, 0, bonusAcc))
+    dmg            = math.floor(dmg * xi.spells.damage.calculateAbsorption(target, xi.element.WATER, false))
+    dmg            = math.floor(dmg * xi.spells.damage.calculateNullification(target, xi.element.WATER, false, false))
 
     params.targetTPMult = 0 -- Quick Draw does not feed TP
     dmg                 = xi.ability.takeDamage(target, player, params, true, dmg, xi.attackType.MAGICAL, xi.damageType.WATER, xi.slot.RANGED, 1, 0, 0, 0, action, nil)
@@ -72,10 +74,12 @@ abilityObject.onUseAbility = function(player, target, ability, action)
 
             power = power * 1.2
             target:delStatusEffectSilent(effectId)
-            target:addStatusEffect(effectId, power, tick, duration, subId, subpower, tier)
+            target:addStatusEffect(effectId, { power = power, duration = duration, origin = player, tick = tick, subType = subId, subPower = subpower, tier = tier })
 
             local newEffect = target:getStatusEffect(effectId)
-            newEffect:setStartTime(startTime)
+            if newEffect then
+                newEffect:setStartTime(startTime)
+            end
         end
     end
 

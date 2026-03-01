@@ -1,12 +1,11 @@
 -----------------------------------
 -- Zone: Xarcabard (112)
 -----------------------------------
-require('scripts/quests/i_can_hear_a_rainbow')
------------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    xi.conq.setRegionalConquestOverseers(zone:getRegionID())
+    xi.conquest.setRegionalConquestOverseers(zone:getRegionID())
     xi.voidwalker.zoneOnInit(zone)
 end
 
@@ -34,8 +33,6 @@ zoneObject.onZoneIn = function(player, prevZone)
         not utils.mask.getBit(dynamisMask, 0)
     then
         cs = 13
-    elseif quests.rainbow.onZoneIn(player) then
-        cs = 9
     elseif unbridledPassionCS == 3 then
         if
             math.abs(pos.x - xi.teleport.destination[xi.teleport.id.VAHZL][1]) < 0.1 and
@@ -52,16 +49,13 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)
-    if csid == 9 then
-        quests.rainbow.onEventUpdate(player)
-    end
 end
 
 zoneObject.onEventFinish = function(player, csid, option, npc)

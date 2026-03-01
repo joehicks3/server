@@ -1,10 +1,11 @@
 -----------------------------------
 -- Zone: Aydeewa_Subterrane (68)
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    zone:registerTriggerArea(1, 378, -3, 338, 382, 3, 342)
+    zone:registerCuboidTriggerArea(1, 378, -3, 338, 382, 3, 342)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)

@@ -5,6 +5,7 @@
 -- Recast Time: 00:05:00
 -- Duration: 00:01:00 or the next Dark Magic cast
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -12,7 +13,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    xi.job_utils.dark_knight.useNetherVoid(player, target, ability)
+    return xi.job_utils.dark_knight.useNetherVoid(player, target, ability)
 end
 
 return abilityObject

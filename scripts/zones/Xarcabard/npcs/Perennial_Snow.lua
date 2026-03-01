@@ -6,10 +6,8 @@
 -----------------------------------
 local ID = zones[xi.zone.XARCABARD]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local circleOfTime = player:getQuestStatus(xi.questLog.JEUNO, xi.quest.id.jeuno.THE_CIRCLE_OF_TIME)
@@ -21,7 +19,7 @@ entity.onTrigger = function(player, npc)
     then
         if player:getCharVar('star_ringburied') == 0 then
             player:startEvent(3)
-        elseif os.time() > player:getCharVar('star_ringburied') then
+        elseif GetSystemTime() > player:getCharVar('star_ringburied') then
             player:startEvent(2)
         else
             player:messageSpecial(ID.text.PERENNIAL_SNOW_WAIT, 225)
@@ -33,12 +31,9 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 3 then
-        player:setCharVar('star_ringburied', os.time() + 60) -- wait 1 minute
+        player:setCharVar('star_ringburied', GetSystemTime() + 60) -- wait 1 minute
     elseif csid == 2 then
         player:setCharVar('star_ringburied', 0)
         player:setCharVar('circleTime', 4)

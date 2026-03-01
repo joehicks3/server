@@ -3,16 +3,16 @@
 --  Mob: Ace of Swords
 -- Windurst Mission 9-2
 -----------------------------------
-local global = require('scripts/zones/Full_Moon_Fountain/Globals')
+mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
-entity.onMobDeath = function(mob, player, optParams)
-    global.tryPhaseChange(player)
+entity.onMobSpawn = function(mob)
+    mob:addImmunity(xi.immunity.PLAGUE)
 end
 
-entity.onEventFinish = function(player, csid, option, npc)
-    global.phaseEventFinish(player, csid)
+entity.onMobDeath = function(mob, player, optParams)
 end
 
 return entity

@@ -3,13 +3,11 @@
 --  NPC: Stonehoused_Adit
 -- !pos -434.655 36.708 279.983 88
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    xi.instance.onTrigger(player, npc, xi.zones.RUHOTZ_SILVERMINES)
+    xi.instance.onTrigger(player, npc, xi.zone.RUHOTZ_SILVERMINES)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)

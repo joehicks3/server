@@ -8,6 +8,7 @@
 -- TODO Requre check for other 3 quests An Understanding General, A Generous General,
 -- TODO: Convert this quest to interaction.
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -48,7 +49,7 @@ entity.onTrigger = function(player, npc)
     elseif
         player:getCharVar('moral') == 3 and
         player:getLocalVar('moralZone') == 0 and
-        player:getCharVar('moralWait') <= os.time()
+        player:getCharVar('moralWait') <= GetSystemTime()
     then
         player:startEvent(705)
 
@@ -56,9 +57,6 @@ entity.onTrigger = function(player, npc)
     else
         xi.crafting.guildMasterOnTrigger(player, npc)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

@@ -6,6 +6,7 @@
 -----------------------------------
 local ID = zones[xi.zone.SOUTHERN_SAN_DORIA]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -18,13 +19,13 @@ end
 
 entity.onEventUpdate = function(player, csid, option, npc)
     if csid == 690 then
-        xi.crafting.guildPointOnEventFinish(player, option, npc, xi.guild.LEATHERCRAFT)
+        xi.crafting.guildPointOnEventUpdate(player, option, npc, xi.guild.LEATHERCRAFT)
     end
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 690 then
-        xi.crafting.guildPointOnEventFinish(player, option, npc, xi.guild.LEATHERCRAFT)
+        xi.crafting.guildPointOnEventFinish(player, option, xi.guild.LEATHERCRAFT)
     elseif csid == 691 then
         player:messageSpecial(ID.text.GP_OBTAINED, option)
     end

@@ -11,9 +11,9 @@
 -- Door: Prince Royal's  : !pos -38 -3 73 233
 -- Door: Prince Regent's : !pos -37 -3 31 233
 -- Halver                : !pos 2 0.1 0.1 233
--- qm11                  : !pos -13 -17 -151 159
--- qm12                  : !pos -32 -17 -153 159
--- qm13                  : !pos -68 -17 -153 159
+-- qm_key1               : !pos -13 -17 -151 159
+-- qm_key2               : !pos -32 -17 -153 159
+-- qm_key3               : !pos -68 -17 -153 159
 -- Granite Door          : !pos -50 -17 -154 159
 -----------------------------------
 local chateauID   = zones[xi.zone.CHATEAU_DORAGUILLE]
@@ -172,6 +172,8 @@ mission.sections =
                         player:hasKeyItem(xi.ki.PIECE_OF_A_BROKEN_KEY1) and
                         player:hasKeyItem(xi.ki.PIECE_OF_A_BROKEN_KEY2) and
                         player:hasKeyItem(xi.ki.PIECE_OF_A_BROKEN_KEY3) and
+                        nioA and
+                        nioHum and
                         (not nioA:isSpawned() or nioA:isDead()) and
                         (not nioHum:isSpawned() or nioHum:isDead())
                     then
@@ -195,6 +197,7 @@ mission.sections =
 
                     if
                         player:getMissionStatus(mission.areaId) == 5 and
+                        mobNioHum and
                         (mobNioHum:isDead() or not mobNioHum:isSpawned())
                     then
                         mission:setVar(player, 'Prog', 1)
@@ -209,6 +212,7 @@ mission.sections =
 
                     if
                         player:getMissionStatus(mission.areaId) == 5 and
+                        mobNioA and
                         (mobNioA:isDead() or not mobNioA:isSpawned())
                     then
                         mission:setVar(player, 'Prog', 1)
@@ -216,7 +220,7 @@ mission.sections =
                 end,
             },
 
-            ['qm11'] =
+            ['qm_key1'] =
             {
                 onTrigger = function(player, npc)
                     if
@@ -229,7 +233,7 @@ mission.sections =
                 end,
             },
 
-            ['qm12'] =
+            ['qm_key2'] =
             {
                 onTrigger = function(player, npc)
                     if
@@ -242,7 +246,7 @@ mission.sections =
                 end,
             },
 
-            ['qm13'] =
+            ['qm_key3'] =
             {
                 onTrigger = function(player, npc)
                     if
@@ -252,6 +256,13 @@ mission.sections =
                         player:setMissionStatus(mission.areaId, player:getMissionStatus(mission.areaId) + 1)
                         return mission:keyItem(xi.ki.PIECE_OF_A_BROKEN_KEY3)
                     end
+                end,
+            },
+
+            ['qm17'] =
+            {
+                onTrigger = function(player, npc)
+                    return mission:messageSpecial(uggalepihID.text.SLIGHTLY_QUIVERS, xi.ki.CRYSTAL_DOWSER)
                 end,
             },
 

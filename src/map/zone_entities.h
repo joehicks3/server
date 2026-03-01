@@ -1,28 +1,37 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2010-2015 Darkstar Dev Teams
+  Copyright (c) 2010-2015 Darkstar Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
 
-#ifndef _CZONEENTITIES_H
-#define _CZONEENTITIES_H
+#pragma once
 
 #include "zone.h"
+
+#include "common/timer.h"
+
+#include "entities/baseentity.h"
+#include "entities/charentity.h"
+#include "entities/mobentity.h"
+#include "entities/npcentity.h"
+#include "entities/petentity.h"
+#include "entities/trustentity.h"
+#include "enums/music_slot.h"
 
 #include <set>
 #include <vector>
@@ -30,13 +39,16 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 class CZoneEntities
 {
 public:
+    CZoneEntities(CZone*);
+    ~CZoneEntities();
+
     void HealAllMobs();
+    void TryAddToNearbySpawnLists(CBaseEntity* PEntity);
 
     CCharEntity* GetCharByName(const std::string& name); // finds the player if exists in zone
     CCharEntity* GetCharByID(uint32 id);
     CBaseEntity* GetEntity(uint16 targid, uint8 filter = -1); // get a pointer to any entity in the zone
 
-    void UpdateCharPacket(CCharEntity* PChar, ENTITYUPDATE type, uint8 updatemask);
     void UpdateEntityPacket(CBaseEntity* PEntity, ENTITYUPDATE type, uint8 updatemask, bool alwaysInclude = false);
 
     void SpawnPCs(CCharEntity* PChar);
@@ -44,8 +56,8 @@ public:
     void SpawnPETs(CCharEntity* PChar);
     void SpawnNPCs(CCharEntity* PChar);
     void SpawnTRUSTs(CCharEntity* PChar);
-    void SpawnMoogle(CCharEntity* PChar);    // display Moogle in MogHouse in zone
-    void SpawnTransport(CCharEntity* PChar); // display ship/boat in zone
+    void SpawnConditionalNPCs(CCharEntity* PChar); // display Moogle in MogHouse in zone
+    void SpawnTransport(CCharEntity* PChar);       // display ship/boat in zone
     void DespawnPC(CCharEntity* PChar);
     void SavePlayTime();
 
@@ -59,29 +71,42 @@ public:
     void InsertMOB(CBaseEntity* PMob);
     void InsertPET(CBaseEntity* PPet);
     void InsertTRUST(CBaseEntity* PTrust);
-    void DeletePET(CBaseEntity* PPet);
-    void DeleteTRUST(CBaseEntity* PTrust);
 
-    void FindPartyForMob(CBaseEntity* PEntity);         // looking for a party for the monster
-    void TransportDepart(uint16 boundary, uint16 zone); // ship/boat is leaving, passengers need to be collected
+    void FindPartyForMob(CBaseEntity* PEntity); // looking for a party for the monster
 
-    void TOTDChange(TIMETYPE TOTD); // process the world's reactions to changing time of day
-    void WeatherChange(WEATHER weather);
-    void MusicChange(uint8 BlockID, uint8 MusicTrackID);
+    void TransportDepart(uint16 boundary, uint16 prevZoneId, uint16 transportId); // ship/boat is leaving, passengers need to be collected
 
-    void PushPacket(CBaseEntity*, GLOBAL_MESSAGE_TYPE, CBasicPacket*); // send a global package within the zone
+    void TOTDChange(vanadiel_time::TOTD TOTD); // process the world's reactions to changing time of day
+    void WeatherChange(Weather weather);
+    void MusicChange(MusicSlot slotId, uint16 trackId);
 
-    void ZoneServer(time_point tick);
+    void PushPacket(CBaseEntity*, GLOBAL_MESSAGE_TYPE, const std::unique_ptr<CBasicPacket>&); // send a global package within the zone
+
+    void ZoneServer(timer::time_point tick);
 
     CZone* GetZone();
 
+    auto         GetEffectCheckTime() const -> timer::time_point;
     EntityList_t GetCharList() const;
     EntityList_t GetMobList() const;
     bool         CharListEmpty() const;
 
-    uint16 GetNewCharTargID();
-    void   AssignDynamicTargIDandLongID(CBaseEntity* PEntity);
+    void ForEachChar(const std::function<void(CCharEntity*)>& func);
+    void ForEachMob(const std::function<void(CMobEntity*)>& func);
+    void ForEachNpc(const std::function<void(CNpcEntity*)>& func);
+    void ForEachTrust(const std::function<void(CTrustEntity*)>& func);
+    void ForEachPet(const std::function<void(CPetEntity*)>& func);
+    void ForEachAlly(const std::function<void(CMobEntity*)>& func);
 
+    auto GetNewCharTargID() -> uint16;
+    void AssignDynamicTargIDandLongID(CBaseEntity* PEntity);
+    void EraseStaleDynamicTargIDs();
+    auto GetUsedDynamicTargIDsCount() const -> std::size_t;
+
+private:
+    CZone* m_zone;
+
+    // NOTE: These are all keyed by targid
     EntityList_t m_allyList;
     EntityList_t m_mobList;
     EntityList_t m_petList;
@@ -90,24 +115,28 @@ public:
     EntityList_t m_TransportList;
     EntityList_t m_charList;
 
-    uint16           nextDynamicTargID; // The next dynamic targ ID to chosen -- SE rotates them forwards and skips entries that already exist.
-    std::set<uint16> charTargIds;       // sorted set of targids for characters
-    std::set<uint16> dynamicTargIds;    // sorted set of targids for dynamic entities
+    uint16           m_nextDynamicTargID; // The next dynamic targ ID to chosen -- SE rotates them forwards and skips entries that already exist.
+    std::set<uint16> m_charTargIds;       // sorted set of targids for characters
+    std::set<uint16> m_dynamicTargIds;    // sorted set of targids for dynamic entities
 
-    std::vector<std::pair<uint16, time_point>> dynamicTargIdsToDelete; // list of targids pending deletion at a later date
+    std::vector<std::pair<uint16, timer::time_point>> m_dynamicTargIdsToDelete; // list of targids pending deletion at a later date
 
-    CZoneEntities(CZone*);
-    ~CZoneEntities();
+    timer::time_point m_EffectCheckTime{ timer::now() };
 
-private:
-    CZone*     m_zone;
-    time_point m_EffectCheckTime{ server_clock::now() };
+    timer::time_point m_computeTime{ timer::now() };
+    uint16            m_lastCharComputeTargId{ 0 };
 
-    time_point computeTime{ server_clock::now() };
-    uint16     lastCharComputeTargId;
+    timer::time_point m_charPersistTime{ timer::now() };
+    uint16            m_lastCharPersistTargId{ 0 };
 
-    time_point charPersistTime{ server_clock::now() };
-    uint16     lastCharPersistTargId;
+    //
+    // Intermediate collections for use inside ZoneServer
+    //
+
+    std::vector<CMobEntity*>         m_mobsToDelete;
+    std::vector<CNpcEntity*>         m_npcsToDelete;
+    std::vector<CPetEntity*>         m_petsToDelete;
+    std::vector<CTrustEntity*>       m_trustsToDelete;
+    std::vector<CMobEntity*>         m_aggroableMobs;
+    std::unordered_set<CCharEntity*> m_charsToChangeZone;
 };
-
-#endif

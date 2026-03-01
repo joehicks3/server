@@ -11,6 +11,7 @@
 -- 100%TP    200%TP    300%TP
 -- 4.00      4.25      4.75
 -----------------------------------
+---@type TWeaponSkill
 local weaponskillObject = {}
 
 weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary, action, taChar)
@@ -20,6 +21,7 @@ weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary,
     params.ele = xi.element.DARK
     params.skill = xi.skill.MARKSMANSHIP
     params.includemab = true
+    params.dStat = xi.mod.AGI
 
     if xi.settings.main.USE_ADOULIN_WEAPON_SKILL_CHANGES then
         params.ftpMod = { 4.0, 6.7, 10.0 }

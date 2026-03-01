@@ -1,20 +1,19 @@
 -----------------------------------
 -- Area: Kazham
---  NPC: Flame Walker
+--  NPC: Bhoyu Halpatacco
+-- !pos -18 -4 -15 250
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    player:startEvent(117)
-end
+    local zPos = player:getZPos()
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
+    if zPos >= -11 and zPos <= -6 then
+        player:startEvent(117) -- Inside of the Dock
+    else
+        player:startEvent(118) -- Inside of Kazham
+    end
 end
 
 return entity

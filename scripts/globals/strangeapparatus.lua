@@ -215,7 +215,7 @@ local strAppData =
 
 local function addDoctorStatus(player)
     local data = strAppData[player:getZoneID()]
-    player:setCharVar('StrangeApparatusDoctorStatus' .. data.suffix, os.time() + 172800) -- 2 days
+    player:setCharVar('StrangeApparatusDoctorStatus' .. data.suffix, GetSystemTime() + 172800) -- 2 days
 end
 
 local function delDoctorStatus(player)
@@ -228,7 +228,7 @@ local function hasDoctorStatus(player)
     local docStatusExpires = player:getCharVar('StrangeApparatusDoctorStatus' .. data.suffix)
 
     if docStatusExpires ~= 0 then
-        if os.time() <= docStatusExpires then
+        if GetSystemTime() <= docStatusExpires then
             return true
         else
             player:setCharVar('StrangeApparatusDoctorStatus' .. data.suffix, 0)
@@ -296,7 +296,7 @@ xi.strangeApparatus =
                         end
                     end
 
-                    if not hasDoctorStatus(player) and math.random() < 0.5 then
+                    if not hasDoctorStatus(player) and math.random(1, 100) <= 50 then
                         item = data.cluster -- give clusters instead of reward
                         qty  = 2
                     end

@@ -5,10 +5,18 @@
 -----------------------------------
 local ID = zones[xi.zone.THE_ELDIEME_NECROPOLIS]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobInitialize = function(mob)
     mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 300)
+    mob:addImmunity(xi.immunity.DARK_SLEEP)
+    mob:addImmunity(xi.immunity.LIGHT_SLEEP)
+end
+
+entity.onMobSpawn = function(mob)
+    mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, 250)
+    mob:setMod(xi.mod.STORETP, 75) -- 8 hits to 1k tp
 end
 
 entity.onMobDeath = function(mob, player, optParams)
@@ -19,7 +27,10 @@ entity.onMobDeath = function(mob, player, optParams)
         player:setCharVar('ANewDawn_Event', 5)
     end
 
-    if optParams.isKiller then
+    if
+        optParams.isKiller or
+        optParams.noKiller
+    then
         for i = ID.mob.TAIFUN, ID.mob.TROMBE do
             if GetMobByID(i):isSpawned() then
                 DespawnMob(i)

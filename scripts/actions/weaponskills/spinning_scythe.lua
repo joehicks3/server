@@ -11,8 +11,10 @@
 -- 100%TP    200%TP    300%TP
 -- 1.00      1.00      1.00
 -----------------------------------
+---@type TWeaponSkill
 local weaponskillObject = {}
 
+-- TODO: Radius 5y at 2000 TP, 6y at 3000 TP
 weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary, action, taChar)
     local params = {}
     params.numHits = 1

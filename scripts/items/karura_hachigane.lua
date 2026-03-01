@@ -3,6 +3,7 @@
 -- Karura Hachigane
 -- Pet mod via latent effect
 -----------------------------------
+---@type TItem
 local itemObject = {}
 local listenerPrefix = 'PET_MOD_LATENT'
 local latentPetId = xi.petId.GARUDA
@@ -12,7 +13,7 @@ local latentMods =
     { xi.mod.DEF, 10 },
 }
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     return 0
 end
 

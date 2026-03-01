@@ -6,10 +6,8 @@
 -----------------------------------
 local ID = zones[xi.zone.WESTERN_ADOULIN]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local finao = player:getQuestStatus(xi.questLog.ADOULIN, xi.quest.id.adoulin.FAILURE_IS_NOT_AN_OPTION)
@@ -31,9 +29,6 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 78 then
         -- Starting Quest: 'F.A.I.L.ure Is Not an Option'
@@ -45,7 +40,9 @@ entity.onEventFinish = function(player, csid, option, npc)
         player:addExp(1000 * xi.settings.main.EXP_RATE)
         player:addCurrency('bayld', 500 * xi.settings.main.BAYLD_RATE)
         player:messageSpecial(ID.text.BAYLD_OBTAINED, 500 * xi.settings.main.BAYLD_RATE)
-        player:addFame(xi.fameArea.ADOULIN)
+
+        -- TODO: Verify fame value added
+        player:addFame(xi.fameArea.ADOULIN, 30)
     end
 end
 

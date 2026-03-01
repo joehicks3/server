@@ -1,8 +1,6 @@
 -----------------------------------
 -- Harvest Festivals
 -----------------------------------
-require('scripts/globals/utils')
------------------------------------
 xi = xi or {}
 xi.events = xi.events or {}
 xi.events.harvestFestival = xi.events.harvestFestival or {}
@@ -11,8 +9,8 @@ xi.events.harvestFestival = xi.events.harvestFestival or {}
 
 xi.events.harvestFestival.isHalloweenEnabled = function()
     local option = 0
-    local month = tonumber(os.date('%m'))
-    local day = tonumber(os.date('%d'))
+    local month = JstMonth()
+    local day = JstDayOfTheMonth()
 
     if
         month == 10 and day >= 20 or
@@ -197,7 +195,7 @@ xi.events.harvestFestival.onHalloweenTrade = function(player, trade, npc)
                     local halloweenCostumeList = { quadav, orc, yagudo, shade, ghost, hound, skeleton, darkStalker }
 
                     local costumePicked = halloweenCostumeList[math.random(1, #halloweenCostumeList)] -- will randomly pick one of the costumes in the list
-                    player:addStatusEffect(xi.effect.COSTUME, costumePicked, 0, 3600)
+                    player:addStatusEffect(xi.effect.COSTUME, { power = costumePicked, duration = 3600, origin = player })
 
                     -- pitchForkCostumeList defines the special costumes per zone that can trigger the pitch fork requirement
                     -- zone, costumeID

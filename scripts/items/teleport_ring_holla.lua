@@ -3,9 +3,10 @@
 -- Teleport ring: Holla
 -- Enchantment: "Teleport-Holla"
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     local result = 0
     if not target:hasKeyItem(xi.ki.HOLLA_GATE_CRYSTAL) then
         result = 445
@@ -14,8 +15,8 @@ itemObject.onItemCheck = function(target)
     return result
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffectEx(xi.effect.TELEPORT, 0, xi.teleport.id.HOLLA, 0, 4)
+itemObject.onItemUse = function(target, user)
+    target:addStatusEffect(xi.effect.TELEPORT, { power = xi.teleport.id.HOLLA, duration = 4, origin = user, icon = 0 })
 end
 
 return itemObject

@@ -7,6 +7,7 @@
 -- Range: Self
 -- Notes:Nightmare Crabs use an enhanced version that applies a Magic Defense Boost that cannot be dispelled.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -14,7 +15,7 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    skill:setMsg(xi.mobskills.mobBuffMove(mob, xi.effect.SHELL, 5000, 0, 180))
+    skill:setMsg(xi.mobskills.mobBuffMove(target, xi.effect.SHELL, 5000, 0, 180))
 
     return xi.effect.SHELL
 end

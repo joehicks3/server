@@ -16,10 +16,15 @@ g_mixins.families.chigoe_pet = function(hostMob)
             return
         end
 
+        local numChigoesToSpawn = 1
+        if mob:getPool() == xi.mobPool.PEALLAIDH then
+            numChigoesToSpawn = 2
+        end
+
         for _, mobID in pairs(ID.mob.CHIGOES[mobName]) do
             local chigoe = GetMobByID(mobID)
 
-            if not chigoe:isSpawned() then
+            if chigoe and not chigoe:isSpawned() then
                 chigoe:setSpawn(hostMob:getXPos() + math.random(-2, 2), hostMob:getYPos() + math.random(-2, 2), hostMob:getZPos() + math.random(-2, 2), hostMob:getRotPos())
                 chigoe:spawn()
                 if target then
@@ -31,7 +36,10 @@ g_mixins.families.chigoe_pet = function(hostMob)
                     mobArg:removeListener('CHIGOE_DISENGAGE')
                 end)
 
-                return
+                numChigoesToSpawn = numChigoesToSpawn - 1
+                if numChigoesToSpawn == 0 then
+                    return
+                end
             end
         end
     end)

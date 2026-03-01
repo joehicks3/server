@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.RABAO]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -34,9 +35,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(50)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

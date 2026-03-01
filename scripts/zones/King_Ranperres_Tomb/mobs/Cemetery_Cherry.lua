@@ -4,12 +4,17 @@
 -- !pos 33.000 0.500 -287.000 190
 -----------------------------------
 local ID = zones[xi.zone.KING_RANPERRES_TOMB]
-mixins = { require('scripts/mixins/job_special') }
+mixins =
+{
+    require('scripts/mixins/job_special'),
+    require('scripts/mixins/draw_in'),
+}
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 local function spawnSaplings()
-    for i = ID.mob.CHERRY_SAPLING_OFFSET, ID.mob.CHERRY_SAPLING_OFFSET + 12 do
+    for i = ID.mob.CHERRY_SAPLING_OFFSET, ID.mob.CHERRY_SAPLING_OFFSET + 8 do
         local mob = GetMobByID(i)
         if mob ~= nil and mob:getName() == 'Cherry_Sapling' and not mob:isSpawned() then
             SpawnMob(i)
@@ -18,8 +23,14 @@ local function spawnSaplings()
 end
 
 entity.onMobInitialize = function(mob)
-    mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 180)
-    mob:setMobMod(xi.mobMod.DRAW_IN, 1)
+    mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 600)
+    mob:setMobMod(xi.mobMod.GIL_MIN, 20000)
+    mob:setMobMod(xi.mobMod.GIL_MAX, 30000)
+    mob:setMobMod(xi.mobMod.MUG_GIL, 10000)
+    mob:addImmunity(xi.immunity.SILENCE)
+    mob:addImmunity(xi.immunity.DARK_SLEEP)
+    mob:addImmunity(xi.immunity.LIGHT_SLEEP)
+    mob:addImmunity(xi.immunity.TERROR)
 
     local saplingsRespawn = math.random(1800, 3600) -- 30 to 60 minutes
     mob:timer(saplingsRespawn * 1000, function(mobArg)
@@ -29,11 +40,30 @@ end
 
 entity.onMobSpawn = function(mob)
     mob:setLocalVar('wasKilled', 0)
+    mob:setMod(xi.mod.DOUBLE_ATTACK, 15)
+    mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, 150)
+end
+
+entity.onMobMobskillChoose = function(mob, target, skillId)
+    local tpMoves =
+    {
+        xi.mobSkill.DRILL_BRANCH_NM,
+        xi.mobSkill.PINECONE_BOMB_NM,
+        xi.mobSkill.LEAFSTORM_DISPEL,
+        xi.mobSkill.ENTANGLE_POISON,
+    }
+
+    return tpMoves[math.random(1, #tpMoves)]
 end
 
 entity.onMobDeath = function(mob, player, optParams)
-    mob:setLocalVar('wasKilled', 1)
-    player:addTitle(xi.title.MON_CHERRY)
+    if player then
+        player:addTitle(xi.title.MON_CHERRY)
+    end
+
+    if optParams.isKiller or optParams.noKiller then
+        mob:setLocalVar('wasKilled', 1)
+    end
 end
 
 entity.onMobDespawn = function(mob)

@@ -1,11 +1,10 @@
 -----------------------------------
---  Toxic Spit
---
---  Description: Spews a toxic glob at a single target. Additional effect: Poison
---  Type: Magical Water
---  Utsusemi/Blink absorb: Ignores shadows
---  Notes: Additional effect can be removed with Poisona.
+-- Toxic Spit
+-- Family: Eft
+-- Description: Inflicts poison on targets hit.
+-- Notes: Single/AoE hit varies between individuals.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -13,15 +12,14 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local power = mob:getMainLvl() / 5 + 3
+    local power    = math.floor(mob:getMainLvl() / 5 + 3) -- TODO: Capture power at different levels to verify.
+    local duration = 180
 
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.POISON, power, 3, 120)
+    -- TODO: Jug pet: Duration scales with TP.
 
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 2.5, xi.element.WATER, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.WATER, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.WATER)
-    return dmg
+    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.POISON, power, 3, duration)
+
+    return xi.effect.POISON
 end
 
 return mobskillObject

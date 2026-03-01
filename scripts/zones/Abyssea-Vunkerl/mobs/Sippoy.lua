@@ -2,6 +2,7 @@
 -- Area: Abyssea - Vunkerl
 --   NM: Sippoy
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobFight = function(mob, target)
@@ -15,7 +16,9 @@ entity.onMobFight = function(mob, target)
 end
 
 entity.onMobDeath = function(mob, player, optParams)
-    player:addTitle(xi.title.SIPPOY_CAPTURER)
+    if player then
+        player:addTitle(xi.title.SIPPOY_CAPTURER)
+    end
 end
 
 return entity

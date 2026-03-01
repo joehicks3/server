@@ -3,6 +3,7 @@
 --  NPC: Lulupp
 -- !pos -26.567 -3.5 -3.544 250
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local pathNodes =
@@ -107,12 +108,7 @@ entity.onTrigger = function(player, npc)
         elseif progress >= 1 or failed >= 2 then
             player:startEvent(242) -- happy with rod
         end
-    else
-        player:startEvent(197)  -- not sure why but this cs has no text
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

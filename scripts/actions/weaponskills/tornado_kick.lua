@@ -5,8 +5,9 @@
 -- Mods : STR:32% VIT:32%
 -- 100%TP     200%TP     300%TP
 -- 2.25x        2.75x    3.5x
--- Delivers a twofold attack. Damage varies with TP.
+-- Delivers a threefold attack. Damage varies with TP.
 -----------------------------------
+---@type TWeaponSkill
 local weaponskillObject = {}
 
 weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary, action, taChar)

@@ -7,6 +7,7 @@
 -----------------------------------
 local ID = zones[xi.zone.EASTERN_ADOULIN]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 -- Various quest states for Children Of The Rune (COTR).
@@ -23,9 +24,6 @@ local cotrStates =
     -- next interaction, jump to the final cutscene and try to issue the reward.
     REWARD_PENDING = 3
 }
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     -- CHILDREN OF THE RUNE

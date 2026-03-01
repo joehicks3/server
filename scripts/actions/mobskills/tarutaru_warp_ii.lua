@@ -2,6 +2,7 @@
 -- Tarutaru Warp II
 -- End Ark Angel TT teleport
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -9,10 +10,6 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local t = mob:getSpawnPos()
-    local angle = math.random() * 2 * math.pi
-    local pos = NearLocation(t, 18.0, angle)
-    mob:teleport(pos, target)
     skill:setMsg(xi.msg.basic.NONE)
     return 0
 end

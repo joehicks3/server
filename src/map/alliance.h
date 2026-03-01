@@ -19,11 +19,9 @@
 ===========================================================================
 */
 
-#ifndef _CALLIANCE_H
-#define _CALLIANCE_H
+#pragma once
 
 #include "common/cbasetypes.h"
-#include "map.h"
 
 #include <vector>
 
@@ -49,7 +47,7 @@ public:
     void    removeParty(CParty* party);
     void    delParty(CParty* party);
     void    dissolveAlliance(bool playerInitiated = true);
-    void    assignAllianceLeader(const char* name);
+    void    assignAllianceLeader(const std::string& name);
     bool    hasOnlyOneParty() const;
     bool    isFull() const;
 
@@ -59,5 +57,3 @@ private:
     CParty* aLeader; // alliance lead party
     uint32  loadPartyCount() const;
 };
-
-#endif

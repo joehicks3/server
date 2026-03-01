@@ -2,6 +2,9 @@
 --  MOB: Archaic Gear
 -- Area: Nyzul Isle
 -----------------------------------
+mixins = { require('scripts/mixins/families/gear') }
+-----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobEngage = function(mob, target)

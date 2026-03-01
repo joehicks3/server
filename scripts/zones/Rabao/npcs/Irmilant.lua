@@ -4,6 +4,7 @@
 -- Starts and Ends Quests: The Immortal Lu Shang and Indomitable Spirit
 -- !pos 3.78 9.54 56.21 247
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -38,16 +39,13 @@ entity.onTrigger = function(player, npc)
         Indomitable == xi.questStatus.QUEST_AVAILABLE
     then
         player:startEvent(131) --Begins Indomitable Spirit
-    elseif indomitableTimer ~= 0 and indomitableTimer > os.time() then
+    elseif indomitableTimer ~= 0 and indomitableTimer > GetSystemTime() then
         player:startEvent(133) --Asks the player to wait (next CQ tally)
     elseif indomitableTimer ~= 0 then
         player:startEvent(134) --Ends the Quest
     elseif Indomitable == xi.questStatus.QUEST_COMPLETED then
         player:startEvent(135) --Dialogue for those who have completed Indomitable Spirit
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

@@ -3,15 +3,16 @@
 -- Item: Flask of Strange Milk
 -- Item Effect: Restores 500 HP over 300 seconds.
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     return 0
 end
 
-itemObject.onItemUse = function(target)
+itemObject.onItemUse = function(target, user)
     if not target:hasStatusEffect(xi.effect.REGEN) then
-        target:addStatusEffect(xi.effect.REGEN, 5, 3, 300)
+        target:addStatusEffect(xi.effect.REGEN, { power = 5, duration = 300, origin = user, tick = 3 })
     else
         target:messageBasic(xi.msg.basic.NO_EFFECT)
     end

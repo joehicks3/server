@@ -2,20 +2,32 @@
 -- Knuckle Sandwich
 -- Used by Trust: Prishe II
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod  = 1
-    local info    = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * dmgmod, xi.element.LIGHT, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg     = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.LIGHT, info.hitslanded)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.LIGHT)
+    -- TODO: Capture possible skillchain properties
+    -- TODO: Is this magical or physical skill?
+    params.baseDamage     = mob:getWeaponDmg()
+    params.fTP            = { 1, 1, 1 } -- TODO: Capture fTPs
+    params.element        = xi.element.LIGHT -- TODO: Capture element
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.LIGHT
+    params.shadowBehavior = xi.mobskills.shadowBehavior.IGNORE_SHADOWS -- TODO: Capture shadowBehavior
 
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

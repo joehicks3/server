@@ -5,6 +5,7 @@
 -- Recast Time: 0:05
 -- Duration: 5:00
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -12,7 +13,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability, action)
-    xi.job_utils.rune_fencer.useRuneEnchantment(player, target, ability, xi.effect.GELUS)
+    return xi.job_utils.rune_fencer.useRuneEnchantment(player, target, ability, xi.effect.GELUS)
 end
 
 return abilityObject

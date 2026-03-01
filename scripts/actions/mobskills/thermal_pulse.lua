@@ -1,12 +1,10 @@
 -----------------------------------
---  Thermal Pulse
---  Family: Wamouracampa
---  Description: Deals Fire damage to enemies within area of effect. Additional effect: Blindness
---  Type: Magical
---  Utsusemi/Blink absorb: Ignores shadow
---  Range: 12.5
---  Notes: Open form only.
+-- Thermal Pulse
+-- Family: Wamouracampa
+-- Description: Deals Fire damage to enemies within area of effect. Additional Effect: Blindness
+-- Notes: Open form only.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -17,14 +15,26 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
     end
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.BLINDNESS, 20, 0, 60)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 3, xi.element.FIRE, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.FIRE, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.FIRE)
-    return dmg
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 4.5, 4.5, 4.5 }
+    params.element        = xi.element.FIRE
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.FIRE
+    params.shadowBehavior = xi.mobskills.shadowBehavior.WIPE_SHADOWS
+
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        local duration = xi.mobskills.calculateDuration(skill:getTP(), 30, 90)
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.BLINDNESS, 100, 0, duration)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

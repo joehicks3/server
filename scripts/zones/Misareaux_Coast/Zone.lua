@@ -3,6 +3,7 @@
 -----------------------------------
 local misareauxGlobal = require('scripts/zones/Misareaux_Coast/globals')
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
@@ -11,7 +12,7 @@ zoneObject.onInitialize = function(zone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -36,6 +37,23 @@ zoneObject.onGameHour = function(zone)
 
     if vHour >= 22 or vHour <= 7 then
         misareauxGlobal.ziphiusHandleQM()
+    end
+end
+
+zoneObject.onZoneWeatherChange = function(weather)
+    local ID = zones[xi.zone.MISAREAUX_COAST]
+    local odqan1 = GetMobByID(ID.mob.ODQAN[1])
+    local odqan2 = GetMobByID(ID.mob.ODQAN[2])
+
+    if weather == xi.weather.FOG and odqan1 and odqan2 then
+        -- Check which Odqan is allowed to spawn
+        if odqan1:getLocalVar('canSpawn') == 1 then
+            DisallowRespawn(odqan1:getID(), false)
+            DisallowRespawn(odqan2:getID(), true)
+        elseif odqan2:getLocalVar('canSpawn') == 1 then
+            DisallowRespawn(odqan2:getID(), false)
+            DisallowRespawn(odqan1:getID(), true)
+        end
     end
 end
 

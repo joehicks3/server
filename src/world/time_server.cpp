@@ -1,20 +1,20 @@
 /*
 ===========================================================================
 
-Copyright (c) 2023 LandSandBoat Dev Teams
+  Copyright (c) 2023 LandSandBoat Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
@@ -22,88 +22,108 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include "time_server.h"
 
 #include "common/cbasetypes.h"
-#include "common/taskmgr.h"
+#include "common/task_manager.h"
 #include "common/tracy.h"
 #include "common/vana_time.h"
-#include "daily_tally.h"
-#include "world_server.h"
 
-int32 time_server(time_point tick, CTaskMgr::CTask* PTask)
+#include "conquest_system.h"
+#include "daily_tally.h"
+#include "world_engine.h"
+
+void time_server(const WorldEngine* worldServer)
 {
     TracyZoneScoped;
-    TIMETYPE     VanadielTOTD = CVanaTime::getInstance()->SyncTime();
-    WorldServer* worldServer  = std::any_cast<WorldServer*>(PTask->m_data);
 
-    // Weekly update for conquest (sunday at midnight)
-    static time_point lastConquestTally  = tick - 1h;
-    static time_point lastConquestUpdate = tick - 1h;
-    if (CVanaTime::getInstance()->getJstWeekDay() == 1 && CVanaTime::getInstance()->getJstHour() == 0 && CVanaTime::getInstance()->getJstMinute() == 0)
-    {
-        if (tick > (lastConquestTally + 1h))
-        {
-            worldServer->conquestSystem->updateWeekConquest();
-            lastConquestTally = tick;
-        }
-    }
-    // Hourly conquest update
-    else if (CVanaTime::getInstance()->getJstMinute() == 0)
-    {
-        if (tick > (lastConquestUpdate + 1h))
-        {
-            worldServer->conquestSystem->updateHourlyConquest();
-            lastConquestUpdate = tick;
-        }
-    }
+    const auto tick = timer::now();
+    // Track elapsed ticks.
+    static auto tickNum = 0;
+    ++tickNum;
 
-    // Vanadiel Hour
-    static time_point lastVHourlyUpdate = tick - 4800ms;
-    if (CVanaTime::getInstance()->getMinute() == 0)
-    {
-        if (tick > (lastVHourlyUpdate + 4800ms))
-        {
-            worldServer->conquestSystem->updateVanaHourlyConquest();
-            lastVHourlyUpdate = tick;
-        }
-    }
+    // Earth-based ticks.
+    // Uses the JST equivalent of the current timer tick. (steady_clock -> system_clock)
 
-    // JST Midnight
-    static time_point lastTickedJstMidnight = tick - 1h;
-    if (CVanaTime::getInstance()->getJstHour() == 0 && CVanaTime::getInstance()->getJstMinute() == 0)
+    // Earth time points
+    const auto jstTime    = earth_time::time_point(timer::to_utc(tick));
+    const auto jstHour    = earth_time::jst::get_hour(jstTime);
+    const auto jstWeekday = earth_time::jst::get_weekday(jstTime);
+
+    // Static variable for the next tick
+    static auto nextHourlyTick = std::chrono::ceil<std::chrono::hours>(jstTime);
+
+    // Hourly ticks
+    if (jstTime >= nextHourlyTick)
     {
-        if (tick > (lastTickedJstMidnight + 1h))
+        ShowDebugFmt("1-hour tick... (current tick: {})", tickNum);
+        if (jstHour == 0)
         {
-            if (settings::get<bool>("main.ENABLE_DAILY_TALLY"))
+            // Daily tick (midnight JST)
+            ShowDebugFmt("Daily tick... (current tick: {})", tickNum);
+            if (jstWeekday == 1)
             {
-                dailytally::UpdateDailyTallyPoints();
+                // Weekly tick (Monday JST)
+                ShowDebugFmt("Weekly tick... (current tick: {})", tickNum);
+                worldServer->conquestSystem_->updateWeekConquest();
             }
-
-            lastTickedJstMidnight = tick;
+            else
+            {
+                // This should happen every midnight except Monday.
+                worldServer->conquestSystem_->updateHourlyConquest();
+            }
+            dailytally::UpdateDailyTallyPoints();
         }
-    }
-
-    // 4-hour RoE Timed blocks
-    static time_point lastTickedRoeBlock = tick - 1h;
-    if (CVanaTime::getInstance()->getJstHour() % 4 == 0 && CVanaTime::getInstance()->getJstMinute() == 0)
-    {
-        if (tick > (lastTickedRoeBlock + 1h))
+        else
         {
-            lastTickedRoeBlock = tick;
+            // This should happen hourly, except midnight.
+            worldServer->conquestSystem_->updateHourlyConquest();
         }
-    }
+        // 1-hour tick (including every midnight)
 
-    // Vanadiel Day
-    static time_point lastVDailyUpdate = tick - 4800ms;
-    if (CVanaTime::getInstance()->getHour() == 0 && CVanaTime::getInstance()->getMinute() == 0)
-    {
-        if (tick > (lastVDailyUpdate + 4800ms))
+        if (jstHour % 2 == 0)
         {
-            lastVDailyUpdate = tick;
+            // 2-hour tick
+            ShowDebugFmt("2-hour tick... (current tick: {})", tickNum);
+            if (jstHour % 4 == 0)
+            {
+                // 4-hour tick
+                ShowDebugFmt("4-hour tick... (current tick: {})", tickNum);
+            }
         }
+
+        nextHourlyTick = std::chrono::ceil<std::chrono::hours>(jstTime);
     }
 
-    if (VanadielTOTD != TIME_NONE)
+    // Vana'diel-based ticks.
+    // Uses the Vana'diel time equivalent of the current JST time. (steady_clock -> system_clock -> vanadiel_clock)
+    // Note: Vana'diel minute is equal to the tick interval (2400ms). It is possible to miss a minute if there is
+    //       variance in the tick time.
+
+    // Vana'diel time points
+    const auto vanaTime = vanadiel_time::from_earth_time(jstTime);
+    const auto vanaTotd = vanadiel_time::get_totd(vanaTime);
+    const auto vanaHour = vanadiel_time::get_hour(vanaTime);
+
+    // Static variables for the next tick
+    static auto nextVHourlyUpdate = std::chrono::ceil<xi::vanadiel_clock::hours>(vanaTime);
+    static auto prevTotd          = vanaTotd;
+
+    if (vanaTime >= nextVHourlyUpdate)
     {
-    }
+        // Vana'diel Hour
+        worldServer->conquestSystem_->updateVanaHourlyConquest();
 
-    return 0;
+        if (vanaHour == 0)
+        {
+            // Vana'diel Day
+            ShowDebugFmt("Vana'diel day tick... (current tick: {})", tickNum);
+        }
+
+        if (vanaTotd != prevTotd)
+        {
+            // MIDNIGHT -> NEWDAY -> DAWN -> DAY -> DUSK -> EVENING -> NIGHT
+
+            prevTotd = vanaTotd;
+        }
+
+        nextVHourlyUpdate = std::chrono::ceil<xi::vanadiel_clock::hours>(vanaTime);
+    }
 }

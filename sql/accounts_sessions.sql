@@ -26,13 +26,14 @@ CREATE TABLE `accounts_sessions` (
   `linkshellid2` int(10) unsigned NOT NULL DEFAULT '0',
   `linkshellrank2` smallint(5) unsigned NOT NULL DEFAULT '0',
   `session_key` binary(20) NOT NULL DEFAULT '\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0',
-  `server_addr` int(10) unsigned zerofill NOT NULL DEFAULT '0000000000',
+  `server_addr` int(10) unsigned NOT NULL DEFAULT '0',
   `server_port` smallint(5) unsigned NOT NULL DEFAULT '0',
-  `client_addr` int(10) unsigned zerofill NOT NULL DEFAULT '0000000000',
+  `client_addr` int(10) unsigned NOT NULL DEFAULT '0',
   `client_port` smallint(5) unsigned NOT NULL DEFAULT '0',
   `version_mismatch` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `seacom_type` TINYINT(1) unsigned NOT NULL DEFAULT '0',
   `seacom_message` TINYBLOB NULL DEFAULT NULL,
+  `last_zoneout_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`charid`),
   UNIQUE KEY `accid` (`accid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

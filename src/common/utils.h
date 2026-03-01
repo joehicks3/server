@@ -19,19 +19,54 @@
 ===========================================================================
 */
 
-#ifndef _UTILS_H_
-#define _UTILS_H_
-#define _USE_MATH_DEFINES
+#pragma once
 
 #include "common/cbasetypes.h"
+#include "common/database.h"
+#include "common/logging.h"
 #include "common/mmo.h"
-#include "common/mutex_guarded.h"
 #include "common/stdext.h"
+#include "common/synchronized.h"
+#include "common/timer.h"
+#include "common/xirand.h"
 
+// Ahead of <math.h> (not <cmath>)
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
+#endif // _USE_MATH_DEFINES
+#include <math.h>
+
+#include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <iostream>
-#include <math.h>
 #include <set>
+
+template <typename T, typename U>
+auto ref(U* buf, std::size_t index) -> T&
+{
+    return *reinterpret_cast<T*>(reinterpret_cast<uint8*>(buf) + index);
+}
+
+template <typename T, typename U>
+auto ref(const U* buf, std::size_t index) -> const T&
+{
+    return *reinterpret_cast<const T*>(reinterpret_cast<const uint8*>(buf) + index);
+}
+
+template <typename T, typename U>
+auto as(U& object) -> T*
+{
+    static_assert(std::is_standard_layout_v<T>, "Type must be standard layout (No virtual functions, inheritance, etc.)");
+    return reinterpret_cast<T*>(&object);
+}
+
+template <typename T, typename U>
+auto as(const U& object) -> const T*
+{
+    static_assert(std::is_standard_layout_v<T>, "Type must be standard layout (No virtual functions, inheritance, etc.)");
+    return reinterpret_cast<const T*>(&object);
+}
 
 constexpr size_t PacketNameLength = 16; // 15 + null terminator
 
@@ -40,30 +75,58 @@ constexpr size_t SignatureStringLength = 16; // encoded signature string size //
 constexpr size_t LinkshellStringLength = 20; // encoded linkshell string size // 19 characters + null terminator
 
 int32 checksum(uint8* buf, uint32 buflen, char checkhash[16]);
-int   config_switch(const char* str);
 bool  bin2hex(char* output, unsigned char* input, size_t count);
 
-float           distance(const position_t& A, const position_t& B, bool ignoreVertical = false);                     // distance between positions. Use only horizontal plane (x and z) if ignoreVertical is set.
-float           distanceSquared(const position_t& A, const position_t& B, bool ignoreVertical = false);              // squared distance between positions (use squared unless otherwise needed)
-bool            distanceWithin(const position_t& A, const position_t& B, float within, bool ignoreVertical = false); // returns true if the distance between the points is <= within.
-constexpr float square(float distance)                                                                               // constexpr square (used with distanceSquared)
+constexpr float square(auto distance) // constexpr square (used with distanceSquared)
 {
     return distance * distance;
+}
+
+inline float distanceSquared(const position_t& A, const position_t& B, bool ignoreVertical = false)
+{
+    float dX = A.x - B.x;
+    float dY = ignoreVertical ? 0 : A.y - B.y;
+    float dZ = A.z - B.z;
+    return dX * dX + dY * dY + dZ * dZ;
+}
+
+inline float distance(const position_t& A, const position_t& B, bool ignoreVertical = false)
+{
+    return std::sqrt(distanceSquared(A, B, ignoreVertical));
+}
+
+inline bool isWithinDistance(const position_t& A, const position_t& B, float within, bool ignoreVertical = false)
+{
+    return distanceSquared(A, B, ignoreVertical) <= square(within);
+}
+
+// Used for setting "proper" packet sizes rounded to the nearest four away from zero
+constexpr auto roundUpToNearestFour(uint32 input) -> uint32
+{
+    const auto remainder = input % 4U;
+    if (remainder == 0)
+    {
+        return input;
+    }
+
+    return input + 4U - remainder;
 }
 
 int32      intpow32(int32 base, int32 exponent); // Exponential power of integers
 void       getMSB(uint32* result, uint32 value); // fast Most Significant Byte search under GCC or MSVC. Fallback included.
 float      rotationToRadian(uint8 rotation);
 uint8      radianToRotation(float radian);
-uint8      worldAngle(const position_t& A, const position_t& B);               // А - the main entity, B - target entity (vector projection onto the X-axis)
-uint8      relativeAngle(uint8 world, int16 diff);                             // Returns a new world angle which is diff degrees in a given (signed) direction
-int16      angleDifference(uint8 worldAngleA, uint8 aworldAngleB);             // Returns difference between two world angles (0~128), sign indicates direction
-int16      facingAngle(const position_t& A, const position_t& B);              // А - the main entity, B - target entity
-bool       facing(const position_t& A, const position_t& B, uint8 coneAngle);  // true if A is facing B within coneAngle degrees
-bool       infront(const position_t& A, const position_t& B, uint8 coneAngle); // true if A is infront of B within coneAngle degrees
-bool       behind(const position_t& A, const position_t& B, uint8 coneAngle);  // true if A is behind of B within coneAngle degrees
-bool       beside(const position_t& A, const position_t& B, uint8 coneAngle);  // true if A is to a side of B within coneAngle degrees
-position_t nearPosition(const position_t& A, float offset, float radian);      // Returns a position near the given position
+uint8      worldAngle(const position_t& A, const position_t& B);                              // А - the main entity, B - target entity (vector projection onto the X-axis)
+uint8      relativeAngle(uint8 world, int16 diff);                                            // Returns a new world angle which is diff degrees in a given (signed) direction
+int16      angleDifference(uint8 worldAngleA, uint8 worldAngleB);                             // Returns difference between two world angles (0~128), sign indicates direction
+int16      facingAngle(const position_t& A, const position_t& B);                             // А - the main entity, B - target entity
+bool       facing(const position_t& A, const position_t& B, uint8 coneAngle);                 // true if A is facing B within coneAngle degrees
+bool       infront(const position_t& A, const position_t& B, uint8 coneAngle);                // true if A is infront of B within coneAngle degrees
+bool       behind(const position_t& A, const position_t& B, uint8 coneAngle);                 // true if A is behind of B within coneAngle degrees
+bool       beside(const position_t& A, const position_t& B, uint8 coneAngle);                 // true if A is to a side of B within coneAngle degrees
+auto       toEntitysLeft(const position_t& A, const position_t& B, uint8 coneAngle) -> bool;  // true if A is to the left side of B within coneAngle degrees (from perspective of B)
+auto       toEntitysRight(const position_t& A, const position_t& B, uint8 coneAngle) -> bool; // true if A is to the right side of B within coneAngle degrees (from perspective of B)
+position_t nearPosition(const position_t& A, float offset, float radian);                     // Returns a position near the given position
 
 int32 hasBit(uint16 value, const uint8* BitArray, uint32 size); // Check for the presence of a bit in the array
 int32 addBit(uint16 value, uint8* BitArray, uint32 size);       // Adds a bit to the array
@@ -89,15 +152,15 @@ void        DecodeStringSignature(const std::string& signature, char* target);
 void        PackSoultrapperName(std::string name, uint8 output[]);
 std::string UnpackSoultrapperName(uint8 input[]);
 
-auto escape(std::string const& s) -> std::string;
-auto split(std::string const& s, std::string const& delimiter = " ") -> std::vector<std::string>;
-auto to_lower(std::string const& s) -> std::string;
-auto to_upper(std::string const& s) -> std::string;
+auto escape(const std::string& s) -> std::string;
+auto split(const std::string& s, const std::string& delimiter = " ") -> std::vector<std::string>;
+auto to_lower(const std::string& s) -> std::string;
+auto to_upper(const std::string& s) -> std::string;
 auto trim(const std::string& str, const std::string& whitespace = " \t") -> std::string;
 void rtrim(std::string& s);
-bool matches(std::string const& target, std::string const& pattern);
-bool starts_with(std::string const& target, std::string const& pattern);
-auto replace(std::string const& target, std::string const& search, std::string const& replace) -> std::string;
+bool matches(const std::string& target, const std::string& pattern);
+bool starts_with(const std::string& target, const std::string& pattern);
+auto replace(const std::string& target, const std::string& search, const std::string& replace) -> std::string;
 
 look_t stringToLook(std::string str);
 
@@ -109,6 +172,13 @@ bool definitelyGreaterThan(float a, float b);
 bool definitelyLessThan(float a, float b);
 
 void crash();
+
+inline auto thread_id_to_string(std::thread::id id) -> std::string
+{
+    std::ostringstream oss;
+    oss << id;
+    return oss.str();
+}
 
 template <typename T>
 std::set<std::filesystem::path> sorted_directory_iterator(std::string path_name)
@@ -123,16 +193,38 @@ std::set<std::filesystem::path> sorted_directory_iterator(std::string path_name)
 
 namespace utils
 {
-    auto openFile(std::string const& path, std::string const& mode) -> std::unique_ptr<FILE>;
-    auto toASCII(std::string const& target, unsigned char replacement = '\0') -> std::string;
+
+auto openFile(const std::string& path, const std::string& mode) -> std::unique_ptr<FILE>;
+
+enum class ASCIIMode
+{
+    IncludeSpace,
+    ExcludeSpace,
+};
+
+auto isPrintableASCII(unsigned char ch, ASCIIMode mode) -> bool;
+auto isStringPrintable(const std::string& str, ASCIIMode mode) -> bool;
+auto toASCII(const std::string& target, unsigned char replacement = '\0') -> std::string;
+
+template <typename T>
+auto getRandomSampleString(T min, T max) -> std::string
+{
+    std::vector<T> randomNumbers;
+    for (int i = 0; i < 3; i++)
+    {
+        randomNumbers.push_back(xirand::GetRandomNumber(min, max));
+    }
+    return fmt::format("{}", fmt::join(randomNumbers, " "));
+}
+
 } // namespace utils
 
 // clang-format off
-static mutex_guarded<std::unordered_map<std::string, time_point>> lastExecutionTimes;
+static Synchronized<std::unordered_map<std::string, timer::time_point>> lastExecutionTimes;
 #define RATE_LIMIT(duration, code)                                                    \
 {                                                                                     \
-    auto        currentTime = server_clock::now();                                    \
-    std::string key         = std::string(__FILE__) + ":" + std::to_string(__LINE__); \
+    const auto currentTime = timer::now();                                            \
+    const auto key         = std::string(__FILE__) + ":" + std::to_string(__LINE__);  \
     lastExecutionTimes.write([&](auto& lastExecutionTimes)                            \
     {                                                                                 \
         if (lastExecutionTimes.find(key) == lastExecutionTimes.end() ||               \
@@ -140,11 +232,9 @@ static mutex_guarded<std::unordered_map<std::string, time_point>> lastExecutionT
         {                                                                             \
             lastExecutionTimes[key] = currentTime;                                    \
             {                                                                         \
-                code;                                                                  \
+                code;                                                                 \
             }                                                                         \
         }                                                                             \
     });                                                                               \
 }
 // clang-format on
-
-#endif

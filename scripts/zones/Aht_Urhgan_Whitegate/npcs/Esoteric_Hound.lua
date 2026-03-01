@@ -2,19 +2,18 @@
 -- Area: Aht Urhgan Whitegate
 --  NPC: Esoteric Hound
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    player:startEvent(229)
-end
+    -- Outside dock zone.
+    if player:getZPos() >= -105 then
+        player:startEvent(229)
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
+    -- Inside dock zone.
+    else
+        player:startEvent(225)
+    end
 end
 
 return entity

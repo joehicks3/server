@@ -5,6 +5,7 @@
 -- Recast Time: 10:00
 -- Duration: 1 Spell or 60 seconds, whichever occurs first.
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -12,7 +13,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    xi.job_utils.black_mage.useElementalSeal(player, target, ability)
+    return xi.job_utils.black_mage.useElementalSeal(player, target, ability)
 end
 
 return abilityObject

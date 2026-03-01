@@ -1,6 +1,8 @@
 -----------------------------------
 -- xi.effect.HUM
+-- Notes: Might be related to Chocobo Hum (Currently unobtainable BRD song)
 -----------------------------------
+---@type TEffect
 local effectObject = {}
 
 effectObject.onEffectGain = function(target, effect)

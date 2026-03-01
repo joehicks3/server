@@ -5,6 +5,7 @@
 -- Recast Time: 00:03:00
 -- Duration: 0:01:00 or until next Weapon Skill.
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -12,7 +13,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    player:addStatusEffect(xi.effect.SENGIKORI, 12, 0, 60)
+    return xi.job_utils.samurai.useSengikori(player, target, ability)
 end
 
 return abilityObject

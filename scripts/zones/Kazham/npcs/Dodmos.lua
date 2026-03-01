@@ -6,6 +6,7 @@
 -----------------------------------
 local ID = zones[xi.zone.KAZHAM]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -39,9 +40,6 @@ entity.onTrigger = function(player, npc)
     elseif trialSizeFire == xi.questStatus.QUEST_COMPLETED then
         player:startEvent(289) --Defeated Avatar
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

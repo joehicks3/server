@@ -1,22 +1,25 @@
 -----------------------------------
 -- Area: Tavnazian Safehold
 --  NPC: Nivorajean
--- !pos 15.890 -22.999 13.322 26
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    -- TODO: Default cycles between 221 and 382, 382 in Default
-    player:startEvent(221)
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
+    -- Dialgoue cycles
+    if player:getLocalVar('spokenNivorajean') == 0 then
+        player:startEvent(382)
+    else
+        player:startEvent(221)
+    end
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
+    if csid == 382 then
+        player:setLocalVar('spokenNivorajean', 1)
+    else
+        player:setLocalVar('spokenNivorajean', 0)
+    end
 end
 
 return entity

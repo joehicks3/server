@@ -2,33 +2,22 @@
 -- ID: 15448
 -- Item: Tanners belt
 -- Enchantment: Synthesis image support
--- 2Min, All Races
------------------------------------
--- Enchantment: Synthesis image support
--- Duration: 2Min
+-- Duration: 8Min
 -- Leathercraft Skill +3
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
-    local result = 0
+itemObject.onItemCheck = function(target, item, param, caster)
     if target:hasStatusEffect(xi.effect.LEATHERCRAFT_IMAGERY) then
-        result = 240
+        return xi.msg.basic.ITEM_UNABLE_TO_USE
     end
 
-    return result
+    return 0
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffect(xi.effect.LEATHERCRAFT_IMAGERY, 3, 0, 120)
-end
-
-itemObject.onEffectGain = function(target, effect)
-    target:addMod(xi.mod.LEATHER, 1)
-end
-
-itemObject.onEffectLose = function(target, effect)
-    target:delMod(xi.mod.LEATHER, 1)
+itemObject.onItemUse = function(target, user)
+    target:addStatusEffect(xi.effect.LEATHERCRAFT_IMAGERY, { power = 3, duration = 480, origin = user })
 end
 
 return itemObject

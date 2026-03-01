@@ -2,7 +2,12 @@
 -- Area: The Eldieme Necropolis
 --  Mob: Ka
 -----------------------------------
+---@type TMobEntity
 local entity = {}
+
+entity.onMobInitialize = function(mob)
+    mob:setMobMod(xi.mobMod.NO_STANDBACK, 1)
+end
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 672, 1, xi.regime.type.GROUNDS)

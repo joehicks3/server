@@ -25,6 +25,7 @@
 -- The AMOUNT of damage done to the target is irrelevant to the behavior of nightmare sleep, only the source of the damage and the source of the Nightmare.
 -----------------------------------
 
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -32,8 +33,17 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dotdamage = 15
-    skill:setMsg(xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.SLEEP_I, 1, 0, math.random(20, 30), 0, dotdamage, 2))
+    local bioPower   = 15
+    local duration   = math.random(20, 30)
+    local effectTier = 11
+
+    -- Handle unbreakable sleep
+    skill:setMsg(xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.SLEEP_I, 1, 0, duration, 0, 0, effectTier))
+
+    -- Handle special Bio
+    target:delStatusEffectSilent(xi.effect.DIA)
+    target:delStatusEffectSilent(xi.effect.BIO)
+    target:addStatusEffect(xi.effect.BIO, { power = bioPower, duration = duration, origin = mob, tick = 3, subPower = 10, tier = effectTier })
 
     return xi.effect.SLEEP_I
 end

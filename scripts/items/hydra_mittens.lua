@@ -4,29 +4,29 @@
 -- Item Effect: ACC +15 RACC +15
 -- Duration: 3 Minutes
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
-    local effect = target:getStatusEffect(xi.effect.ENCHANTMENT)
-    if effect ~= nil and effect:getSubType() == 14925 then
-        target:delStatusEffect(xi.effect.ENCHANTMENT)
+itemObject.onItemCheck = function(target, item, param, caster)
+    if target:getStatusEffectBySource(xi.effect.ACCURACY_BOOST, xi.effectSourceType.EQUIPPED_ITEM, xi.item.HYDRA_MITTENS) ~= nil then
+        target:delStatusEffect(xi.effect.ACCURACY_BOOST, nil, xi.effectSourceType.EQUIPPED_ITEM, xi.item.HYDRA_MITTENS)
     end
 
     return 0
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffect(xi.effect.ENCHANTMENT, 0, 0, 180, 14925)
+itemObject.onItemUse = function(target, user)
+    if target:hasEquipped(xi.item.HYDRA_MITTENS) then
+        target:addStatusEffect(xi.effect.ACCURACY_BOOST, { duration = 180, origin = user, sourceType = xi.effectSourceType.EQUIPPED_ITEM, sourceTypeParam = xi.item.HYDRA_MITTENS })
+    end
 end
 
 itemObject.onEffectGain = function(target, effect)
-    target:addMod(xi.mod.ACC, 15)
-    target:addMod(xi.mod.RACC, 15)
+    effect:addMod(xi.mod.ACC, 15)
+    effect:addMod(xi.mod.RACC, 15)
 end
 
 itemObject.onEffectLose = function(target, effect)
-    target:delMod(xi.mod.ACC, 15)
-    target:delMod(xi.mod.RACC, 15)
 end
 
 return itemObject

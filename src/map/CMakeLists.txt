@@ -1,15 +1,23 @@
+add_subdirectory(action)
 add_subdirectory(ai)
 add_subdirectory(entities)
+add_subdirectory(enums)
 add_subdirectory(items)
 add_subdirectory(los)
 add_subdirectory(lua)
 add_subdirectory(packets)
 add_subdirectory(utils)
 
+set(APP_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+)
+
 set(SOURCES
     ${COMMON_SOURCES}
+    ${ACTION_SOURCES}
     ${AI_SOURCES}
     ${ENTITY_SOURCES}
+    ${ENUMS_SOURCES}
     ${ITEM_SOURCES}
     ${LOS_SOURCES}
     ${LUA_SOURCES}
@@ -19,8 +27,8 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/ability.h
     ${CMAKE_CURRENT_SOURCE_DIR}/alliance.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/alliance.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/anticheat.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/anticheat.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/aman.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/aman.h
     ${CMAKE_CURRENT_SOURCE_DIR}/attack.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/attack.h
     ${CMAKE_CURRENT_SOURCE_DIR}/attackround.cpp
@@ -54,6 +62,10 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/enmity_container.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enmity_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/event_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/fishingcontest.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/fishingcontest.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmcall_container.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmcall_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/grades.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/grades.h
     ${CMAKE_CURRENT_SOURCE_DIR}/guild.cpp
@@ -62,6 +74,10 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/instance_loader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/instance.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/instance.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ipc_client.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ipc_client.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/inventory_sync_state.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/inventory_sync_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/item_container.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/item_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/items.h
@@ -73,12 +89,22 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/latent_effect.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linkshell.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linkshell.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/map.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/map.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_application.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_application.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_engine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_engine.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_networking.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_networking.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_session_container.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_session_container.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_session.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_session.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_socket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_socket.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_statistics.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/map_statistics.h
     ${CMAKE_CURRENT_SOURCE_DIR}/merit.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/merit.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/message.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/message.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mob_modifier.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mob_spell_container.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mob_spell_container.h
@@ -112,6 +138,10 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/status_effect_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/status_effect.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/status_effect.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/spawn_handler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/spawn_handler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/spawn_slot.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/spawn_slot.h
     ${CMAKE_CURRENT_SOURCE_DIR}/time_server.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/time_server.h
     ${CMAKE_CURRENT_SOURCE_DIR}/timetriggers.cpp
@@ -151,42 +181,54 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_SOURCE_D
 
 # Search for module directories
 set(module_include_dirs "")
+set(cmakelist_include_paths "")
 file(STRINGS ${CMAKE_SOURCE_DIR}/modules/init.txt INIT_FILE_ENTRIES REGEX "^[^#\n].*")
 foreach(entry ${INIT_FILE_ENTRIES})
     if (${entry} STREQUAL "")
         continue()
     endif()
     if (IS_DIRECTORY "${CMAKE_SOURCE_DIR}/modules/${entry}")
+        if (EXISTS "${CMAKE_SOURCE_DIR}/modules/${entry}/CMakeLists.txt")
+            list(APPEND cmakelist_include_paths "${CMAKE_SOURCE_DIR}/modules/${entry}/CMakeLists.txt")
+            message(STATUS "Adding module CMakeLists.txt to build: ${CMAKE_SOURCE_DIR}/modules/${entry}/CMakeLists.txt")
+            continue()
+        endif()
         file(GLOB_RECURSE module_files
             "${CMAKE_SOURCE_DIR}/modules/${entry}/*.cpp"
             "${CMAKE_SOURCE_DIR}/modules/${entry}/*.h")
         list(APPEND module_include_dirs "${CMAKE_SOURCE_DIR}/modules/${entry}")
-        list(APPEND SOURCES ${module_files})
+        list(APPEND APP_SOURCES ${module_files})
         message(STATUS "Adding module files to build: ${module_files}")
     elseif (${entry} MATCHES "\.cpp")
-        list(APPEND SOURCES "${CMAKE_SOURCE_DIR}/modules/${entry}")
+        list(APPEND APP_SOURCES "${CMAKE_SOURCE_DIR}/modules/${entry}")
         message(STATUS "Adding module files to build: ${CMAKE_SOURCE_DIR}/modules/${entry}")
     endif()
 endforeach()
 
 add_executable(xi_map
-    ${SOURCES}
+    ${APP_SOURCES}
     ${resource})
+
+set(MAP_LIB_SOURCES ${SOURCES})
+add_library(xi_map_lib
+    STATIC
+        ${MAP_LIB_SOURCES})
+
+foreach(entry ${cmakelist_include_paths})
+    if (${entry} STREQUAL "")
+        continue()
+    endif()
+    include("${entry}")
+endforeach()
 
 if(WIN32)
     set_target_properties(xi_map PROPERTIES OUTPUT_NAME xi_map)
 endif()
 
-target_compile_definitions(
-    xi_map
+target_link_libraries(xi_map_lib
     PUBLIC
-    -DdsUDPSERV
-    -DDEBUGLOGMAP
-)
-
-target_link_libraries(xi_map
-    PUBLIC
-        ${EXTERNAL_LIBS}
+        ${SHARED_EXTERNAL_LIBS}
+        ${MAP_ONLY_EXTERNAL_LIBS}
         project_options
     PRIVATE
         project_warnings
@@ -194,14 +236,22 @@ target_link_libraries(xi_map
 
 target_include_directories(xi_map
     PUBLIC
-        ${CMAKE_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}
         ${module_include_dirs}
 )
 
-if(NOT ${ENABLE_CLANG_TIDY})
-    target_precompile_headers(xi_map PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/pch.h)
+target_include_directories(xi_map_lib
+    PUBLIC
+        ${CMAKE_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(xi_map
+    PUBLIC
+        xi_map_lib)
+
+if(PCH_ENABLE)
+    target_precompile_headers(xi_map_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/pch.h)
 endif()
 
 if (APPLE)
@@ -212,7 +262,8 @@ set_target_output_directory(xi_map)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT xi_map)
 
 if(TRACY_ENABLE)
-    target_link_libraries(xi_map PUBLIC TracyClient)
+    target_link_libraries(xi_map_lib PUBLIC TracyClient)
     set_target_properties(xi_map PROPERTIES OUTPUT_NAME xi_map_tracy)
+    target_compile_definitions(xi_map_lib PUBLIC TRACY_ENABLE)
     message(STATUS "TRACY_ENABLE: xi_map will be output as xi_map_tracy")
 endif(TRACY_ENABLE)

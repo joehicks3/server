@@ -2,6 +2,7 @@
 -- Area: Kazham
 --  NPC: Bubupp
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -55,12 +56,7 @@ entity.onTrigger = function(player, npc)
         elseif progress >= 6 or failed >= 7 then
             player:startEvent(247) -- happy with giant fish bones
         end
-    else
-        player:startEvent(202)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

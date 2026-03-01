@@ -5,14 +5,15 @@
 -- Recast Time: 2:00 minutes
 -- Duration: 1:00 minutes
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
     return 0, 0
 end
 
-abilityObject.onUseAbility = function(player, target, ability)
-    xi.job_utils.thief.useFeint(player, target, ability)
+abilityObject.onUseAbility = function(player, target, ability, action)
+    return xi.job_utils.thief.useFeint(player, target, ability, action)
 end
 
 return abilityObject

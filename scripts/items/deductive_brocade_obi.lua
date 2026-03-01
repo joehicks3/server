@@ -4,27 +4,28 @@
 -- Item Effect: MND+10
 -- Duration: 3 Minutes
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
-    local effect = target:getStatusEffect(xi.effect.ENCHANTMENT)
-    if effect ~= nil and effect:getSubType() == 15861 then
-        target:delStatusEffect(xi.effect.ENCHANTMENT)
+itemObject.onItemCheck = function(target, item, param, caster)
+    if target:getStatusEffectBySource(xi.effect.MND_BOOST, xi.effectSourceType.EQUIPPED_ITEM, xi.item.DEDUCTIVE_BROCADE_OBI) ~= nil then
+        target:delStatusEffect(xi.effect.MND_BOOST, nil, xi.effectSourceType.EQUIPPED_ITEM, xi.item.DEDUCTIVE_BROCADE_OBI)
     end
 
     return 0
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffect(xi.effect.ENCHANTMENT, 0, 0, 180, 15861)
+itemObject.onItemUse = function(target, user)
+    if target:hasEquipped(xi.item.DEDUCTIVE_BROCADE_OBI) then
+        target:addStatusEffect(xi.effect.MND_BOOST, { duration = 180, origin = user, sourceType = xi.effectSourceType.EQUIPPED_ITEM, sourceTypeParam = xi.item.DEDUCTIVE_BROCADE_OBI })
+    end
 end
 
 itemObject.onEffectGain = function(target, effect)
-    target:addMod(xi.mod.MND, 10)
+    effect:addMod(xi.mod.MND, 10)
 end
 
 itemObject.onEffectLose = function(target, effect)
-    target:delMod(xi.mod.MND, 10)
 end
 
 return itemObject

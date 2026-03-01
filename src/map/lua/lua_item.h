@@ -1,20 +1,20 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2010-2015 Darkstar Dev Teams
+  Copyright (c) 2010-2015 Darkstar Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTItem or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTItem or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
@@ -72,12 +72,16 @@ public:
     auto getAugment(uint8 slot) -> sol::table; // get the augment id and power in slot
     // int32 setAugment(lua_State*);           // set the augment id and power in slot
 
-    uint8  getSkillType();         // get skill type
-    uint16 getWeaponskillPoints(); // get current ws points
+    uint8  getSkillType();                            // get skill type
+    uint16 getWeaponskillPoints();                    // get current ws points
+    void   setWeaponskillPointsNeeded(uint16 points); // set required ws points to unlock (used for Unlocking a Myth era module)
+    uint16 getWeaponskillPointsNeeded();              // confirm required ws points on this item object
 
-    bool isTwoHanded();  // is a two handed weapon
-    bool isHandToHand(); // is a hand to hand weapon (or unarmed H2H)
-    bool isShield();     // is a Shield
+    bool  isTwoHanded();             // is a two handed weapon
+    bool  isHandToHand();            // is a hand to hand weapon (or unarmed H2H)
+    bool  isShield();                // is a Shield
+    uint8 getShieldSize();           // get the shield size (used for block rate calculation)
+    uint8 getShieldAbsorptionRate(); // get the shield absorbtion rate (used for block rate calculation)
 
     auto getSignature() -> std::string;
 
@@ -88,11 +92,11 @@ public:
 
     bool isInstalled();
 
-    void setSoulPlateData(std::string const& name, uint16 mobFamily, uint8 zeni, uint16 skillIndex, uint8 fp);
+    void setSoulPlateData(const std::string& name, uint32 interestData, uint8 zeni, uint16 skillIndex, uint8 fp);
     auto getSoulPlateData() -> sol::table;
 
     auto getExData() -> sol::table;            // NOTE: This is 0-indexed, to be in line with the underlying C++ data
-    void setExData(sol::table const& newData); // NOTE: This is 0-indexed, to be in line with the underlying C++ data
+    void setExData(const sol::table& newData); // NOTE: This is 0-indexed, to be in line with the underlying C++ data
 
     bool operator==(const CLuaItem& other) const
     {

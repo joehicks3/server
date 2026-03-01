@@ -1,9 +1,11 @@
 -----------------------------------
 -- Zone: Nashmau (53)
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
+    zone:registerCuboidTriggerArea(1, 0, 0.0, -50, 20, 0.0, -35) -- In front of boat customs
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -14,7 +16,10 @@ zoneObject.onZoneIn = function(player, prevZone)
         player:getYPos() == 0 and
         player:getZPos() == 0
     then
-        if prevZone == xi.zone.SILVER_SEA_ROUTE_TO_NASHMAU then
+        if
+            player:hasKeyItem(xi.ki.SILVER_SEA_FERRY_TICKET) and
+            prevZone == xi.zone.SILVER_SEA_ROUTE_TO_NASHMAU
+        then
             cs = 201
             player:setPos(11, 2, -102, 128)
         else
@@ -31,9 +36,13 @@ end
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
 end
 
-zoneObject.onTransportEvent = function(player, transport)
-    if transport == 59 then
-        player:startEvent(200)
+zoneObject.onTransportEvent = function(player, prevZoneId, transportId)
+    if prevZoneId == xi.zone.SILVER_SEA_ROUTE_TO_AL_ZAHBI then
+        if player:hasKeyItem(xi.ki.SILVER_SEA_FERRY_TICKET) then
+            player:startEvent(200)
+        else
+            player:setPos(11, 2, -102, 128)
+        end
     end
 end
 
@@ -42,7 +51,7 @@ end
 
 zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 200 then
-        player:setPos(0, -2, 0, 0, 59)
+        player:setPos(0, -2, 0, 0, xi.zone.SILVER_SEA_ROUTE_TO_AL_ZAHBI)
     end
 end
 

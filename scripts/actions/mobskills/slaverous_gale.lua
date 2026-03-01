@@ -1,25 +1,36 @@
 -----------------------------------
 -- Slaverous Gale
---
--- Description: Deals earth damage that inflicts Plague and Slow effects on targets in front of the caster
--- Type: Magical (Earth)
+-- Family: Sandworms
+-- Description: Deals damage to targets in front of mob. Additional Effect: Plague, Slow
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.PLAGUE, 1, 3, 60)
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.SLOW, 1250, 0, 60)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * math.random(4, 6), xi.element.EARTH, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.EARTH, xi.mobskills.shadowBehavior.WIPE_SHADOWS)
+    -- TODO: JP wiki says this can miss and may be a physical skill. Need more captures to confirm.
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 5.0, 5.0, 5.0 }
+    params.element        = xi.element.EARTH
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.EARTH
+    params.shadowBehavior = xi.mobskills.shadowBehavior.WIPE_SHADOWS
 
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.EARTH)
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.PLAGUE, 5, 3, 120)
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.SLOW, 5000, 0, 120)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

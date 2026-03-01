@@ -1,8 +1,7 @@
 -----------------------------------
 -- Zone: Jugner_Forest_[S] (82)
 -----------------------------------
-require('scripts/globals/dark_ixion')
------------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)

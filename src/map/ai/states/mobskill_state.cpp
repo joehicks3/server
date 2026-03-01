@@ -1,35 +1,40 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2010-2015 Darkstar Dev Teams
+  Copyright (c) 2010-2015 Darkstar Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
 
 #include "mobskill_state.h"
+#include "action/action.h"
+#include "action/interrupts.h"
 #include "ai/ai_container.h"
+#include "ai/helpers/targetfind.h"
 #include "enmity_container.h"
 #include "entities/battleentity.h"
 #include "entities/mobentity.h"
+#include "enums/action/category.h"
+#include "lua/luautils.h"
 #include "mobskill.h"
-#include "packets/action.h"
+#include "packets/s2c/0x028_battle2.h"
 #include "status_effect_container.h"
 #include "utils/battleutils.h"
 
-CMobSkillState::CMobSkillState(CBattleEntity* PEntity, uint16 targid, uint16 wsid)
+CMobSkillState::CMobSkillState(CBattleEntity* PEntity, uint16 targid, uint16 wsid, std::optional<timer::duration> castTimeOverride)
 : CState(PEntity, targid)
 , m_PEntity(PEntity)
 , m_spentTP(0)
@@ -45,40 +50,80 @@ CMobSkillState::CMobSkillState(CBattleEntity* PEntity, uint16 targid, uint16 wsi
         throw CStateInitException(nullptr);
     }
 
-    auto* PTarget = m_PEntity->IsValidTarget(m_targid, skill->getValidTargets(), m_errorMsg);
+    // Self-centered AoE: validate mob can target itself, but keep original targid for allegiance
+    const bool   isSelfCenteredAoE = skill->getAoe() == static_cast<uint8>(AOE_RADIUS::ATTACKER);
+    const uint16 validTargets      = isSelfCenteredAoE ? static_cast<uint16>(TARGET_SELF) : skill->getValidTargets();
+    const uint16 validateTargid    = isSelfCenteredAoE ? m_PEntity->targid : targid;
+    auto*        PTarget           = m_PEntity->IsValidTarget(validateTargid, validTargets, m_errorMsg);
 
-    if (!PTarget || m_errorMsg)
+    if (!PTarget || this->HasErrorMsg())
     {
-        throw CStateInitException(std::move(m_errorMsg));
+        if (this->HasErrorMsg())
+        {
+            throw CStateInitException(m_errorMsg->copy());
+        }
+        else
+        {
+            throw CStateInitException(std::make_unique<CBasicPacket>());
+        }
     }
+
+    // Store original targid - for self-centered AoE this preserves battle target for allegiance checks
+    SetTarget(targid);
 
     m_PSkill = std::make_unique<CMobSkill>(*skill);
 
-    m_castTime = std::chrono::milliseconds(m_PSkill->getActivationTime());
+    if (castTimeOverride.has_value())
+    {
+        m_castTime = castTimeOverride.value();
+    }
+    else
+    {
+        m_castTime = m_PSkill->getActivationTime();
+    }
 
     if (m_castTime > 0s)
     {
-        action_t action;
-        action.id         = m_PEntity->id;
-        action.actiontype = ACTION_MOBABILITY_START;
+        // For self-centered AoE damaging moves, show battle target in readies message
+        // For true self-target buffs (TARGET_SELF), show self
+        const bool isSelfBuff    = skill->getValidTargets() == TARGET_SELF;
+        auto*      PActionTarget = isSelfBuff ? m_PEntity : (isSelfCenteredAoE ? m_PEntity->GetBattleTarget() : m_PEntity->GetEntity(targid));
+        if (!PActionTarget)
+        {
+            PActionTarget = m_PEntity;
+        }
 
-        actionList_t& actionList  = action.getNewActionList();
-        actionList.ActionTargetID = PTarget->id;
+        action_t action{
+            .actorId    = m_PEntity->id,
+            .actiontype = ActionCategory::SkillStart,
+            .actionid   = static_cast<uint32_t>(FourCC::SkillUse),
+            .targets    = {
+                {
+                       .actorId = PActionTarget ? PActionTarget->id : m_PEntity->id,
+                       .results = {
+                        {
+                               .param     = m_PSkill->getID(),
+                               .messageID = m_PSkill->getFlag() & SKILLFLAG_NO_START_MSG ? MsgBasic::None : MsgBasic::ReadiesWeaponskill,
+                        },
+                    },
+                },
+            },
+        };
 
-        actionTarget_t& actionTarget = actionList.getNewActionTarget();
-
-        actionTarget.reaction   = REACTION::NONE;
-        actionTarget.speceffect = SPECEFFECT::NONE;
-        actionTarget.animation  = 0;
-        actionTarget.param      = m_PSkill->getID();
-        actionTarget.messageID  = 43;
-        m_PEntity->loc.zone->PushPacket(m_PEntity, CHAR_INRANGE_SELF, new CActionPacket(action));
+        m_PEntity->loc.zone->PushPacket(m_PEntity, CHAR_INRANGE_SELF, std::make_unique<GP_SERV_COMMAND_BATTLE2>(action));
 
         // face toward target // TODO : add force param to turnTowardsTarget on certain TP moves like Petro Eyes
         battleutils::turnTowardsTarget(m_PEntity, PTarget);
     }
-    m_PEntity->PAI->EventHandler.triggerListener("WEAPONSKILL_STATE_ENTER", CLuaBaseEntity(m_PEntity), m_PSkill->getID());
+    m_PEntity->PAI->EventHandler.triggerListener("WEAPONSKILL_STATE_ENTER", m_PEntity, m_PSkill->getID());
     SpendCost();
+
+    // Probably ok to do this for all skills, but there's no need
+    // This allows instant mobskills to actually be instant by processing the first tick immediately
+    if (m_castTime == 0s)
+    {
+        DoUpdate(GetEntryTime());
+    }
 }
 
 CMobSkill* CMobSkillState::GetSkill()
@@ -110,35 +155,65 @@ void CMobSkillState::SpendCost()
     }
 }
 
-bool CMobSkillState::Update(time_point tick)
+bool CMobSkillState::Update(timer::time_point tick)
 {
+    // Reset the state for the current skill attempt
+    m_skillSuccess = false;
+
     // Rotate towards target during ability // TODO : add force param to turnTowardsTarget on certain TP moves like Petro Eyes
     if (m_castTime > 0s && tick < GetEntryTime() + m_castTime)
     {
-        CBaseEntity* PTarget = GetTarget();
-        if (PTarget)
+        if (CBaseEntity* PTarget = GetTarget())
         {
             battleutils::turnTowardsTarget(m_PEntity, PTarget);
         }
     }
 
-    if (m_PEntity && m_PEntity->isAlive() && (tick > GetEntryTime() + m_castTime && !IsCompleted()))
+    if (m_PEntity && m_PEntity->isAlive() && (tick >= GetEntryTime() + m_castTime && !IsCompleted()))
     {
-        action_t action;
+        // Check for stun/sleep/etc at the moment of skill completion - Cleanup handles the interrupt
+        if (m_PEntity->StatusEffectContainer->HasPreventActionEffect())
+        {
+            return true;
+        }
+
+        action_t action{};
         m_PEntity->OnMobSkillFinished(*this, action);
-        m_PEntity->loc.zone->PushPacket(m_PEntity, CHAR_INRANGE_SELF, new CActionPacket(action));
-        auto delay   = std::chrono::milliseconds(m_PSkill->getAnimationTime());
-        m_finishTime = tick + delay;
+
+        // Zero message ID
+        if (m_PSkill->getFlag() & SKILLFLAG_NO_FINISH_MSG)
+        {
+            action.ForEachResult([&](action_result_t& result)
+                                 {
+                                     result.messageID = MsgBasic::None;
+                                 });
+        }
+
+        // Only send packet if action was populated (e.g. interrupts return early)
+        if (!action.targets.empty())
+        {
+            m_skillSuccess = true;
+            m_PEntity->loc.zone->PushPacket(m_PEntity, CHAR_INRANGE_SELF, std::make_unique<GP_SERV_COMMAND_BATTLE2>(action));
+        }
+
+        m_finishTime = tick + m_PSkill->getAnimationTime();
         Complete();
     }
+
+    if (!m_PEntity)
+    {
+        ShowError("CMobSkillState: m_Pentity is nullptr");
+        return false;
+    }
+
     if (IsCompleted() && tick > m_finishTime)
     {
         auto* PTarget = GetTarget();
-        if (PTarget && PTarget->objtype == TYPE_MOB && PTarget != m_PEntity && m_PEntity->allegiance == ALLEGIANCE_TYPE::PLAYER)
+        if (m_skillSuccess && PTarget && PTarget->objtype == TYPE_MOB && PTarget != m_PEntity && m_PEntity->allegiance == ALLEGIANCE_TYPE::PLAYER)
         {
-            static_cast<CMobEntity*>(PTarget)->PEnmityContainer->UpdateEnmity(m_PEntity, 0, 0);
+            bool withMaster = m_PEntity->objtype == TYPE_PET || (m_PEntity->objtype == TYPE_MOB && m_PEntity->isCharmed);
+            static_cast<CMobEntity*>(PTarget)->PEnmityContainer->UpdateEnmity(m_PEntity, 0, 0, withMaster);
         }
-        m_PEntity->PAI->EventHandler.triggerListener("WEAPONSKILL_STATE_EXIT", CLuaBaseEntity(m_PEntity), m_PSkill->getID());
 
         if (m_PEntity->objtype == TYPE_PET && m_PEntity->PMaster && m_PEntity->PMaster->objtype == TYPE_PC && (m_PSkill->isBloodPactRage() || m_PSkill->isBloodPactWard()))
         {
@@ -152,37 +227,49 @@ bool CMobSkillState::Update(time_point tick)
                 PSummoner->StatusEffectContainer->GetStatusEffect(EFFECT_AVATARS_FAVOR)->SetPower(power > 11 ? power : 11);
             }
         }
+
         return true;
     }
     return false;
 }
 
-void CMobSkillState::Cleanup(time_point tick)
+void CMobSkillState::Cleanup(timer::time_point tick)
 {
-    if (m_PEntity && m_PEntity->isAlive() && !IsCompleted())
+    if (m_PEntity && !IsCompleted())
     {
-        action_t action;
-        action.id         = m_PEntity->id;
-        action.actiontype = ACTION_MOBABILITY_INTERRUPT;
-        action.actionid   = 28787;
+        ActionInterrupts::AbilityInterrupt(m_PEntity);
+        reduceTpOnInterrupt();
+    }
 
-        actionList_t& actionList  = action.getNewActionList();
-        actionList.ActionTargetID = m_PEntity->id;
+    // Call finalizer if skill completed (not interrupted) and set any final animationsub
+    if (m_PEntity && IsCompleted())
+    {
+        if (m_PSkill->getFinalAnimationSub().has_value() && m_PEntity && m_PEntity->isAlive())
+        {
+            m_PEntity->animationsub = m_PSkill->getFinalAnimationSub().value();
+            m_PEntity->updatemask |= UPDATE_COMBAT;
+        }
 
-        actionTarget_t& actionTarget = actionList.getNewActionTarget();
-        actionTarget.animation       = 0x1FC; // Not perfectly accurate, this animation ID can change from time to time for unknown reasons.
-        actionTarget.reaction        = REACTION::HIT;
+        luautils::OnMobSkillFinalize(m_PEntity, m_PSkill.get());
+    }
 
-        m_PEntity->loc.zone->PushPacket(m_PEntity, CHAR_INRANGE_SELF, new CActionPacket(action));
+    if (m_PEntity)
+    {
+        m_PEntity->PAI->EventHandler.triggerListener("WEAPONSKILL_STATE_EXIT", m_PEntity, m_PSkill->getID());
+    }
+}
 
+void CMobSkillState::reduceTpOnInterrupt() const
+{
+    if (m_PEntity && m_PEntity->isAlive())
+    {
         // On retail testing, mobs lose 33% of their TP at 2900 or higher TP
         // But lose 25% at < 2900 TP.
         // Testing was done via charm on a steelshell, methodology was the following on BST/DRK with a scythe
         // charm -> build tp -> leave -> stun -> interrupt TP move with weapon bash -> charm and check TP. Note that weapon bash incurs damage and thus adds TP.
         // Note: this is very incomplete. Further testing shows that other statuses also reduce TP but in addition it seems that specific mobskills may reduce TP more or less than these numbers
         // Thus while incomplete, is better than nothing.
-        if (m_PEntity->StatusEffectContainer &&
-            m_PEntity->StatusEffectContainer->HasStatusEffect({ EFFECT::EFFECT_STUN, EFFECT::EFFECT_TERROR, EFFECT::EFFECT_PETRIFICATION, EFFECT::EFFECT_SLEEP, EFFECT::EFFECT_SLEEP_II, EFFECT::EFFECT_LULLABY }))
+        if (m_PEntity->StatusEffectContainer && m_PEntity->StatusEffectContainer->HasPreventActionEffect())
         {
             int16 tp = m_spentTP;
             if (tp >= 2900)

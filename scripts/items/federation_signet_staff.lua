@@ -3,9 +3,10 @@
 -- Item: Federation Signet Staff
 -- Effect: Signet
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target, user)
+itemObject.onItemCheck = function(target, item, param, caster)
     if target:getNation() ~= xi.nation.WINDURST then
         return xi.msg.basic.ITEM_CANNOT_USE_ON
     end
@@ -16,10 +17,10 @@ itemObject.onItemCheck = function(target, user)
     end
 
     -- Can only use on targets within party or self
-    if target:getID() ~= user:getID() then
+    if target:getID() ~= caster:getID() then
         if
-            user:getPartyLeader() == nil or
-            target:getPartyLeader():getID() ~= user:getPartyLeader():getID()
+            caster:getPartyLeader() == nil or
+            target:getPartyLeader():getID() ~= caster:getPartyLeader():getID()
         then
             return xi.msg.basic.ITEM_CANNOT_USE_ON
         end
@@ -28,9 +29,9 @@ itemObject.onItemCheck = function(target, user)
     return 0
 end
 
-itemObject.onItemUse = function(target)
+itemObject.onItemUse = function(target, user)
     target:delStatusEffectsByFlag(xi.effectFlag.INFLUENCE, true)
-    target:addStatusEffect(xi.effect.SIGNET, 0, 0, 18000)
+    target:addStatusEffect(xi.effect.SIGNET, { duration = 18000, origin = user })
 end
 
 return itemObject

@@ -1,20 +1,20 @@
 ﻿/*
 ===========================================================================
 
-Copyright (c) 2010-2015 Darkstar Dev Teams
+  Copyright (c) 2010-2015 Darkstar Dev Teams
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see http://www.gnu.org/licenses/
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
 
 ===========================================================================
 */
@@ -24,7 +24,7 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include "entities/battleentity.h"
 #include "status_effect_container.h"
 
-CInactiveState::CInactiveState(CBaseEntity* PEntity, duration _duration, bool canChangeState, bool untargetable)
+CInactiveState::CInactiveState(CBaseEntity* PEntity, timer::duration _duration, bool canChangeState, bool untargetable)
 : CState(PEntity, 0)
 , m_duration(_duration)
 , m_canChangeState(canChangeState)
@@ -36,7 +36,7 @@ CInactiveState::CInactiveState(CBaseEntity* PEntity, duration _duration, bool ca
     }
 }
 
-bool CInactiveState::Update(time_point tick)
+bool CInactiveState::Update(timer::time_point tick)
 {
     auto* PBattleEntity{ dynamic_cast<CBattleEntity*>(m_PEntity) };
     if (PBattleEntity && m_duration == 0ms)
@@ -56,6 +56,6 @@ bool CInactiveState::Update(time_point tick)
     return m_duration > 0ms && tick > GetEntryTime() + m_duration;
 }
 
-void CInactiveState::Cleanup(time_point tick)
+void CInactiveState::Cleanup(timer::time_point tick)
 {
 }

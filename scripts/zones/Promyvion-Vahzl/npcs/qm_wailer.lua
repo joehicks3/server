@@ -6,6 +6,7 @@
 -----------------------------------
 local ID = zones[xi.zone.PROMYVION_VAHZL]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -16,10 +17,6 @@ entity.onTrade = function(player, npc, trade)
         player:messageSpecial(ID.text.ON_NM_SPAWN)
         player:confirmTrade()
     end
-end
-
-entity.onTrigger = function(player, npc)
-    player:messageSpecial(ID.text.POPPED_NM_OFFSET + 1)
 end
 
 return entity

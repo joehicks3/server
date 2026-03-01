@@ -8,7 +8,7 @@
 -- Janshura-Rashura : !pos -227 -8 184 240
 -- Zokima-Rokima    : !pos 0 -16 124 239
 -- _6q2             : !pos 0.1 -49 37 242
--- qm16             : !pos -239.442 -1.000 -18.870 159
+-- qm_windy_9_2     : !pos -239.442 -1.000 -18.870 159
 -- Qu'Hau Spring    : !pos 0 -29 64 122
 -----------------------------------
 local heavensTowerID = zones[xi.zone.HEAVENS_TOWER]
@@ -79,17 +79,14 @@ mission.sections =
 
         [xi.zone.CHAMBER_OF_ORACLES] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if
-                        prevZone == xi.zone.QUICKSAND_CAVES and
-                        player:getMissionStatus(mission.areaId) >= 1
-                    then
-                        return 3
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if
+                    prevZone == xi.zone.QUICKSAND_CAVES and
+                    player:getMissionStatus(mission.areaId) >= 1
+                then
+                    return 3
+                end
+            end,
 
             onEventFinish =
             {
@@ -106,7 +103,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 2 and
-                        player:getLocalVar('battlefieldWin') == 225
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.MOON_READING
                     then
                         player:setMissionStatus(mission.areaId, 3)
                     end
@@ -195,7 +192,7 @@ mission.sections =
 
         [xi.zone.TEMPLE_OF_UGGALEPIH] =
         {
-            ['qm16'] =
+            ['qm_windy_9_2'] =
             {
                 onTrigger = function(player, npc)
                     if player:getMissionStatus(mission.areaId) >= 1 then
@@ -214,14 +211,11 @@ mission.sections =
 
         [xi.zone.WINDURST_WALLS] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if player:getMissionStatus(mission.areaId) == 4 then
-                        return 443
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if player:getMissionStatus(mission.areaId) == 4 then
+                    return 443
+                end
+            end,
 
             onEventFinish =
             {

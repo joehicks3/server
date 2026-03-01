@@ -5,6 +5,7 @@
 -- Recast Time: 5:00 minutes
 -- Duration: 3:00 minutes
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -12,14 +13,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    local duration = 180 + player:getMod(xi.mod.WARDING_CIRCLE_DURATION)
-    local power    = 5
-
-    if player:getMainJob() == xi.job.SAM then
-        power = 15
-    end
-
-    target:addStatusEffect(xi.effect.WARDING_CIRCLE, power, 0, duration)
+    return xi.job_utils.samurai.useWardingCircle(player, target, ability)
 end
 
 return abilityObject

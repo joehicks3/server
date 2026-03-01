@@ -87,6 +87,25 @@ local function addHandlers(secondLevel, lookupSecondLevel, checkFunc, container)
 
     -- Loop through the given second level table, and add them to lookup as needed
     for secondLevelKey, thirdLevel in pairs(secondLevel) do
+        -- The following keys are restricted in CI to function definitions, but to preserve
+        -- backwards-compatibility and ease of use in this system, wrap them in tables if
+        -- encountered.
+        local wrappedDefinitions =
+        {
+            'onZoneIn',
+            'onZoneOut',
+            'afterZoneIn',
+        }
+
+        for _, keyName in ipairs(wrappedDefinitions) do
+            if
+                secondLevelKey == keyName and
+                type(thirdLevel) == 'function'
+            then
+                thirdLevel = { thirdLevel }
+            end
+        end
+
         lookupSecondLevel[secondLevelKey] = lookupSecondLevel[secondLevelKey] or {}
 
         -- If only given a function or an action definition as third level, that will default to be an onTrigger handler
@@ -178,9 +197,7 @@ end
 -- Add handlers from a container, if the handler is in a zone in the valid zone table
 function InteractionLookup:addContainer(container, validZoneTable)
     if self.containers[container.id] then
-        -- Container already added, need to remove it first to re-add.
-        printf('Can\'t add a container that is already a loaded. Need to remove it first: ' .. container.id)
-        return
+        self:removeContainer(container)
     end
 
     if container.id == nil then
@@ -196,6 +213,7 @@ function InteractionLookup:addContainer(container, validZoneTable)
         for zoneId, secondLevel in pairs(section) do
             if zoneId ~= 'check' and (validZoneTable == nil or validZoneTable[zoneId]) then
                 self.data[zoneId] = self.data[zoneId] or {}
+
                 addHandlers(secondLevel, self.data[zoneId], checkFunc, container)
             end
         end
@@ -393,6 +411,7 @@ local function onHandler(data, secondLevelKey, thirdLevelKey, args, fallbackHand
     -- except those that should only perform one action at a time, like onTrigger and onTrade
     if
         fallbackHandler and
+        thirdLevelKey ~= 'onSteal' and
         thirdLevelKey ~= 'onTrigger' and
         thirdLevelKey ~= 'onTrade'
     then
@@ -440,6 +459,10 @@ function InteractionLookup:afterZoneIn(player, fallbackFn)
     return onHandler(self.data, 'afterZoneIn', 1, { player }, fallbackFn)
 end
 
+function InteractionLookup:onSteal(player, mob, ability, action, fallbackFn)
+    return onHandler(self.data, mob:getName(), 'onSteal', { player, mob, ability, action }, fallbackFn)
+end
+
 function InteractionLookup:onTrigger(player, npc, fallbackFn)
     return onHandler(self.data, npc:getName(), 'onTrigger', { player, npc }, fallbackFn, -1, npc:getID())
 end
@@ -453,11 +476,11 @@ function InteractionLookup:onMobDeath(mob, player, optParams, fallbackFn)
 end
 
 function InteractionLookup:onTriggerAreaEnter(player, triggerArea, instance, fallbackFn)
-    return onHandler(self.data, 'onTriggerAreaEnter', triggerArea:GetTriggerAreaID(), { player, triggerArea, instance }, fallbackFn)
+    return onHandler(self.data, 'onTriggerAreaEnter', triggerArea:getTriggerAreaID(), { player, triggerArea, instance }, fallbackFn)
 end
 
 function InteractionLookup:onTriggerAreaLeave(player, triggerArea, instance, fallbackFn)
-    return onHandler(self.data, 'onTriggerAreaLeave', triggerArea:GetTriggerAreaID(), { player, triggerArea, instance }, fallbackFn)
+    return onHandler(self.data, 'onTriggerAreaLeave', triggerArea:getTriggerAreaID(), { player, triggerArea, instance }, fallbackFn)
 end
 
 function InteractionLookup:onZoneIn(player, prevZone, fallbackFn)

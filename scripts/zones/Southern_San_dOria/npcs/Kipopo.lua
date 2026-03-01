@@ -4,6 +4,7 @@
 -- Type: Leathercraft Synthesis Image Support
 -- !pos -191.050 -2.15 12.285 230
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -50,9 +51,6 @@ entity.onTrigger = function(player, npc)
     else
         xi.crafting.oldImageSupportOnTrigger(player, npc)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

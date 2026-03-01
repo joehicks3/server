@@ -1,27 +1,39 @@
 -----------------------------------
---  Chaos Blade
---
---  Description: Deals Dark damage to enemies within a fan-shaped area. Additional effect: Curse
---  Type: Magical
---  Utsusemi/Blink absorb: Ignores Shadows
---  Range: Melee
+-- Chaos Blade
+-- Family: Dragons
+-- Description: Deals Dark damage to enemies within a fan-shaped area. Additional Effect: Curse
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 2
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 3, xi.element.DARK, dmgmod, xi.mobskills.magicalTpBonus.MAB_BONUS, 1)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.DARK, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.DARK)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    -- curse LAST so you don't die
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.CURSE_I, 25, 0, 420)
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 1, 1, 1 }
+    params.element        = xi.element.DARK
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.DARK
+    params.shadowBehavior = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
+    -- TODO: This move should force the mob to look at the target.
 
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        -- TODO: Capture power/durations (Varies between different mobs/NMs)
+        local power    = 25
+        local duration = 420
+
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.CURSE_I, power, 0, duration)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

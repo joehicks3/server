@@ -22,7 +22,12 @@ mission.sections =
 
         [xi.zone.AHT_URHGAN_WHITEGATE] =
         {
-            ['Naja_Salaheem'] = mission:progressEvent(3073, { text_table = 0 }),
+            ['Naja_Salaheem'] =
+            {
+                onTrigger = function(player, npc)
+                    return mission:event(3073, xi.besieged.getMercenaryRank(player), 1, 0, 0, 0, 0, 0, 0, 0)
+                end,
+            },
         },
 
         [xi.zone.ARRAPAGO_REEF] =
@@ -41,18 +46,15 @@ mission.sections =
                 end,
             },
 
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if
-                        prevZone == xi.zone.THE_ASHU_TALIF and
-                        player:getMissionStatus(mission.areaId) == 2
-                    then
-                        player:setPos(-456, -3, -405, 64)
-                        return 9
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if
+                    prevZone == xi.zone.THE_ASHU_TALIF and
+                    player:getMissionStatus(mission.areaId) == 2
+                then
+                    player:setPos(-456, -3, -405, 64)
+                    return 9
+                end
+            end,
 
             onEventFinish =
             {
@@ -69,21 +71,18 @@ mission.sections =
 
         [xi.zone.NASHMAU] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    if
-                        prevZone == xi.zone.ARRAPAGO_REEF and
-                        player:getMissionStatus(mission.areaId) == 3 and
-                        player:getXPos() == 0 and
-                        player:getYPos() == 0 and
-                        player:getZPos() == 0
-                    then
-                        player:setPos(-13, 2, -62, 194)
-                        return 281
-                    end
-                end,
-            },
+            onZoneIn = function(player, prevZone)
+                if
+                    prevZone == xi.zone.ARRAPAGO_REEF and
+                    player:getMissionStatus(mission.areaId) == 3 and
+                    player:getXPos() == 0 and
+                    player:getYPos() == 0 and
+                    player:getZPos() == 0
+                then
+                    player:setPos(-13, 2, -62, 194)
+                    return 281
+                end
+            end,
 
             onEventFinish =
             {

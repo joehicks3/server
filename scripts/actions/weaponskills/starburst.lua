@@ -10,6 +10,7 @@
 -- 100%TP    200%TP    300%TP
 -- 1.00      2.00      2.50
 -----------------------------------
+---@type TWeaponSkill
 local weaponskillObject = {}
 
 weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary, action, taChar)
@@ -17,9 +18,10 @@ weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary,
     params.ftpMod = { 1.0, 2.0, 2.5 }
     params.skill = xi.skill.STAFF
     params.includemab = true
+    params.dStat = xi.mod.INT
     -- 50/50 shot of being light or dark
     params.ele = xi.element.LIGHT
-    if math.random() < 0.5 then
+    if math.random(1, 100) <= 50 then
         params.ele = xi.element.DARK
     end
 

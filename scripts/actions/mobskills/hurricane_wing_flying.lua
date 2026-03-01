@@ -1,26 +1,39 @@
 -----------------------------------
---  Hurricane Wing (Airborne Version)
---
---  Description: Deals hurricane-force wind damage to enemies within a very wide area of effect. Additional effect: Blind
---  Type: Magical
---  Utsusemi/Blink absorb: Wipes shadows
---  Range: 30' radial.
---  Notes: Used only by Wyrm when in the air. Only use in a dedicated flying skill set.
+-- Hurricane Wing (Airborne Version)
+-- Family: Wyrm
+-- Description: Deals hurricane-force wind damage to enemies within a very wide area of effect. Additional Effect: Blind
+-- Notes: Used by Wyrm when in the air. Only use in a dedicated flying skill set.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
+    if mob:getAnimationSub() ~= 1 then -- Only use while flying
+        return 1
+    end
+
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.BLINDNESS, 60, 0, 30)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 5, xi.element.WIND, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.WIND, xi.mobskills.shadowBehavior.WIPE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.WIND)
-    return dmg
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 4, 4, 4 }
+    params.element        = xi.element.WIND
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.WIND
+    params.shadowBehavior = xi.mobskills.shadowBehavior.WIPE_SHADOWS
+
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.BLINDNESS, 100, 0, 30)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

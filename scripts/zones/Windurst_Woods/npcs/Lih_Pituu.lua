@@ -4,6 +4,7 @@
 -- Type: Bonecraft Adv. Image Support
 -- !pos -5.471 -6.25 -141.211 241
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local pathNodes =
@@ -19,14 +20,8 @@ entity.onSpawn = function(npc)
     npc:pathThrough(pathNodes, xi.path.flag.PATROL)
 end
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
     xi.crafting.oldImageSupportOnTrigger(player, npc)
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

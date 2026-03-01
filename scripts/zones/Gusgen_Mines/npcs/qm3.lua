@@ -6,10 +6,8 @@
 -----------------------------------
 local ID = zones[xi.zone.GUSGEN_MINES]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local healingTheLand = player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.HEALING_THE_LAND)
@@ -28,12 +26,6 @@ entity.onTrigger = function(player, npc)
     else
         player:messageSpecial(ID.text.LETTERS_IS_WRITTEN_HERE)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

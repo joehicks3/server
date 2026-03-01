@@ -1,32 +1,46 @@
 -----------------------------------
 -- Drain Whip
+-- Family: Morbols
 -- Description: Drains HP, MP, or TP from the target.
--- Type: Magical
--- Utsusemi/Blink absorb: ignores shadows
--- Range: Melee
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local drainEffect = xi.mobskills.drainType.HP
-    local dmgmod      = 1
-    local info        = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 3, xi.element.DARK, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg         = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.DARK, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    local rnd         = math.random(1, 3)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    if rnd == 1 then
-        drainEffect = xi.mobskills.drainType.TP
-    elseif rnd == 2 then
-        drainEffect = xi.mobskills.drainType.MP
+    local drainType = math.random(xi.mobskills.drainType.HP, xi.mobskills.drainType.TP)
+
+    -- TODO: Is this magical or physical? Need captures
+    -- TODO: Are the fTPs the same for each drain type?
+    params.baseDamage         = mob:getMainLvl() + 2
+    params.fTP                = { 3.0, 3.0, 3.0 } -- TODO: Capture fTPs
+    params.element            = xi.element.NONE
+    params.attackType         = xi.attackType.MAGICAL
+    params.damageType         = xi.damageType.NONE
+    params.shadowBehavior     = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
+    params.skipMagicBonusDiff = true
+
+    if
+        drainType == xi.mobskills.drainType.MP or
+        drainType == xi.mobskills.drainType.TP
+    then
+        params.skipDamageAdjustment = true
+        params.skipMagicBonusDiff   = true
+        params.skipStoneSkin        = true
     end
 
-    skill:setMsg(xi.mobskills.mobPhysicalDrainMove(mob, target, skill, drainEffect, dmg))
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
 
-    return dmg
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        skill:setMsg(xi.mobskills.mobDrainMove(mob, target, drainType, info.damage))
+    end
+
+    return info.damage
 end
 
 return mobskillObject

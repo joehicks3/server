@@ -4,10 +4,8 @@
 --  Involved In Quest: Making Headlines
 -- !pos 32.575 -5.250 141.372 241
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local makingHeadlines = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.MAKING_HEADLINES)
@@ -43,9 +41,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(414) -- Standard Conversation
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

@@ -812,104 +812,6 @@ local gearSets =
         },
     },
 
-    [47] = -- Begin Jailer weapons: Set is weapon + Virtue stone, bonus 50% extra melee swing.
-    {
-        items =
-        {
-            xi.item.VIRTUE_STONE,
-            xi.item.HOPE_STAFF,
-        },
-        minEquipped = 2,
-        mods =
-        {
-            { xi.mod.AMMO_SWING, 50 },
-        },
-    },
-
-    [48] =
-    {
-        items =
-        {
-            xi.item.VIRTUE_STONE,
-            xi.item.JUSTICE_SWORD,
-        },
-        minEquipped = 2,
-        mods =
-        {
-            { xi.mod.AMMO_SWING, 50 },
-        },
-    },
-
-    [49] =
-    {
-        items =
-        {
-            xi.item.VIRTUE_STONE,
-            xi.item.TEMPERANCE_AXE,
-        },
-        minEquipped = 2,
-        mods =
-        {
-            { xi.mod.AMMO_SWING, 50 },
-        },
-    },
-
-    [50] =
-    {
-        items =
-        {
-            xi.item.VIRTUE_STONE,
-            xi.item.LOVE_HALBERD,
-        },
-        minEquipped = 2,
-        mods =
-        {
-            { xi.mod.AMMO_SWING, 50 },
-        },
-    },
-
-    [51] =
-    {
-        items =
-        {
-            xi.item.VIRTUE_STONE,
-            xi.item.FORTITUDE_AXE,
-        },
-        minEquipped = 2,
-        mods =
-        {
-            { xi.mod.AMMO_SWING, 50 },
-        },
-    },
-
-    [52] =
-    {
-        items =
-        {
-            xi.item.VIRTUE_STONE,
-            xi.item.FAITH_BAGHNAKHS,
-        },
-        minEquipped = 2,
-        mods =
-        {
-            { xi.mod.AMMO_SWING, 50 },
-        },
-    },
-
-    [53] = -- End Jailer weapons
-    {
-        items =
-        {
-            xi.item.VIRTUE_STONE,
-            xi.item.PRUDENCE_ROD,
-        },
-        minEquipped = 2,
-        mods =
-        {
-            { xi.mod.AMMO_SWING, 50 },
-        },
-    },
-
     [54] = -- Bladeborn/Steelflash Earrings
     {
         items =
@@ -1530,7 +1432,7 @@ local gearSets =
         maxEquipped = 5,
         mods =
         {
-            { xi.mod.FAST_CAST, 1, 2, 3, 4 },
+            { xi.mod.FASTCAST, 1, 2, 3, 4 },
         },
     },
 
@@ -1702,8 +1604,8 @@ local gearSets =
             xi.item.THEOPHANY_PANTALOONS_P3,
             xi.item.THEOPHANY_MITTS_P2,
             xi.item.THEOPHANY_MITTS_P3,
-            xi.item.THEOPHANY_BRIAULT_P2,
-            xi.item.THEOPHANY_BRIAULT_P3,
+            xi.item.THEOPHANY_BLIAUT_P2,
+            xi.item.THEOPHANY_BLIAUT_P3,
             xi.item.THEOPHANY_CAP_P2,
             xi.item.THEOPHANY_CAP_P3,
         },
@@ -2216,9 +2118,9 @@ local gearSets =
         items =
         {
             xi.item.REGAL_RING,
-            xi.item.RUNEIST_BOOTS_P2,
-            xi.item.RUNEIST_BOOTS_P3,
-            xi.item.RUNIEST_TROUSERS_P2,
+            xi.item.RUNEIST_BOTTES_P2,
+            xi.item.RUNEIST_BOTTES_P3,
+            xi.item.RUNIESTS_TROUSERS_P2,
             xi.item.RUNEIST_TROUSERS_P3,
             xi.item.RUNEIST_MITONS_P2,
             xi.item.RUNEIST_MITONS_P3,
@@ -2335,7 +2237,7 @@ local gearSets =
         minEquipped = 2,
         mods =
         {
-            { xi.mod.DMG, -4, -6, -8, -10 },
+            { xi.mod.DMG, -400, -600, -800, -1000 },
         },
     },
 
@@ -2570,16 +2472,24 @@ xi.gear_sets.itemToSetId = xi.gear_sets.createItemToSetId()
 -- core on equip and unequip of an item.
 xi.gear_sets.checkForGearSet = function(player)
     player:clearGearSetMods()
+    local playerCurrentLevel = player:getMainLvl()
 
     -- Build a table containing equipped Set IDs, and the count for each one.
     local equippedSets = {}
     for equipmentSlot = 0, xi.MAX_SLOTID do
-        local equipId = player:getEquipID(equipmentSlot)
-        local setId   = xi.gear_sets.itemToSetId[equipId]
+        local equip = player:getEquippedItem(equipmentSlot)
+        if equip then
+            local equipId    = equip:getID()
+            local equipLevel = equip:getReqLvl()
+            local setId      = xi.gear_sets.itemToSetId[equipId]
 
-        if setId then
-            for _, v in ipairs(setId) do
-                equippedSets[v] = equippedSets[v] and (equippedSets[v] + 1) or 1
+            if
+                setId and
+                playerCurrentLevel >= equipLevel -- Player may be under Level Sync/Cap
+            then
+                for _, v in ipairs(setId) do
+                    equippedSets[v] = equippedSets[v] and (equippedSets[v] + 1) or 1
+                end
             end
         end
     end

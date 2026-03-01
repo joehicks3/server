@@ -2,10 +2,11 @@
 -- Heavy Armature
 -- Adds buffs Haste, Shell, Protect, Blink
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
-    if mob:getPool() == 243 then
+    if mob:getPool() == xi.mobPool.ARMED_GEARS then
         return 0
     else
         return 1

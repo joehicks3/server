@@ -5,14 +5,15 @@
 -- Recast Time: 00:03:00
 -- Duration: 00:01:00
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
-    return 0, 0
+    return xi.job_utils.dragoon.abilityCheckRequiresPet(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    xi.job_utils.dragoon.useSpiritBond(player, target, ability)
+    return xi.job_utils.dragoon.useSpiritBond(player, target, ability)
 end
 
 return abilityObject

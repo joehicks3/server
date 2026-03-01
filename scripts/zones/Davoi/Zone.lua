@@ -4,6 +4,7 @@
 local ID = zones[xi.zone.DAVOI]
 require('scripts/quests/otherAreas/helpers')
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
@@ -25,7 +26,7 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
@@ -58,7 +59,7 @@ end
 zoneObject.onGameHour = function(zone)
     local jarMoveTime = GetServerVariable('Davoi_Jar_Move_Time')
 
-    if os.time() >= jarMoveTime then
+    if GetSystemTime() >= jarMoveTime then
         local npc = GetNPCByID(ID.npc.JAR)
 
         xi.otherAreas.helpers.TestMyMettle.moveJar(npc)

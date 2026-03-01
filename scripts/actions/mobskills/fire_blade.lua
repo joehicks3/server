@@ -4,6 +4,7 @@
 -- Type: Enhancing
 -- Used only by Kam'lanaut. Enfire aspect adds 70+ to his melee attacks.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -11,7 +12,7 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    skill:setMsg(xi.mobskills.mobBuffMove(mob, xi.effect.ENFIRE, 65, 0, 60))
+    skill:setMsg(xi.mobskills.mobBuffMove(mob, xi.effect.ENFIRE, 65, 0, 30))
 
     return xi.effect.ENFIRE
 end

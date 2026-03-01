@@ -1,6 +1,6 @@
 -----------------------------------
 -- Area: The Garden of Ru'Hmet
---   NM: Ix'aern DRK
+-- NM: Ix'aern DRK
 -- !pos -240 5.00 440 35
 -- !pos -280 5.00 240 35
 -- !pos -560 5.00 239 35
@@ -8,9 +8,23 @@
 -----------------------------------
 mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobInitialize = function(IxAernDrkMob)
+    IxAernDrkMob:setMobMod(xi.mobMod.IDLE_DESPAWN, 300)
+    IxAernDrkMob:addImmunity(xi.immunity.BIND)
+    IxAernDrkMob:addImmunity(xi.immunity.BLIND)
+    IxAernDrkMob:addImmunity(xi.immunity.DARK_SLEEP)
+    IxAernDrkMob:addImmunity(xi.immunity.ELEGY)
+    IxAernDrkMob:addImmunity(xi.immunity.GRAVITY)
+    IxAernDrkMob:addImmunity(xi.immunity.LIGHT_SLEEP)
+    IxAernDrkMob:addImmunity(xi.immunity.PARALYZE)
+    IxAernDrkMob:addImmunity(xi.immunity.SILENCE)
+    IxAernDrkMob:addImmunity(xi.immunity.SLOW)
+    IxAernDrkMob:addImmunity(xi.immunity.STUN)
+    IxAernDrkMob:addImmunity(xi.immunity.TERROR)
+
     IxAernDrkMob:addListener('DEATH', 'AERN_DEATH', function(mob, killer)
         local timesReraised = mob:getLocalVar('AERN_RERAISES')
         if math.random (1, 10) < 10 then
@@ -26,6 +40,7 @@ entity.onMobInitialize = function(IxAernDrkMob)
             mob:setMobMod(xi.mobMod.NO_DROPS, 1)
             mob:timer(9000, function(mobArg)
                 mobArg:setHP(mob:getMaxHP())
+                mobArg:setMP(mob:getMaxMP())
                 mobArg:setAnimationSub(3)
                 mobArg:resetAI()
                 mobArg:stun(3000)

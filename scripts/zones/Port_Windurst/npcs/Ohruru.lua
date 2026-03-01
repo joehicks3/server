@@ -6,10 +6,8 @@
 -- Note: Animation for his "Cure" is not functioning. Unable to capture option 1, so if the user says no, he heals them anyways.
 -- !pos -108 -5 94 240
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local catch = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.CATCH_IT_IF_YOU_CAN)
@@ -57,9 +55,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(230) -- STANDARD CONVERSATION
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

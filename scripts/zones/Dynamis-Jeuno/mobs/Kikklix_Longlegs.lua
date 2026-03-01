@@ -8,7 +8,13 @@ mixins =
     require('scripts/mixins/job_special')
 }
 -----------------------------------
+---@type TMobEntity
 local entity = {}
+
+entity.spawnPoints =
+{
+    { x = -55.608, y =  5.906, z = -0.608 }
+}
 
 entity.onMobDeath = function(mob, player, optParams)
 end

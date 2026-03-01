@@ -2,9 +2,12 @@
 -- Area: Batallia Downs
 --  Mob: Goblin Pathfinder
 -----------------------------------
-local ID = zones[xi.zone.BATALLIA_DOWNS]
------------------------------------
+---@type TMobEntity
 local entity = {}
+
+entity.onMobInitialize = function(mob)
+    xi.pet.setMobPet(mob, 1, 'Goblins_Dragonfly')
+end
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 74, 2, xi.regime.type.FIELDS)
@@ -15,8 +18,7 @@ entity.onMobDeath = function(mob, player, optParams)
     then
         -- Guesstimating 15% chance
         if math.random(1, 100) >= 85 then
-            player:addKeyItem(xi.ki.BOWL_OF_BLAND_GOBLIN_SALAD)
-            player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.BOWL_OF_BLAND_GOBLIN_SALAD)
+            npcUtil.giveKeyItem(player, xi.ki.BOWL_OF_BLAND_GOBLIN_SALAD)
         end
     end
 end

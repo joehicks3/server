@@ -6,6 +6,7 @@
 -- TP Cost: 25%
 -- Duration: 1:30
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -31,7 +32,9 @@ abilityObject.onUseAbility = function(player, target, ability)
 
     player:delStatusEffect(xi.effect.HASTE_SAMBA)
     player:delStatusEffect(xi.effect.DRAIN_SAMBA)
-    player:addStatusEffect(xi.effect.ASPIR_SAMBA, 2, 0, duration)
+    player:addStatusEffect(xi.effect.ASPIR_SAMBA, { power = 2, duration = duration, origin = player })
+
+    return xi.effect.ASPIR_SAMBA
 end
 
 return abilityObject

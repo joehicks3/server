@@ -35,7 +35,7 @@ public:
     void AddMember(CCharEntity* PChar);
     bool DelMember(CCharEntity* PChar);
 
-    void PushPacket(uint32 senderID, CBasicPacket* packet);
+    void PushPacket(uint32 senderID, const std::unique_ptr<CBasicPacket>& packet);
 
     std::vector<CCharEntity*> members;
 
@@ -45,13 +45,15 @@ private:
 
 namespace unitychat
 {
-    CUnityChat* LoadUnityChat(uint32 leader);
-    void        UnloadUnityChat(uint32 leader);
 
-    bool AddOnlineMember(CCharEntity* PChar, uint32 leader);
-    bool DelOnlineMember(CCharEntity* PChar, uint32 leader);
+CUnityChat* LoadUnityChat(uint32 leader);
+void        UnloadUnityChat(uint32 leader);
 
-    CUnityChat* GetUnityChat(uint32 leader);
+bool AddOnlineMember(CCharEntity* PChar, uint32 leader);
+bool DelOnlineMember(CCharEntity* PChar, uint32 leader);
+
+CUnityChat* GetUnityChat(uint32 leader);
+
 }; // namespace unitychat
 
 #endif

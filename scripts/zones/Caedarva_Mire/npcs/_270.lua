@@ -5,10 +5,8 @@
 -----------------------------------
 local ID = zones[xi.zone.CAEDARVA_MIRE]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     if player:checkDistance(npc) < 3 then
@@ -26,12 +24,6 @@ entity.onTrigger = function(player, npc)
     else
         player:messageSpecial(ID.text.STAGING_GATE_CLOSER)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

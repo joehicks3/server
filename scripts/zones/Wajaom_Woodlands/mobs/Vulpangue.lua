@@ -1,9 +1,11 @@
 -----------------------------------
 -- Area: Wajaom Woodlands
 --  ZNM: Vulpangue
+--  !pos -697 -7 -123
 -----------------------------------
 mixins = { require('scripts/mixins/rage') }
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobInitialize = function(mob)

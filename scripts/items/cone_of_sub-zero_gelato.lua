@@ -7,28 +7,25 @@
 -- MP % 16 (cap 80)
 -- MP Recovered While Healing 2
 -----------------------------------
+---@type TItemFood
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     return xi.itemUtils.foodOnItemCheck(target, xi.foodType.BASIC)
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffect(xi.effect.FOOD, 0, 0, 3600, 5155)
+itemObject.onItemUse = function(target, user, item, action)
+    target:addStatusEffect(xi.effect.FOOD, { duration = 3600, origin = user, sourceType = xi.effectSourceType.FOOD, sourceTypeParam = item:getID() })
 end
 
 itemObject.onEffectGain = function(target, effect)
-    target:addMod(xi.mod.HP, 10)
-    target:addMod(xi.mod.FOOD_MPP, 16)
-    target:addMod(xi.mod.FOOD_MP_CAP, 80)
-    target:addMod(xi.mod.MPHEAL, 2)
+    effect:addMod(xi.mod.FOOD_HP, 10)
+    effect:addMod(xi.mod.FOOD_MPP, 16)
+    effect:addMod(xi.mod.FOOD_MP_CAP, 80)
+    effect:addMod(xi.mod.MPHEAL, 2)
 end
 
 itemObject.onEffectLose = function(target, effect)
-    target:delMod(xi.mod.HP, 10)
-    target:delMod(xi.mod.FOOD_MPP, 16)
-    target:delMod(xi.mod.FOOD_MP_CAP, 80)
-    target:delMod(xi.mod.MPHEAL, 2)
 end
 
 return itemObject

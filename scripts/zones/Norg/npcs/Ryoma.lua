@@ -6,10 +6,8 @@
 -----------------------------------
 local ID = zones[xi.zone.NORG]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local twentyInPirateYears = player:getQuestStatus(xi.questLog.OUTLANDS, xi.quest.id.outlands.TWENTY_IN_PIRATE_YEARS)

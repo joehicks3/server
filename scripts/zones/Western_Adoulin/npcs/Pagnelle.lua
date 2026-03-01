@@ -5,10 +5,8 @@
 -----------------------------------
 local ID = zones[xi.zone.WESTERN_ADOULIN]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local raptorRapture = player:getQuestStatus(xi.questLog.ADOULIN, xi.quest.id.adoulin.RAPTOR_RAPTURE)
@@ -59,9 +57,6 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 5032 then
         -- Warps player to Rala Waterways to continue intrductory CS for Quest: 'Raptor Rapture'
@@ -85,7 +80,9 @@ entity.onEventFinish = function(player, csid, option, npc)
         player:completeQuest(xi.questLog.ADOULIN, xi.quest.id.adoulin.RAPTOR_RAPTURE)
         player:addCurrency('bayld', 1000 * xi.settings.main.BAYLD_RATE)
         player:messageSpecial(ID.text.BAYLD_OBTAINED, 1000 * xi.settings.main.BAYLD_RATE)
-        player:addFame(xi.fameArea.ADOULIN)
+
+        -- TODO: Verify fame value added
+        player:addFame(xi.fameArea.ADOULIN, 30)
         player:needToZone(true)
     end
 end

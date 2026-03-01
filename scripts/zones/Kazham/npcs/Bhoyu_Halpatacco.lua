@@ -3,10 +3,10 @@
 --  NPC: Bhoyu Halpatacco
 -- !pos -18 -4 -15 250
 -----------------------------------
+local ID = zones[xi.zone.KAZHAM]
+-----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local zPos = player:getZPos()
@@ -15,10 +15,9 @@ entity.onTrigger = function(player, npc)
         player:startEvent(67)
     elseif player:getGil() >= 200 then
         player:startEvent(116, 0, 200)
+    else
+        player:showText(npc, ID.text.NOT_ENOUGH_GIL)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

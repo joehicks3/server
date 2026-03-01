@@ -3,10 +3,8 @@
 --  NPC: Hari Pakhroib
 -- Starts and Finishes Quest: Greetings to the Guardian
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local guardian = player:getQuestStatus(xi.questLog.OUTLANDS, xi.quest.id.outlands.GREETINGS_TO_THE_GUARDIAN)
@@ -31,9 +29,6 @@ entity.onTrigger = function(player, npc)
     elseif guardian == xi.questStatus.QUEST_COMPLETED and needToZone then
         player:startEvent(72)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

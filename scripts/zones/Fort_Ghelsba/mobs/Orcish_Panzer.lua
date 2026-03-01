@@ -4,7 +4,12 @@
 -- Note: PH for Chariotbuster Byakzak
 -- !pos 23.935 -48.474 35.489 141
 -----------------------------------
+---@type TMobEntity
 local entity = {}
+
+entity.onMobInitialize = function(mob)
+    mob:addImmunity(xi.immunity.TERROR)
+end
 
 entity.onMobDeath = function(mob, player, optParams)
     if optParams.isKiller then
@@ -14,10 +19,13 @@ entity.onMobDeath = function(mob, player, optParams)
 
         DisallowRespawn(mobId, true)
 
-        if os.time() > hq:getLocalVar('pop') then
+        if
+            hq and
+            GetSystemTime() > hq:getLocalVar('pop')
+        then
             SpawnMob(mobId + 2):updateClaim(player)
             hq:setPos(mob:getXPos(), mob:getYPos(), mob:getZPos(), 0)
-        else
+        elseif nq then
             SpawnMob(mobId + 1):updateClaim(player)
             nq:setPos(mob:getXPos(), mob:getYPos(), mob:getZPos(), 0)
         end

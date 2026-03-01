@@ -1,10 +1,11 @@
 -----------------------------------
 -- Attachment: Ice Maker
 -----------------------------------
+---@type TAttachment
 local attachmentObject = {}
 
 attachmentObject.onEquip = function(automaton)
-    automaton:addListener('MAGIC_START', 'AUTO_ICE_MAKER_START', function(pet, spell, action)
+    automaton:addListener('MAGIC_START', 'AUTO_ICE_MAKER_START', function(pet, target, spell, action)
         if spell:getSkillType() ~= xi.skill.ELEMENTAL_MAGIC then
             return
         end

@@ -2,9 +2,12 @@
 -- Area: Rolanberry Fields
 --  Mob: Goblin Pathfinder
 -----------------------------------
-local ID = zones[xi.zone.ROLANBERRY_FIELDS]
------------------------------------
+---@type TMobEntity
 local entity = {}
+
+entity.onMobInitialize = function(mob)
+    xi.pet.setMobPet(mob, 1, 'Goblins_Bee')
+end
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 86, 2, xi.regime.type.FIELDS)
@@ -16,8 +19,7 @@ entity.onMobDeath = function(mob, player, optParams)
     then
         -- Guesstimating 15% chance
         if math.random(1, 100) <= 15 then
-            player:addKeyItem(xi.ki.JUG_OF_GREASY_GOBLIN_JUICE)
-            player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.JUG_OF_GREASY_GOBLIN_JUICE)
+            npcUtil.giveKeyItem(player, xi.ki.JUG_OF_GREASY_GOBLIN_JUICE)
         end
     end
 end

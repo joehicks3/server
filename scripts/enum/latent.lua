@@ -1,5 +1,6 @@
 xi = xi or {}
 
+---@enum xi.latent
 xi.latent =
 {
     HP_UNDER_PERCENT         = 0,  -- hp less than or equal to % - PARAM: HP PERCENT
@@ -42,8 +43,8 @@ xi.latent =
     JOB_MULTIPLE             = 38, -- PARAM: 0: ODD, 2: EVEN, 3-99: DIVISOR
     JOB_MULTIPLE_AT_NIGHT    = 39, -- PARAM: 0: ODD, 2: EVEN, 3-99: DIVISOR
     EQUIPPED_IN_SLOT         = 40, -- When item is equipped in the specified slot (e.g. Dweomer Knife, Erlking's Sword, etc.) PARAM: slotID
-    -- 41 free to use
-    -- 42 free to use
+    DURING_WS                = 41, -- During Weaponskill
+    WEATHER_CONDITION        = 42, -- See weather.lua for xi.weather enum
     WEAPON_DRAWN_HP_UNDER    = 43, -- PARAM: HP PERCENT
     NATION_CITIZEN           = 44, -- Triggered by player being citizen of nation matching param: 0 San d'Oria, 1 Bastok, 2 Windurst
     MP_UNDER_VISIBLE_GEAR    = 45, -- mp less than or equal to %, calculated using MP bonuses from visible gear only
@@ -63,4 +64,7 @@ xi.latent =
     VS_ECOSYSTEM             = 59, -- Vs. Specific Ecosystem ID (e.g. Vs. Plantoid: Accuracy+3)
     VS_FAMILY                = 60, -- Vs. Specific Family ID (e.g. Vs. Korrigan: Accuracy+3)
     VS_SUPERFAMILY           = 61, -- Vs. Specific Family ID (e.g. Vs. Mandragora: Accuracy+3)
+    MAINJOB                  = 62, -- mainjob - PARAM: JOBTYPE
+    IN_ADOULIN               = 63, -- in adoulin city zone
+    IN_GARRISON              = 64, -- while in an active Garrison
 }

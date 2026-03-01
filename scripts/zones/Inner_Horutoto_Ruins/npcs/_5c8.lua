@@ -8,13 +8,11 @@
 -----------------------------------
 local ID = zones[xi.zone.INNER_HORUTOTO_RUINS]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    if npc:getLocalVar('doorCoolDown') > os.time() then
+    if npc:getLocalVar('doorCoolDown') > GetSystemTime() then
         return
     elseif player:getZPos() >= -15 then
         player:messageSpecial(ID.text.PORTAL_NOT_OPEN_THAT_SIDE)
@@ -34,18 +32,12 @@ entity.onTrigger = function(player, npc)
             npc:timer(2500, function(npcArg)
                 npcArg:openDoor(30)
                 GetNPCByID(ID.npc.PORTAL_CIRCLE_BASE + 3):entityAnimationPacket('klrg')
-                npcArg:setLocalVar('doorCoolDown', os.time() + 38)
+                npcArg:setLocalVar('doorCoolDown', GetSystemTime() + 38)
             end)
         else
             player:messageSpecial(ID.text.PORTAL_SEALED_BY_3_MAGIC)
         end
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

@@ -5,6 +5,7 @@
 -- Involved in Quest: Riding on the Clouds
 -- !pos 25 -6 6 248
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -25,9 +26,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(61, 4366, 629, xi.item.CLUMP_OF_BOYAHDA_MOSS) -- During & after completed quest "Only the Best"
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

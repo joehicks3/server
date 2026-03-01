@@ -1,11 +1,9 @@
 -----------------------------------
---  Fuscous Ooze
---  Family: Slugs
---  Description: A dusky slime inflicts encumberance and weight.
---  Type: Magical
---  Utsusemi/Blink absorb: Ignores shadows
---  Range: Cone
+-- Fuscous Ooze
+-- Family: Slugs
+-- Description: Inflicts Encumbrance and Weight.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -13,15 +11,14 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    -- TODO: Encumberance seems to do nothing?
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.WEIGHT, 50, 0, 45)
+    local duration = math.random(30, 45)
 
-    local dmgmod = 1
-    local baseDamage = mob:getWeaponDmg() * 3.7
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, baseDamage, xi.element.WATER, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.WATER, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.WATER)
-    return dmg
+    skill:setMsg(xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.WEIGHT, 50, 0, duration))
+    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.ENCUMBRANCE_II, 0xFFFF, 0, duration)
+
+    -- This skill does not return a specific effect in the message.
+    -- Message returns "<Slug Name> uses Fuscous Ooze" and repeats for each target hit.
+    return xi.msg.basic.USES
 end
 
 return mobskillObject

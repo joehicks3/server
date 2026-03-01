@@ -14,13 +14,11 @@
 ===========================================================================
 */
 
-#ifndef _CJOBPOINTS_H
-#define _CJOBPOINTS_H
+#pragma once
 
 #include <vector>
 
 #include "./entities/battleentity.h"
-#include "ability.h"
 #include "common/cbasetypes.h"
 #include "modifier.h"
 
@@ -148,16 +146,16 @@ enum JOBPOINT_TYPE : uint16
     JP_ENLIGHT_EFFECT       = JPCATEGORY_PLD + 0x09, // ae.dmg +1 p.acc +1
 
     // DRK
-    JP_BLOOD_WEAPON_EFFECT     = JPCATEGORY_DRK + 0x00, // hp absorb +2%
-    JP_SOUL_ENSLAVEMENT_EFFECT = JPCATEGORY_DRK + 0x02, // tp absorb +1%
-    JP_ARCANE_CIRCLE_EFFECT    = JPCATEGORY_DRK + 0x01, // dmg taken -1
-    JP_LAST_RESORT_EFFECT      = JPCATEGORY_DRK + 0x03, // p.atk +2
-    JP_SOULEATER_DURATION      = JPCATEGORY_DRK + 0x04, // dur. +1s
-    JP_WEAPON_BASH_EFFECT      = JPCATEGORY_DRK + 0x05, // dmg +10
-    JP_NETHER_VOID_EFFECT      = JPCATEGORY_DRK + 0x06, // absorb +2% abs-attri status +1/10
-    JP_ARCANE_CREST_DURATION   = JPCATEGORY_DRK + 0x07, // dur. +1s
-    JP_SCARLET_DLRIUM_DURATION = JPCATEGORY_DRK + 0x08, // dur. +1s
-    JP_ENDARK_EFFECT           = JPCATEGORY_DRK + 0x09, // p.dmg p.atk p.acc +1
+    JP_BLOOD_WEAPON_EFFECT       = JPCATEGORY_DRK + 0x00, // hp absorb +2%
+    JP_SOUL_ENSLAVEMENT_EFFECT   = JPCATEGORY_DRK + 0x02, // tp absorb +1%
+    JP_ARCANE_CIRCLE_EFFECT      = JPCATEGORY_DRK + 0x01, // dmg taken -1
+    JP_LAST_RESORT_EFFECT        = JPCATEGORY_DRK + 0x03, // p.atk +2
+    JP_SOULEATER_DURATION        = JPCATEGORY_DRK + 0x04, // dur. +1s
+    JP_WEAPON_BASH_EFFECT        = JPCATEGORY_DRK + 0x05, // dmg +10
+    JP_NETHER_VOID_EFFECT        = JPCATEGORY_DRK + 0x06, // absorb +2% abs-attri status +1/10
+    JP_ARCANE_CREST_DURATION     = JPCATEGORY_DRK + 0x07, // dur. +1s
+    JP_SCARLET_DELIRIUM_DURATION = JPCATEGORY_DRK + 0x08, // dur. +1s
+    JP_ENDARK_EFFECT             = JPCATEGORY_DRK + 0x09, // p.dmg p.atk p.acc +1
 
     // BST
     JP_FAMILIAR_EFFECT    = JPCATEGORY_BST + 0x00, // all pet attr. +3
@@ -340,7 +338,6 @@ enum JOBPOINT_TYPE : uint16
 #define JobPointsCategoryIndexByJpType(jp_type) (jp_type >> 5)
 #define JobPointTypeIndex(id)                   (id & 0x1F)
 #define JobPointCost(value)                     ((value + 1) % 21)
-#define JobPointValueFormat(value)              (value << 2)
 
 /************************************************************************
  *                                                                       *
@@ -385,7 +382,11 @@ public:
     bool   IsJobPointExist(JOBPOINT_TYPE jpType); // Check to see if JP exists
     void   RaiseJobPoint(JOBPOINT_TYPE jpType);   // Add upgrade
     uint16 GetJobPoints();                        // Get unspent job points for current job
+    uint16 GetJobPointsByJob(uint8 jobID) const;  // get current job points for a players specified job
     void   SetJobPoints(int16 amount);            // Set job points for current job
+
+    void AddJobPoints(uint8 jobID, uint16 amount); // Add jobpoints to a players specififed job
+    void DelJobPoints(uint8 jobID, int16 amount);  // Del jobpoints to a players specified job
 
     JobPoints_t*    GetJobPointsByType(JOBPOINT_TYPE jpType);
     JobPointType_t* GetJobPointType(JOBPOINT_TYPE jpType);
@@ -394,7 +395,7 @@ public:
 
     JobPoints_t* GetAllJobPoints();
 
-    uint16 GetJobPointsSpent();
+    uint16 GetJobPointsSpent() const;
 
     bool   AddCapacityPoints(uint16 amount); // Add Capacity Points for current job, and increase JP as needed
     uint32 GetCapacityPoints();              // Get Capacity Points for Character's Current Job
@@ -413,9 +414,9 @@ private:
 
 namespace jobpointutils
 {
-    void                                LoadGifts();
-    void                                RefreshGiftMods(CCharEntity* PChar);
-    extern std::vector<JobPointGifts_t> jpGifts[MAX_JOBTYPE];
-} // namespace jobpointutils
 
-#endif
+void                                LoadGifts();
+void                                RefreshGiftMods(CCharEntity* PChar);
+extern std::vector<JobPointGifts_t> jpGifts[MAX_JOBTYPE];
+
+} // namespace jobpointutils

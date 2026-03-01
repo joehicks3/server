@@ -3,6 +3,7 @@
 --  NPC: Ajithaam
 -- !pos -82 0.1 160 244
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -21,9 +22,6 @@ entity.onTrigger = function(player, npc)
     if player:getCurrentMission(xi.mission.log_id.TOAU) >= xi.mission.id.toau.PRESIDENT_SALAHEEM then
         player:startEvent(10176)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

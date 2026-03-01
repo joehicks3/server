@@ -3,10 +3,8 @@
 --  NPC: Amagusa-Chigurusa
 -- !pos -28.746 -4.5 61.954 238
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local wildcatWindurst = player:getCharVar('WildcatWindurst')
@@ -19,9 +17,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(562)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

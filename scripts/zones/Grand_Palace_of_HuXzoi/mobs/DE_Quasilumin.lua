@@ -188,13 +188,15 @@ entity.closeDoor = function(mob)
     local openedDoor = mob:getLocalVar('opened_door')
     if openedDoor ~= 0 then
         local npc = GetNPCByID(openedDoor)
-        npc:setAnimation(xi.animation.CLOSE_DOOR)
-        mob:setLocalVar('opened_door', 0)
+        if npc then
+            npc:setAnimation(xi.animation.CLOSE_DOOR)
+            mob:setLocalVar('opened_door', 0)
+        end
     end
 end
 
 entity.onMobInitialize = function(mob)
-    -- mob:addStatusEffect(xi.effect.NO_REST, 1, 0, 0)
+    -- mob:addStatusEffect(xi.effect.NO_REST, { power = 1, origin = mob })
     mob:setMobMod(xi.mobMod.NO_MOVE, 1)
     mob:setMobMod(xi.mobMod.NO_DESPAWN, 1)
     mob:setAutoAttackEnabled(false)
@@ -211,7 +213,7 @@ entity.onMobRoam = function(mob)
         mob:pathThrough(escort.path[point], xi.path.flag.WALK)
     end
 
-    local now = os.time()
+    local now = GetSystemTime()
     local expire = mob:getLocalVar('expire')
     if expire ~= 0 and expire <= now then
         if progress ~= escortProgress.COMPLETE then
@@ -227,17 +229,23 @@ entity.onMobRoam = function(mob)
     local openedDoor = mob:getLocalVar('opened_door')
     if openedDoor ~= 0 then
         local npc = GetNPCByID(openedDoor)
-        if mob:checkDistance(npc) > 15 then
-            npc:setAnimation(xi.animation.CLOSE_DOOR)
-            mob:setLocalVar('opened_door', 0)
-        elseif npc:getAnimation() ~= xi.animation.OPEN_DOOR then
-            npc:setAnimation(xi.animation.OPEN_DOOR)
+        if npc then
+            if mob:checkDistance(npc) > 15 then
+                npc:setAnimation(xi.animation.CLOSE_DOOR)
+                mob:setLocalVar('opened_door', 0)
+            elseif npc:getAnimation() ~= xi.animation.OPEN_DOOR then
+                npc:setAnimation(xi.animation.OPEN_DOOR)
+            end
         end
     end
 
     for _, doorID in ipairs(escort.doors) do
         local npc = GetNPCByID(doorID)
-        if doorID ~= openedDoor and mob:checkDistance(npc) <= 8 then
+        if
+            npc and
+            doorID ~= openedDoor and
+            mob:checkDistance(npc) <= 8
+        then
             npc:setAnimation(xi.animation.OPEN_DOOR)
             mob:setLocalVar('opened_door', doorID)
         end
@@ -254,7 +262,7 @@ entity.onPath = function(mob)
         if point == #data.path then
             mob:showText(mob, ID.text.PATROL_COMPLETED)
             mob:setLocalVar('progress', escortProgress.COMPLETE)
-            mob:setLocalVar('expire', os.time() + 60)
+            mob:setLocalVar('expire', GetSystemTime() + 60)
         elseif progress ~= escortProgress.COMPLETE then
             point = point + 1
             mob:setLocalVar('point', point)

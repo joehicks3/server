@@ -11,6 +11,7 @@
 -- 100%TP    200%TP    300%TP
 --   2.75    2.75    2.75
 -----------------------------------
+---@type TWeaponSkill
 local weaponskillObject = {}
 
 weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary, action, taChar)
@@ -21,6 +22,7 @@ weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary,
     params.agi_wsc = 0.4
     params.overrideCE = 160
     params.overrideVE = 480
+    params.rangedAccuracyBonus = 100 -- https://wiki.ffo.jp/html/3094.html 特性の有無で100近く飛命が低い侍であっても問題なくとてとてに当てられるほど。
 
     -- Apply aftermath
     xi.aftermath.addStatusEffect(player, tp, xi.slot.RANGED, xi.aftermath.type.RELIC)

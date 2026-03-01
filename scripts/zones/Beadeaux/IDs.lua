@@ -7,62 +7,52 @@ zones[xi.zone.BEADEAUX] =
 {
     text =
     {
-        ITEM_CANNOT_BE_OBTAINED            = 6384, -- You cannot obtain the <item>. Come back after sorting your inventory.
-        ITEM_OBTAINED                      = 6390, -- Obtained: <item>.
-        GIL_OBTAINED                       = 6391, -- Obtained <number> gil.
-        KEYITEM_OBTAINED                   = 6393, -- Obtained key item: <keyitem>.
-        NOT_ENOUGH_GIL                     = 6395, -- You do not have enough gil.
-        ITEMS_OBTAINED                     = 6399, -- You obtain <number> <item>!
-        NOTHING_OUT_OF_ORDINARY            = 6404, -- There is nothing out of the ordinary here.
-        FELLOW_MESSAGE_OFFSET              = 6419, -- I'm ready. I suppose.
-        CARRIED_OVER_POINTS                = 7001, -- You have carried over <number> login point[/s].
-        LOGIN_CAMPAIGN_UNDERWAY            = 7002, -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
-        LOGIN_NUMBER                       = 7003, -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
-        MEMBERS_LEVELS_ARE_RESTRICTED      = 7023, -- Your party is unable to participate because certain members' levels are restricted.
-        CONQUEST_BASE                      = 7064, -- Tallying conquest results...
-        LOCKED_DOOR_QUADAV_HAS_KEY         = 7227, -- It is locked tight, but has what looks like a keyhole. Maybe one of the Quadav here has the key.
-        FEEL_COLD                          = 7349, -- You feel cold...
-        FEEL_NUMB                          = 7350, -- You feel extremely numb...
-        TOO_HEAVY                          = 7351, -- Your body feels almost too heavy to move...
-        LIGHT_HEADED                       = 7352, -- You feel a little light-headed...but only briefly.
-        NORMAL_AGAIN                       = 7353, -- You feel normal again.
-        YOU_CAN_NOW_BECOME_A_DARK_KNIGHT   = 7364, -- You can now become a dark knight!
-        FOUL_SMELLING_SOIL_IS_SPILLING_OUT = 7365, -- Foul-smelling soil is spilling out.
-        CHEST_UNLOCKED                     = 7375, -- You unlock the chest!
-        LEARNS_SPELL                       = 7793, -- <name> learns <spell>!
-        UNCANNY_SENSATION                  = 7795, -- You are assaulted by an uncanny sensation.
-        COMMON_SENSE_SURVIVAL              = 7802, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
+        ITEM_CANNOT_BE_OBTAINED            = 6385, -- You cannot obtain the <item>. Come back after sorting your inventory.
+        ITEM_OBTAINED                      = 6391, -- Obtained: <item>.
+        GIL_OBTAINED                       = 6392, -- Obtained <number> gil.
+        KEYITEM_OBTAINED                   = 6394, -- Obtained key item: <keyitem>.
+        NOT_ENOUGH_GIL                     = 6396, -- You do not have enough gil.
+        ITEMS_OBTAINED                     = 6400, -- You obtain <number> <item>!
+        NOTHING_OUT_OF_ORDINARY            = 6405, -- There is nothing out of the ordinary here.
+        FELLOW_MESSAGE_OFFSET              = 6420, -- I'm ready. I suppose.
+        CARRIED_OVER_POINTS                = 7002, -- You have carried over <number> login point[/s].
+        LOGIN_CAMPAIGN_UNDERWAY            = 7003, -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
+        LOGIN_NUMBER                       = 7004, -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
+        MEMBERS_LEVELS_ARE_RESTRICTED      = 7024, -- Your party is unable to participate because certain members' levels are restricted.
+        CONQUEST_BASE                      = 7069, -- Tallying conquest results...
+        LOCKED_DOOR_QUADAV_HAS_KEY         = 7232, -- It is locked tight, but has what looks like a keyhole. Maybe one of the Quadav here has the key.
+        FEEL_COLD                          = 7354, -- You feel cold...
+        FEEL_NUMB                          = 7355, -- You feel extremely numb...
+        TOO_HEAVY                          = 7356, -- Your body feels almost too heavy to move...
+        LIGHT_HEADED                       = 7357, -- You feel a little light-headed...but only briefly.
+        NORMAL_AGAIN                       = 7358, -- You feel normal again.
+        YOU_CAN_NOW_BECOME_A_DARK_KNIGHT   = 7369, -- You can now become a dark knight!
+        FOUL_SMELLING_SOIL_IS_SPILLING_OUT = 7370, -- Foul-smelling soil is spilling out.
+        CHEST_UNLOCKED                     = 7380, -- You unlock the chest!
+        HUURR                              = 7776, -- Hu-urr...!
+        TAKEN_FROM_YOU                     = 7778, -- The <keyitem> is taken from you!
+        QUADAV_ARE_ATTACKING               = 7779, -- The Quadav are attacking!
+        LEARNS_SPELL                       = 7798, -- <name> learns <spell>!
+        UNCANNY_SENSATION                  = 7800, -- You are assaulted by an uncanny sensation.
+        COMMON_SENSE_SURVIVAL              = 7807, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
     },
     mob =
     {
-        MIMIC                  = 17379783,
-        BI_GHO_HEADTAKER_PH    =
-        {
-            [17379350] = 17379351, -- -98.611 0.498 71.212
-        },
-        DA_DHA_HUNDREDMASK_PH  =
-        {
-            [17379426] = 17379427, -- -71.480 0.490 -62.882
-        },
-        GE_DHA_EVILEYE_PH      =
-        {
-            [17379447] = 17379450, -- -242.709 0.5 -188.01
-        },
-        ZO_KHU_BLACKCLOUD_PH   =
-        {
-            [17379562] = 17379564, -- -294.223 -3.504 -206.657
-        },
-        GA_BHU_UNVANQUISHED_PH =
-        {
-            [17379625] = 17379626, -- 139.642 -2.445 161.557
-        },
+        BI_GHO_HEADTAKER    = GetFirstID('BiGho_Headtaker'),
+        DA_DHA_HUNDREDMASK  = GetFirstID('DaDha_Hundredmask'),
+        GA_BHU_UNVANQUISHED = GetFirstID('GaBhu_Unvanquished'),
+        GE_DHA_EVILEYE      = GetFirstID('GeDha_Evileye'),
+        MAGNES_QUADAV_NM    = GetFirstID('Magnes_Quadav_NM'),
+        NICKEL_QUADAV_NM    = GetFirstID('Nickel_Quadav_NM'),
+        MIMIC               = GetFirstID('Mimic'),
+        ZO_KHU_BLACKCLOUD   = GetFirstID('ZoKhu_Blackcloud'),
     },
     npc =
     {
-        QM1             = 17379801,
+        AFFLICTOR_BASE  = GetFirstID('The_Afflictor'),
         TREASURE_CHEST  = GetFirstID('Treasure_Chest'),
         TREASURE_COFFER = GetFirstID('Treasure_Coffer'),
-        AFFLICTOR_BASE  = 17379802,
+        QM1             = GetFirstID('qm1'),
     },
 }
 

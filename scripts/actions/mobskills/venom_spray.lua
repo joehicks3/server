@@ -1,12 +1,9 @@
 -----------------------------------
---  Venom Spray
---
---  Description: Deals damage in a fan shaped area. Additional effect: poison
---  Type: Magical Water
---  Utsusemi/Blink absorb: Ignores shadows
---  Range: 10' cone
---  Notes: Additional effect can be removed with Poisona.
+-- Venom Spray
+-- Family: Antlions
+-- Description: Poisons enemies in a frontal cone.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -14,15 +11,16 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local power = mob:getMainLvl() / 8 + 10
+    local power    = 15
+    local duration = 120
 
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.POISON, power, 3, 60)
+    if mob:isNM() then
+        power = 25
+    end
 
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 1.8, xi.element.WATER, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.WATER, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.WATER)
-    return dmg
+    skill:setMsg(xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.POISON, power, 3, duration))
+
+    return xi.effect.POISON
 end
 
 return mobskillObject

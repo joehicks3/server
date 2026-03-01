@@ -4,22 +4,15 @@
 -- !pos 159.943 -72.109 -839.986 15
 -- Teleports Players to Konschatat Highlands
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    player:startEvent(200)
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
+    xi.abyssea.exitMawOnTrigger(player, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
-    if csid == 200 and option == 1 then
-        player:setPos(91, -68, -582, 237, 108)
-    end
+    xi.abyssea.exitMawOnEventFinish(player, csid, option, npc)
 end
 
 return entity

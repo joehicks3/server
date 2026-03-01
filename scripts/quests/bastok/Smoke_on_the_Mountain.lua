@@ -3,6 +3,8 @@
 -----------------------------------
 -- Log ID: 1, Quest ID: 15
 -- Hungry Wolf : !pos -25.861 -11 -30.172 237
+-- Offa: !pos -283-6 -15.9 -140.3 235
+-- ??? (Campfire) !pos 461.8 -20.9 -578.5 107
 -----------------------------------
 local southGustabergID = zones[xi.zone.SOUTH_GUSTABERG]
 -----------------------------------
@@ -53,8 +55,6 @@ quest.sections =
                 end,
             },
 
-            ['Offa'] = quest:event(222),
-
             onEventFinish =
             {
                 [429] = function(player, csid, option, npc)
@@ -69,6 +69,11 @@ quest.sections =
             },
         },
 
+        [xi.zone.BASTOK_MARKETS] =
+        {
+            ['Offa'] = quest:event(222),
+        },
+
         [xi.zone.SOUTH_GUSTABERG] =
         {
             ['qm2'] =
@@ -77,7 +82,7 @@ quest.sections =
                     if npcUtil.tradeHasExactly(trade, xi.item.SLICE_OF_GIANT_SHEEP_MEAT) then
                         if quest:getLocalVar(player, 'Timer') == 0 then
                             player:confirmTrade()
-                            quest:setLocalVar(player, 'Timer', os.time() + 60)
+                            quest:setLocalVar(player, 'Timer', GetSystemTime() + 60)
 
                             return quest:messageSpecial(southGustabergID.text.FIRE_PUT, xi.item.SLICE_OF_GIANT_SHEEP_MEAT)
                         else
@@ -91,7 +96,7 @@ quest.sections =
 
                     if cookTimer == 0 then
                         return quest:messageSpecial(southGustabergID.text.FIRE_GOOD)
-                    elseif os.time() < cookTimer then
+                    elseif GetSystemTime() < cookTimer then
                         return quest:messageSpecial(southGustabergID.text.FIRE_LONGER, xi.item.SLICE_OF_GIANT_SHEEP_MEAT)
                     else
                         quest:setLocalVar(player, 'Timer', 0)

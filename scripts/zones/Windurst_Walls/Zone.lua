@@ -1,34 +1,23 @@
 -----------------------------------
 -- Zone: Windurst_Walls (239)
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    zone:registerTriggerArea(1, -2, -17, 140, 2, -16, 142)
+    zone:registerCuboidTriggerArea(1, -2, -17, 140, 2, -16, 142)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
-    local cs = -1
-
-    -- MOG HOUSE EXIT
-    if
-        player:getXPos() == 0 and
-        player:getYPos() == 0 and
-        player:getZPos() == 0
-    then
-        local position = math.random(1, 5) - 123
-        player:setPos(-257.5, -5.05, position, 0)
-    end
-
-    return cs
+    return xi.moghouse.onMoghouseZoneEvent(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
-    switch (triggerArea:GetTriggerAreaID()): caseof
+    switch (triggerArea:getTriggerAreaID()): caseof
     {
         [1] = function()  -- Heaven's Tower enter portal
             player:startEvent(86)

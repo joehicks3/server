@@ -3,9 +3,10 @@
 -- Icarus Wing
 -- Increases TP of the user by 1000
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     if target:hasStatusEffect(xi.effect.MEDICINE) then
         return xi.msg.basic.ITEM_NO_USE_MEDICATED
     end
@@ -13,9 +14,9 @@ itemObject.onItemCheck = function(target)
     return 0
 end
 
-itemObject.onItemUse = function(target)
+itemObject.onItemUse = function(target, user)
     target:addTP(1000)
-    target:addStatusEffect(xi.effect.MEDICINE, 0, 0, 7200)
+    target:addStatusEffect(xi.effect.MEDICINE, { duration = 7200, origin = user })
 end
 
 return itemObject

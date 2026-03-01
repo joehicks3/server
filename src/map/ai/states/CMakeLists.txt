@@ -17,14 +17,12 @@ set(AI_STATE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mobskill_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/petskill_state.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/petskill_state.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/raise_state.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/raise_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/range_state.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/range_state.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/respawn_state.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/respawn_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/state.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/state.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/synth_state.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/synth_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/trigger_state.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/trigger_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/weaponskill_state.cpp

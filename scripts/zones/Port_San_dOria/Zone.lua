@@ -3,6 +3,7 @@
 -----------------------------------
 require('scripts/quests/flyers_for_regine')
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
@@ -10,26 +11,22 @@ zoneObject.onInitialize = function(zone)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
-    local cs = { -1 }
-
     if
         player:getXPos() == 0 and
         player:getYPos() == 0 and
         player:getZPos() == 0
     then
         if prevZone == xi.zone.SAN_DORIA_JEUNO_AIRSHIP then
-            cs = { 702 }
-            player:setPos(-1.000, 0.000, 44.000, 0)
-        else
-            player:setPos(80, -16, -135, 165)
+            player:setPos(-1.000, 0.000, 44.000, 128)
+            return 702
         end
     end
 
-    return cs
+    return xi.moghouse.onMoghouseZoneEvent(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
@@ -39,7 +36,7 @@ end
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
 end
 
-zoneObject.onTransportEvent = function(player, transport)
+zoneObject.onTransportEvent = function(player, prevZoneId, transportId)
     player:startEvent(700)
 end
 

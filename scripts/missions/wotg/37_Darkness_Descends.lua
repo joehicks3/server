@@ -21,18 +21,15 @@ mission.sections =
 
         [xi.zone.THRONE_ROOM_S] =
         {
-            onZoneIn =
-            {
-                function(player, prevZone)
-                    local missionStatus = mission:getVar(player, 'Status')
+            onZoneIn = function(player, prevZone)
+                local missionStatus = mission:getVar(player, 'Status')
 
-                    if missionStatus == 0 then
-                        return 8
-                    elseif missionStatus == 2 then
-                        return 10
-                    end
-                end,
-            },
+                if missionStatus == 0 then
+                    return 8
+                elseif missionStatus == 2 then
+                    return 10
+                end
+            end,
 
             onEventUpdate =
             {
@@ -47,7 +44,8 @@ mission.sections =
 
                 [10] = function(player, csid, option, npc)
                     if option == 5 then
-                        player:updateEvent(156, 10, 305, 183, 320, 847, 450, 0)
+                        local equip = player:getEquipmentModelIds()
+                        player:updateEvent(156, player:getFace(), equip.head, equip.body, equip.hands, equip.main, equip.sub, 0)
                     end
                 end,
             },
@@ -68,7 +66,7 @@ mission.sections =
                     -- in various missions.
 
                     if
-                        player:getLocalVar('battlefieldWin') == 353 and
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.DARKNESS_DESCENDS and
                         mission:getVar(player, 'Status') == 1
                     then
                         mission:setVar(player, 'Status', 2)

@@ -2,6 +2,7 @@
 -- Area: Kazham
 --  NPC: Kakapp
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -55,12 +56,7 @@ entity.onTrigger = function(player, npc)
         elseif progress >= 8 or failed >= 9 then
             player:startEvent(249) -- happy with wyvern skull
         end
-    else
-        player:startEvent(204)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

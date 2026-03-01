@@ -11,6 +11,7 @@
 -- 100%TP    200%TP    300%TP
 -- 3.0625    5.8398    7.5625
 -----------------------------------
+---@type TWeaponSkill
 local weaponskillObject = {}
 
 weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary, action, taChar)
@@ -20,6 +21,7 @@ weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary,
     params.ele = xi.element.LIGHT
     params.skill = xi.skill.AXE
     params.includemab = true
+    params.dStat = xi.mod.CHR -- TODO : Verify maximum bonus of 651
 
     if xi.settings.main.USE_ADOULIN_WEAPON_SKILL_CHANGES then
         params.ftpMod = { 3.0625, 5.8398, 7.5625 }

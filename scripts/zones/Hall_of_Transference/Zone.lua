@@ -1,17 +1,18 @@
 -----------------------------------
 -- Zone: Hall_of_Transference
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    zone:registerTriggerArea(1, -281, -5, 277, -276, 0, 284)      -- Holla
-    zone:registerTriggerArea(2, 276, -84, -82, 283, -80, -75)     -- Mea
-    zone:registerTriggerArea(3, -283, -45, -283, -276, -40, -276) -- Dem
-    zone:registerTriggerArea(4, 0, 0, 0, 0, 0, 0)
+    zone:registerCuboidTriggerArea(1, -281, -5, 277, -276, 0, 284)      -- Holla
+    zone:registerCuboidTriggerArea(2, 276, -84, -82, 283, -80, -75)     -- Mea
+    zone:registerCuboidTriggerArea(3, -283, -45, -283, -276, -40, -276) -- Dem
+    zone:registerCylindricalTriggerArea(4, 0, 0, 0)
 
-    zone:registerTriggerArea(5, 288.847, -83.960, -40.693, 291.209, -79.960, -37.510)     -- Mea Sky Teleporter
-    zone:registerTriggerArea(6, -240.181, -3.960, 268.409, -237.671, 1.960, 271.291)      -- Holla Sky Teleporter
-    zone:registerTriggerArea(7, -240.797, -43.960, -291.552, -237.944, -39.960, -288.954) -- Dem Sky Teleporter
+    zone:registerCuboidTriggerArea(5, 288.847, -83.960, -40.693, 291.209, -79.960, -37.510)     -- Mea Sky Teleporter
+    zone:registerCuboidTriggerArea(6, -240.181, -3.960, 268.409, -237.671, 1.960, 271.291)      -- Holla Sky Teleporter
+    zone:registerCuboidTriggerArea(7, -240.797, -43.960, -291.552, -237.944, -39.960, -288.954) -- Dem Sky Teleporter
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -29,7 +30,7 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
-    switch (triggerArea:GetTriggerAreaID()): caseof
+    switch (triggerArea:getTriggerAreaID()): caseof
     {
         [1] = function() -- Holla
             player:setCharVar('option', 1)
@@ -55,7 +56,7 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
             if player:getCharVar('MeaChipRegistration') == 1 then
                 if
                     math.random(1, 100) <= 95 or
-                    player:getCharVar('LastSkyWarpMea') < os.time()
+                    player:getCharVar('LastSkyWarpMea') < GetSystemTime()
                 then
                     -- 5% Chance chip breaks
                     player:startEvent(161) -- To Sky
@@ -71,7 +72,7 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
             if player:getCharVar('HollaChipRegistration') == 1 then
                 if
                     math.random(1, 100) <= 95 or
-                    player:getCharVar('LastSkyWarpHolla') < os.time()
+                    player:getCharVar('LastSkyWarpHolla') < GetSystemTime()
                 then
                     -- 5% Chance chip breaks
                     player:startEvent(161) -- To Sky
@@ -87,7 +88,7 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
             if player:getCharVar('DemChipRegistration') == 1 then
                 if
                     math.random(1, 100) <= 95 or
-                    player:getCharVar('LastSkyWarpDem') < os.time()
+                    player:getCharVar('LastSkyWarpDem') < GetSystemTime()
                 then
                     -- 5% Chance chip breaks
                     player:startEvent(161) -- To Sky
@@ -118,11 +119,11 @@ zoneObject.onEventFinish = function(player, csid, option, npc)
         local prevZone = player:getPreviousZone()
 
         if prevZone == xi.zone.LA_THEINE_PLATEAU then
-            player:setCharVar('LastSkyWarpHolla', getMidnight())
+            player:setCharVar('LastSkyWarpHolla', JstMidnight())
         elseif prevZone == xi.zone.KONSCHTAT_HIGHLANDS then
-            player:setCharVar('LastSkyWarpDem', getMidnight())
+            player:setCharVar('LastSkyWarpDem', JstMidnight())
         elseif prevZone == xi.zone.TAHRONGI_CANYON then
-            player:setCharVar('LastSkyWarpMea', getMidnight())
+            player:setCharVar('LastSkyWarpMea', JstMidnight())
         end
 
         xi.teleport.to(player, xi.teleport.id.SKY)

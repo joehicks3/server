@@ -34,26 +34,31 @@
 #include "packets/pet_sync.h"
 #include "status_effect_container.h"
 #include "utils/battleutils.h"
+#include "utils/messageutils.h"
 #include "utils/mobutils.h"
 #include "utils/petutils.h"
 
+#include "common/timer.h"
 #include "common/utils.h"
 #include "petentity.h"
+
+#include "action/action.h"
+#include "action/interrupts.h"
+#include "packets/s2c/0x029_battle_message.h"
 
 CPetEntity::CPetEntity(PET_TYPE petType)
 : CMobEntity()
 , m_PetID(0)
 , m_PetType(petType)
 , m_spawnLevel(0)
-, m_jugSpawnTime(time_point::min())
-, m_jugDuration(duration::min())
+, m_jugSpawnTime(timer::time_point{})
+, m_jugDuration(timer::duration{})
 {
     TracyZoneScoped;
     objtype                     = TYPE_PET;
     m_EcoSystem                 = ECOSYSTEM::UNCLASSIFIED;
     allegiance                  = ALLEGIANCE_TYPE::PLAYER;
     m_MobSkillList              = 0;
-    m_IsClaimable               = false;
     m_bReleaseTargIDOnDisappear = true;
     spawnAnimation              = SPAWN_ANIMATION::SPECIAL; // Initial spawn has the special spawn-in animation
 
@@ -85,19 +90,17 @@ bool CPetEntity::isBstPet()
     return getPetType() == PET_TYPE::JUG_PET || objtype == TYPE_MOB;
 }
 
-int32 CPetEntity::getJugSpawnTime()
+timer::time_point CPetEntity::getJugSpawnTime()
 {
     if (m_PetType != PET_TYPE::JUG_PET)
     {
         ShowWarning("Non-Jug Pet calling function (%d).", static_cast<uint8>(m_PetType));
-        return 0;
     }
 
-    const auto epoch = m_jugSpawnTime.time_since_epoch();
-    return static_cast<int32>(std::chrono::duration_cast<std::chrono::seconds>(epoch).count());
+    return m_jugSpawnTime;
 }
 
-void CPetEntity::setJugSpawnTime(int32 spawnTime)
+void CPetEntity::setJugSpawnTime(timer::time_point spawnTime)
 {
     if (m_PetType != PET_TYPE::JUG_PET)
     {
@@ -105,21 +108,21 @@ void CPetEntity::setJugSpawnTime(int32 spawnTime)
         return;
     }
 
-    m_jugSpawnTime = std::chrono::system_clock::time_point(std::chrono::duration<int>(spawnTime));
+    m_jugSpawnTime = spawnTime;
 }
 
-int32 CPetEntity::getJugDuration()
+timer::duration CPetEntity::getJugDuration()
 {
     if (m_PetType != PET_TYPE::JUG_PET)
     {
         ShowWarning("Non-Jug Pet calling function (%d).", static_cast<uint8>(m_PetType));
-        return 0;
+        return 0s;
     }
 
-    return static_cast<int32>(std::chrono::duration_cast<std::chrono::seconds>(m_jugDuration).count());
+    return m_jugDuration;
 }
 
-void CPetEntity::setJugDuration(int32 seconds)
+void CPetEntity::setJugDuration(timer::duration seconds)
 {
     if (m_PetType != PET_TYPE::JUG_PET)
     {
@@ -127,7 +130,7 @@ void CPetEntity::setJugDuration(int32 seconds)
         return;
     }
 
-    m_jugDuration = std::chrono::seconds(seconds);
+    m_jugDuration = seconds;
 }
 
 const std::string CPetEntity::GetScriptName()
@@ -205,7 +208,7 @@ WYVERN_TYPE CPetEntity::getWyvernType()
 void CPetEntity::PostTick()
 {
     CBattleEntity::PostTick();
-    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    timer::time_point now = timer::now();
     if (loc.zone && updatemask && status != STATUS_TYPE::DISAPPEAR && now > m_nextUpdateTimer)
     {
         m_nextUpdateTimer = now + 250ms;
@@ -213,7 +216,7 @@ void CPetEntity::PostTick()
 
         if (PMaster && PMaster->PPet == this)
         {
-            ((CCharEntity*)PMaster)->pushPacket(new CPetSyncPacket((CCharEntity*)PMaster));
+            ((CCharEntity*)PMaster)->pushPacket<CPetSyncPacket>((CCharEntity*)PMaster);
         }
 
         updatemask = 0;
@@ -263,34 +266,13 @@ void CPetEntity::Spawn()
 
     if (m_PetType == PET_TYPE::JUG_PET)
     {
-        m_jugSpawnTime = server_clock::now();
+        m_jugSpawnTime = timer::now();
     }
 
     // NOTE: This is purposefully calling CBattleEntity's impl.
     // TODO: Calling a grand-parent's impl. of an overridden function is bad
     CBattleEntity::Spawn();
     luautils::OnMobSpawn(this);
-}
-
-bool CPetEntity::shouldDespawn(time_point tick)
-{
-    // This check was moved from the original call site when this method was added.
-    // It is in theory not needed, but we are not removing it without further testing.
-    // TODO: Consider removing this when possible.
-    if (isCharmed && tick > charmTime)
-    {
-        return true;
-    }
-
-    if (PMaster != nullptr &&
-        PAI->IsSpawned() &&
-        m_PetType == PET_TYPE::JUG_PET &&
-        tick > m_jugSpawnTime + m_jugDuration)
-    {
-        return true;
-    }
-
-    return false;
 }
 
 void CPetEntity::loadPetZoningInfo()
@@ -323,7 +305,7 @@ void CPetEntity::OnAbility(CAbilityState& state, action_t& action)
     std::unique_ptr<CBasicPacket> errMsg;
     if (PTarget && IsValidTarget(PTarget->targid, PAbility->getValidTarget(), errMsg))
     {
-        if (this != PTarget && distance(this->loc.p, PTarget->loc.p) > PAbility->getRange())
+        if (this != PTarget && distance(this->loc.p, PTarget->loc.p) > PAbility->getRange() + modelHitboxSize + PTarget->modelHitboxSize)
         {
             return;
         }
@@ -332,50 +314,42 @@ void CPetEntity::OnAbility(CAbilityState& state, action_t& action)
         // Abilities are not subject to paralyze if they have non-zero cast time due to this corner case.
         if (state.GetAbility()->getCastTime() == 0s && battleutils::IsParalyzed(this))
         {
-            setActionInterrupted(action, PTarget, MSGBASIC_IS_PARALYZED_2, 0);
+            ActionInterrupts::AbilityParalyzed(this, PTarget);
             return;
         }
 
-        action.id                    = this->id;
-        action.actiontype            = PAbility->getActionType();
-        action.actionid              = PAbility->getID();
-        actionList_t& actionList     = action.getNewActionList();
-        actionList.ActionTargetID    = PTarget->id;
-        actionTarget_t& actionTarget = actionList.getNewActionTarget();
-        actionTarget.reaction        = REACTION::NONE;
-        actionTarget.speceffect      = SPECEFFECT::RECOIL;
-        actionTarget.animation       = PAbility->getAnimationID();
-        actionTarget.param           = 0;
-        auto prevMsg                 = actionTarget.messageID;
+        action.actorId                = this->id;
+        action.actiontype             = PAbility->getActionType();
+        action.actionid               = PAbility->getID();
+        action_target_t& actionTarget = action.addTarget(PTarget->id);
+        action_result_t& actionResult = actionTarget.addResult();
+        actionResult.resolution       = ActionResolution::Hit;
+        actionResult.animation        = PAbility->getAnimationID();
+        actionResult.param            = 0;
+        auto prevMsg                  = actionResult.messageID;
 
         int32 value = luautils::OnUseAbility(this, PTarget, PAbility, &action);
-        if (prevMsg == actionTarget.messageID)
+        if (prevMsg == actionResult.messageID)
         {
-            actionTarget.messageID = PAbility->getMessage();
+            actionResult.messageID = PAbility->getMessage();
         }
-        if (actionTarget.messageID == 0)
+
+        if (actionResult.messageID == MsgBasic::None)
         {
-            actionTarget.messageID = MSGBASIC_USES_JA;
+            actionResult.messageID = MsgBasic::UsesJobAbility;
         }
-        actionTarget.param = value;
+
+        actionResult.param = value;
 
         if (value < 0)
         {
-            actionTarget.messageID = ability::GetAbsorbMessage(actionTarget.messageID);
-            actionTarget.param     = -value;
+            actionResult.messageID = messageutils::GetAbsorbVariant(actionResult.messageID);
+            actionResult.param     = -value;
         }
     }
     else // Can't target anything, just cancel the animation.
     {
-        action.actiontype         = ACTION_MOBABILITY_INTERRUPT;
-        action.actionid           = 28787; // Some hardcoded magic for interrupts
-        actionList_t& actionList  = action.getNewActionList();
-        actionList.ActionTargetID = id;
-
-        actionTarget_t& actionTarget = actionList.getNewActionTarget();
-        actionTarget.animation       = 0x1FC;
-        actionTarget.messageID       = 0;
-        actionTarget.reaction        = REACTION::ABILITY | REACTION::HIT;
+        ActionInterrupts::AbilityInterrupt(this);
     }
 }
 
@@ -396,7 +370,7 @@ bool CPetEntity::CanAttack(CBattleEntity* PTarget, std::unique_ptr<CBasicPacket>
         auto* PChar = dynamic_cast<CCharEntity*>(this->PMaster);
         if (PChar && !PChar->IsMobOwner(PTarget))
         {
-            errMsg = std::make_unique<CMessageBasicPacket>(this, PTarget, 0, 0, MSGBASIC_ALREADY_CLAIMED);
+            errMsg = std::make_unique<GP_SERV_COMMAND_BATTLE_MESSAGE>(this, PTarget, 0, 0, MsgBasic::AlreadyClaimed);
             PAI->Disengage();
             return false;
         }
@@ -418,21 +392,17 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
     }
 
     PAI->TargetFind->reset();
-
-    float distance  = PSkill->getDistance();
     uint8 findFlags = 0;
 
-    /* // TODO: do pet skills need this?
-    if (PSkill->getFlag() & SKILLFLAG_HIT_ALL)
-    {
-        findFlags |= FINDFLAGS_HIT_ALL;
-    }
-    */
-
     // Mob buff abilities also hit monster's pets
-    if (PSkill->getValidTargets() == TARGET_SELF)
+    if (PSkill->getValidTargets() & TARGET_SELF)
     {
         findFlags |= FINDFLAGS_PET;
+        // skill can target self and is aoe, add itself to targetfind first
+        if (PSkill->isAoE())
+        {
+            PTarget = this;
+        }
     }
 
     if ((PSkill->getValidTargets() & TARGET_IGNORE_BATTLEID) == TARGET_IGNORE_BATTLEID)
@@ -445,11 +415,19 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
         findFlags |= FINDFLAGS_DEAD;
     }
 
-    action.id         = id;
-    action.actiontype = (ACTIONTYPE)PSkill->getSkillFinishCategory();
-    action.actionid   = PSkill->getID();
+    action.actorId    = id;
+    action.actiontype = PSkill->getSkillFinishCategory();
+    if (PSkill->getMobSkillID() > 0)
+    {
+        // jug pet skills emulate mob skills but still have the same flow as wyvern and smn pet skills
+        action.actionid = PSkill->getMobSkillID();
+    }
+    else
+    {
+        action.actionid = PSkill->getID();
+    }
 
-    if (PAI->TargetFind->isWithinRange(&PTarget->loc.p, distance))
+    if (PAI->TargetFind->isWithinRange(&PTarget->loc.p, PSkill->getDistance() + this->modelHitboxSize + PTarget->modelHitboxSize))
     {
         if (PSkill->isAoE())
         {
@@ -458,7 +436,7 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
         else if (PSkill->isConal())
         {
             float angle = 45.0f;
-            PAI->TargetFind->findWithinCone(PTarget, distance, angle, findFlags, PSkill->getValidTargets());
+            PAI->TargetFind->findWithinCone(PTarget, PSkill->getRadius(), angle, findFlags, PSkill->getValidTargets());
         }
         else
         {
@@ -472,18 +450,29 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
             }
 
             PAI->TargetFind->findSingleTarget(PTarget, findFlags, PSkill->getValidTargets());
+            // special jug pet skills that affect pet and owner: non-aoe-skill, primary target is the pet, and targetflag includes "actor's party"
+            // If we didn't filter on pet type, skills like healing ruby would fit the condition
+            if (this->getPetType() == PET_TYPE::JUG_PET && this->PMaster != nullptr && PTarget == this && PSkill->getValidTargets() & TARGET_PLAYER_PARTY)
+            {
+                // addEntity does not handle range checking
+                if (PAI->TargetFind->isWithinRange(&this->PMaster->loc.p, PSkill->getRadius()))
+                {
+                    PAI->TargetFind->addEntity(this->PMaster, false);
+                }
+            }
         }
     }
     else // Out of range
     {
-        action.actiontype         = ACTION_MOBABILITY_INTERRUPT;
-        actionList_t& actionList  = action.getNewActionList();
-        actionList.ActionTargetID = PTarget->id;
+        if (this->getPetType() == PET_TYPE::AVATAR)
+        {
+            ActionInterrupts::AvatarOutOfRange(this, PSkill, PTarget);
+        }
+        else if (this->getPetType() == PET_TYPE::WYVERN)
+        {
+            ActionInterrupts::WyvernOutOfRange(this, PSkill, PTarget);
+        }
 
-        actionTarget_t& actionTarget = actionList.getNewActionTarget();
-        actionTarget.animation       = 0x1FC; // Hardcoded magic sent from the server
-        actionTarget.messageID       = MSGBASIC_TOO_FAR_AWAY;
-        actionTarget.speceffect      = SPECEFFECT::BLOOD;
         return;
     }
 
@@ -492,47 +481,33 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
     // No targets, perhaps something like Super Jump or otherwise untargetable
     if (targets == 0)
     {
-        action.actiontype         = ACTION_MOBABILITY_INTERRUPT;
-        action.actionid           = 28787; // Some hardcoded magic for interrupts
-        actionList_t& actionList  = action.getNewActionList();
-        actionList.ActionTargetID = id;
-
-        actionTarget_t& actionTarget = actionList.getNewActionTarget();
-        actionTarget.animation       = 0x1FC;
-        actionTarget.messageID       = 0;
-        actionTarget.reaction        = REACTION::ABILITY | REACTION::HIT;
-
+        // There used to be a specific interrupt here, but it's not clear in what conditions it should occur
+        // Add a test and retail capture before reintroducing.
         return;
     }
 
     PSkill->setTotalTargets(targets);
     PSkill->setPrimaryTargetID(PTarget->id);
     PSkill->setTP(state.GetSpentTP());
+    PSkill->setHP(health.hp);
     PSkill->setHPP(GetHPP());
 
-    uint16 msg            = 0;
-    uint16 defaultMessage = PSkill->getMsg();
+    MsgBasic msg            = MsgBasic::None;
+    MsgBasic defaultMessage = PSkill->getMsg();
 
     bool first{ true };
     for (auto&& PTargetFound : PAI->TargetFind->m_targets)
     {
-        actionList_t& list = action.getNewActionList();
-
-        list.ActionTargetID = PTargetFound->id;
-
-        actionTarget_t& target = list.getNewActionTarget();
-
-        list.ActionTargetID = PTargetFound->id;
-        target.reaction     = REACTION::HIT;
-        target.speceffect   = SPECEFFECT::HIT;
-        target.animation    = PSkill->getAnimationID();
-        target.messageID    = PSkill->getMsg();
+        action_target_t& actionTarget = action.addTarget(PTargetFound->id);
+        action_result_t& actionResult = actionTarget.addResult();
+        actionTarget.actorId          = PTargetFound->id;
+        actionResult.resolution       = ActionResolution::Hit;
+        actionResult.animation        = PSkill->getAnimationID();
+        actionResult.messageID        = PSkill->getMsg();
 
         // reset the skill's message back to default
         PSkill->setMsg(defaultMessage);
         int32 damage = 0;
-
-        target.animation = PSkill->getAnimationID();
 
         /* if (petType == PET_TYPE::AUTOMATON) // TODO: figure out Automaton
         {
@@ -543,72 +518,73 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
             damage = luautils::OnPetAbility(PTargetFound, this, PSkill, PMaster, &action);
         }
 
-        if (msg == 0)
+        // primary target will have msg == 0
+        if (msg == MsgBasic::None)
         {
-            if (PSkill->getMsg() == 185) // TODO: remove when we rip out the original SMN implementation, this is xi.msg.basic.DAMAGE (not in .h)
-            {
-                msg = defaultMessage;
-            }
-            else
-            {
-                msg = PSkill->getMsg();
-            }
+            msg = PSkill->getMsg();
         }
         else
         {
-            msg = PSkill->getAoEMsg();
+            // convert to aoe message
+            msg = messageutils::GetAoEVariant(PSkill->getMsg());
         }
 
+        // damage was absorbed
         if (damage < 0)
         {
-            msg          = MSGBASIC_SKILL_RECOVERS_HP; // TODO: verify this message does/does not vary depending on mob/avatar/automaton use
-            target.param = std::clamp(-damage, 0, PTargetFound->GetMaxHP() - PTargetFound->health.hp);
+            // TODO: verify this message does/does not vary depending on mob/avatar/automaton use
+            //       furthermore, this likely needs to be PSkill->setMsg(MsgBasic::SkillRecoversHP) and happen before the above code
+            msg = MsgBasic::SkillRecoversHP;
+            actionResult.recordDamage(attack_outcome_t{
+                .atkType = ATTACK_TYPE::PHYSICAL,
+                .damage  = std::clamp(-damage, 0, PTargetFound->GetMaxHP() - PTargetFound->health.hp),
+                .target  = PTargetFound,
+            });
+        }
+        else if (damage > 0 && PSkill->isDamageMsg())
+        {
+            // We use the skill to carry the critical flag and the attack type
+            // This should be deprecated in favor of onPetAbility returning a table...
+            actionResult.recordDamage(attack_outcome_t{
+                .atkType    = PSkill->getAttackType(),
+                .damage     = damage,
+                .target     = PTargetFound,
+                .isCritical = PSkill->isCritical(),
+            });
+
+            // Reset the flag
+            PSkill->setCritical(false);
         }
         else
         {
-            target.param = damage;
+            // Buffs/debuffs/status effects - just set param directly
+            actionResult.param = damage;
         }
 
-        target.messageID = msg;
+        actionResult.messageID = msg;
 
         if (PSkill->hasMissMsg())
         {
-            target.reaction   = REACTION::MISS;
-            target.speceffect = SPECEFFECT::NONE;
-            if (msg == PSkill->getAoEMsg())
-            {
-                msg = 282;
-            }
+            actionResult.resolution = ActionResolution::Miss;
         }
         else
         {
-            target.reaction   = REACTION::HIT;
-            target.speceffect = SPECEFFECT::HIT;
+            actionResult.resolution = ActionResolution::Hit;
         }
 
-        // TODO: Should this be reaction and not speceffect?
-        if (target.speceffect == SPECEFFECT::HIT) // Formerly bitwise and, though nothing in this function adds additional bits to the field
+        if (actionResult.resolution != ActionResolution::Miss && actionResult.resolution != ActionResolution::Parry)
         {
-            target.speceffect = SPECEFFECT::RECOIL;
-            target.knockback  = PSkill->getKnockback();
-            if (first && (PSkill->getPrimarySkillchain() != 0))
+            actionResult.knockback = PSkill->getKnockback();
+            if (first && PTargetFound->health.hp > 0 && PSkill->getPrimarySkillchain() != 0)
             {
-                SUBEFFECT effect = battleutils::GetSkillChainEffect(PTargetFound, PSkill->getPrimarySkillchain(), PSkill->getSecondarySkillchain(),
-                                                                    PSkill->getTertiarySkillchain());
-                if (effect != SUBEFFECT_NONE)
+                const auto effect = battleutils::GetSkillChainEffect(
+                    PTargetFound,
+                    PSkill->getPrimarySkillchain(),
+                    PSkill->getSecondarySkillchain(),
+                    PSkill->getTertiarySkillchain());
+                if (effect != ActionProcSkillChain::None)
                 {
-                    int32 skillChainDamage = battleutils::TakeSkillchainDamage(this, PTargetFound, target.param, nullptr);
-                    if (skillChainDamage < 0)
-                    {
-                        target.addEffectParam   = -skillChainDamage;
-                        target.addEffectMessage = 384 + effect;
-                    }
-                    else
-                    {
-                        target.addEffectParam   = skillChainDamage;
-                        target.addEffectMessage = 287 + effect;
-                    }
-                    target.additionalEffect = effect;
+                    actionResult.recordSkillchain(effect, battleutils::TakeSkillchainDamage(this, PTargetFound, actionResult.param, nullptr));
                 }
 
                 first = false;
@@ -631,9 +607,16 @@ void CPetEntity::OnPetSkillFinished(CPetSkillState& state, action_t& action)
 
     if (PTarget)
     {
-        if (PTarget->objtype == TYPE_MOB && (PTarget->isDead() || (this->getPetType() == PET_TYPE::AVATAR)))
+        if (PTarget->objtype == TYPE_MOB && PTarget->allegiance != this->allegiance)
         {
-            battleutils::ClaimMob(PTarget, this);
+            bool isAvatar      = (this->getPetType() == PET_TYPE::AVATAR);
+            bool isAtomosSkill = (PSkill->getID() == ABILITY_DECONSTRUCTION);
+            bool isDead        = PTarget->isDead();
+
+            if (isDead || (isAvatar && !isAtomosSkill))
+            {
+                battleutils::ClaimMob(PTarget, this);
+            }
         }
         battleutils::DirtyExp(PTarget, this);
     }

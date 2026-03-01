@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.SOUTHERN_SAN_DORIA_S]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 -- Item 1019 = Lufet Salt
@@ -42,9 +43,6 @@ entity.onTrigger = function(player, npc)
     elseif beansAhoy == xi.questStatus.QUEST_COMPLETED then
         player:startEvent(341)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

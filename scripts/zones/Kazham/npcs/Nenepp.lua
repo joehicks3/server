@@ -4,6 +4,7 @@
 -----------------------------------
 local ID = zones[xi.zone.KAZHAM]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local pathNodes =
@@ -70,12 +71,7 @@ entity.onTrigger = function(player, npc)
         elseif progress >= 10 or failed >= 11 then
             player:startEvent(250) -- happy with lucky egg
         end
-    else
-        player:startEvent(206)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

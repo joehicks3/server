@@ -83,7 +83,7 @@ quest.sections =
 
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.item.CHUNK_OF_ZINC_ORE) and
+                        npcUtil.tradeHas(trade, xi.item.CHUNK_OF_ZINC_ORE) and
                         not player:hasKeyItem(xi.ki.PALBOROUGH_MINES_LOGS)
                     then
                         return quest:progressEvent(3)
@@ -107,7 +107,7 @@ quest.sections =
                 onTrigger = function(player, npc)
                     if player:hasKeyItem(xi.ki.PALBOROUGH_MINES_LOGS) then
                         return quest:progressEvent(10)
-                    elseif math.random(1, 2) == 1 then
+                    elseif math.random(1, 100) <= 50 then
                         return quest:event(8)
                     else
                         return quest:event(9)

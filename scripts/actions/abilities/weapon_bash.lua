@@ -5,14 +5,15 @@
 -- Cast Time: Instant
 -- Recast Time: 00:03:00
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
     return xi.job_utils.dark_knight.checkWeaponBash(player, target, ability)
 end
 
-abilityObject.onUseAbility = function(player, target, ability)
-    return xi.job_utils.dark_knight.useWeaponBash(player, target, ability)
+abilityObject.onUseAbility = function(player, target, ability, action)
+    return xi.job_utils.dark_knight.useWeaponBash(player, target, ability, action)
 end
 
 return abilityObject

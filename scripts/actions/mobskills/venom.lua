@@ -1,28 +1,38 @@
 -----------------------------------
---  Venom
---
---  Description: Deals damage in a fan shaped area. Additional effect: poison
---  Type: Magical Water
---  Utsusemi/Blink absorb: Ignores shadows
---  Range: 10' cone
---  Notes: Additional effect can be removed with Poisona.
+-- Venom
+-- Family: Fly
+-- Description: Deals Water damage in a fan shaped area. Additional Effect: Poison
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local power = mob:getMainLvl() / 6 + 1
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.POISON, power, 3, 60)
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 1.50, 1.50, 1.50 }
+    params.element        = xi.element.WATER
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.WATER
+    params.shadowBehavior = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
 
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 1.5, xi.element.WATER, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.WATER, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.WATER)
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        -- TODO: Jugpet differences
+
+        -- TODO: Dynamis - Nightmare Fly
+
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.POISON, 1, 3, 60) -- TODO: Capture duration
+    end
+
+    return info.damage
 end
 
 return mobskillObject

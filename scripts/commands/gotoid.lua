@@ -2,6 +2,7 @@
 -- func: gotoid
 -- desc: Go to given mob or npc ID
 -----------------------------------
+---@type TCommand
 local commandObj = {}
 
 commandObj.cmdprops =
@@ -45,7 +46,7 @@ commandObj.onTrigger = function(player, target)
     end
 
     if not targ then
-        player:goToEntity(target)
+        player:gotoEntity(target)
     elseif pos0 then
         player:printToPlayer(string.format('%s (%i) has not been given coordinates.', targ:getName(), targ:getID()))
     else

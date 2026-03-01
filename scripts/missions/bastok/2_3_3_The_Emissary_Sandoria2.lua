@@ -30,7 +30,7 @@ mission.sections =
                     local missionStatus = player:getMissionStatus(mission.areaId)
 
                     if missionStatus == 8 then
-                        local needsHalverTrust = (not player:hasSpell(xi.magic.spell.HALVER) and not player:findItem(xi.item.CIPHER_OF_HALVERS_ALTER_EGO)) and 1 or 0
+                        local needsHalverTrust = (xi.settings.main.ENABLE_TRUST_QUESTS == 1 and not player:hasSpell(xi.magic.spell.HALVER) and not player:findItem(xi.item.CIPHER_OF_HALVERS_ALTER_EGO)) and 1 or 0
 
                         return mission:progressEvent(503, { [7] = needsHalverTrust })
                     elseif missionStatus <= 10 then
@@ -45,6 +45,7 @@ mission.sections =
                     player:setMissionStatus(mission.areaId, 9)
 
                     if
+                        xi.settings.main.ENABLE_TRUST_QUESTS == 1 and
                         not player:hasSpell(xi.magic.spell.HALVER) and
                         not player:findItem(xi.item.CIPHER_OF_HALVERS_ALTER_EGO)
                     then
@@ -61,7 +62,7 @@ mission.sections =
                 [32001] = function(player, csid, option, npc)
                     if
                         player:getMissionStatus(mission.areaId) == 9 and
-                        player:getLocalVar('battlefieldWin') == 999
+                        player:getLocalVar('battlefieldWin') == xi.battlefield.id.RANK_2_MISSION_1
                     then
                         npcUtil.giveKeyItem(player, xi.ki.KINDRED_CREST)
                         player:setMissionStatus(mission.areaId, 10)

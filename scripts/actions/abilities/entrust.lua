@@ -5,6 +5,7 @@
 -- Recast Time: 00:10:00
 -- Duration: 00:00:30
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -12,7 +13,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    player:addStatusEffect(xi.effect.ENTRUST, 1, 0, 60)
+    player:addStatusEffect(xi.effect.ENTRUST, { power = 1, duration = 60, origin = player })
 end
 
 return abilityObject

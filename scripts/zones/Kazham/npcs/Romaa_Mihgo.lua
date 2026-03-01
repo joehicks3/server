@@ -3,10 +3,8 @@
 --  NPC: Romaa Mihgo
 -- !pos 29.000 -13.023 -176.500 250
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local tuningOutProgress = player:getCharVar('TuningOut_Progress')
@@ -19,12 +17,7 @@ entity.onTrigger = function(player, npc)
         player:startEvent(297, 0, 1695, 4297, 4506) -- After fight with the Nasus. Mentions guard needs Habaneros, Black Curry, Mutton Tortilla
     elseif tuningOutProgress == 6 then
         player:startEvent(298, 0, 1695, 4297, 4506) -- Repeats guard need for Habaneros, Black Curry, Mutton Tortilla
-    else
-        player:startEvent(263)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

@@ -2,26 +2,42 @@
 -- Area: The Shrine of Ru'Avitau
 --  Mob: Seiryu (Pet version)
 -----------------------------------
+mixins = { require('scripts/mixins/job_special') }
+-----------------------------------
+---@type TMobEntity
 local entity = {}
 
-entity.onMobMagicPrepare = function(mob, target, spellId)
-    if not mob:hasStatusEffect(xi.effect.HUNDRED_FISTS, 0) then
-        local rnd = math.random()
-        if rnd < 0.5 then
-            return 186 -- aeroga 3
-        elseif rnd < 0.7 then
-            return 157 -- aero 4
-        elseif rnd < 0.9 then
-            return 208 -- tornado
-        else
-            return 237 -- choke
-        end
-    end
+entity.onMobSpawn = function(mob)
+    mob:setMobMod(xi.mobMod.ADD_EFFECT, 1)
+    mob:setMobMod(xi.mobMod.CANNOT_GUARD, 1)
+    mob:setMod(xi.mod.REGAIN, 450)
 
-    return 0 -- Still need a return, so use 0 when not casting
+    mob:addListener('EFFECT_LOSE', 'SEIRYU_HF', function(mobArg, effect)
+        if effect:getEffectType() == xi.effect.HUNDRED_FISTS then
+            mobArg:setMagicCastingEnabled(true)
+            mobArg:setMobAbilityEnabled(true)
+        end
+    end)
 end
 
-entity.onMobDeath = function(mob, player, optParams)
+entity.onAdditionalEffect = function(mob, target, damage)
+    local pTable =
+    {
+        chance         = 100,
+        attackType     = xi.attackType.MAGICAL,
+        magicalElement = xi.element.WIND,
+        basePower      = math.floor(damage / 2),
+        actorStat      = xi.mod.INT,
+    }
+
+    return xi.combat.action.executeAddEffectDamage(mob, target, pTable)
+end
+
+entity.onMobWeaponSkill = function(target, mob, skill)
+    if skill:getID() == xi.jsa.HUNDRED_FISTS then
+        mob:setMagicCastingEnabled(false)
+        mob:setMobAbilityEnabled(false)
+    end
 end
 
 return entity

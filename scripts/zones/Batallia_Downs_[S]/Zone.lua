@@ -1,8 +1,7 @@
 -----------------------------------
 -- Zone: Batallia_Downs_[S] (84)
 -----------------------------------
-require('scripts/globals/dark_ixion')
------------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)

@@ -7,10 +7,8 @@
 -----------------------------------
 local ID = zones[xi.zone.NORTHERN_SAN_DORIA]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local trialByIce = player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.TRIAL_BY_ICE)
@@ -30,7 +28,7 @@ entity.onTrigger = function(player, npc)
     -----------------------------------
     elseif
         (trialByIce == xi.questStatus.QUEST_AVAILABLE and player:getFameLevel(xi.fameArea.SANDORIA) >= 6) or
-        (trialByIce == xi.questStatus.QUEST_COMPLETED and os.time() > player:getCharVar('TrialByIce_date'))
+        (trialByIce == xi.questStatus.QUEST_COMPLETED and GetSystemTime() > player:getCharVar('TrialByIce_date'))
     then
         player:startEvent(706, 0, xi.ki.TUNING_FORK_OF_ICE) -- Start and restart quest 'Trial by ice'
     elseif
@@ -76,9 +74,6 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 706 and option == 1 then
         if player:getQuestStatus(xi.questLog.SANDORIA, xi.quest.id.sandoria.TRIAL_BY_ICE) == xi.questStatus.QUEST_COMPLETED then
@@ -87,11 +82,9 @@ entity.onEventFinish = function(player, csid, option, npc)
 
         player:addQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.TRIAL_BY_ICE)
         player:setCharVar('TrialByIce_date', 0)
-        player:addKeyItem(xi.ki.TUNING_FORK_OF_ICE)
-        player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.TUNING_FORK_OF_ICE)
+        npcUtil.giveKeyItem(player, xi.ki.TUNING_FORK_OF_ICE)
     elseif csid == 718 then
-        player:addKeyItem(xi.ki.TUNING_FORK_OF_ICE)
-        player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.TUNING_FORK_OF_ICE)
+        npcUtil.giveKeyItem(player, xi.ki.TUNING_FORK_OF_ICE)
     elseif csid == 709 then
         local item = 0
 
@@ -120,7 +113,7 @@ entity.onEventFinish = function(player, csid, option, npc)
 
             player:addTitle(xi.title.HEIR_OF_THE_GREAT_ICE)
             player:delKeyItem(xi.ki.WHISPER_OF_FROST) --Whisper of Frost, as a trade for the above rewards
-            player:setCharVar('TrialByIce_date', getMidnight())
+            player:setCharVar('TrialByIce_date', JstMidnight())
             player:addFame(xi.fameArea.SANDORIA, 30)
             player:completeQuest(xi.questLog.SANDORIA, xi.quest.id.sandoria.TRIAL_BY_ICE)
         end

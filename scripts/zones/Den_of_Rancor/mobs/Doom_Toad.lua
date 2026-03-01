@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.DEN_OF_RANCOR]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobDeath = function(mob, player, optParams)
@@ -12,7 +13,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.OGAMA_PH, 5, 3600) -- 1 hour
+    xi.mob.phOnDespawn(mob, ID.mob.OGAMA, 5, 3600) -- 1 hour
 end
 
 return entity

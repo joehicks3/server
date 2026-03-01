@@ -1,24 +1,38 @@
 -----------------------------------
---  Zarbzan
---
---  Description: Launches a firebomb from its cannon.
---  Type: Magical
---  Utsusemi/Blink absorb: Ignores shadows
---  Range: Unknown
---  Notes: Used by RNG trolls only.
+-- Zarbzan
+-- Family: Trolls
+-- Description: Deals Fire damage to target and their surrounding allies.
+-- Notes: Only used by Troll RNGs. This is an actual mobskill, not the regular ranged attack.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
-    return 0
+    if mob:getMainJob() == xi.job.RNG then -- TODO: Set proper skill lists for Trolls with ranged attacks.
+        return 0
+    end
+
+    return 1
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = 1
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 4, xi.element.FIRE, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.FIRE, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.FIRE)
-    return dmg
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
+
+    params.baseDamage      = mob:getMainLvl() + 2
+    params.fTP             = { 2.00, 2.00, 2.00 }
+    params.element         = xi.element.FIRE
+    params.attackType      = xi.attackType.MAGICAL
+    params.damageType      = xi.damageType.FIRE
+    params.shadowBehavior  = xi.mobskills.shadowBehavior.IGNORE_SHADOWS -- TODO: Capture shadowBehavior
+    params.dStatMultiplier = 1
+
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

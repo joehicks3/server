@@ -9,7 +9,9 @@ local stellarFulcrumID = zones[xi.zone.STELLAR_FULCRUM]
 local content = BattlefieldMission:new({
     zoneId                = xi.zone.STELLAR_FULCRUM,
     battlefieldId         = xi.battlefield.id.RETURN_TO_DELKFUTTS_TOWER,
+    canLoseExp            = false,
     isMission             = true,
+    allowTrusts           = true,
     maxPlayers            = 6,
     levelCap              = 75,
     timeLimit             = utils.minutes(30),
@@ -19,7 +21,7 @@ local content = BattlefieldMission:new({
     missionArea           = xi.mission.log_id.ZILART,
     mission               = xi.mission.id.zilart.RETURN_TO_DELKFUTTS_TOWER,
     missionStatusArea     = xi.mission.log_id.ZILART,
-    requiredMissionStatus = 2,
+    requiredMissionStatus = 1,
     title                 = xi.title.DESTROYER_OF_ANTIQUITY,
 })
 

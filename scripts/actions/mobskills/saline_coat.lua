@@ -8,6 +8,7 @@
 -- Range: Self
 -- Notes: ~50% Magic DEF boost.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -15,7 +16,10 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    skill:setMsg(xi.mobskills.mobBuffMove(mob, xi.effect.MAGIC_DEF_BOOST, 50, 0, 60))
+    local power = 100 + (skill:getTP() - 1000) / 100
+
+    -- Decay is 5 per tick
+    skill:setMsg(xi.mobskills.mobBuffMove(mob, xi.effect.MAGIC_DEF_BOOST, power, 0, 60))
 
     return xi.effect.MAGIC_DEF_BOOST
 end

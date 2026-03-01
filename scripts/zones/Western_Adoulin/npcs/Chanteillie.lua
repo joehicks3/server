@@ -5,6 +5,7 @@
 --                       'Vegetable Vegetable Crisis'
 -- !pos 89 0 -75 256
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -44,9 +45,6 @@ entity.onTrigger = function(player, npc)
     elseif vvc == xi.questStatus.QUEST_ACCEPTED and player:getCharVar('VVC_Status') == 1 then
         player:startEvent(5088)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

@@ -6,24 +6,23 @@
 -- High-quality success rate +1
 -- Synthesis failure rate -2%
 -----------------------------------
+---@type TItemFood
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     return xi.itemUtils.foodOnItemCheck(target, xi.foodType.BASIC)
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffect(xi.effect.FOOD, 0, 0, 1800, 5782)
+itemObject.onItemUse = function(target, user, item, action)
+    target:addStatusEffect(xi.effect.FOOD, { duration = 1800, origin = user, sourceType = xi.effectSourceType.FOOD, sourceTypeParam = item:getID() })
 end
 
 itemObject.onEffectGain = function(target, effect)
-    target:addMod(xi.mod.SYNTH_HQ_RATE, 1)
-    target:addMod(xi.mod.SYNTH_FAIL_RATE, -2)
+    effect:addMod(xi.mod.SYNTH_HQ_RATE, 1)
+    effect:addMod(xi.mod.SYNTH_MATERIAL_LOSS, 2)
 end
 
 itemObject.onEffectLose = function(target, effect)
-    target:delMod(xi.mod.SYNTH_HQ_RATE, 1)
-    target:delMod(xi.mod.SYNTH_FAIL_RATE, -2)
 end
 
 return itemObject

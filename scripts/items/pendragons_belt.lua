@@ -4,27 +4,21 @@
 -- Item Effect: DEX +10
 -- Duration: 60 seconds
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
-    local effect = target:getStatusEffect(xi.effect.ENCHANTMENT)
-    if effect ~= nil and effect:getSubType() == 15869 then
-        target:delStatusEffect(xi.effect.ENCHANTMENT)
+itemObject.onItemCheck = function(target, item, param, caster)
+    if target:getStatusEffectBySource(xi.effect.ENCHANTMENT, xi.effectSourceType.EQUIPPED_ITEM, xi.item.PENDRAGONS_BELT) ~= nil then
+        target:delStatusEffect(xi.effect.ENCHANTMENT, nil, xi.effectSourceType.EQUIPPED_ITEM, xi.item.PENDRAGONS_BELT)
     end
 
     return 0
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffect(xi.effect.ENCHANTMENT, 0, 0, 60, 15869)
-end
-
-itemObject.onEffectGain = function(target, effect)
-    target:addMod(xi.mod.DEX, 10)
-end
-
-itemObject.onEffectLose = function(target, effect)
-    target:delMod(xi.mod.DEX, 10)
+itemObject.onItemUse = function(target, user)
+    if target:hasEquipped(xi.item.PENDRAGONS_BELT) then
+        target:addStatusEffect(xi.effect.DEX_BOOST, { power = 10, duration = 60, origin = user, sourceType = xi.effectSourceType.EQUIPPED_ITEM, sourceTypeParam = xi.item.PENDRAGONS_BELT })
+    end
 end
 
 return itemObject

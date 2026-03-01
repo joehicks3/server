@@ -15,8 +15,6 @@ local content = Battlefield:new({
     entryNpc         = 'BC_Entrance',
     exitNpc          = 'Burning_Circle',
     requiredItems    = { xi.item.ATROPOS_ORB, wearMessage = waughroonID.text.A_CRACK_HAS_FORMED, wornMessage = waughroonID.text.ORB_IS_CRACKED },
-
-    experimental = true,
 })
 
 content:addEssentialMobs({ 'Titanis_Max', 'Titanis_Jax', 'Titanis_Xax', 'Titanis_Dax' })
@@ -24,56 +22,68 @@ content:addEssentialMobs({ 'Titanis_Max', 'Titanis_Jax', 'Titanis_Xax', 'Titanis
 content.loot =
 {
     {
-        { itemid = xi.item.MICHISHIBA_NO_TSUYU, droprate = 217 }, -- Michishiba-no-tsuyu
-        { itemid = xi.item.DISSECTOR,           droprate = 174 }, -- Dissector
-        { itemid = xi.item.COFFINMAKER,         droprate = 333 }, -- Coffinmaker
-        { itemid = xi.item.GRAVEDIGGER,         droprate = 174 }, -- Gravedigger
+        { itemId = xi.item.GIL,                        weight = 10000, amount = 24000 },
     },
 
     {
-        { itemid = xi.item.CLAYMORE_GRIP,    droprate = 144 }, -- Claymore Grip
-        { itemid = xi.item.DAMASCUS_INGOT,   droprate = 275 }, -- Damascus Ingot
-        { itemid = xi.item.GIANT_BIRD_PLUME, droprate = 275 }, -- Giant Bird Plume
-        { itemid = xi.item.POLE_GRIP,        droprate = 203 }, -- Pole Grip
-        { itemid = xi.item.SPEAR_STRAP,      droprate = 116 }, -- Spear Strap
+        { itemId = xi.item.MICHISHIBA_NO_TSUYU,        weight =  2500 },
+        { itemId = xi.item.DISSECTOR,                  weight =  2500 },
+        { itemId = xi.item.COFFINMAKER,                weight =  2500 },
+        { itemId = xi.item.GRAVEDIGGER,                weight =  2500 },
     },
 
     {
-        { itemid = xi.item.ADAMAN_INGOT,     droprate = 159 }, -- Adaman Ingot
-        { itemid = xi.item.ORICHALCUM_INGOT, droprate = 290 }, -- Orichalcum Ingot
-        { itemid = xi.item.TITANIS_EARRING,  droprate = 406 }, -- Titanis Earring
+        { itemId = xi.item.DAMASCUS_INGOT,             weight =  2000 },
+        { itemId = xi.item.GIANT_BIRD_PLUME,           weight =  4000 },
+        { itemId = xi.item.CLAYMORE_GRIP,              weight =  1000 },
+        { itemId = xi.item.POLE_GRIP,                  weight =  1000 },
+        { itemId = xi.item.SPEAR_STRAP,                weight =  2000 },
     },
 
     {
-        { itemid = xi.item.EVOKERS_BOOTS,  droprate = 159 }, -- Evokers Boots
-        { itemid = xi.item.OSTREGER_MITTS, droprate = 217 }, -- Ostreger Mitts
-        { itemid = xi.item.PINEAL_HAT,     droprate = 145 }, -- Pineal Hat
-        { itemid = xi.item.TRACKERS_KECKS, droprate = 159 }, -- Trackers Kecks
+        { itemId = xi.item.ADAMAN_INGOT,               weight =  2500 },
+        { itemId = xi.item.ORICHALCUM_INGOT,           weight =  2500 },
+        { itemId = xi.item.TITANIS_EARRING,            weight =  5000 },
     },
 
     {
-        { itemid = xi.item.CORAL_FRAGMENT,          droprate = 101 }, -- Coral Fragment
-        { itemid = xi.item.CHUNK_OF_DARKSTEEL_ORE,  droprate =  29 }, -- Chunk Of Darksteel Ore
-        { itemid = xi.item.DEMON_HORN,              droprate =  29 }, -- Demon Horn
-        { itemid = xi.item.EBONY_LOG,               droprate =  29 }, -- Ebony Log
-        { itemid = xi.item.GOLD_INGOT,              droprate = 101 }, -- Gold Ingot
-        { itemid = xi.item.SPOOL_OF_GOLD_THREAD,    droprate =  29 }, -- Spool Of Gold Thread
-        { itemid = xi.item.CHUNK_OF_MYTHRIL_ORE,    droprate =  29 }, -- Chunk Of Mythril Ore
-        { itemid = xi.item.PETRIFIED_LOG,           droprate =  58 }, -- Petrified Log
-        { itemid = xi.item.CHUNK_OF_PLATINUM_ORE,   droprate =  14 }, -- Chunk Of Platinum Ore
-        { itemid = xi.item.SQUARE_OF_RAINBOW_CLOTH, droprate =  58 }, -- Square Of Rainbow Cloth
-        { itemid = xi.item.RAM_HORN,                droprate =  14 }, -- Ram Horn
-        { itemid = xi.item.SQUARE_OF_RAXA,          droprate = 159 }, -- Square Of Raxa
-        { itemid = xi.item.SPOOL_OF_MALBORO_FIBER,  droprate =  72 }, -- Spool Of Malboro Fiber
+        { itemId = xi.item.EVOKERS_BOOTS,              weight =  2500 },
+        { itemId = xi.item.OSTREGER_MITTS,             weight =  2500 },
+        { itemId = xi.item.PINEAL_HAT,                 weight =  2500 },
+        { itemId = xi.item.TRACKERS_KECKS,             weight =  2500 },
     },
 
     {
-        { itemid = xi.item.VIAL_OF_BLACK_BEETLE_BLOOD, droprate =  87 }, -- Vial Of Black Beetle Blood
-        { itemid = xi.item.DAMASCUS_INGOT,             droprate =  14 }, -- Damascus Ingot
-        { itemid = xi.item.SQUARE_OF_DAMASCENE_CLOTH,  droprate =  29 }, -- Square Of Damascene Cloth
-        { itemid = xi.item.PHILOSOPHERS_STONE,         droprate = 174 }, -- Philosophers Stone
-        { itemid = xi.item.PHOENIX_FEATHER,            droprate = 246 }, -- Phoenix Feather
-        { itemid = xi.item.SQUARE_OF_RAXA,             droprate = 159 }, -- Square Of Raxa
+        { itemId = xi.item.CHUNK_OF_DARKSTEEL_ORE,     weight =   500 },
+        { itemId = xi.item.CHUNK_OF_GOLD_ORE,          weight =   500 },
+        { itemId = xi.item.CHUNK_OF_MYTHRIL_ORE,       weight =   500 },
+        { itemId = xi.item.CHUNK_OF_PLATINUM_ORE,      weight =   500 },
+        { itemId = xi.item.EBONY_LOG,                  weight =   500 },
+        { itemId = xi.item.MAHOGANY_LOG,               weight =   500 },
+        { itemId = xi.item.PETRIFIED_LOG,              weight =   500 },
+        { itemId = xi.item.PHILOSOPHERS_STONE,         weight =   500 },
+        { itemId = xi.item.SPOOL_OF_GOLD_THREAD,       weight =   500 },
+        { itemId = xi.item.SQUARE_OF_RAINBOW_CLOTH,    weight =   500 },
+        { itemId = xi.item.SQUARE_OF_RAXA,             weight =   500 },
+        { itemId = xi.item.CORAL_FRAGMENT,             weight =   500 },
+        { itemId = xi.item.DEMON_HORN,                 weight =   500 },
+        { itemId = xi.item.HANDFUL_OF_WYVERN_SCALES,   weight =   500 },
+        { itemId = xi.item.RAM_HORN,                   weight =   500 },
+        { itemId = xi.item.SLAB_OF_GRANITE,            weight =   500 },
+        { itemId = xi.item.RERAISER,                   weight =   500 },
+        { itemId = xi.item.HI_RERAISER,                weight =   500 },
+        { itemId = xi.item.VILE_ELIXIR,                weight =   500 },
+        { itemId = xi.item.VILE_ELIXIR_P1,             weight =   500 },
+    },
+
+    {
+        { itemId = xi.item.VIAL_OF_BLACK_BEETLE_BLOOD, weight =   625 },
+        { itemId = xi.item.SQUARE_OF_DAMASCENE_CLOTH,  weight =   625 },
+        { itemId = xi.item.DAMASCUS_INGOT,             weight =   625 },
+        { itemId = xi.item.SPOOL_OF_MALBORO_FIBER,     weight =   625 },
+        { itemId = xi.item.PHILOSOPHERS_STONE,         weight =  2000 },
+        { itemId = xi.item.PHOENIX_FEATHER,            weight =  3500 },
+        { itemId = xi.item.SQUARE_OF_RAXA,             weight =  2000 },
     },
 }
 

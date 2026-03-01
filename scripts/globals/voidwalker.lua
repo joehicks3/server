@@ -71,7 +71,7 @@ local function getMobsFromAbyssites(zoneId, abyssites)
             for _, mobId in ipairs(zones[zoneId].mob.VOIDWALKER[keyitem]) do
                 local mob = GetMobByID(mobId)
 
-                if mob:isAlive() and mob:getLocalVar('[VoidWalker]PopedBy') == 0 then
+                if mob and mob:isAlive() and mob:getLocalVar('[VoidWalker]PopedBy') == 0 then
                     table.insert(results, { mobId = mobId, keyItem = keyitem })
                 end
             end
@@ -285,17 +285,6 @@ xi.voidwalker.zoneOnInit = function(zone)
     end
 end
 
-local mobIsBusy = function(mob)
-    local act = mob:getCurrentAction()
-
-    return  act == xi.act.MOBABILITY_START or
-            act == xi.act.MOBABILITY_USING or
-            act == xi.act.MOBABILITY_FINISH or
-            act == xi.act.MAGIC_START or
-            act == xi.act.MAGIC_CASTING or
-            act == xi.act.MAGIC_FINISH
-end
-
 local function doMobSkillEveryHPP(mob, every, start, mobskill, condition)
     local mobhpp = mob:getHPP()
 
@@ -321,10 +310,10 @@ local function randomly(mob, chance, between, effect, skill)
     if
         math.random(0, 100) <= chance and
         not mob:hasStatusEffect(effect) and
-        os.time() > (mob:getLocalVar('MOBSKILL_TIME') + between)
+        GetSystemTime() > (mob:getLocalVar('MOBSKILL_TIME') + between)
     then
         mob:setLocalVar('MOBSKILL_USE', 1)
-        mob:setLocalVar('MOBSKILL_TIME', os.time())
+        mob:setLocalVar('MOBSKILL_TIME', GetSystemTime())
         mob:useMobAbility(skill)
     end
 end
@@ -338,9 +327,12 @@ local function DespawnPet(mob)
 
         for i, petId in ipairs(petIds) do
             local pet = GetMobByID(petId)
-            DespawnMob(petId)
-            pet:setSpawn(mob:getXPos(), mob:getYPos(), mob:getZPos())
-            pet:setPos(mob:getXPos(), mob:getYPos(), mob:getZPos())
+
+            if pet then
+                DespawnMob(petId)
+                pet:setSpawn(mob:getXPos(), mob:getYPos(), mob:getZPos())
+                pet:setPos(mob:getXPos(), mob:getYPos(), mob:getZPos())
+            end
         end
     end
 end
@@ -348,12 +340,26 @@ end
 local modByMobName =
 {
     ['Krabkatoa'] = function(mob)
-        mob:addStatusEffect(xi.effect.REGAIN, 10, 0, 0)
+        mob:addStatusEffect(xi.effect.REGAIN, { power = 10, origin = mob })
         mob:addMod(xi.mod.DOUBLE_ATTACK, 10)
     end,
 
     ['Tammuz'] = function(mob)
-        mob:addStatusEffect(xi.effect.MIGHTY_STRIKES, 1, 0, 0)
+        mob:addStatusEffect(xi.effect.MIGHTY_STRIKES, { power = 1, origin = mob })
+    end,
+
+    ['Erebus'] = function(mob)
+        mob:addImmunity(xi.immunity.GRAVITY)
+        mob:addImmunity(xi.immunity.BIND)
+    end,
+
+    ['Raker_Bee'] = function(mob)
+        mob:addImmunity(xi.immunity.GRAVITY)
+        mob:addImmunity(xi.immunity.BIND)
+    end,
+
+    ['Gjenganger'] = function(mob)
+        mob:addImmunity(xi.immunity.STUN)
     end,
 }
 
@@ -361,8 +367,11 @@ local mixinByMobName =
 {
     ['Capricornus'] = function(mob)
         doMobSkillEveryHPP(mob, 20, 80, xi.jsa.MIGHTY_STRIKES, not mob:hasStatusEffect(xi.effect.MIGHTY_STRIKES))
-        if mob:hasStatusEffect(xi.effect.MIGHTY_STRIKES) and not mobIsBusy(mob) then
-            mob:useMobAbility(xi.mob.skills.RECOIL_DIVE)
+        if
+            mob:hasStatusEffect(xi.effect.MIGHTY_STRIKES) and
+            not xi.combat.behavior.isEntityBusy(mob)
+        then
+            mob:useMobAbility(xi.mobSkill.RECOIL_DIVE_1)
         end
     end,
 
@@ -389,7 +398,7 @@ local mixinByMobName =
     end,
 
     ['Blobdingnag'] = function(mob)
-        doMobSkillEveryHPP(mob, 20, 82, xi.mob.skills.CYTOKINESIS, true)
+        doMobSkillEveryHPP(mob, 20, 82, xi.mobSkill.CYTOKINESIS, true)
     end,
 
     ['Farruca_Fly'] = function(mob)
@@ -406,7 +415,7 @@ local mixinByMobName =
             mob:hasStatusEffect(xi.effect.BLOOD_WEAPON) and
             not mob:hasStatusEffect(xi.effect.HUNDRED_FISTS)
         then
-            mob:addStatusEffect(xi.effect.HUNDRED_FISTS, 1, 0, 30)
+            mob:addStatusEffect(xi.effect.HUNDRED_FISTS, { power = 1, duration = 30, origin = mob })
         end
     end,
 
@@ -447,7 +456,7 @@ xi.voidwalker.onMobFight = function(mob, target)
     end
 
     local poptime = mob:getLocalVar('[VoidWalker]PopedAt')
-    local now     = os.time()
+    local now     = GetSystemTime()
 
     if
         mob:isSpawned() and
@@ -502,7 +511,10 @@ xi.voidwalker.onMobDeath = function(mob, player, optParams, keyItem)
             local outOfParty  = true
 
             for _, member in pairs(alliance) do
-                if member:getID() == playerpoped:getID() then
+                if
+                    playerpoped and
+                    member:getID() == playerpoped:getID()
+                then
                     outOfParty = false
                     break
                 end
@@ -510,6 +522,7 @@ xi.voidwalker.onMobDeath = function(mob, player, optParams, keyItem)
 
             if
                 outOfParty and
+                playerpoped and
                 not playerpoped:hasKeyItem(keyItem)
             then
                 checkUpgrade(playerpoped, mob, keyItem)
@@ -552,9 +565,13 @@ xi.voidwalker.onHealing = function(player)
         player:messageSpecial(zoneTextTable.VOIDWALKER_NO_MOB, abyssites[1])
     elseif mobNearest.distance <= 4 then
         local mob = GetMobByID(mobNearest.mobId)
+        if not mob then
+            return
+        end
+
         mob:setLocalVar('[VoidWalker]PopedBy', player:getID())
         mob:setLocalVar('[VoidWalker]PopedWith', mobNearest.keyItem)
-        mob:setLocalVar('[VoidWalker]PopedAt', os.time())
+        mob:setLocalVar('[VoidWalker]PopedAt', GetSystemTime())
 
         if
             mobNearest.keyItem ~= xi.keyItem.CLEAR_ABYSSITE and

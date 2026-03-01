@@ -1,16 +1,14 @@
 -----------------------------------
 -- Zone: West_Ronfaure (100)
 -----------------------------------
-require('scripts/quests/i_can_hear_a_rainbow')
------------------------------------
+---@type TZone
 local zoneObject = {}
 
-zoneObject.onChocoboDig = function(player, precheck)
-    return xi.chocoboDig.start(player, precheck)
-end
-
 zoneObject.onInitialize = function(zone)
-    xi.conq.setRegionalConquestOverseers(zone:getRegionID())
+    -- A Chocobo Riding Game finish line
+    zone:registerCylindricalTriggerArea(1, -135.60, 264.53, 8)
+
+    xi.conquest.setRegionalConquestOverseers(zone:getRegionID())
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -24,27 +22,30 @@ zoneObject.onZoneIn = function(player, prevZone)
         player:setPos(-126, -62, 273, 99)
     end
 
-    if quests.rainbow.onZoneIn(player) then
-        cs = 51
-    end
-
     return cs
 end
 
+zoneObject.afterZoneIn = function(player)
+    xi.chocoboGame.handleMessage(player)
+end
+
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
-end
+    local triggerAreaID = triggerArea:getTriggerAreaID()
 
-zoneObject.onEventUpdate = function(player, csid, option, npc)
-    if csid == 51 then
-        quests.rainbow.onEventUpdate(player)
+    if triggerAreaID == 1 and player:hasStatusEffect(xi.effect.MOUNTED) then
+        xi.chocoboGame.onTriggerAreaEnter(player)
     end
 end
 
+zoneObject.onEventUpdate = function(player, csid, option, npc)
+end
+
 zoneObject.onEventFinish = function(player, csid, option, npc)
+    xi.chocoboGame.onEventFinish(player, csid)
 end
 
 return zoneObject

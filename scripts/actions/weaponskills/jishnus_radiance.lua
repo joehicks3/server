@@ -11,6 +11,7 @@
 -- 100%TP    200%TP    300%TP
 -- 1.75      1.75      1.75
 -----------------------------------
+---@type TWeaponSkill
 local weaponskillObject = {}
 
 weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary, action, taChar)
@@ -31,9 +32,9 @@ weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary,
     local damage, criticalHit, tpHits, extraHits, shadowsAbsorbed = xi.weaponskills.doRangedWeaponskill(player, target, wsID, params, tp, action, primary)
 
     if shadowsAbsorbed + tpHits + extraHits == 3 then
-        action:speceffect(target:getID(), bit.bor(action:speceffect(target:getID()), 8))
+        utils.unused()
     elseif shadowsAbsorbed + tpHits + extraHits == 2 then
-        action:speceffect(target:getID(), bit.bor(action:speceffect(target:getID()), 4))
+        utils.unused()
     end
 
     return tpHits, extraHits, criticalHit, damage

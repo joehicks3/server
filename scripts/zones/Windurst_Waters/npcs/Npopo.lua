@@ -3,10 +3,8 @@
 --  NPC: Npopo
 -- !pos -35.464 -5.999 239.120 238
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local wildcatWindurst = player:getCharVar('WildcatWindurst')
@@ -19,9 +17,6 @@ entity.onTrigger = function(player, npc)
     else
         player:startEvent(269)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)

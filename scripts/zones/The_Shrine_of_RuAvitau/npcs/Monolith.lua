@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.THE_SHRINE_OF_RUAVITAU]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 local doors =
@@ -36,9 +37,6 @@ local monoliths =
     [18] = 'y', [19] = 'b',
 }
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
     local offset = npc:getID() - ID.npc.MONOLITH_OFFSET
     if offset >= 0 and offset <= 38 then
@@ -53,12 +51,6 @@ entity.onTrigger = function(player, npc)
             GetNPCByID(ID.npc.MONOLITH_OFFSET + (i * 2) - 1):setAnimation(anim)
         end
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

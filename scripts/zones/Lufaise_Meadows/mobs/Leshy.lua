@@ -4,6 +4,7 @@
 -----------------------------------
 local ID = zones[xi.zone.LUFAISE_MEADOWS]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 local function disturbMob(mob)
@@ -11,10 +12,11 @@ local function disturbMob(mob)
     if offset >= 0 and offset <= 7 then
         local nm = GetMobByID(ID.mob.COLORFUL_LESHY)
         if
+            nm and
             not nm:isSpawned() and
             not GetMobByID(ID.mob.COLORFUL_LESHY + 1):isSpawned()
         then
-            nm:setLocalVar('timeToGrow', os.time() + math.random(43200, 86400)) -- Colorful in 12 to 24 hours
+            nm:setLocalVar('timeToGrow', GetSystemTime() + math.random(43200, 86400)) -- Colorful in 12 to 24 hours
         end
     end
 end
@@ -33,9 +35,10 @@ entity.onMobRoam = function(mob)
     if offset >= 0 and offset <= 7 then
         local nm = GetMobByID(ID.mob.COLORFUL_LESHY)
         if
+            nm and
             not nm:isSpawned() and
             not GetMobByID(ID.mob.COLORFUL_LESHY + 1):isSpawned() and
-            os.time() > nm:getLocalVar('timeToGrow') and
+            GetSystemTime() > nm:getLocalVar('timeToGrow') and
             nm:getLocalVar('phIndex') == 0 and
             math.random(1, 20) == 1 -- this prevents the same Leshy from growing every cycle
         then

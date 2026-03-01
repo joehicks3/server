@@ -6,6 +6,7 @@
 -----------------------------------
 local ID = zones[xi.zone.WAJAOM_WOODLANDS]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -17,7 +18,7 @@ entity.onTrade = function(player, npc, trade)
             player:messageSpecial(ID.text.PLACE_HYDROGAUGE, xi.item.HYDROGAUGE) -- You set the <item> in the trench.
             player:tradeComplete() --Trade Complete
             player:setCharVar('NavigatingtheUnfriendlySeas', 3)
-            player:setCharVar('Leypoint_waitJTime', os.time() + 60) -- Wait 60 seconds.
+            player:setCharVar('Leypoint_waitJTime', GetSystemTime() + 60) -- Wait 60 seconds.
         end
     end
 end
@@ -27,19 +28,13 @@ entity.onTrigger = function(player, npc)
         player:getQuestStatus(xi.questLog.AHT_URHGAN, xi.quest.id.ahtUrhgan.NAVIGATING_THE_UNFRIENDLY_SEAS) == xi.questStatus.QUEST_ACCEPTED and
         player:getCharVar('NavigatingtheUnfriendlySeas') == 3
     then
-        if player:getCharVar('Leypoint_waitJTime') <= os.time() then
+        if player:getCharVar('Leypoint_waitJTime') <= GetSystemTime() then
             player:startEvent(508)
             player:setCharVar('NavigatingtheUnfriendlySeas', 4)   -- play cs for having waited enough time
         else
             player:messageSpecial(ID.text.ENIGMATIC_LIGHT, xi.item.HYDROGAUGE)    -- play cs for not waiting long enough
         end
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

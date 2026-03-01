@@ -1,7 +1,29 @@
+/*
+===========================================================================
+
+  Copyright (c) 2024 LandSandBoat Dev Teams
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see http://www.gnu.org/licenses/
+
+===========================================================================
+*/
+
 #ifdef __APPLE__
 #include <csignal>
 #include <sys/ptrace.h>
 #include <sys/resource.h>
+#include <sys/sysctl.h>
 #include <sys/types.h>
 
 #ifndef PTRACE_TRACEME
@@ -13,7 +35,7 @@
 #endif // PTRACE_DETACH
 
 #include "debug.h"
-#include "kernel.h"
+#include "logging.h"
 
 #define BACKWARD_HAS_BFD 1
 #include "ext/backward/backward.hpp"
@@ -52,7 +74,7 @@ void dumpBacktrace(int signal)
 
 void debug::init()
 {
-    struct rlimit core_limits;
+    rlimit core_limits{};
     core_limits.rlim_cur = core_limits.rlim_max = RLIM_INFINITY;
     setrlimit(RLIMIT_CORE, &core_limits);
 
@@ -71,22 +93,36 @@ void debug::init()
 bool debug::isRunningUnderDebugger()
 {
     static bool isCheckedAlready = false;
-
-    bool underDebugger = false;
+    static bool underDebugger    = false;
 
     if (!isCheckedAlready)
     {
-        if (ptrace(PTRACE_TRACEME, 0, nullptr, 0) < 0)
+        int mib[4] = {
+            CTL_KERN,
+            KERN_PROC,
+            KERN_PROC_PID,
+            getpid(),
+        };
+
+        kinfo_proc info{};
+        info.kp_proc.p_flag = 0;
+
+        size_t size = sizeof(info);
+
+        if (sysctl(mib, 4, &info, &size, nullptr, 0) == 0)
         {
-            underDebugger = true;
-        }
-        else
-        {
-            ptrace(PTRACE_DETACH, 0, nullptr, 0);
+            underDebugger = (info.kp_proc.p_flag & P_TRACED) != 0;
         }
 
         isCheckedAlready = true;
     }
+
     return underDebugger;
 }
+
+bool debug::isUserRoot()
+{
+    return getuid() == 0 && getgid() == 0;
+}
+
 #endif // __APPLE__

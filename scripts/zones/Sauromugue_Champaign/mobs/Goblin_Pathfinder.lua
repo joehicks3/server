@@ -2,9 +2,12 @@
 -- Area: Sauromugue Champaign
 --  Mob: Goblin Pathfinder
 -----------------------------------
-local ID = zones[xi.zone.SAUROMUGUE_CHAMPAIGN]
------------------------------------
+---@type TMobEntity
 local entity = {}
+
+entity.onMobInitialize = function(mob)
+    xi.pet.setMobPet(mob, 1, 'Goblins_Beetle')
+end
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.regime.checkRegime(player, mob, 97, 2, xi.regime.type.FIELDS)
@@ -17,8 +20,7 @@ entity.onMobDeath = function(mob, player, optParams)
     then
         -- Guesstimating 15% chance
         if math.random(1, 100) <= 15 then
-            player:addKeyItem(xi.ki.CHUNK_OF_SMOKED_GOBLIN_GRUB)
-            player:messageSpecial(ID.text.KEYITEM_OBTAINED, xi.ki.CHUNK_OF_SMOKED_GOBLIN_GRUB)
+            npcUtil.giveKeyItem(player, xi.ki.CHUNK_OF_SMOKED_GOBLIN_GRUB)
         end
     end
 end

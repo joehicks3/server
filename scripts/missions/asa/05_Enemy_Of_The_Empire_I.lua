@@ -12,7 +12,7 @@ local mission = Mission:new(xi.mission.log_id.ASA, xi.mission.id.asa.ENEMY_OF_TH
 
 mission.reward =
 {
-    ki = xi.ki.BLACK_BOOK,
+    keyItem = xi.ki.BLACK_BOOK,
     nextMission = { xi.mission.log_id.ASA, xi.mission.id.asa.ENEMY_OF_THE_EMPIRE_II },
 }
 
@@ -151,7 +151,7 @@ mission.sections =
                     local mobOne = mission:getVar(player, 'MobOne')
                     local mobTwo = mission:getVar(player, 'MobTwo')
                     local mobThree = mission:getVar(player, 'MobThree')
-                    local pickupReady = mission:getVar(player, 'Soulplate') < os.time()
+                    local pickupReady = mission:getVar(player, 'Soulplate') < GetSystemTime()
                     local platesTraded = mission:getVar(player, 'Plates')
 
                     if option == 6 then
@@ -236,7 +236,7 @@ mission.sections =
 
                         npcUtil.giveItem(player, { xi.item.SOULTRAPPER, 12 })
                         mission:setVar(player, 'AndrauseBuy', 0)
-                        mission:setVar(player, 'Soulplate', getMidnight())
+                        mission:setVar(player, 'Soulplate', JstMidnight())
                     elseif mission:getVar(player, 'AndrauseBuy') == 1 and player:getGil() < 800 then
                         mission:setVar(player, 'AndrauseBuy', 0)
                     end
@@ -254,7 +254,7 @@ mission.sections =
                         player:addItem(xi.item.BLANK_SOUL_PLATE, 12)
                         player:messageSpecial(norgID.text.YOU_OBTAIN, xi.item.BLANK_SOUL_PLATE, 12) -- Soul Plates
                         mission:setVar(player, 'AndrauseBuy', 0)
-                        mission:setVar(player, 'Soulplate', getMidnight())
+                        mission:setVar(player, 'Soulplate', JstMidnight())
                     elseif mission:getVar(player, 'AndrauseBuy') == 1 and player:getGil() < 800 then
                         mission:setVar(player, 'AndrauseBuy', 0)
                     end

@@ -5,6 +5,7 @@
 -- Recast Time: 5 Minutes
 -- Duration: 1 Blood Pact or 60 seconds, whichever occurs first.
 -----------------------------------
+---@type TAbility
 local abilityObject = {}
 
 abilityObject.onAbilityCheck = function(player, target, ability)
@@ -16,7 +17,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onUseAbility = function(player, target, ability)
-    player:addStatusEffect(xi.effect.APOGEE, 1, 0, 60)
+    player:addStatusEffect(xi.effect.APOGEE, { power = 1, duration = 60, origin = player })
 
     return xi.effect.APOGEE
 end

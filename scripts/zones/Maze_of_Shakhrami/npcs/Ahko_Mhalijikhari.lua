@@ -1,13 +1,10 @@
 -----------------------------------
 -- Area: Maze of Shakhrami
 --  NPC: Ahko Mhalijikhari
--- Type: Quest NPC
 -- !pos -344.617 -12.226 -166.233 198
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     if player:getCharVar('EcoStatus') == 201 then
@@ -23,12 +20,9 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 62 and option == 1 then
-        player:addStatusEffect(xi.effect.LEVEL_RESTRICTION, 25, 0, 0)
+        player:addStatusEffect(xi.effect.LEVEL_RESTRICTION, { power = 25, origin = player })
     elseif csid == 65 then
         player:delStatusEffect(xi.effect.LEVEL_RESTRICTION)
         player:setCharVar('EcoStatus', 203)

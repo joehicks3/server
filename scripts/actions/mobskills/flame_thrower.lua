@@ -1,28 +1,44 @@
 -----------------------------------
--- Flame_Thrower
--- Description: Uses a flamethrower that deals Fire damage to players in a fan-shaped area of effect. Additional effect: Plague
--- Type: Magical
+-- Flame Thrower
+-- Family: Ultima
+-- Description: Uses a flamethrower that deals Fire damage to players in a fan-shaped area of effect. Additional Effect: Plague
+-- TODO: Figure out damage values for Ultima/Omega Master Trial
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    xi.mobskills.mobPhysicalStatusEffectMove(mob, target, skill, xi.effect.PLAGUE, 5, 3, 30)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    local dmgmod = 2
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 3, xi.element.FIRE, dmgmod, xi.mobskills.magicalTpBonus.MAB_BONUS, 1)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.FIRE, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
+    params.percentMultipier = 0.05
+    params.damageCap        = mob:getMainLvl() < 65 and 490 or 750
+    params.bonusDamage      = 0
+    params.mAccuracyBonus   = { 0, 0, 0 }
+    params.resistStat       = xi.mod.INT
+    params.element          = xi.element.FIRE
+    params.attackType       = xi.attackType.BREATH
+    params.damageType       = xi.damageType.FIRE
+    params.shadowBehavior   = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
 
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.FIRE)
-    if target:hasStatusEffect(xi.effect.ELEMENTALRES_DOWN) then
-        target:delStatusEffectSilent(xi.effect.ELEMENTALRES_DOWN)
+    local info = xi.mobskills.mobBreathMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.PLAGUE, 5, 3, 120)
+
+        if target:hasStatusEffect(xi.effect.ELEMENTALRES_DOWN) then
+            target:delStatusEffectSilent(xi.effect.ELEMENTALRES_DOWN)
+        end
     end
 
-    mob:setLocalVar('nuclearWaste', 0)
-    return dmg
+    mob:setLocalVar('nuclearWaste', 0) -- TODO: Migrate to mob script
+
+    return info.damage
 end
 
 return mobskillObject

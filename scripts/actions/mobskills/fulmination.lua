@@ -1,48 +1,36 @@
 -----------------------------------
 -- Fulmination
---
--- Description: Deals heavy magical damage in an area of effect. Additional effect: Paralysis + Stun
--- Type: Magical
--- Utsusemi/Blink absorb: Wipes Shadows
--- Range: 30 yalms
+-- Family: Khimaira
+-- Description: Deals Thunder damage in an area of effect. Additional Effect: Paralysis, Stun
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
-    if mob:getFamily() == 316 then
-        local mobSkin = mob:getModelId()
-
-        if mobSkin == 1805 then
-            return 0
-        else
-            return 1
-        end
-    end
-
-    local family = mob:getFamily()
-    local mobhp = mob:getHPP()
-    local result = 1
-
-    if family == 168 and mobhp <= 35 then -- Khimaira < 35%
-        result = 0
-    elseif family == 315 and mobhp <= 50 then -- Tyger < 50%
-        result = 0
-    end
-
-    return result
+    return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    -- TODO: Hits all players near Khimaira, not just alliance.
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    local dmgmod = 3
-    local info = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * 4, xi.element.THUNDER, dmgmod, xi.mobskills.magicalTpBonus.MAB_BONUS, 1)
-    local dmg = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.THUNDER, xi.mobskills.shadowBehavior.WIPE_SHADOWS)
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.PARALYSIS, 40, 0, 60)
-    xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.STUN, 1, 0, 4)
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 12, 12, 12 } -- TODO: Capture fTPs
+    params.element        = xi.element.THUNDER
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.THUNDER
+    params.shadowBehavior = xi.mobskills.shadowBehavior.WIPE_SHADOWS
 
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.THUNDER)
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+
+        -- TODO: Capture power/durations
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.PARALYSIS, 40, 0, 60)
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.STUN, 1, 0, 4)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

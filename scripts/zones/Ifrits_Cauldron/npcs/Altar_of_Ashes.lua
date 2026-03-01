@@ -6,6 +6,7 @@
 -----------------------------------
 local ID = zones[xi.zone.IFRITS_CAULDRON]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
@@ -44,12 +45,6 @@ entity.onTrigger = function(player, npc)
     else
         player:messageSpecial(ID.text.ALTAR_STANDARD)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

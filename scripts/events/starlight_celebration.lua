@@ -10,7 +10,7 @@ xi.events.starlightCelebration.entities = xi.events.starlightCelebration.entitie
 local event = SeasonalEvent:new('StarlightCelebration')
 
 xi.events.starlightCelebration.enabledCheck = function()
-    local month = tonumber(os.date('%m'))
+    local month = JstMonth()
     return month == 12
 end
 
@@ -267,7 +267,9 @@ xi.events.starlightCelebration.generateEntities = function()
                     releaseIdOnDisappear = true,
                 })
 
-                table.insert(xi.events.starlightCelebration.entities, npc:getID())
+                if npc then
+                    table.insert(xi.events.starlightCelebration.entities, npc:getID())
+                end
             end
         end
     end

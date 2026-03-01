@@ -5,6 +5,7 @@
 -----------------------------------
 local ID = zones[xi.zone.WEST_SARUTABARUTA_S]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrigger = function(player, npc)
@@ -34,12 +35,6 @@ entity.onTrigger = function(player, npc)
     else
         player:messageSpecial(ID.text.DOOR_OFFSET + 3)
     end
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

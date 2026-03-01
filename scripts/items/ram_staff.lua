@@ -3,14 +3,15 @@
 -- Ram Staff
 -- Enchantment: "Retrace" (Southern San d'Oria[S])
 -----------------------------------
+---@type TItem
 local itemObject = {}
 
-itemObject.onItemCheck = function(target)
+itemObject.onItemCheck = function(target, item, param, caster)
     return 0
 end
 
-itemObject.onItemUse = function(target)
-    target:addStatusEffectEx(xi.effect.TELEPORT, 0, xi.teleport.id.SOUTHERN_SAN_DORIA_S, 0, 3)
+itemObject.onItemUse = function(target, user)
+    target:addStatusEffect(xi.effect.TELEPORT, { power = xi.teleport.id.SOUTHERN_SAN_DORIA_S, duration = 3, origin = user, icon = 0 })
 end
 
 return itemObject

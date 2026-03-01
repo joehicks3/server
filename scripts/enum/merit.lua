@@ -3,6 +3,7 @@
 -----------------------------------
 xi = xi or {}
 
+---@enum xi.meritCategory
 local meritCategory =
 {
     HP_MP      = 0x0040,
@@ -69,6 +70,7 @@ local meritCategory =
     -- COUNT = 0x0D80,
 }
 
+---@enum xi.merit
 xi.merit =
 {
     -- HP
@@ -256,7 +258,7 @@ xi.merit =
 
     -- PUP 1
     AUTOMATON_SKILLS            = meritCategory.PUP_1 + 0x00,
-    MAINTENACE_RECAST           = meritCategory.PUP_1 + 0x02,
+    MAINTENANCE_RECAST          = meritCategory.PUP_1 + 0x02,
     REPAIR_EFFECT               = meritCategory.PUP_1 + 0x04,
     ACTIVATE_RECAST             = meritCategory.PUP_1 + 0x06,
     REPAIR_RECAST               = meritCategory.PUP_1 + 0x08,

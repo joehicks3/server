@@ -5,11 +5,12 @@
 -----------------------------------
 local ID = zones[xi.zone.KING_RANPERRES_TOMB]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 entity.onMobDeath = function(mob, player, optParams)
     local allSaplingsDead = true
-    for i = ID.mob.CHERRY_SAPLING_OFFSET, ID.mob.CHERRY_SAPLING_OFFSET + 12 do
+    for i = ID.mob.CHERRY_SAPLING_OFFSET, ID.mob.CHERRY_SAPLING_OFFSET + 8 do
         local mobObj = GetMobByID(i)
         if
             mobObj ~= nil and

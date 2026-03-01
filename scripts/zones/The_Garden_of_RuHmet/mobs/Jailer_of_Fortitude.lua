@@ -6,19 +6,34 @@ local ID = zones[xi.zone.THE_GARDEN_OF_RUHMET]
 local gardenGlobal = require('scripts/zones/The_Garden_of_RuHmet/globals')
 mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
+---@type TMobEntity
 local entity = {}
+
+entity.onMobInitialize = function(mob)
+    mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 180)
+    mob:addImmunity(xi.immunity.BIND)
+    mob:addImmunity(xi.immunity.BLIND)
+    mob:addImmunity(xi.immunity.DARK_SLEEP)
+    mob:addImmunity(xi.immunity.LIGHT_SLEEP)
+    mob:addImmunity(xi.immunity.GRAVITY)
+    mob:addImmunity(xi.immunity.PLAGUE)
+    mob:addImmunity(xi.immunity.PARALYZE)
+end
 
 entity.onMobSpawn = function(mob)
     xi.mix.jobSpecial.config(mob, {
         specials =
         {
-            { id = xi.jsa.INVINCIBLE, cooldown = 180, hpp = math.random(90, 95) }, -- "Has access to Invincible, which it may use several times."
+            { id = xi.jsa.INVINCIBLE, cooldown = 180, hpp = 50 }, -- "Has access to Invincible, which it may use several times."
         },
     })
 
     -- Change animation to humanoid w/ prismatic core
     mob:setAnimationSub(1)
     mob:setModelId(1169)
+    mob:setMod(xi.mod.UDMGPHYS, -9500)
+    mob:setMod(xi.mod.UDMGRANGE, -9500)
+    mob:setMobMod(xi.mobMod.WEAPON_BONUS, 73)
 end
 
 entity.onMobFight = function(mob, target)
@@ -29,6 +44,15 @@ entity.onMobFight = function(mob, target)
     if mob:getBattleTime() - lastCast > 30 then
         mob:setLocalVar('COPY_SPELL', 0)
         mob:setLocalVar('delay', 0)
+    end
+
+    -- Block usage of invincible if either kf'ghrah is alive
+    local bothKfghrahDead = GetMobByID(ID.mob.KFGHRAH_WHM):isDead() and GetMobByID(ID.mob.KFGHRAH_BLM):isDead()
+    if bothKfghrahDead then
+        mob:setLocalVar('[jobSpecial]hpp_1', 50)
+    else
+        -- Set impossible HPP threshold while either kf'ghrah is alive
+        mob:setLocalVar('[jobSpecial]hpp_1', 0)
     end
 
     if
@@ -60,8 +84,6 @@ entity.onMagicHit = function(caster, target, spell)
         target:setLocalVar('reflectTime', target:getBattleTime())
         target:setAnimationSub(1)
     end
-
-    return 1
 end
 
 entity.onMobDeath = function(mob, player, optParams)

@@ -1,6 +1,6 @@
 -----------------------------------
 -- Persists NM time of deaths to the database. They must be added to the list here
--- to get this extra behaviour.
+-- to get this extra behavior.
 -- This is useful if you don't want players rushing to NM spawns after a server
 -- restart or a crash (or trying to force crashes/restarts to get NM pops)
 -----------------------------------
@@ -39,7 +39,7 @@ for _, entry in pairs(nmsToPersist) do
 
         local respawn = respawnFunc()
         mob:setRespawnTime(respawn)
-        SetServerVariable(varName, (os.time() + respawn))
+        SetServerVariable(varName, (GetSystemTime() + respawn))
         print(string.format('Writing respawn time to server vars: %s %i', mob:getName(), respawn))
     end)
 
@@ -51,9 +51,9 @@ for _, entry in pairs(nmsToPersist) do
         local respawn = GetServerVariable(varName)
         print(string.format('Getting respawn time from server vars: %s %i', mob:getName(), respawn))
 
-        if os.time() < respawn then
-            UpdateNMSpawnPoint(mob:getID())
-            mob:setRespawnTime(respawn - os.time())
+        if GetSystemTime() < respawn then
+            xi.mob.updateNMSpawnPoint(mob)
+            mob:setRespawnTime(respawn - GetSystemTime())
         else
             SpawnMob(mob:getID())
         end

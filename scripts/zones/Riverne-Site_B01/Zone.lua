@@ -1,13 +1,14 @@
 -----------------------------------
 -- Zone: Riverne-Site_B01
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conq.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -25,6 +26,10 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.afterZoneIn = function(player)
+    -- ZONE WIDE LEVEL RESTRICTION
+    if xi.settings.main.ENABLE_COP_ZONE_CAP == 1 then
+        player:addStatusEffect(xi.effect.LEVEL_RESTRICTION, { power = 50, origin = player })
+    end
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

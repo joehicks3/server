@@ -7,6 +7,7 @@
 --  Range: Melee
 --  Notes: Used only by Zirnitra and Turul
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
@@ -16,12 +17,17 @@ end
 mobskillObject.onMobWeaponSkill = function(target, mob, skill)
     local damage    = target:getHP()
 
-    -- If have more hp then 30%, then reduce a 10%
+    -- If we have more than 30% HP, then reduce by 10%
     if target:getHPP() > 30 then
         damage = damage * 0.9
     end
 
-    local dmg = xi.mobskills.mobFinalAdjustments(damage, mob, skill, target, xi.attackType.PHYSICAL, xi.damageType.PIERCING, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
+    local info =
+    {
+        damage = damage
+    }
+
+    local dmg = xi.mobskills.mobFinalAdjustments(info, mob, skill, target, xi.attackType.PHYSICAL, xi.damageType.PIERCING, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
 
     target:takeDamage(dmg, mob, xi.attackType.PHYSICAL, xi.damageType.PIERCING)
 

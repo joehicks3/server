@@ -16,54 +16,69 @@ local content = Battlefield:new({
     entryNpc         = 'BC_Entrance',
     exitNpc          = 'Burning_Circle',
     requiredItems    = { xi.item.COMET_ORB, wearMessage = waughroonID.text.A_CRACK_HAS_FORMED, wornMessage = waughroonID.text.ORB_IS_CRACKED },
-
-    experimental = true,
 })
 
 content:addEssentialMobs({ 'The_Waughroon_Kid' })
 
 content.loot =
 {
+
+    {
+        { itemId = xi.item.GIL,                      weight = 10000, amount = 8000 },
+    },
+
     {
         quantity = 2,
-        { itemid = xi.item.BAG_OF_TREE_CUTTINGS, droprate = 1000 }, -- bag_of_tree_cuttings
+        { itemId = xi.item.BAG_OF_TREE_CUTTINGS,     weight = 10000 },
     },
 
     {
-        { itemid = xi.item.CLUMP_OF_BOYAHDA_MOSS, droprate = 1000 }, -- clump_of_boyahda_moss
+        { itemId = xi.item.NONE,                     weight =  5000 },
+        { itemId = xi.item.BAG_OF_TREE_CUTTINGS,     weight =  5000 },
     },
 
     {
-        { itemid = xi.item.SCROLL_OF_QUAKE,          droprate = 100 }, -- scroll_of_quake
-        { itemid = xi.item.PIECE_OF_WISTERIA_LUMBER, droprate = 100 }, -- piece_of_wisteria_lumber
-        { itemid = xi.item.MAHOGANY_LOG,             droprate = 100 }, -- mahogany_log
-        { itemid = xi.item.EBONY_LOG,                droprate = 100 }, -- ebony_log
-        { itemid = xi.item.SCROLL_OF_FREEZE,         droprate = 100 }, -- scroll_of_freeze
-        { itemid = xi.item.DARKSTEEL_INGOT,          droprate = 100 }, -- darksteel_ingot
-        { itemid = xi.item.SCROLL_OF_RAISE_II,       droprate = 100 }, -- scroll_of_raise_ii
-        { itemid = xi.item.PETRIFIED_LOG,            droprate = 100 }, -- petrified_log
-        { itemid = xi.item.GOLD_INGOT,               droprate = 100 }, -- gold_ingot
-        { itemid = xi.item.CORAL_FRAGMENT,           droprate = 100 }, -- coral_fragment
+        { itemId = xi.item.CLUMP_OF_BOYAHDA_MOSS,    weight = 10000 },
     },
 
     {
-        { itemid = xi.item.SHOCK_MASK,              droprate = 62 }, -- shock_mask
-        { itemid = xi.item.SUPER_RIBBON,            droprate = 62 }, -- super_ribbon
-        { itemid = xi.item.RIVAL_RIBBON,            droprate = 62 }, -- rival_ribbon
-        { itemid = xi.item.IVORY_MITTS,             droprate = 62 }, -- ivory_mitts
-        { itemid = xi.item.SPIKED_FINGER_GAUNTLETS, droprate = 70 }, -- spiked_finger_gauntlets
-        { itemid = xi.item.SLY_GAUNTLETS,           droprate = 62 }, -- sly_gauntlets
-        { itemid = xi.item.RUSH_GLOVES,             droprate = 62 }, -- rush_gloves
-        { itemid = xi.item.MANA_CIRCLET,            droprate = 62 }, -- mana_circlet
-        { itemid = xi.item.HATEFUL_COLLAR,          droprate = 62 }, -- hateful_collar
-        { itemid = xi.item.ESOTERIC_MANTLE,         droprate = 62 }, -- esoteric_mantle
-        { itemid = xi.item.TEMPLARS_MANTLE,         droprate = 62 }, -- templars_mantle
-        { itemid = xi.item.HEAVY_MANTLE,            droprate = 62 }, -- heavy_mantle
-        { itemid = xi.item.INTELLECT_TORQUE,        droprate = 62 }, -- intellect_torque
-        { itemid = xi.item.STORM_GORGET,            droprate = 62 }, -- storm_gorget
-        { itemid = xi.item.BENIGN_NECKLACE,         droprate = 62 }, -- benign_necklace
-        { itemid = xi.item.SNIPERS_MANTLE,          droprate = 62 }, -- snipers_mantle
+        quantity = 2,
+        { itemId = xi.item.MANA_CIRCLET,             weight =   620 },
+        { itemId = xi.item.RIVAL_RIBBON,             weight =   620 },
+        { itemId = xi.item.SHOCK_MASK,               weight =   620 },
+        { itemId = xi.item.SUPER_RIBBON,             weight =   620 },
+        { itemId = xi.item.IVORY_MITTS,              weight =   620 },
+        { itemId = xi.item.RUSH_GLOVES,              weight =   620 },
+        { itemId = xi.item.SLY_GAUNTLETS,            weight =   620 },
+        { itemId = xi.item.SPIKED_FINGER_GAUNTLETS,  weight =   620 },
+        { itemId = xi.item.ESOTERIC_MANTLE,          weight =   620 },
+        { itemId = xi.item.HEAVY_MANTLE,             weight =   620 },
+        { itemId = xi.item.SNIPERS_MANTLE,           weight =   620 },
+        { itemId = xi.item.TEMPLARS_MANTLE,          weight =   620 },
+        { itemId = xi.item.BENIGN_NECKLACE,          weight =   620 },
+        { itemId = xi.item.HATEFUL_COLLAR,           weight =   620 },
+        { itemId = xi.item.INTELLECT_TORQUE,         weight =   620 },
+        { itemId = xi.item.STORM_GORGET,             weight =   620 },
     },
+
+    {
+        { itemId = xi.item.SCROLL_OF_QUAKE,          weight =   620 },
+        { itemId = xi.item.SCROLL_OF_FREEZE,         weight =   620 },
+        { itemId = xi.item.SCROLL_OF_RAISE_II,       weight =   620 },
+        { itemId = xi.item.SCROLL_OF_REGEN_III,      weight =   620 },
+        { itemId = xi.item.PIECE_OF_WISTERIA_LUMBER, weight =   620 },
+        { itemId = xi.item.MAHOGANY_LOG,             weight =   620 },
+        { itemId = xi.item.EBONY_LOG,                weight =   620 },
+        { itemId = xi.item.PETRIFIED_LOG,            weight =   620 },
+        { itemId = xi.item.DARKSTEEL_INGOT,          weight =   620 },
+        { itemId = xi.item.GOLD_INGOT,               weight =   620 },
+        { itemId = xi.item.MYTHRIL_INGOT,            weight =   620 },
+        { itemId = xi.item.HANDFUL_OF_WYVERN_SCALES, weight =   620 },
+        { itemId = xi.item.RAM_HORN,                 weight =   620 },
+        { itemId = xi.item.WYVERN_SKIN,              weight =   620 },
+        { itemId = xi.item.RAM_SKIN,                 weight =   620 },
+        { itemId = xi.item.CORAL_FRAGMENT,           weight =   620 },
+    }
 }
 
 return content:register()

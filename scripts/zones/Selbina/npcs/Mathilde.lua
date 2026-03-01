@@ -4,22 +4,30 @@
 -- Involved in Quest: Riding on the Clouds
 -- !pos 12.578 -8.287 -7.576 248
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
-    -- Note: Event 173 is shown once on the first time when talking to Mathilde.  Followup event
-    -- that repeats is event 174.
-
-    -- Former implementation defaulted to event 171, which was not observed.
-end
-
-entity.onEventUpdate = function(player, csid, option, npc)
+    if player:getRank(player:getNation()) >= 6 then
+        if not player:hasCompletedUniqueEvent(xi.uniqueEvent.MET_MATHILDES_SON) then
+            player:startEvent(173)
+        else
+            player:startEvent(174)
+        end
+    else
+        player:startEvent(171)
+    end
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
+    if
+        csid == 171 and
+        not player:hasCompletedUniqueEvent(xi.uniqueEvent.RAMONA_INTRODUCTION)
+    then
+        player:setCharVar('metMathilde', 1)
+    elseif csid == 173 then
+        player:setUniqueEvent(xi.uniqueEvent.MET_MATHILDES_SON)
+    end
 end
 
 return entity

@@ -7,60 +7,55 @@ zones[xi.zone.CARPENTERS_LANDING] =
 {
     text =
     {
-        ITEM_CANNOT_BE_OBTAINED       = 6384, -- You cannot obtain the <item>. Come back after sorting your inventory.
-        FULL_INVENTORY_AFTER_TRADE    = 6388, -- You cannot obtain the <item>. Try trading again after sorting your inventory.
-        ITEM_OBTAINED                 = 6390, -- Obtained: <item>.
-        GIL_OBTAINED                  = 6391, -- Obtained <number> gil.
-        KEYITEM_OBTAINED              = 6393, -- Obtained key item: <keyitem>.
-        ITEMS_OBTAINED                = 6399, -- You obtain <number> <item>!
-        NOTHING_OUT_OF_ORDINARY       = 6404, -- There is nothing out of the ordinary here.
-        FELLOW_MESSAGE_OFFSET         = 6419, -- I'm ready. I suppose.
-        CARRIED_OVER_POINTS           = 7001, -- You have carried over <number> login point[/s].
-        LOGIN_CAMPAIGN_UNDERWAY       = 7002, -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
-        LOGIN_NUMBER                  = 7003, -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
-        MEMBERS_LEVELS_ARE_RESTRICTED = 7023, -- Your party is unable to participate because certain members' levels are restricted.
-        CONQUEST_BASE                 = 7064, -- Tallying conquest results...
-        YOU_WISH_TO_KNOW_MISTALLE     = 7239, -- You wish to know of the Knights Mistalle?
-        SQUASH_ANOTHER_WORM           = 7240, -- You're just like everyone else! A maggot looking for a scandal! Well, it's time for me to squash another worm!
-        BEGONE_TRESPASSER             = 7259, -- Begone, trespasser! This land belongs to the Knights Mi- This land belongs to Count Teulomme!
-        CRYPTONBERRY_FALLEN_TREE      = 7261, -- A tree has fallen here...
-        CRYPTONBERRY_EXECUTOR_POP     = 7262, -- You feel a wave of hatred wash over you!
-        FISHING_MESSAGE_OFFSET        = 7285, -- You can't fish here.
-        LOGGING_IS_POSSIBLE_HERE      = 7402, -- Logging is possible here if you have <item>.
-        BEUGUNGEL_SHOP_DIALOG         = 7434, -- Hello, [sir/ma'am]! I'm selling goods direct from the Carpenters' Guild.
-        CRYPTONBERRY_EXECUTOR_DIE     = 7486, -- ...Cleave our foesss with barren hate.
-        CRYPTONBERRY_ASSASSIN_2HR     = 7487, -- ..Take up thy lanternsss. The truth we shall illuminate.
-        CRYPTONBERRY_EXECUTOR_2HR     = 7488, -- Through this we ssseek our just reward...
-        MYCOPHILE_MUSHROOM            = 7505, -- There is a rotten mushroom here. There are 3 openings in its cap.
-        HERCULES_TREE_NOTHING_YET     = 7507, -- There is nothing here yet. Check again in the morning.
-        UNITY_WANTED_BATTLE_INTERACT  = 7550, -- Those who have accepted % must pay # Unity accolades to participate. The content for this Wanted battle is #. [Ready to begin?/You do not have the appropriate object set, so your rewards will be limited.]
-        COMMON_SENSE_SURVIVAL         = 7572, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
+        ITEM_CANNOT_BE_OBTAINED       = 6385, -- You cannot obtain the <item>. Come back after sorting your inventory.
+        FULL_INVENTORY_AFTER_TRADE    = 6389, -- You cannot obtain the <item>. Try trading again after sorting your inventory.
+        ITEM_OBTAINED                 = 6391, -- Obtained: <item>.
+        GIL_OBTAINED                  = 6392, -- Obtained <number> gil.
+        KEYITEM_OBTAINED              = 6394, -- Obtained key item: <keyitem>.
+        ITEMS_OBTAINED                = 6400, -- You obtain <number> <item>!
+        NOTHING_OUT_OF_ORDINARY       = 6405, -- There is nothing out of the ordinary here.
+        FELLOW_MESSAGE_OFFSET         = 6420, -- I'm ready. I suppose.
+        CARRIED_OVER_POINTS           = 7002, -- You have carried over <number> login point[/s].
+        LOGIN_CAMPAIGN_UNDERWAY       = 7003, -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
+        LOGIN_NUMBER                  = 7004, -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
+        MEMBERS_LEVELS_ARE_RESTRICTED = 7024, -- Your party is unable to participate because certain members' levels are restricted.
+        CONQUEST_BASE                 = 7069, -- Tallying conquest results...
+        YOU_WISH_TO_KNOW_MISTALLE     = 7244, -- You wish to know of the Knights Mistalle?
+        SQUASH_ANOTHER_WORM           = 7245, -- You're just like everyone else! A maggot looking for a scandal! Well, it's time for me to squash another worm!
+        BEGONE_TRESPASSER             = 7264, -- Begone, trespasser! This land belongs to the Knights Mi- This land belongs to Count Teulomme!
+        CRYPTONBERRY_FALLEN_TREE      = 7266, -- A tree has fallen here...
+        CRYPTONBERRY_EXECUTOR_POP     = 7267, -- You feel a wave of hatred wash over you!
+        FISHING_MESSAGE_OFFSET        = 7290, -- You can't fish here.
+        LOGGING_IS_POSSIBLE_HERE      = 7407, -- Logging is possible here if you have <item>.
+        BEUGUNGEL_SHOP_DIALOG         = 7439, -- Hello, [sir/ma'am]! I'm selling goods direct from the Carpenters' Guild.
+        TOO_POOR                      = 7445, -- I'm sorry, [sir/madame]. You don't have enough gil to purchase a ticket.
+        BARGE_TICKET_REMAINING        = 7458, -- You use your %. (# trip[/s] remaining)
+        BARGE_TICKET_USED             = 7459, -- You use up your %.
+        BARGE_TICKET_ADDED            = 7460, -- # ticket[/s] [was/were] added to your %.
+        STENCH_OF_DECAY               = 7489, -- You are overwhelmed by the putrid stench of decay!
+        CRYPTONBERRY_EXECUTOR_DIE     = 7491, -- ...Cleave our foesss with barren hate.
+        CRYPTONBERRY_ASSASSIN_2HR     = 7492, -- ..Take up thy lanternsss. The truth we shall illuminate.
+        CRYPTONBERRY_EXECUTOR_2HR     = 7493, -- Through this we ssseek our just reward...
+        POLISH_MUSHROOM_SPORE         = 7494, -- You polish the <keyitem> with the glowing mushroom spores!
+        MYCOPHILE_MUSHROOM            = 7510, -- There is a rotten mushroom here. There are 3 openings in its cap.
+        HERCULES_TREE_NOTHING_YET     = 7512, -- There is nothing here yet. Check again in the morning.
+        UNITY_WANTED_BATTLE_INTERACT  = 7555, -- Those who have accepted % must pay # Unity accolades to participate. The content for this Wanted battle is #. [Ready to begin?/You do not have the appropriate object set, so your rewards will be limited.]
+        COMMON_SENSE_SURVIVAL         = 7577, -- It appears that you have arrived at a new survival guide provided by the Adventurers' Mutual Aid Network. Common sense dictates that you should now be able to teleport here from similar tomes throughout the world.
     },
     mob =
     {
-        ORCTRAP_PH            =
-        {
-            [16785675] = 16785676, -- 181.819 -5.887 -524.872
-        },
-        TEMPEST_TIGON         = 16785593,
-        OVERGROWN_IVY         = 16785709,
-        CRYPTONBERRY_EXECUTOR = 16785710,
-        MYCOPHILE             = 16785722,
-        HERCULES_BEETLE       = 16785723,
+        ORCTRAP               = GetFirstID('Orctrap'),
+        TEMPEST_TIGON         = GetFirstID('Tempest_Tigon'),
+        OVERGROWN_IVY         = GetFirstID('Overgrown_Ivy'),
+        CRYPTONBERRY_EXECUTOR = GetFirstID('Cryptonberry_Executor'),
+        MYCOPHILE             = GetFirstID('Mycophile'),
+        HERCULES_BEETLE       = GetFirstID('Hercules_Beetle'),
+        PARA                  = GetFirstID('Para'),
     },
     npc =
     {
-        HERCULES_BEETLE_TREES =
-        {
-            16785730,
-            16785731,
-            16785732,
-            16785733,
-            16785734,
-            16785735,
-        },
-
-        LOGGING = GetTableOfIDs('Logging_Point'),
+        HERCULES_BEETLE_TREES = GetTableOfIDs('qm_hercules_beetle'),
+        LOGGING               = GetTableOfIDs('Logging_Point'),
     },
 }
 

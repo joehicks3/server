@@ -7,10 +7,8 @@
 -----------------------------------
 local ID = zones[xi.zone.WINDURST_WOODS]
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     local c2000 = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.THE_ALL_NEW_C_2000) -- previous quest in line
@@ -30,7 +28,7 @@ entity.onTrigger = function(player, npc)
     then
         player:startEvent(296) -- A Greeting Cardian quest start
     elseif aGreetingCardian == xi.questStatus.QUEST_ACCEPTED and agccs == 3 then
-        if player:needToZone() or os.time() < agcTime then
+        if player:needToZone() or GetSystemTime() < agcTime then
             player:startEvent(277) -- standard dialog if 1 minute has not passed
         else
             player:startEvent(298) -- A Greeting Cardian part two
@@ -48,15 +46,12 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     -- A Greeting Cardian
     if csid == 296 then
         player:addQuest(xi.questLog.WINDURST, xi.quest.id.windurst.A_GREETING_CARDIAN)
         player:setCharVar('AGreetingCardian_Event', 2)
-        player:setCharVar('AGreetingCardian_timer', os.time() + 60)
+        player:setCharVar('AGreetingCardian_timer', GetSystemTime() + 60)
         player:needToZone(true) -- wait one minute and zone after this step
     elseif csid == 298 then
         player:setCharVar('AGreetingCardian_Event', 4)

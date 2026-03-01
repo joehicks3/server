@@ -3,6 +3,7 @@
 --  Mob: Fistule
 -- Note: Spawn by dissolve Guimauve, Bloodguzzler or Lentor
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
 local getNearestMob = function(fistule, mobs)
@@ -42,7 +43,7 @@ entity.onMobRoam = function(mob)
     if nearestMob and nearestMob.distance <= 10 then
         local nearestMobToAbsorb = mobToAbsorb[nearestMob.mobId]
         if nearestMobToAbsorb then
-            mob:useMobAbility(xi.mob.skills.DISSOLVE, nearestMobToAbsorb)
+            mob:useMobAbility(xi.mobSkill.DISSOLVE, nearestMobToAbsorb)
             mob:setLocalVar('[ClaimedBy]', nearestMobToAbsorb:getLocalVar('[ClaimedBy]'))
             mob:setUntargetable(false)
             nearestMobToAbsorb:timer(10000, function(nMob)
@@ -53,7 +54,7 @@ entity.onMobRoam = function(mob)
 end
 
 entity.onMobDeath = function(mob, player, isKiller)
-    if player ~= nil and not player:hasTitle(xi.title.FISTULE_DRAINER) then
+    if player then
         player:addTitle(xi.title.FISTULE_DRAINER)
     end
 end

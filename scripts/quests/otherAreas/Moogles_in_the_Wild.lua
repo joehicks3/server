@@ -15,20 +15,23 @@ quest.reward =
 -- Since there are so many zones with interactions:
 quest.sections = {}
 
-quest.sections[1] = {}
-quest.sections[1].check = function(player, status, vars)
-    local bedPlacedTime = quest:getVar(player, 'bedPlacedTime')
+quest.sections[1] =
+{
+    check = function(player, status, vars)
+        local bedPlacedTime = quest:getVar(player, 'bedPlacedTime')
 
-    return status == xi.questStatus.QUEST_AVAILABLE and
-        player:hasCompletedQuest(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.THE_MOOGLE_PICNIC) and
-        xi.moghouse.isInMogHouseInHomeNation(player) and
-        player:getFameLevel(player:getNation()) >= 7 and
-        not quest:getMustZone(player) and
-        quest:getLocalVar(player, 'questSeen') == 0 and
-        bedPlacedTime ~= 0 and
-        os.time() > bedPlacedTime + 60
-end
+        return status == xi.questStatus.QUEST_AVAILABLE and
+            player:hasCompletedQuest(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.THE_MOOGLE_PICNIC) and
+            xi.moghouse.inMogHouseInHomeNation(player) and
+            player:getFameLevel(player:getNation()) >= 7 and
+            not quest:getMustZone(player) and
+            quest:getLocalVar(player, 'questSeen') == 0 and
+            bedPlacedTime ~= 0 and
+            GetSystemTime() > bedPlacedTime + 60
+    end
+}
 
+---@type ZoneSection
 local questAvailable =
 {
     ['Moogle'] =
@@ -50,11 +53,14 @@ local questAvailable =
     },
 }
 
-quest.sections[2] = {}
-quest.sections[2].check = function(player, status, vars)
-    return status == xi.questStatus.QUEST_ACCEPTED
-end
+quest.sections[2] =
+{
+    check = function(player, status, vars)
+        return status == xi.questStatus.QUEST_ACCEPTED
+    end
+}
 
+---@type ZoneSection
 local questAccepted =
 {
     ['Moogle'] =
@@ -77,7 +83,7 @@ local questAccepted =
                 return quest:progressEvent(30014, 0, 0, 0, 0, 0, xi.item.RAPTOR_MANTLE, xi.item.WOOL_HAT)
             elseif
                 questProgress == 1 and
-                quest:getVar(player, 'Timer') < os.time()
+                quest:getVar(player, 'Timer') < GetSystemTime()
             then
                 return quest:progressEvent(30016)
             end
@@ -93,7 +99,7 @@ local questAccepted =
         [30015] = function(player, csid, option, npc)
             player:confirmTrade()
             quest:setVar(player, 'Prog', 1)
-            quest:setVar(player, 'Timer', os.time() + 60)
+            quest:setVar(player, 'Timer', GetSystemTime() + 60)
         end,
 
         [30016] = function(player, csid, option, npc)

@@ -3,10 +3,8 @@
 --  NPC: Curio Vendor Moogle
 --  Shop NPC
 -----------------------------------
+---@type TNpcEntity
 local entity = {}
-
-entity.onTrade = function(player, npc, trade)
-end
 
 entity.onTrigger = function(player, npc)
     if not player:hasKeyItem(xi.ki.RHAPSODY_IN_WHITE) then
@@ -16,14 +14,10 @@ entity.onTrigger = function(player, npc)
     end
 end
 
-entity.onEventUpdate = function(player, csid, option, npc)
-end
-
 entity.onEventFinish = function(player, csid, option, npc)
     if csid == 9601 then
-        if option >= 1 and option <= 6 then
-            local stock = xi.shop.curioVendorMoogleStock[option]
-            xi.shop.curioVendorMoogle(player, stock)
+        if xi.shop.curioVendorMoogleStock[option] then
+            xi.shop.curioVendorMoogle(player, xi.shop.curioVendorMoogleStock[option])
         end
     end
 end

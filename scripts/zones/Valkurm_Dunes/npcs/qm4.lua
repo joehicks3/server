@@ -1,24 +1,27 @@
 -----------------------------------
 -- Area: Valkurm Dunes
 --  NPC: qm4 (???)
--- Involved in quest: Pirate's Chart
--- !pos -160 4 -131 103
+-- Involved In Pirates Chart quest
+-- !pos -168 4 -131 103
 -----------------------------------
-local ID = zones[xi.zone.VALKURM_DUNES]
------------------------------------
+---@type TNpcEntity
 local entity = {}
 
 entity.onTrade = function(player, npc, trade)
+    if xi.settings.map.FISHING_ENABLE then
+        return xi.piratesChart.onTrade(player, npc, trade)
+    end
 end
 
 entity.onTrigger = function(player, npc)
-    player:messageSpecial(ID.text.MONSTERS_KILLED_ADVENTURERS)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)
+    return xi.piratesChart.onEventUpdate(player, csid, option, npc)
 end
 
 entity.onEventFinish = function(player, csid, option, npc)
+    return xi.piratesChart.onEventFinish(player, csid, option, npc)
 end
 
 return entity

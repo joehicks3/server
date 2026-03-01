@@ -1,31 +1,32 @@
 -----------------------------------
---  Auroral Uppercut
+-- Auroral Uppercut
+-- Famiy: Prish
+-- Description: Deals Light damage to target.
 -----------------------------------
-local ID = zones[xi.zone.EMPYREAL_PARADOX]
------------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
-    if
-        target:hasStatusEffect(xi.effect.PHYSICAL_SHIELD) or
-        target:hasStatusEffect(xi.effect.MAGIC_SHIELD)
-    then
-        return 1
-    end
-
-    mob:showText(mob, ID.text.PRISHE_TEXT + 4)
-
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod  = 1
-    local info    = xi.mobskills.mobMagicalMove(mob, target, skill, mob:getWeaponDmg() * dmgmod, xi.element.LIGHT, dmgmod, xi.mobskills.magicalTpBonus.NO_EFFECT)
-    local dmg     = xi.mobskills.mobFinalAdjustments(info.dmg, mob, skill, target, xi.attackType.MAGICAL, xi.damageType.LIGHT, info.hitslanded)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    target:takeDamage(dmg, mob, xi.attackType.MAGICAL, xi.damageType.LIGHT)
+    params.baseDamage     = mob:getMainLvl() + 2
+    params.fTP            = { 2.0, 2.0, 2.0 }
+    params.element        = xi.element.LIGHT
+    params.attackType     = xi.attackType.MAGICAL
+    params.damageType     = xi.damageType.LIGHT
+    params.shadowBehavior = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
 
-    return dmg
+    local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+    end
+
+    return info.damage
 end
 
 return mobskillObject

@@ -7,10 +7,18 @@
 -- Has en-slow that overwrites and prevents Haste 2.
 -- When slow is active on the player, the NM moves out to melee at a normal range and stops trying to stand on them until it wears. Aura ceases at this time too.
 -----------------------------------
+local ID = zones[xi.zone.ROLANBERRY_FIELDS_S]
+-----------------------------------
+---@type TMobEntity
 local entity = {}
 
+entity.phList =
+{
+    [ID.mob.DYINYINGA - 1] = ID.mob.DYINYINGA,
+}
+
 entity.onMobInitialize = function(mob)
-    mob:setSpeed(100)
+    mob:setBaseSpeed(100)
     mob:setMobMod(xi.mobMod.ADD_EFFECT, 1)
     mob:setMod(xi.mod.AURA_SIZE, -575) -- 6.25 + (-575) / 100 = .5'
 end
@@ -38,8 +46,8 @@ entity.onMobFight = function(mob, target)
                     newZ = newZ + (newZ > tarZ and 1 or -1) * math.random(1, 3)
                 else
                     -- random direction
-                    newX = newX + (math.random(1, 2) == 1 and 1 or -1) * math.random(1, 3)
-                    newZ = newZ + (math.random(1, 2) == 1 and 1 or -1) * math.random(1, 3)
+                    newX = newX + (math.random(1, 100) <= 50 and 1 or -1) * math.random(1, 3)
+                    newZ = newZ + (math.random(1, 100) <= 50 and 1 or -1) * math.random(1, 3)
                 end
 
                 mob:pathTo(newX, newY, newZ)
@@ -48,8 +56,8 @@ entity.onMobFight = function(mob, target)
     else
         -- Aura and closes the gap
         mob:setMobMod(xi.mobMod.TARGET_DISTANCE_OFFSET, 50)
-        mob:addStatusEffectEx(xi.effect.COLURE_ACTIVE, xi.effect.COLURE_ACTIVE, 6, 3, 0, xi.effect.AMNESIA, 50, xi.auraTarget.ENEMIES, xi.effectFlag.AURA)
-        mob:addStatusEffectEx(xi.effect.NONE,          xi.effect.NONE,          6, 3, 0, xi.effect.SILENCE, 50, xi.auraTarget.ENEMIES, xi.effectFlag.AURA)
+        mob:addStatusEffect(xi.effect.COLURE_ACTIVE, { power = 6, origin = mob, tick = 3, subType = xi.effect.AMNESIA, subPower = 50, tier = xi.auraTarget.ENEMIES, flag = xi.effectFlag.AURA })
+        mob:addStatusEffect(xi.effect.NONE, { power = 6, origin = mob, tick = 3, subType = xi.effect.SILENCE, subPower = 50, tier = xi.auraTarget.ENEMIES, flag = xi.effectFlag.AURA })
     end
 end
 

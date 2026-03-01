@@ -3,12 +3,14 @@
 -----------------------------------
 local ID = zones[xi.zone.MOUNT_ZHAYOLM]
 -----------------------------------
+---@type TZone
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
     GetMobByID(ID.mob.CERBERUS):setRespawnTime(math.random(12, 36) * 3600)
 
     xi.helm.initZone(zone, xi.helmType.MINING)
+    xi.darkRider.addHoofprints(zone)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -33,6 +35,18 @@ zoneObject.afterZoneIn = function(player)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
+end
+
+zoneObject.onGameDay = function()
+    xi.apkallu.updateHate(xi.zone.MOUNT_ZHAYOLM, -3)
+end
+
+zoneObject.onGameHour = function(zone)
+    xi.darkRider.onGameHour(zone)
+
+    if VanadielHour() == 0 then
+        xi.darkRider.addHoofprints(zone)
+    end
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)

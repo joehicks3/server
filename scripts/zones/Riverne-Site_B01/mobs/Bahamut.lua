@@ -1,20 +1,46 @@
 -----------------------------------
 -- Area: Riverne - Site B01 (BCNM)
---   NM: Bahamut
+-- NM: Bahamut
+-- !pos -612.800 1.750 693.190 29
 -----------------------------------
 local ID = zones[xi.zone.RIVERNE_SITE_B01]
 -----------------------------------
+---@type TMobEntity
 local entity = {}
 
-entity.onMobInitialize = function(mob)
-    mob:setMobMod(xi.mobMod.HP_STANDBACK, -1)
-end
-
 entity.onMobSpawn = function(mob)
-    mob:addStatusEffect(xi.effect.PHALANX, 35, 0, 180)
-    mob:addStatusEffect(xi.effect.STONESKIN, 350, 0, 300)
-    mob:addStatusEffect(xi.effect.PROTECT, 175, 0, 1800)
-    mob:addStatusEffect(xi.effect.SHELL, 24, 0, 1800)
+    mob:addImmunity(xi.immunity.GRAVITY)
+    mob:addImmunity(xi.immunity.BIND)
+    mob:addImmunity(xi.immunity.SILENCE)
+    mob:addImmunity(xi.immunity.PARALYZE)
+    mob:addImmunity(xi.immunity.LIGHT_SLEEP)
+    mob:addImmunity(xi.immunity.DARK_SLEEP)
+    mob:addImmunity(xi.immunity.TERROR)
+    mob:setMobMod(xi.mobMod.NO_STANDBACK, 1)
+    mob:setMobMod(xi.mobMod.SIGHT_RANGE, 20)
+    mob:setMobMod(xi.mobMod.SOUND_RANGE, 20)
+    -- should cast a spell every ~30 seconds
+    mob:setMobMod(xi.mobMod.MAGIC_COOL, 50)
+    -- base damage scaled down from Bahamut v2 (wyrmking decends) value based on level difference
+    -- base damage of 136 = (lvl 83 + 2) + 51
+    mob:setMobMod(xi.mobMod.WEAPON_BONUS, 51)
+    -- Note baha has a job trait with fast cast of 15% so 75% total
+    mob:setMod(xi.mod.UFASTCAST, 60)
+    -- ATT scaled down from Bahamut v2 (wyrmking decends) value based on level difference
+    mob:setMod(xi.mod.ATT, 425)
+    -- should use mob skill every ~60 sec (without TP feed)
+    mob:addMod(xi.mod.REGAIN, 50)
+    mob:addMod(xi.mod.REGEN, 50)
+    -- MDEF bonus scaled down from Bahamut v2 (wyrmking decends) value based on level difference
+    mob:setMod(xi.mod.MDEF, 55)
+    mob:addStatusEffect(xi.effect.PHALANX, { power = 35, duration = 180, origin = mob })
+    mob:addStatusEffect(xi.effect.STONESKIN, { power = 350, duration = 300, origin = mob })
+    mob:addStatusEffect(xi.effect.PROTECT, { power = 175, duration = 1800, origin = mob })
+    mob:addStatusEffect(xi.effect.SHELL, { power = 24, duration = 1800, origin = mob })
+    -- set these here to make sure no issues if previously killed during a flare mobskill
+    mob:setMobAbilityEnabled(true)
+    mob:setMagicCastingEnabled(true)
+    mob:setAutoAttackEnabled(true)
 end
 
 local megaflareHPP =
@@ -30,19 +56,6 @@ entity.onMobFight = function(mob, target)
     local gigaFlare = mob:getLocalVar('GigaFlare')
     local tauntShown = mob:getLocalVar('tauntShown')
     local mobHPP = mob:getHPP()
-    local isBusy = false
-    local act = mob:getCurrentAction()
-
-    if
-        act == xi.act.MOBABILITY_START or
-        act == xi.act.MOBABILITY_USING or
-        act == xi.act.MOBABILITY_FINISH or
-        act == xi.act.MAGIC_START or
-        act == xi.act.MAGIC_CASTING or
-        act == xi.act.MAGIC_START
-    then
-        isBusy = true -- is set to true if Bahamut is in any stage of using a mobskill or casting a spell
-    end
 
     -- if Megaflare hasn't been set to be used this many times, increase the queue of Megaflares. This will allow it to use multiple Megaflares in a row if the HP is decreased quickly enough.
     for trigger, hpp in ipairs(megaflareHPP) do
@@ -53,7 +66,7 @@ entity.onMobFight = function(mob, target)
         end
     end
 
-    if mob:actionQueueEmpty() and not isBusy then -- the last check prevents multiple Mega/Gigaflares from being called at the same time.
+    if not xi.combat.behavior.isEntityBusy(mob) then -- the last check prevents multiple Mega/Gigaflares from being called at the same time.
         if megaFlareQueue > 0 then
             mob:setMobAbilityEnabled(false) -- disable all other actions until Megaflare is used successfully
             mob:setMagicCastingEnabled(false)
@@ -70,8 +83,8 @@ entity.onMobFight = function(mob, target)
                 end
 
                 if mob:checkDistance(target) <= 15 then -- without this check if the target is out of range it will keep attemping and failing to use Megaflare. Both Megaflare and Gigaflare have range 15.
-                    if bit.band(mob:getBehaviour(), xi.behavior.NO_TURN) > 0 then -- default behaviour
-                        mob:setBehaviour(bit.band(mob:getBehaviour(), bit.bnot(xi.behavior.NO_TURN)))
+                    if bit.band(mob:getBehavior(), xi.behavior.NO_TURN) > 0 then -- default behavior
+                        mob:setBehavior(bit.band(mob:getBehavior(), bit.bnot(xi.behavior.NO_TURN)))
                     end
 
                     mob:useMobAbility(1551)
@@ -89,8 +102,8 @@ entity.onMobFight = function(mob, target)
                 mob:setLocalVar('tauntShown', 3) -- again, taunt won't show again until the move is successfully used.
             end
 
-            if bit.band(mob:getBehaviour(), xi.behavior.NO_TURN) > 0 then -- default behaviour
-                mob:setBehaviour(bit.band(mob:getBehaviour(), bit.bnot(xi.behavior.NO_TURN)))
+            if bit.band(mob:getBehavior(), xi.behavior.NO_TURN) > 0 then -- default behavior
+                mob:setBehavior(bit.band(mob:getBehavior(), bit.bnot(xi.behavior.NO_TURN)))
             end
 
             mob:useMobAbility(1552)

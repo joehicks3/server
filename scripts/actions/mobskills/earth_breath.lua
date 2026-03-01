@@ -1,22 +1,39 @@
 -----------------------------------
---  Earth Breath
---  Description: Deals Earth damage to enemies within a fan-shaped area.
---  Type: Breath
---  Utsusemi/Blink absorb: Ignores shadows
---  Range: Unknown cone
+-- Earth Breath
+-- Family: Adamantoise
+-- Description: Deals Earth damage to enemies within a fan-shaped area.
 -----------------------------------
+---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
+    if not target:isInfront(mob, 128) then
+        return 1
+    end
+
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill)
-    local dmgmod = xi.mobskills.mobBreathMove(mob, target, skill, 0.167, 1.875, xi.element.EARTH, 500)
+mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+    local params = {}
 
-    local dmg = xi.mobskills.mobFinalAdjustments(dmgmod, mob, skill, target, xi.attackType.BREATH, xi.damageType.EARTH, xi.mobskills.shadowBehavior.IGNORE_SHADOWS)
-    target:takeDamage(dmg, mob, xi.attackType.BREATH, xi.damageType.EARTH)
-    return dmg
+    params.percentMultipier = 0.10
+    params.damageCap        = 500
+    params.bonusDamage      = 100
+    params.mAccuracyBonus   = { 0, 0, 0 }
+    params.resistStat       = xi.mod.INT
+    params.element          = xi.element.EARTH
+    params.attackType       = xi.attackType.BREATH
+    params.damageType       = xi.damageType.EARTH
+    params.shadowBehavior   = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
+
+    local info = xi.mobskills.mobBreathMove(mob, target, skill, action, params)
+
+    if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+    end
+
+    return info.damage
 end
 
 return mobskillObject
