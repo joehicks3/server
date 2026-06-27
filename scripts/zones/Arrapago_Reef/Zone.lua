@@ -4,6 +4,71 @@
 ---@type TZone
 local zoneObject = {}
 
+local function applyDeathListener(player)
+    player:addListener('DEATH', 'LAMIA_19_TRIGGER', function(playerArg)
+        local ID = zones[xi.zone.ARRAPAGO_REEF]
+
+        -- Early return: No mob object.
+        local mob = GetMobByID(ID.mob.LAMIA_NO19)
+        if not mob then
+            return
+        end
+
+        -- Early return: Mob isn't spawned.
+        if not mob:isSpawned() then
+            return
+        end
+
+        -- Early return: Mob is already triggered and aggresive.
+        if mob:getLocalVar('state') ~= 0 then
+            return
+        end
+
+        -- Early return: Player is too far away from mob.
+        if mob:checkDistance(playerArg) > 15 then
+            return
+        end
+
+        -- Early return: No zone object.
+        local zone = mob:getZone()
+        if not zone then
+            return
+        end
+
+        -- Send message.
+        local players = zone:getPlayers()
+        for _, person in pairs(players) do
+            if person:checkDistance(playerArg) <= 30 then
+                person:messageSpecial(ID.text.FOREBODING)
+            end
+        end
+
+        -- Early return: Doesn't get triggered. 80% chance she answers it (estimate from current captures; needs more data for a precise rate)
+        if math.random(1, 100) > 80 then
+            return
+        end
+
+        -- Handle local variables.
+        mob:setLocalVar('state', 1)
+        mob:setLocalVar('appearTime', GetSystemTime())
+
+        mob:clearPath()
+        mob:setMobMod(xi.mobMod.NO_MOVE, 1)
+        mob:setPos(playerArg:getXPos(), playerArg:getYPos(), playerArg:getZPos())
+
+        mob:setStatus(xi.status.UPDATE)
+        mob:hideHP(false)
+        mob:hideName(false)
+        mob:setUntargetable(false)
+
+        -- While visible she is always aggressive and has true sight
+        mob:setAggressive(true)
+        mob:setMobMod(xi.mobMod.ALWAYS_AGGRO, 1)
+        mob:setMobMod(xi.mobMod.DETECTION, xi.detects.SIGHT)
+        mob:setTrueDetection(true)
+    end)
+end
+
 zoneObject.onInitialize = function(zone)
     zone:registerCuboidTriggerArea(1, -462, -4, -420, -455, -1, -392) -- approach the Cutter
 end
@@ -19,12 +84,7 @@ zoneObject.onZoneIn = function(player, prevZone)
         player:setPos(-456, -3, -405, 64)
     end
 
-    if
-        prevZone == xi.zone.THE_ASHU_TALIF and
-        player:getCharVar('AgainstAllOdds') == 3
-    then
-        cs = 238
-    elseif prevZone == xi.zone.ILRUSI_ATOLL then
+    if prevZone == xi.zone.ILRUSI_ATOLL then
         player:setPos(26, -7, 606, 222)
     end
 
@@ -34,15 +94,15 @@ end
 zoneObject.afterZoneIn = function(player)
     player:entityVisualPacket('1pb1')
     player:entityVisualPacket('2pb1')
+
+    applyDeathListener(player)
+end
+
+zoneObject.onZoneOut = function(player)
+    player:removeListener('LAMIA_19_TRIGGER')
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
-    if
-        player:getQuestStatus(xi.questLog.AHT_URHGAN, xi.quest.id.ahtUrhgan.AGAINST_ALL_ODDS) == xi.questStatus.QUEST_ACCEPTED and
-        player:getCharVar('AgainstAllOdds') == 1
-    then
-        player:startEvent(237)
-    end
 end
 
 zoneObject.onGameDay = function()
@@ -57,12 +117,6 @@ zoneObject.onEventFinish = function(player, csid, option, npc)
         player:setPos(0, 0, 0, 0, 55)
     elseif csid == 222 then -- Enter instance: Black coffin
         player:setPos(0, 0, 0, 0, 60)
-    elseif csid == 237 then
-        player:startEvent(240)
-    elseif csid == 238 then
-        npcUtil.completeQuest(player, xi.questLog.AHT_URHGAN, xi.quest.id.ahtUrhgan.AGAINST_ALL_ODDS, { item = 15266, var = 'AgainstAllOdds' })
-    elseif csid == 240 then
-        player:setCharVar('AgainstAllOdds', 2)
     end
 end
 

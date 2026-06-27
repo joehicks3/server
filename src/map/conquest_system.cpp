@@ -25,7 +25,7 @@
 #include "common/vana_time.h"
 #include "common/xi.h"
 
-#include "entities/charentity.h"
+#include "entities/char_entity.h"
 #include "ipc_client.h"
 #include "utils/charutils.h"
 #include "utils/zoneutils.h"
@@ -39,7 +39,7 @@ namespace conquest
 
 // Lazily initialized conquest data
 // TODO: This should be a member of _something_
-xi::optional<ConquestData> conquestData;
+Maybe<ConquestData> conquestData;
 
 ConquestData& GetConquestData()
 {

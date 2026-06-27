@@ -64,8 +64,8 @@ entity.spawnPoints =
 
 entity.phList =
 {
-    [ID.mob.CHARYBDIS - 4] = ID.mob.CHARYBDIS, -- -138.181, 48.389, -338.001
-    [ID.mob.CHARYBDIS - 2] = ID.mob.CHARYBDIS, -- -212.407, 38.538, -342.544
+    [ID.mob.CHARYBDIS - 4] = ID.mob.CHARYBDIS, -- Confirmed on retail
+    [ID.mob.CHARYBDIS - 1] = ID.mob.CHARYBDIS, -- Confirmed on retail
 }
 
 entity.onMobInitialize = function(mob)
@@ -82,9 +82,6 @@ entity.onMobSpawn = function(mob)
     mob:setMod(xi.mod.SILENCE_RES_RANK, 11)
 
     mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, 150)
-end
-
-entity.onMobDeath = function(mob, player, optParams)
 end
 
 return entity

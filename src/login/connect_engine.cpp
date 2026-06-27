@@ -28,7 +28,11 @@ namespace
 
 auto getZMQEndpointString() -> std::string
 {
-    return fmt::format("tcp://{}:{}", settings::get<std::string>("network.ZMQ_IP"), settings::get<uint16>("network.ZMQ_PORT"));
+    return fmt::format(
+        "{}://{}:{}",
+        settings::get<std::string>("network.ZMQ_TRANSPORT"),
+        settings::get<std::string>("network.ZMQ_IP"),
+        settings::get<uint16>("network.ZMQ_PORT"));
 }
 
 auto getZMQRoutingId() -> uint64
@@ -40,61 +44,62 @@ auto getZMQRoutingId() -> uint64
 
     return IPP(ip, port).getRawIPP();
 }
+
 constexpr auto kSessionCleanTime = 15min;
 
 } // namespace
 
-ConnectEngine::ConnectEngine(Scheduler& scheduler)
+ConnectEngine::ConnectEngine(Scheduler& scheduler, ZMQService& zmqService)
 : scheduler_(scheduler)
-, zmqDealerWrapper_(getZMQEndpointString(), getZMQRoutingId())
-, m_authHandler(scheduler_, settings::get<uint32>("network.LOGIN_AUTH_PORT"), zmqDealerWrapper_)
-, m_dataHandler(scheduler_, settings::get<uint32>("network.LOGIN_DATA_PORT"), zmqDealerWrapper_)
-, m_viewHandler(scheduler_, settings::get<uint32>("network.LOGIN_VIEW_PORT"), zmqDealerWrapper_)
+, dealerChannel_(zmqService.registerDealer(getZMQEndpointString(), getZMQRoutingId()))
+, m_authHandler(scheduler_, settings::get<uint32>("network.LOGIN_AUTH_PORT"), dealerChannel_)
+, m_dataHandler(scheduler_, settings::get<uint32>("network.LOGIN_DATA_PORT"), dealerChannel_)
+, m_viewHandler(scheduler_, settings::get<uint32>("network.LOGIN_VIEW_PORT"), dealerChannel_)
 {
-    scheduler.postToMainThread(periodicCleanup());
+    periodicCleanupToken_ = scheduler.intervalOnMainThread(
+        kSessionCleanTime,
+        [this]()
+        {
+            periodicCleanup();
+        });
 }
 
 ConnectEngine::~ConnectEngine()
 {
 }
 
-auto ConnectEngine::periodicCleanup() -> Task<void>
+void ConnectEngine::periodicCleanup()
 {
-    while (!scheduler_.closeRequested())
+    auto& sessions       = loginHelpers::getAuthenticatedSessions();
+    auto  ipAddrIterator = sessions.begin();
+    while (ipAddrIterator != sessions.end())
     {
-        co_await scheduler_.yieldFor(kSessionCleanTime);
-
-        auto& sessions       = loginHelpers::getAuthenticatedSessions();
-        auto  ipAddrIterator = sessions.begin();
-        while (ipAddrIterator != sessions.end())
+        auto sessionIterator = ipAddrIterator->second.begin();
+        while (sessionIterator != ipAddrIterator->second.end())
         {
-            auto sessionIterator = ipAddrIterator->second.begin();
-            while (sessionIterator != ipAddrIterator->second.end())
-            {
-                session_t& session = sessionIterator->second;
+            session_t& session = sessionIterator->second;
 
-                // If it's been 15 minutes, erase it from the session list
-                if (!session.data_session &&
-                    !session.view_session &&
-                    timer::now() > session.authorizedTime + kSessionCleanTime)
-                {
-                    sessionIterator = ipAddrIterator->second.erase(sessionIterator);
-                }
-                else
-                {
-                    ++sessionIterator;
-                }
-            }
-
-            // If this map entry is empty, clean it up
-            if (ipAddrIterator->second.size() == 0)
+            // If it's been 15 minutes, erase it from the session list
+            if (!session.data_session &&
+                !session.view_session &&
+                timer::now() > session.authorizedTime + kSessionCleanTime)
             {
-                ipAddrIterator = sessions.erase(ipAddrIterator);
+                sessionIterator = ipAddrIterator->second.erase(sessionIterator);
             }
             else
             {
-                ++ipAddrIterator;
+                ++sessionIterator;
             }
+        }
+
+        // If this map entry is empty, clean it up
+        if (ipAddrIterator->second.size() == 0)
+        {
+            ipAddrIterator = sessions.erase(ipAddrIterator);
+        }
+        else
+        {
+            ++ipAddrIterator;
         }
     }
 }

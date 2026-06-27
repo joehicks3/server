@@ -22,7 +22,7 @@
 #include "common/logging.h"
 #include "common/timer.h"
 
-#include "entities/charentity.h"
+#include "entities/char_entity.h"
 #include "recast_container.h"
 
 #include "enums/recast.h"
@@ -287,6 +287,7 @@ bool CRecastContainer::HasRecast(RECASTTYPE type, Recast id, timer::duration rec
 void CRecastContainer::Check()
 {
     TracyZoneScoped;
+
     for (auto type : { RECAST_MAGIC, RECAST_ABILITY })
     {
         RecastList_t* PRecastList = GetRecastList(type);

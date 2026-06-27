@@ -25,10 +25,10 @@ local bowPhases =
 
 local formTable =
 {
-    [forms.SHEATHED] = { skill = 0,    delay = 2000, standback = xi.behavior.NONE      },
-    [forms.MELEE   ] = { skill = 0,    delay = 2000, standback = xi.behavior.NONE      },
-    [forms.BOW_LOW ] = { skill = 2056, delay = 2400, standback = xi.behavior.STANDBACK },
-    [forms.BOW_HIGH] = { skill = 2055, delay = 1500, standback = xi.behavior.STANDBACK },
+    [forms.SHEATHED] = { skill = 0,    delay = 200,  standback = xi.behavior.NONE      },
+    [forms.MELEE   ] = { skill = 0,    delay = 200,  standback = xi.behavior.NONE      },
+    [forms.BOW_LOW ] = { skill = 2056, delay = 240,  standback = xi.behavior.STANDBACK },
+    [forms.BOW_HIGH] = { skill = 2055, delay = 150,   standback = xi.behavior.STANDBACK },
 }
 
 local bowSequence =
@@ -194,7 +194,7 @@ entity.onMobMobskillChoose = function(mob, target, skillId)
     return skill
 end
 
-entity.onMobWeaponSkill = function(target, mob, skill)
+entity.onMobWeaponSkill = function(mob, target, skill, action)
     local skillId = skill:getID()
 
     -- Track last time Tenzen did a mobskill. Dont Meikyo Shisui immediately after.

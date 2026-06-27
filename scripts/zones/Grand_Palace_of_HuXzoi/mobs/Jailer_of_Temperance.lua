@@ -45,7 +45,7 @@ entity.onMobInitialize = function(mob)
 end
 
 entity.onMobSpawn = function(mob)
-    mob:addMobMod(xi.mobMod.WEAPON_BONUS, 13) -- 100 total weapon damage
+    mob:addMobMod(xi.mobMod.BASE_DAMAGE_MODIFIER, 13) -- 100 total weapon damage
     mob:addMod(xi.mod.EVA, 10)
     mob:addMod(xi.mod.MDEF, 20)
     mob:addMod(xi.mod.ATT, mob:getMod(xi.mod.ATT) * 0.65) -- Increase attack by 65%
@@ -59,8 +59,8 @@ entity.onMobSpawn = function(mob)
     xi.mix.jobSpecial.config(mob, {
         specials =
         {
-            { id = xi.jsa.MEIKYO_SHISUI, hpp = math.random(65, 70) },
-            { id = xi.jsa.MEIKYO_SHISUI, hpp = math.random(35, 40) },
+            { id = xi.mobSkill.MEIKYO_SHISUI_1, hpp = math.random(65, 70) },
+            { id = xi.mobSkill.MEIKYO_SHISUI_1, hpp = math.random(35, 40) },
         },
     })
 

@@ -10,7 +10,7 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local params = {}
 
     params.baseDamage      = mob:getMainLvl() + 2
@@ -19,7 +19,7 @@ mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
     params.attackType      = xi.attackType.MAGICAL
     params.damageType      = xi.damageType.THUNDER
     params.shadowBehavior  = xi.mobskills.shadowBehavior.WIPE_SHADOWS
-    params.dStatMultiplier = 1.5
+    params.dStatMultiplier = 2
 
     local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
 

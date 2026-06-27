@@ -21,12 +21,15 @@
 
 #pragma once
 
-#include "common/cbasetypes.h"
-#include "common/timer.h"
-#include "common/vana_time.h"
+#include <common/cbasetypes.h>
+#include <common/timer.h>
+#include <common/types/maybe.h>
+#include <common/vana_time.h>
+
 #include "map_constants.h"
 
-#include <optional>
+#include <map>
+#include <memory>
 #include <unordered_map>
 
 enum class Weather : uint16_t;
@@ -37,20 +40,27 @@ class SpawnSlot;
 
 struct PendingSlotRespawn
 {
-    timer::time_point     respawnAt;
-    std::optional<uint32> specificMobId;
+    timer::time_point respawnAt;
+    Maybe<uint32>     specificMobId;
 };
 
 class SpawnHandler
 {
 public:
     explicit SpawnHandler(CZone* PZone);
+    ~SpawnHandler(); // out-of-line: spawnSlots_ holds unique_ptr to (here) incomplete SpawnSlot
+
+    // Get the spawn slot for slotId, creating it if it doesn't exist yet.
+    auto getOrCreateSpawnSlot(uint32_t slotId) -> SpawnSlot*;
+
+    // Get the spawn slot for slotId, or nullptr if none exists.
+    auto getSpawnSlot(uint32_t slotId) const -> SpawnSlot*;
 
     void Tick(timer::time_point now);
-    void registerForRespawn(CMobEntity* PMob, std::optional<timer::duration> respawnTime = std::nullopt);
+    void registerForRespawn(CMobEntity* PMob, Maybe<timer::duration> respawnTime = std::nullopt);
     void unregister(CMobEntity* PMob);
     auto isRegistered(CMobEntity* PMob) const -> bool;
-    auto getRemainingRespawnTime(CMobEntity* PMob) const -> std::optional<timer::duration>;
+    auto getRemainingRespawnTime(CMobEntity* PMob) const -> Maybe<timer::duration>;
     void onTOTDChange(vanadiel_time::TOTD totd) const;
     void onWeatherChange(Weather weather) const;
     auto canSpawnNow(const CMobEntity* PMob) const -> bool;
@@ -61,4 +71,5 @@ private:
     timer::duration                                    spawnWindow_{ kSpawnHandlerWindow };
     std::unordered_map<uint32, timer::time_point>      pendingRespawns_;     // Non-slotted mobs: mobId -> respawnAt timestamp
     std::unordered_map<SpawnSlot*, PendingSlotRespawn> pendingSlotRespawns_; // Slotted mobs: slot pointer -> respawn info
+    std::map<uint32_t, std::unique_ptr<SpawnSlot>>     spawnSlots_;          // Owns this zone's spawn slots, keyed by slot id
 };

@@ -11,13 +11,13 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local params = {}
 
     params.baseDamage     = 9999 + mob:getHP()
     params.fTP            = { 2.5, 2.5, 2.5 }
     params.element        = xi.element.FIRE
-    params.attackType     = xi.attackType.MAGICAL
+    params.attackType     = xi.attackType.BREATH
     params.damageType     = xi.damageType.FIRE
     params.shadowBehavior = xi.mobskills.shadowBehavior.WIPE_SHADOWS
 

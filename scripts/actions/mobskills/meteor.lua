@@ -11,7 +11,7 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local params = {}
 
     params.baseDamage     = mob:getMainLvl()
@@ -27,11 +27,15 @@ mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
         target:takeDamage(info.damage, mob, info.attackType, info.damageType)
     end
 
-    -- Animation change happens after mobskill finishes.
-    -- Animation: Chlevnik falls but calls in a final meteor barrage, then dies.
-    skill:setFinalAnimationSub(1)
-
     return info.damage
+end
+
+mobskillObject.onMobSkillFinalize = function(mob, skill)
+    mob:setAnimationSub(1)
+    mob:timer(6000, function(mobArg)
+        mobArg:setUnkillable(false)
+        mobArg:setHP(0)
+    end)
 end
 
 return mobskillObject

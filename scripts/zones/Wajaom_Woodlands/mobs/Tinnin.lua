@@ -120,19 +120,22 @@ entity.onMobFight = function(mob, target)
     mob:useMobAbility(xi.mobSkill.BAROFIELD)
 end
 
-entity.onMobWeaponSkill = function(target, mob, skill)
+entity.onMobWeaponSkill = function(mob, target, skill, action)
     local skillId = skill:getID()
 
     -- Barofield -> Polar Blast -> Pyric Blast chain.
-    if skillId == xi.mobSkill.BAROFIELD then
-        mob:useMobAbility(xi.mobSkill.POLAR_BLAST)
-    elseif skillId == xi.mobSkill.POLAR_BLAST then
-        if mob:getAnimationSub() == 0 then
-            mob:useMobAbility(xi.mobSkill.PYRIC_BLAST)
+    if target == mob:getTarget() then
+        if skillId == xi.mobSkill.BAROFIELD then
+            mob:useMobAbility(xi.mobSkill.POLAR_BLAST)
+        elseif skillId == xi.mobSkill.POLAR_BLAST then
+            if mob:getAnimationSub() == 0 then
+                mob:useMobAbility(xi.mobSkill.PYRIC_BLAST)
+            end
         end
+    end
 
     -- Pyric/Polar Bulwark -> Nerve Gas
-    elseif skillId == xi.mobSkill.PYRIC_BULWARK then
+    if skillId == xi.mobSkill.PYRIC_BULWARK then
         mob:useMobAbility(xi.mobSkill.NERVE_GAS)
     elseif skillId == xi.mobSkill.POLAR_BULWARK then
         mob:useMobAbility(xi.mobSkill.NERVE_GAS)

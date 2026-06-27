@@ -461,10 +461,6 @@ xi.dynamis.zoneOnZoneIn = function(player, prevZone)
 
     if player:getCharVar('Dynamis_Entry') == 1 or player:getGMLevel() > 0 then
         if player:getCharVar('Dynamis_subjob') == 1 then
-            player:timer(5000, function(playerArg)
-                playerArg:messageBasic(xi.msg.basic.UNABLE_TO_ACCESS_SJ)
-            end)
-
             player:addStatusEffect(xi.effect.SJ_RESTRICTION, { origin = player })
         end
 
@@ -1124,4 +1120,11 @@ xi.dynamis.hourglassAndCurrencyExchangeNPCOnEventFinish = function(player, csid,
 
         player:setLocalVar('hundredItemBought', 0)
     end
+end
+
+xi.dynamis.mobInfo = function(mob)
+    -- No gil, no mug, enhanced damage 1.5x
+    mob:setMobMod(xi.mobMod.GIL_MAX, -1)
+    mob:setMobMod(xi.mobMod.MUG_GIL, -1)
+    mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, 150)
 end

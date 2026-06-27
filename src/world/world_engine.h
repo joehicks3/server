@@ -21,9 +21,11 @@
 
 #pragma once
 
-#include "common/application.h"
-#include "common/scheduler.h"
-#include "common/zmq_router_wrapper.h"
+#include <common/application.h>
+#include <common/ipp_message.h>
+#include <common/scheduler.h>
+#include <common/types/flag.h>
+#include <common/zmq/zmq_service.h>
 
 #include "http_server.h"
 
@@ -41,7 +43,9 @@ class ColonizationSystem;
 class WorldEngine final : public Engine
 {
 public:
-    WorldEngine(Scheduler& scheduler);
+    using EnableHTTPServer = xi::Flag<struct EnableHTTPServerTag>;
+
+    WorldEngine(Scheduler& scheduler, ZMQService& zmqService, EnableHTTPServer enableHTTPServer);
     ~WorldEngine() override;
 
     // TODO: Make all of these members private
@@ -59,6 +63,6 @@ public:
     std::unique_ptr<HTTPServer> httpServer_;
 
 private:
-    auto timeServer() -> Task<void>;
-    auto pumpQueues() -> Task<void>;
+    Maybe<Scheduler::Token> timeServerToken_;
+    Maybe<Scheduler::Token> pumpQueuesToken_;
 };

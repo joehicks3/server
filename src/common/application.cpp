@@ -1,4 +1,4 @@
-/*
+﻿/*
 ===========================================================================
 
   Copyright (c) 2022 LandSandBoat Dev Teams
@@ -27,7 +27,6 @@
 #include "logging.h"
 #include "lua.h"
 #include "settings.h"
-#include "task_manager.h"
 #include "xirand.h"
 
 #ifdef _WIN32
@@ -44,40 +43,6 @@
 namespace
 {
 
-// Marked as true by markLoaded() when the
-// application is fully loaded and the main
-// loop has begun.
-bool gIsRunning = false;
-
-void handleSignal(const std::error_code& error, int signal)
-{
-    if (error)
-    {
-        return;
-    }
-
-    switch (signal)
-    {
-#ifdef _WIN32
-        case SIGBREAK:
-#endif // _WIN32
-        case SIGINT:
-        case SIGTERM:
-            gIsRunning = false;
-            std::exit(0);
-#ifndef _WIN32
-        case SIGABRT:
-        case SIGSEGV:
-        case SIGFPE:
-        case SIGILL:
-            break;
-#endif
-        default:
-            std::cerr << fmt::format("Unhandled signal: {}\n", signal);
-            break;
-    }
-}
-
 #ifdef _WIN32
 unsigned long prevQuickEditMode;
 #endif // _WIN32
@@ -86,7 +51,7 @@ unsigned long prevQuickEditMode;
 
 Application::Application(const ApplicationConfig& appConfig, int argc, char** argv)
 : scheduler_()
-, signals_(scheduler_.ioContext())
+, signals_(scheduler_.mainContext())
 , serverName_(appConfig.serverName)
 , args_(std::make_unique<Arguments>(appConfig, argc, argv))
 {
@@ -121,7 +86,6 @@ Application::Application(const ApplicationConfig& appConfig, int argc, char** ar
 
 Application::~Application()
 {
-    signals_.cancel();
     tryRestoreQuickEditMode();
     logging::ShutDown();
 }
@@ -131,6 +95,31 @@ void Application::trySetConsoleTitle()
 #ifdef _WIN32
     SetConsoleTitleA(fmt::format("{}-server", serverName_).c_str());
 #endif
+}
+
+void Application::handleSignal(const std::error_code& error, int signal)
+{
+    switch (signal)
+    {
+#ifdef _WIN32
+        case SIGBREAK:
+#endif // _WIN32
+        case SIGINT:
+        case SIGTERM:
+            // Shut down gracefully so main() unwinds and the engine's destructor runs.
+            requestExit();
+            break;
+#ifndef _WIN32
+        case SIGABRT:
+        case SIGSEGV:
+        case SIGFPE:
+        case SIGILL:
+            break;
+#endif
+        default:
+            std::cerr << fmt::format("Unhandled signal: {}\n", signal);
+            break;
+    }
 }
 
 void Application::registerSignalHandlers()
@@ -146,7 +135,11 @@ void Application::registerSignalHandlers()
     signals_.add(SIGXFSZ);
     signals_.add(SIGPIPE);
 #endif
-    signals_.async_wait(&handleSignal);
+    signals_.async_wait(
+        [this](const std::error_code& error, int signal)
+        {
+            handleSignal(error, signal);
+        });
 }
 
 void Application::usercheck() const
@@ -227,10 +220,11 @@ void Application::prepareLogging()
 
 void Application::markLoaded()
 {
-    ShowInfoFmt("The {}-server is ready to work...", serverName_);
+    const auto elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime_).count();
+
+    ShowInfoFmt("The {}-server is ready to work after {:.2f} seconds...", serverName_, elapsed);
     ShowInfoFmt("Type 'help' for a list of available commands.");
     ShowInfoFmt("=======================================================================");
-    gIsRunning = true;
 
     if (Application::isRunningInCI())
     {
@@ -241,12 +235,21 @@ void Application::markLoaded()
 
 auto Application::isRunning() const -> bool
 {
-    return gIsRunning;
+    return !scheduler_.closeRequested();
 }
 
 void Application::requestExit()
 {
-    gIsRunning = false;
+    scheduler_.postToMainThread(
+        [this]()
+        {
+            scheduler_.stop();
+        });
+}
+
+auto Application::closeRequested() const -> bool
+{
+    return scheduler_.closeRequested();
 }
 
 auto Application::isRunningInCI() const -> bool
@@ -270,40 +273,37 @@ void Application::run()
 
     markLoaded();
 
-    try
-    {
-        // NOTE: ioContext_.run() takes over and blocks this thread. Anything after this point will only fire
-        // if ioContext_ finishes!
-        //
-        // This busy loop looks nasty, however --
-        // https://think-async.com/Asio/asio-1.24.0/doc/asio/reference/io_service.html
-        //
-        // If an exception is thrown from a handler, the exception is allowed to propagate through the throwing thread's invocation of
-        // run(), run_one(), run_for(), run_until(), poll() or poll_one(). No other threads that are calling any of these functions are affected.
-        // It is then the responsibility of the application to catch the exception.
+    // NOTE: scheduler_.run() takes over and blocks this thread. Anything after this point will only fire
+    // if scheduler_ finishes!
+    //
+    // https://think-async.com/asio/asio-1.24.0/doc/asio/reference/io_service.html
+    //
+    // If an exception is thrown from a handler, the exception is allowed to propagate through the throwing thread's invocation of
+    // run(), run_one(), run_for(), run_until(), poll() or poll_one(). No other threads that are calling any of these functions are affected.
+    // It is then the responsibility of the application to catch the exception.
 
-        while (isRunning())
-        {
-            try
-            {
-                scheduler_.run();
-                break;
-            }
-            catch (std::exception& e)
-            {
-                ShowErrorFmt("Inner fatal: {}", e.what());
-            }
-        }
-    }
-    catch (std::exception& e)
+    while (isRunning())
     {
-        ShowErrorFmt("Outer fatal: {}", e.what());
+        try
+        {
+            scheduler_.run();
+            break;
+        }
+        catch (std::exception& e)
+        {
+            ShowErrorFmt("Fatal exception: {}", e.what());
+        }
     }
 }
 
 auto Application::scheduler() -> Scheduler&
 {
     return scheduler_;
+}
+
+auto Application::zmqService() -> ZMQService&
+{
+    return zmqService_;
 }
 
 auto Application::args() const -> Arguments&

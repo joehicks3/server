@@ -42,9 +42,6 @@ entity.onMobSpawn = function(mob)
     end
 end
 
-entity.onMobFight = function(mob, target)
-end
-
 -- If Para uses TP specific TP moves move under 50% HP then it will spawn a clone.
 -- Will only spawn 4 adds total.
 -- Adds will spawn ontop of the player.
@@ -52,7 +49,7 @@ end
 -- No reports or captures if the clones can respawn.
 -- Reports from players saying only the original needs to be killed.
 -- To do: Per retail captures, a clone is only made when the appropriate TP move LANDS. It will NOT clone when it misses and fails to do damage to the player.
-entity.onMobWeaponSkill = function(target, mob, skill)
+entity.onMobWeaponSkill = function(mob, target, skill, action)
     local hpp   = mob:getHPP()
     local skillId = skill:getID()
     local para = GetMobByID(ID.mob.PARA)
@@ -82,7 +79,4 @@ entity.onMobWeaponSkill = function(target, mob, skill)
 end
 
 -- Clones do not despawn when original is killed. Consistent with capture.
-entity.onMobDeath = function(mob, player, optParams)
-end
-
 return entity

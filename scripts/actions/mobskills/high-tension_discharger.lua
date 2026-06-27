@@ -11,7 +11,7 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local params = {}
 
     params.percentMultipier = 0.05
@@ -29,7 +29,7 @@ mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
     if xi.mobskills.processDamage(mob, target, skill, action, info) then
         target:takeDamage(info.damage, mob, info.attackType, info.damageType)
 
-        xi.mobskills.mobPhysicalStatusEffectMove(mob, target, skill, xi.effect.STUN, 1, 3, 4)
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.STUN, 1, 3, 4)
 
         if target:hasStatusEffect(xi.effect.ELEMENTALRES_DOWN) then
             target:delStatusEffectSilent(xi.effect.ELEMENTALRES_DOWN)

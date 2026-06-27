@@ -279,8 +279,8 @@ xi.battlefield.id =
     SHEEP_IN_ANTLIONS_CLOTHING                 = 674, -- Converted
     SHELL_WE_DANCE                             = 675, -- Experimental
     TOTENTANZ                                  = 676,
-    TANGO_WITH_A_TRACKER                       = 677, -- Experimental
-    REQUIEM_OF_A_SIN                           = 678,
+    TANGO_WITH_A_TRACKER                       = 677,
+    REQUIEM_OF_SIN                             = 678,
     ANTAGONISTIC_AMBUSCADE                     = 679,
     DARKNESS_NAMED                             = 704, -- Converted
     TEST_YOUR_MITE                             = 705,
@@ -408,6 +408,7 @@ end
 --  - requiredKeyItems: Key items required to be able to enter the battlefield - these are removed upon entry unless 'keep = true' (optional)
 --  - title: Title given to players upon victory (optional)
 --  - grantXP: Amount of XP to grant upon victory (optional)
+--  - grantXPLockout: If true, players can only receive the grantXP once per day, resetting at JST midnight. (optional)
 --  - lossEventParams: Parameters given to the loss event (32002). Defaults to none. (optional)
 ---@diagnostic disable-next-line: duplicate-set-field
 function Battlefield:new(data)
@@ -436,6 +437,7 @@ function Battlefield:new(data)
 
     obj.title            = data.title
     obj.grantXP          = data.grantXP
+    obj.grantXPLockout   = data.grantXPLockout
     obj.levelCap         = data.levelCap or 0
     obj.allowSubjob      = (data.allowSubjob == nil or data.allowSubjob) or false
     obj.allowTrusts      = data.allowTrusts and data.allowTrusts or false
@@ -928,13 +930,21 @@ function Battlefield:onEventFinishWin(player, csid, option, npc)
     end
 
     if self.grantXP then
+        if self.grantXPLockout then
+            if self:getVar(player, 'XP') > GetSystemTime() then
+                return
+            end
+
+            self:setVar(player, 'XP', JstMidnight())
+        end
+
         player:addExp(self.grantXP)
     end
 end
 
 function Battlefield.onExitTrigger(player, npc)
     if player:getBattlefield() then
-        return Battlefield:progressCutscene(32003)
+        return Battlefield:progressOptionalCutscene(32003, { cs_option = 3, canSkip = true })
     end
 end
 

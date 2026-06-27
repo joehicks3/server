@@ -16,7 +16,7 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
     end
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local params = {}
 
     params.percentMultipier = 0.01 -- TODO: Capture breath values.
@@ -38,7 +38,7 @@ mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
     end
 
     if
-        mob:getFamily() == 313 and
+        mob:getPool() == xi.mobPool.TINNIN and
         bit.band(mob:getBehavior(), xi.behavior.NO_TURN) == 0
     then
         -- re-enable no turn if all three heads are up

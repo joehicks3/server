@@ -8,7 +8,7 @@ local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
     if
-        mob:getFamily() == 91 and -- Pandemonium Warden TODO: Set skill lists
+        mob:getSpecies() == xi.mobSpecies.WARDEN and -- Pandemonium Warden TODO: Set skill lists
         mob:getModelId() ~= 1746
     then
         return 1
@@ -17,7 +17,7 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 0
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local params = {}
 
     params.percentMultipier = 0.0833

@@ -107,7 +107,7 @@ entity.onMobSpawn = function(mob)
     mob:setMobMod(xi.mobMod.MAGIC_COOL, 20)
     mob:setMobMod(xi.mobMod.ROAM_COOL, 55)
     mob:setMobMod(xi.mobMod.ROAM_DISTANCE, 5)
-    mob:setMobMod(xi.mobMod.WEAPON_BONUS, 158) -- 255 total weapon damage
+    mob:setMobMod(xi.mobMod.BASE_DAMAGE_MODIFIER, 158) -- 255 total weapon damage
     mob:setBehavior(bit.bor(mob:getBehavior(), xi.behavior.NO_TURN))
 end
 
@@ -208,7 +208,7 @@ entity.onMobMobskillChoose = function(mob, target, skillId)
     end
 end
 
-entity.onMobWeaponSkill = function(target, mob, skill)
+entity.onMobWeaponSkill = function(mob, target, skill, action)
     -- Don't lose TP from autos during flight
     if skill:getID() == 1288 then
         mob:addTP(64) -- Needs to gain TP from flight auto attacks

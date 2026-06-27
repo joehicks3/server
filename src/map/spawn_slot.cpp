@@ -18,7 +18,7 @@
 
 #include <ranges>
 
-#include "entities/mobentity.h"
+#include "entities/mob_entity.h"
 #include "spawn_handler.h"
 #include "zone.h"
 
@@ -36,13 +36,13 @@ void SpawnSlot::RemoveMob(const CMobEntity* mob)
                   });
 }
 
-auto SpawnSlot::TrySpawn(const std::optional<uint32> specificMobId) -> bool
+auto SpawnSlot::TrySpawn(const Maybe<uint32> specificMobId) -> bool
 {
     // Get SpawnHandler from first mob's zone for condition checking
     SpawnHandler* spawnHandler = nullptr;
     if (!entries.empty() && entries[0].mob->loc.zone)
     {
-        spawnHandler = entries[0].mob->loc.zone->spawnHandler();
+        spawnHandler = &entries[0].mob->loc.zone->spawnHandler();
     }
 
     // Check if a specific mob should respawn (deaggro case)

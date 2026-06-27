@@ -34,12 +34,12 @@ entity.onMobFight = function(mob, target)
         mob:getHPP() <= 40 and
         mob:getLocalVar('counterstanceUsed') == 0
     then
-        mob:useMobAbility(xi.mobSkill.COUNTERSTANCE)
+        mob:useMobAbility(xi.mobSkill.COUNTERSTANCE_3)
         mob:setLocalVar('counterstanceUsed', 1)
     end
 end
 
-entity.onMobWeaponSkill = function(target, mob, skill)
+entity.onMobWeaponSkill = function(mob, target, skill, action)
     local skillId = skill:getID()
     if
         skillId == xi.mobSkill.BLOW or
@@ -59,9 +59,6 @@ end
 
 entity.onAdditionalEffect = function(mob, target, damage)
     return xi.mob.onAddEffect(mob, target, damage, xi.mob.ae.WEIGHT, { chance = 20, power = 50 })
-end
-
-entity.onMobDeath = function(mob, player, optParams)
 end
 
 return entity

@@ -18,6 +18,7 @@ entity.onMobInitialize = function(mob)
     mob:addImmunity(xi.immunity.SILENCE)
     mob:addImmunity(xi.immunity.DARK_SLEEP)
     mob:addImmunity(xi.immunity.LIGHT_SLEEP)
+    mob:addImmunity(xi.immunity.PETRIFY)
 end
 
 entity.onMobSpawn = function(mob)
@@ -25,12 +26,10 @@ entity.onMobSpawn = function(mob)
     xi.mix.jobSpecial.config(mob, {
         specials =
         {
-            { id = xi.jsa.HUNDRED_FISTS, cooldown = 70, hpp = math.random(98, 99) },
+            { id = xi.mobSkill.HUNDRED_FISTS_1 },
+            { id = xi.mobSkill.HUNDRED_FISTS_1, cooldown = 65, hpp = math.random(98, 99) },
         },
     })
-end
-
-entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)

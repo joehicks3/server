@@ -10,7 +10,7 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
     return 1
 end
 
-mobskillObject.onMobWeaponSkill = function(target, mob, skill, action)
+mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local params = {}
 
     params.baseDamage     = mob:getMainLvl() + 2
@@ -32,7 +32,7 @@ end
 mobskillObject.onMobSkillFinalize = function(mob, skill)
     mob:delStatusEffect(xi.effect.ALL_MISS)
     mob:setMobSkillAttack(0)
-    skill:setFinalAnimationSub(2)
+    mob:setAnimationSub(2)
 end
 
 return mobskillObject

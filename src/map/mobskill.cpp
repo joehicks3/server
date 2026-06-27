@@ -21,7 +21,7 @@
 
 #include "mobskill.h"
 
-#include "entities/mobentity.h"
+#include "entities/mob_entity.h"
 #include "enums/action/animation.h"
 #include "enums/action/knockback.h"
 
@@ -243,7 +243,7 @@ void CMobSkill::setFinalAnimationSub(uint8 newAnimationSub)
     m_FinalAnimationSub = newAnimationSub;
 }
 
-std::optional<uint8> CMobSkill::getFinalAnimationSub()
+Maybe<uint8> CMobSkill::getFinalAnimationSub()
 {
     return m_FinalAnimationSub;
 }

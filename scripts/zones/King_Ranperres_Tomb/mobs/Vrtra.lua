@@ -110,7 +110,7 @@ entity.onMobSpawn = function(mob)
     mob:setMobMod(xi.mobMod.ROAM_COOL, 55)
     mob:setMobMod(xi.mobMod.ROAM_DISTANCE, 5)
     mob:setMobMod(xi.mobMod.SIGHT_RANGE, 30)
-    mob:setMobMod(xi.mobMod.WEAPON_BONUS, 148) -- 245 total weapon damage
+    mob:setMobMod(xi.mobMod.BASE_DAMAGE_MODIFIER, 148) -- 245 total weapon damage
 end
 
 entity.onMobRoam = function(mob)
@@ -173,7 +173,7 @@ entity.onMobFight = function(mob, target)
     end
 end
 
-entity.onMobWeaponSkill = function(target, mob, skill)
+entity.onMobWeaponSkill = function(mob, target, skill, action)
     -- Don't lose TP from charm 2hr
     if skill:getID() == 710 then
         mob:addTP(mob:getLocalVar('skill_tp'))

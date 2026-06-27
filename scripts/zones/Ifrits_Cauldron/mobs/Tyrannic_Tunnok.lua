@@ -14,9 +14,9 @@ entity.spawnPoints =
 
 entity.phList =
 {
-    [ID.mob.TYRANNIC_TUNNOK - 3] = ID.mob.TYRANNIC_TUNNOK,
+    [ID.mob.TYRANNIC_TUNNOK - 3] = ID.mob.TYRANNIC_TUNNOK, -- Confirmed on retail
     [ID.mob.TYRANNIC_TUNNOK + 1] = ID.mob.TYRANNIC_TUNNOK,
-    [ID.mob.TYRANNIC_TUNNOK + 2] = ID.mob.TYRANNIC_TUNNOK,
+    [ID.mob.TYRANNIC_TUNNOK + 2] = ID.mob.TYRANNIC_TUNNOK, -- Confirmed on retail
 }
 
 entity.onMobInitialize = function(mob)
@@ -33,7 +33,7 @@ end
 entity.onMobSpawn = function(mob)
     mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, 150)
 
-    mob:setMod(xi.mod.STORETP, 60)
+    mob:setMod(xi.mod.STORETP, 90) -- 7 hits to 1k
 end
 
 entity.onAdditionalEffect = function(mob, target, damage)

@@ -8,9 +8,6 @@ mixins = { require('scripts/mixins/job_special') }
 ---@type TMobEntity
 local entity = {}
 
-entity.onMobInitialize = function(mob)
-end
-
 entity.onMobSpawn = function(mob)
     xi.mix.jobSpecial.config(mob, {
         specials =
@@ -53,7 +50,7 @@ entity.onAdditionalEffect = function(mob, target, damage)
     return xi.combat.action.executeAddEffectDamage(mob, target, pTable)
 end
 
-entity.onMobWeaponSkill = function(target, mob, skill)
+entity.onMobWeaponSkill = function(mob, target, skill, action)
     -- if not all four elementals are alive then respawn one after using level 75 BP
     if skill:getID() == 856 then
         local pos = target:getPos()
@@ -121,9 +118,6 @@ entity.onMobFight = function(mob, target)
             end
         end
     end
-end
-
-entity.onMobDeath = function(mob, player, optParams)
 end
 
 return entity

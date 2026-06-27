@@ -7,10 +7,12 @@ set(ENUMS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/action/proc_kind.h
     ${CMAKE_CURRENT_SOURCE_DIR}/action/react_kind.h
     ${CMAKE_CURRENT_SOURCE_DIR}/action/resolution.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/automaton.h
     ${CMAKE_CURRENT_SOURCE_DIR}/chat_message_area.h
     ${CMAKE_CURRENT_SOURCE_DIR}/chat_message_type.h
     ${CMAKE_CURRENT_SOURCE_DIR}/emote.h
     ${CMAKE_CURRENT_SOURCE_DIR}/four_cc.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/item_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/item_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/item_lockflg.h
     ${CMAKE_CURRENT_SOURCE_DIR}/key_items.h
@@ -25,5 +27,6 @@ set(ENUMS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/quest_log.h
     ${CMAKE_CURRENT_SOURCE_DIR}/synthesis_effect.h
     ${CMAKE_CURRENT_SOURCE_DIR}/synthesis_result.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/terrain_type.h
     PARENT_SCOPE
 )

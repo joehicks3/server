@@ -22,7 +22,7 @@
 #pragma once
 
 #include "common/cbasetypes.h"
-#include "entities/baseentity.h"
+#include "entities/base_entity.h"
 #include "lua_client_entity_pair.h"
 
 #include <sol/forward.hpp>
@@ -58,8 +58,8 @@ public:
     CLuaSimulation(CLuaSimulation&&)                 = default;
     CLuaSimulation& operator=(CLuaSimulation&&)      = default;
 
-    void cleanClients(std::optional<ClientScope> scope = std::nullopt);
-    void tick(std::optional<TickType> boundary = std::nullopt) const;
+    void cleanClients(Maybe<ClientScope> scope = std::nullopt);
+    void tick(Maybe<TickType> boundary = std::nullopt) const;
     void processClientUpdates() const;
     void tickEntity(CLuaBaseEntity& entity) const;
     void skipTime(uint32 seconds) const;

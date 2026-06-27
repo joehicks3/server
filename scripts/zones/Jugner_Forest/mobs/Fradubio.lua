@@ -91,7 +91,7 @@ entity.onMobRoam = function(mob)
     updateRegen(mob)
 end
 
-entity.onMobWeaponSkill = function(target, mob, skill)
+entity.onMobWeaponSkill = function(mob, target, skill, action)
     if skill:getID() == 329 then
         for i = ID.mob.FRADUBIO + 1, ID.mob.FRADUBIO + 5 do
             local pet = GetMobByID(i)
@@ -108,9 +108,6 @@ entity.onMobWeaponSkill = function(target, mob, skill)
             end
         end
     end
-end
-
-entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)

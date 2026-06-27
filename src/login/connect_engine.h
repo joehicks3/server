@@ -22,7 +22,7 @@
 #pragma once
 
 #include "common/application.h"
-#include "common/zmq_dealer_wrapper.h"
+#include "common/zmq/zmq_service.h"
 
 #ifndef _WIN32
 #include <sys/resource.h>
@@ -38,18 +38,21 @@
 class ConnectEngine final : public Engine
 {
 public:
-    ConnectEngine(Scheduler& scheduler);
+    ConnectEngine(Scheduler& scheduler, ZMQService& zmqService);
     ~ConnectEngine() override;
 
-    // This cleanup function is to periodically poll for auth sessions that were successful but xiloader failed to actually launch FFXI
-    // When this happens, the data/view socket are never opened and will never be cleaned up normally.
-    // Auth is closed before any other sessions are open, so the data/view cleanups aren't sufficient
-    auto periodicCleanup() -> Task<void>;
-
 private:
+    // This cleanup function is to periodically poll for auth sessions that were successful but
+    // xiloader failed to actually launch FFXI.
+    // When this happens, the data/view socket are never opened and will never be cleaned up normally.
+    // Auth is closed before any other sessions are open, so the data/view cleanups aren't sufficient.
+    void periodicCleanup();
+
+    Maybe<Scheduler::Token> periodicCleanupToken_;
+
     Scheduler& scheduler_;
 
-    ZMQDealerWrapper zmqDealerWrapper_;
+    ipc::Channel<zmq::message_t> dealerChannel_;
 
     handler<auth_session> m_authHandler;
     handler<data_session> m_dataHandler;

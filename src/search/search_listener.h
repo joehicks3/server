@@ -33,7 +33,7 @@ class SearchListener
 public:
     SearchListener(Scheduler& scheduler, unsigned int port, SynchronizedShared<std::unordered_set<std::string>>& ipWhitelist)
     : scheduler_(scheduler)
-    , acceptor_(scheduler_.ioContext(), asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
+    , acceptor_(scheduler_.mainContext(), asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
     , ipWhitelist_(ipWhitelist)
     {
         acceptor_.set_option(asio::socket_base::reuse_address(true));
@@ -44,6 +44,7 @@ public:
 private:
     auto accept_loop() -> Task<void>
     {
+        // Run "forever"
         while (!scheduler_.closeRequested())
         {
             auto [ec, socket] = co_await acceptor_.async_accept(asio::as_tuple(asio::use_awaitable));
