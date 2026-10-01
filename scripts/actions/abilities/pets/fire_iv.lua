@@ -10,7 +10,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onPetAbility = function(target, pet, petskill, summoner, action)
-    xi.job_utils.summoner.onUseBloodPact(target, petskill, summoner, action)
+    xi.job_utils.summoner.onUseBloodPact(target, pet, petskill, summoner, action)
 
     local params = {}
 
@@ -30,8 +30,6 @@ abilityObject.onPetAbility = function(target, pet, petskill, summoner, action)
     if xi.mobskills.processDamage(pet, target, petskill, action, info) then
         target:takeDamage(info.damage, pet, info.attackType, info.damageType)
     end
-
-    petskill:setMsg(xi.msg.basic.PET_MAGIC_BURST)
 
     return info.damage
 end

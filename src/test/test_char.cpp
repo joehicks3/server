@@ -22,15 +22,15 @@
 #include "test_char.h"
 
 #include "common/cbasetypes.h"
-#include "common/database.h"
-#include "common/lua.h"
 #include "login/login_helpers.h"
-#include "lua/lua_spy.h"
 #include "map/entities/base_entity.h"
 #include "map/entities/char_entity.h"
 #include "test_common.h"
 
+#include <array>
 #include <format>
+#include <limits>
+#include <utility>
 
 #include <bcrypt/BCrypt.hpp>
 
@@ -76,36 +76,55 @@ std::vector<std::string> charIdTables = {
 // Cleans the given character ID or all characters with IDs >= MinTestCharId.
 void TestChar::clean(uint32 charId /* = 0 */)
 {
-    std::string matchingCondition = std::format(">= {}", MinTestCharId);
-    if (charId > 0)
+    const auto ids = [&]() -> std::pair<uint32, uint32>
     {
-        matchingCondition = std::format("= {}", charId);
-    }
+        if (charId > 0)
+        {
+            return { charId, charId };
+        }
 
-    std::vector cleanupQueries = {
-        std::format("DELETE FROM accounts WHERE id {}", matchingCondition),
-        std::format("DELETE FROM auction_house WHERE seller {}", matchingCondition),
-        std::format("DELETE FROM delivery_box WHERE charid {} OR senderid {}", matchingCondition, matchingCondition),
-        std::format("DELETE FROM audit_bazaar WHERE seller {} OR purchaser {}", matchingCondition, matchingCondition),
-        std::format("DELETE FROM audit_trade WHERE sender {} OR receiver {}", matchingCondition, matchingCondition),
-        std::format("DELETE FROM audit_vendor WHERE seller {}", matchingCondition),
+        return { MinTestCharId, std::numeric_limits<uint32>::max() };
+    }();
+
+    constexpr auto oneIdColumn = std::array{
+        "DELETE FROM accounts WHERE id BETWEEN ? AND ?",
+        "DELETE FROM auction_house WHERE seller BETWEEN ? AND ?",
+        "DELETE FROM audit_vendor WHERE seller BETWEEN ? AND ?",
     };
 
-    for (auto& tableName : charIdTables)
+    constexpr auto twoIdColumns = std::array{
+        "DELETE FROM delivery_box WHERE charid BETWEEN ? AND ? OR senderid BETWEEN ? AND ?",
+        "DELETE FROM audit_bazaar WHERE seller BETWEEN ? AND ? OR purchaser BETWEEN ? AND ?",
+        "DELETE FROM audit_trade WHERE sender BETWEEN ? AND ? OR receiver BETWEEN ? AND ?",
+    };
+
+    for (const auto* query : oneIdColumn)
     {
-        cleanupQueries.emplace_back(std::format("DELETE FROM {} WHERE charid {}", tableName, matchingCondition));
+        if (!db::preparedStmt(query, ids.first, ids.second))
+        {
+            ShowErrorFmt("Failed to execute cleanup query: {}", query);
+        }
     }
 
-    for (auto& query : cleanupQueries)
+    for (const auto* query : twoIdColumns)
     {
-        if (const auto rset = db::preparedStmt(query); !rset)
+        if (!db::preparedStmt(query, ids.first, ids.second, ids.first, ids.second))
         {
-            ShowErrorFmt("Failed to execute cleanup query: {}", query.c_str());
+            ShowErrorFmt("Failed to execute cleanup query: {}", query);
+        }
+    }
+
+    for (const auto& tableName : charIdTables)
+    {
+        const auto query = std::format("DELETE FROM {} WHERE charid BETWEEN ? AND ?", tableName);
+        if (!db::preparedStmt(query, ids.first, ids.second))
+        {
+            ShowErrorFmt("Failed to execute cleanup query: {}", query);
         }
     }
 }
 
-auto TestChar::create(const uint16_t zoneId) -> std::unique_ptr<TestChar>
+auto TestChar::create(const xi::ZoneId zoneId, const CharRace race) -> std::unique_ptr<TestChar>
 {
     uint32_t accId  = 0;
     uint32_t charId = 0;
@@ -148,12 +167,12 @@ auto TestChar::create(const uint16_t zoneId) -> std::unique_ptr<TestChar>
 
     char_mini mini = {
         .m_name   = {},
-        .m_mjob   = JOB_WAR,
+        .m_mjob   = static_cast<uint8>(xi::Job::WAR),
         .m_zone   = zoneId,
         .m_nation = NATION_SANDORIA,
     };
 
-    mini.m_look.race = static_cast<uint8>(CharRace::HumeMale);
+    mini.m_look.race = static_cast<uint8>(race);
     mini.m_look.size = static_cast<uint16>(CharSize::Small);
     mini.m_look.face = static_cast<uint8>(CharFace::Face1A);
 
@@ -210,7 +229,6 @@ void TestChar::setEntity(std::unique_ptr<CCharEntity> entity) const
         session_->charID          = entity->id;
         session_->PChar           = std::move(entity);
         session_->PChar->PSession = session();
-        session_->PChar->status   = STATUS_TYPE::NORMAL;
     }
 }
 

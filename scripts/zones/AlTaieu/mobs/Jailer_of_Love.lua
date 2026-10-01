@@ -86,9 +86,9 @@ local spawnPets = function(mob, minionOffset)
             GetMobByID(minionOffset + 0):setSpawn(mobArg:getXPos() + 4, mobArg:getYPos(), mobArg:getZPos())
             GetMobByID(minionOffset + 1):setSpawn(mobArg:getXPos(), mobArg:getYPos(), mobArg:getZPos() + 4)
             GetMobByID(minionOffset + 2):setSpawn(mobArg:getXPos(), mobArg:getYPos(), mobArg:getZPos() - 4)
-            SpawnMob(minionOffset + 0):setMobMod(xi.mobMod.SUPERLINK, mobArg:getTargID())
-            SpawnMob(minionOffset + 1):setMobMod(xi.mobMod.SUPERLINK, mobArg:getTargID())
-            SpawnMob(minionOffset + 2):setMobMod(xi.mobMod.SUPERLINK, mobArg:getTargID())
+            SpawnMob(minionOffset + 0)
+            SpawnMob(minionOffset + 1)
+            SpawnMob(minionOffset + 2)
             GetMobByID(minionOffset + 0):updateEnmity(mobArg:getTarget())
             GetMobByID(minionOffset + 1):updateEnmity(mobArg:getTarget())
             GetMobByID(minionOffset + 2):updateEnmity(mobArg:getTarget())
@@ -120,7 +120,7 @@ local spawnSharks = function(mob)
     elseif #phuaboUp == 0 or #phuaboUp == 3 then
         numToSpawn = 3
     elseif #phuaboUp == 1 then
-        numToSpawn = math.random(3)
+        numToSpawn = math.randomInt(1, 3)
     end
 
     -- spawn sharks
@@ -130,9 +130,8 @@ local spawnSharks = function(mob)
         local phuabo = GetMobByID(phuaboDn[i])
 
         if phuabo then
-            phuabo:setSpawn(target:getXPos() + math.random(-2, 2), target:getYPos(), target:getZPos())
+            phuabo:setSpawn(target:getXPos() + math.randomInt(-2, 2), target:getYPos(), target:getZPos())
             SpawnMob(phuaboDn[i])
-            phuabo:setMobMod(xi.mobMod.SUPERLINK, mob:getTargID())
             phuabo:updateEnmity(target)
         end
     end
@@ -153,6 +152,7 @@ end
 
 entity.onMobInitialize = function(mob)
     mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 180)
+    mob:setMobMod(xi.mobMod.SUPERLINK, mob:getTargID())
 end
 
 local function getAbsorbMod(element)
@@ -189,7 +189,7 @@ entity.onMobSpawn = function(mob)
     mob:addImmunity(xi.immunity.REQUIEM)
     mob:addImmunity(xi.immunity.TERROR)
 
-    local currentAbsorb = math.random(1, 8) -- pick a random element to absorb after engaging
+    local currentAbsorb = math.randomInt(1, 8) -- pick a random element to absorb after engaging
 
     mob:setLocalVar('currentAbsorb', currentAbsorb)
     mob:setSpellList(spellLists[currentAbsorb])
@@ -198,7 +198,7 @@ entity.onMobSpawn = function(mob)
     xi.mix.jobSpecial.config(mob, {
         specials =
         {
-            { id = xi.mobSkill.ASTRAL_FLOW_1, hpp = math.random(45, 55) },
+            { id = xi.mobSkill.ASTRAL_FLOW_1, hpp = math.randomInt(45, 55) },
         },
     })
 end
@@ -249,7 +249,7 @@ entity.onMobFight = function(mob, target)
         end
 
         -- add new absorb mod
-        local currentAbsorb = math.random(1, 8)
+        local currentAbsorb = math.randomInt(1, 8)
         mob:setLocalVar('currentAbsorb', currentAbsorb)
 
         -- Inject 2hr animation based on element, this shows in the captures.
@@ -321,7 +321,7 @@ end
 entity.onMobDeath = function(mob, player, optParams)
     cleanupPets(mob)
 
-    if math.random(1, 100) <= 25 then -- 25% chance to spawn Absolute Virtue
+    if math.randomInt(1, 100) <= 25 then -- 25% chance to spawn Absolute Virtue
         local highestEnmityTarget = nil
         local highestEnmity = -1
 

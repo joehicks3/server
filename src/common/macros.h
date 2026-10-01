@@ -21,14 +21,10 @@
 
 #pragma once
 
-// The following definitions are set by CMake based on the architecture
-// #define ENV64BIT
-// #define ENV32BIT
+#include <cstdlib>
+#include <utility>
 
-// Ensure one of the definitions is set
-#if !defined(ENV64BIT) && !defined(ENV32BIT)
-#error "Neither ENV64BIT nor ENV32BIT is defined"
-#endif
+static_assert(sizeof(void*) == 8, "Only 64-bit builds are supported");
 
 // Debug mode
 #if defined(_DEBUG) && !defined(DEBUG)
@@ -38,6 +34,11 @@
 // Release mode
 #if !defined(_DEBUG) && !defined(RELEASE)
 #define RELEASE
+#endif
+
+// The config actually compiled ($<CONFIG>).
+#ifndef XI_BUILD_TYPE
+#define XI_BUILD_TYPE "unknown"
 #endif
 
 // define a break macro for debugging
@@ -55,6 +56,27 @@
 #define DISALLOW_COPY_AND_MOVE(TypeName) \
     DISALLOW_COPY(TypeName)              \
     DISALLOW_MOVE(TypeName)
+
+// Marks a code path the author guarantees can never execute (e.g. after an
+// exhaustive switch, or a branch ruled out by prior validation). In debug
+// builds reaching it traps immediately; in release builds it lowers to
+// std::unreachable(), so the optimizer deletes the path entirely.
+#if defined(DEBUG)
+#define XI_UNREACHABLE() std::abort()
+#else
+#define XI_UNREACHABLE() std::unreachable()
+#endif
+
+// Stringify a macro's expanded value, e.g. XI_STRINGIFY(__GNUC__) -> "13".
+#define XI_STRINGIFY2(x) #x
+#define XI_STRINGIFY(x)  XI_STRINGIFY2(x)
+
+// Keep a function out of the inliner (even under LTO) so it stays a real frame in a stack trace.
+#if defined(_MSC_VER)
+#define XI_NOINLINE __declspec(noinline)
+#else
+#define XI_NOINLINE __attribute__((noinline))
+#endif
 
 //
 // This `FOR_EACH_PAIR_CAST_SECOND` macro replaces a common pattern we had in the hot path:

@@ -10,7 +10,7 @@ local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.CIDS_SECRET)
 
 quest.reward =
 {
-    fame     = 30,
+    fame     = 40,
     fameArea = xi.fameArea.BASTOK,
     item     = xi.item.RAM_MANTLE,
 }
@@ -46,7 +46,7 @@ quest.sections =
             ['Cid'] =
             {
                 onTrigger = function(player, npc)
-                    if player:hasKeyItem(xi.ki.UNFINISHED_LETTER) then
+                    if player:hasKeyItem(xi.keyItem.UNFINISHED_LETTER) then
                         return quest:progressEvent(509)
                     elseif quest:getVar(player, 'Prog') == 1 then
                         return quest:event(508):importantEvent()
@@ -60,7 +60,7 @@ quest.sections =
             {
                 [509] = function(player, csid, option, npc)
                     if quest:complete(player) then
-                        player:delKeyItem(xi.ki.UNFINISHED_LETTER)
+                        player:delKeyItem(xi.keyItem.UNFINISHED_LETTER)
                     end
                 end,
             },
@@ -72,8 +72,8 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.item.ROLANBERRY_874_CE) and
-                        quest:getVar(player, 'Prog') == 1
+                        quest:getVar(player, 'Prog') == 1 and
+                        npcUtil.tradeMatches(trade, { { xi.item.ROLANBERRY_874_CE, 1 } })
                     then
                         return quest:progressEvent(133)
                     end
@@ -91,9 +91,9 @@ quest.sections =
                 end,
 
                 [133] = function(player, csid, option, npc)
-                    player:confirmTrade()
+                    player:tradeComplete()
 
-                    npcUtil.giveKeyItem(player, xi.ki.UNFINISHED_LETTER)
+                    npcUtil.giveKeyItem(player, xi.keyItem.UNFINISHED_LETTER)
                 end,
             },
         },

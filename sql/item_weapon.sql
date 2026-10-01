@@ -2191,6 +2191,7 @@ INSERT INTO `item_weapon` VALUES (18563,'ark_scythe',7,0,0,0,0,2,1,999,1,0);
 INSERT INTO `item_weapon` VALUES (18564,'devilish_scythe',7,0,0,0,0,2,1,528,130,0);
 INSERT INTO `item_weapon` VALUES (18565,'adflictio',7,0,0,0,0,2,1,513,134,0);
 INSERT INTO `item_weapon` VALUES (18566,'crepuscular_scythe',7,0,0,0,0,2,1,513,360,0); -- TODO: Not implemented
+INSERT INTO `item_weapon` VALUES (18567,'colibri_scythe',7,0,0,0,0,2,1,528,1,0);       -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (18571,'daurdabla',41,0,0,0,0,0,1,240,0,0);
 INSERT INTO `item_weapon` VALUES (18572,'gjallarhorn',42,0,0,0,0,0,1,240,0,0);
 INSERT INTO `item_weapon` VALUES (18573,'pyf_harp',41,0,0,0,0,0,1,240,0,0);
@@ -4565,6 +4566,7 @@ INSERT INTO `item_weapon` VALUES (21539,'dathaba_claws',1,0,0,0,0,4,3,546,129,0)
 INSERT INTO `item_weapon` VALUES (21540,'dragon_fangs',1,0,0,0,0,4,3,606,217,0);    -- TODO: Not implemented
 INSERT INTO `item_weapon` VALUES (21541,'premium_hearts',1,0,0,0,0,4,3,576,195,0);    -- TODO: Not implemented
 INSERT INTO `item_weapon` VALUES (21542,'ja_ja_mace',11,0,0,0,0,3,1,340,1,0);         -- TODO: ilvl_skill/parry/macc, dmgType
+INSERT INTO `item_weapon` VALUES (21543,'ryofu_uchiwa',11,0,0,0,0,3,1,216,1,0);       -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (21544,'skia_knuckles',1,0,0,0,0,4,1,1239,1,0);         -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (21545,'arctus_knuckles',1,0,0,0,0,4,1,1239,1,0);       -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (21546,'telognophos_knuckles',1,0,0,0,0,4,1,1239,1,0);  -- TODO: ilvl_skill/parry/macc, dmgType
@@ -4617,6 +4619,7 @@ INSERT INTO `item_weapon` VALUES (21596,'telognophos_knife',2,0,0,0,0,1,1,999,1,
 INSERT INTO `item_weapon` VALUES (21597,'auge_knife',2,0,0,0,0,1,1,195,126,0);            -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (21598,'daduchos_knife',2,0,0,0,0,1,1,189,127,0);        -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (21599,'telopanos_knife',2,0,0,0,0,1,1,189,128,0);       -- TODO: ilvl_skill/parry/macc, dmgType
+INSERT INTO `item_weapon` VALUES (21600,'prophetic_knife',2,0,0,0,0,1,1,181,125,0);       -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (21602,'onion_sword_iii',3,0,0,0,0,2,1,240,183,0);       -- TODO: Not implemented
 INSERT INTO `item_weapon` VALUES (21603,'save_the_queen_iii',3,0,0,0,0,2,1,264,201,0); -- TODO: Not implemented
 INSERT INTO `item_weapon` VALUES (21604,'arasy_sword',3,0,242,242,188,2,1,240,123,0);
@@ -4747,6 +4750,7 @@ INSERT INTO `item_weapon` VALUES (21735,'telognophos_axe',5,0,0,0,0,3,1,999,1,0)
 INSERT INTO `item_weapon` VALUES (21736,'auge_axe',5,0,0,0,0,3,1,276,179,0);          -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (21737,'daduchos_axe',5,0,0,0,0,3,1,268,180,0);      -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (21738,'telopanos_axe',5,0,0,0,0,3,1,268,181,0);     -- TODO: ilvl_skill/parry/macc, dmgType
+INSERT INTO `item_weapon` VALUES (21739,'prophetic_axe',5,0,0,0,0,3,1,288,199,0);     -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (21741,'demonic_axe',5,0,0,0,0,2,1,288,1,0);   -- DMG:1 Delay:288
 INSERT INTO `item_weapon` VALUES (21742,'aern_axe',5,0,0,0,0,2,1,288,1,0);      -- DMG:1 Delay:288
 INSERT INTO `item_weapon` VALUES (21743,'aern_axe_ii',5,0,0,0,0,2,1,288,1,0);   -- DMG:1 Delay:288
@@ -5156,6 +5160,8 @@ INSERT INTO `item_weapon` VALUES (22185,'telognophos_saber',3,0,0,0,0,2,1,999,1,
 INSERT INTO `item_weapon` VALUES (22186,'auge_saber',3,0,0,0,0,2,1,240,155,0);         -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (22187,'daduchos_saber',3,0,0,0,0,2,1,233,156,0);     -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (22188,'telopanos_saber',3,0,0,0,0,2,1,233,157,0);    -- TODO: ilvl_skill/parry/macc, dmgType
+INSERT INTO `item_weapon` VALUES (22189,'prophetic_sword',3,0,0,0,0,2,1,221,153,0);    -- TODO: ilvl_skill/parry/macc, dmgType
+INSERT INTO `item_weapon` VALUES (22190,'prophetic_club',11,0,0,0,0,3,1,315,218,0);    -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (22194,'dathaba_staff',12,0,0,0,0,3,1,399,266,0);     -- TODO: Not implemented
 INSERT INTO `item_weapon` VALUES (22195,'flanged_grip',0,0,0,0,0,1,1,999,1,0);
 INSERT INTO `item_weapon` VALUES (22196,'alber_strap',0,0,0,0,0,1,1,999,1,0);
@@ -5200,6 +5206,7 @@ INSERT INTO `item_weapon` VALUES (22234,'telognophos_claymore',4,0,0,0,0,2,1,999
 INSERT INTO `item_weapon` VALUES (22235,'auge_claymore',4,0,0,0,0,2,1,480,312,0);       -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (22236,'daduchos_claymore',4,0,0,0,0,2,1,466,313,0);   -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (22237,'telopanos_claymore',4,0,0,0,0,2,1,466,314,0);  -- TODO: ilvl_skill/parry/macc, dmgType
+INSERT INTO `item_weapon` VALUES (22238,'travesty',4,0,0,0,0,2,1,430,258,0);            -- TODO: ilvl_skill/parry/macc, dmgType
 INSERT INTO `item_weapon` VALUES (22249,'miracle_cheer',42,0,0,0,0,0,1,240,0,0);
 INSERT INTO `item_weapon` VALUES (22250,'seraphic_ampulla',0,0,0,0,0,0,1,999,0,0);
 INSERT INTO `item_weapon` VALUES (22251,'grenade_core',0,0,0,0,0,0,1,999,0,0);
@@ -5259,6 +5266,7 @@ INSERT INTO `item_weapon` VALUES (22307,'loughnashade',42,0,0,0,0,0,1,240,1,0); 
 INSERT INTO `item_weapon` VALUES (22308,'bayeux_bullet',26,0,0,0,0,1,1,240,315,0);     -- TODO: Not implemented
 INSERT INTO `item_weapon` VALUES (22309,'bayeux_arrow',25,0,0,0,0,1,1,90,116,0);      -- TODO: Not implemented
 INSERT INTO `item_weapon` VALUES (22310,'hoxne_ampulla',0,0,0,0,0,0,1,999,0,0);     -- TODO: Not implemented
+INSERT INTO `item_weapon` VALUES (22311,'prophetica',0,0,0,0,0,0,1,240,0,0);        -- TODO: Not implemented
 
 /*!40000 ALTER TABLE `item_weapon` ENABLE KEYS */;
 UNLOCK TABLES;

@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- Appraisal Utilities
 -- desc: Common functionality for Appraisals
 -----------------------------------
@@ -1532,16 +1532,17 @@ xi.appraisal.appraisalItems =
 xi.appraisal.appraiseItem = function(player, npc, trade, gil, appraisalCsid)
     if player:getGil() >= gil then
         for _, tradedItem in pairs(xi.appraisal.unappraisedItems) do
-            if npcUtil.tradeHasExactly(trade, tradedItem) then
+            if trade:getItemQty(tradedItem) == 1 then
                 local tradeID        = trade:getItemId()
                 local info           = xi.appraisal.appraisalItems[tradeID]
                 local appraisalID    = trade:getItem():getAppraisalID()
                 local appraisedItem  = xi.appraisal.itemPick(player, info, appraisalID)
 
-                if appraisedItem ~= 0 then
-                    player:startEvent(appraisalCsid, 1, appraisedItem)
-                    player:setLocalVar('Appraisal', appraisedItem) -- anticheat
+                if appraisedItem ~= 0 and trade:confirmItem(tradedItem) then
                     player:confirmTrade()
+                    player:delGil(gil)
+                    player:addTreasure(appraisedItem, npc)
+                    player:startEvent(appraisalCsid, 1, appraisedItem)
                 end
 
                 break
@@ -1562,7 +1563,7 @@ xi.appraisal.itemPick = function(player, info, appraisalID)
 
     -- pick weighted result
     local item = 0
-    local pick = math.random(1, sum)
+    local pick = math.randomInt(1, sum)
     sum = 0
 
     for i = 1, #items do
@@ -1574,13 +1575,4 @@ xi.appraisal.itemPick = function(player, info, appraisalID)
     end
 
     return item
-end
-
-xi.appraisal.appraisalOnEventFinish = function(player, csid, option, gil, appraisalCsid, npc)
-    if csid == appraisalCsid then
-        local appraisedItem = player:getLocalVar('Appraisal')
-        player:addTreasure(appraisedItem, npc)
-        player:delGil(gil)
-        player:setLocalVar('Appraisal', 0)
-    end
 end

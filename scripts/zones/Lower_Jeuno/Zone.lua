@@ -24,8 +24,8 @@ zoneObject.onZoneIn = function(player, prevZone)
         (month == 12 and day >= 5) or
         (month == 1 and day <= 5)
     then
-        player:changeMusic(0, 239)
-        player:changeMusic(1, 239)
+        player:changeMusic(xi.musicSlot.ZONE_DAY, 239)
+        player:changeMusic(xi.musicSlot.ZONE_NIGHT, 239)
         -- No need for an 'else' to change it back outside these dates as a re-zone will handle that.
     end
 
@@ -33,7 +33,7 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    xi.conquest.onNonRegionConquestUpdate(zone, updatetype, ranking, isConquestAlliance)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

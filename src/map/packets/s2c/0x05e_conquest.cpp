@@ -36,9 +36,6 @@ GP_SERV_COMMAND_CONQUEST::GP_SERV_COMMAND_CONQUEST(CCharEntity* PChar)
     const uint8 sandoria_regions = conquestData.getRegionControlCount(NATION_SANDORIA);
     const uint8 bastok_regions   = conquestData.getRegionControlCount(NATION_BASTOK);
     const uint8 windurst_regions = conquestData.getRegionControlCount(NATION_WINDURST);
-    const uint8 sandoria_prev    = conquestData.getPrevRegionControlCount(NATION_SANDORIA);
-    const uint8 bastok_prev      = conquestData.getPrevRegionControlCount(NATION_BASTOK);
-    const uint8 windurst_prev    = conquestData.getPrevRegionControlCount(NATION_WINDURST);
 
     for (auto regionId = static_cast<uint8>(REGION_TYPE::RONFAURE); regionId <= static_cast<uint8>(REGION_TYPE::TAVNAZIA); regionId++)
     {
@@ -51,7 +48,7 @@ GP_SERV_COMMAND_CONQUEST::GP_SERV_COMMAND_CONQUEST(CCharEntity* PChar)
         packet.Conquest.Regions[regionId].InfluenceRankingWithBeastmen = conquest::GetInfluenceRanking(sandoriaInf, bastokInf, windurstInf, beastmenInf);
         packet.Conquest.Regions[regionId].InfluenceRankingNoBeastmen   = conquest::GetInfluenceRanking(sandoriaInf, bastokInf, windurstInf);
         packet.Conquest.Regions[regionId].InfluenceGraphics            = conquest::GetInfluenceGraphics(sandoriaInf, bastokInf, windurstInf, beastmenInf);
-        packet.Conquest.Regions[regionId].Owner                        = regionOwner + 1;
+        packet.Conquest.Regions[regionId].Owner                        = regionOwner == NATION_NEUTRAL ? 0 : regionOwner + 1;
 
         const int64 total         = sandoriaInf + bastokInf + windurstInf;
         const int64 totalBeastmen = total + beastmenInf;
@@ -68,8 +65,8 @@ GP_SERV_COMMAND_CONQUEST::GP_SERV_COMMAND_CONQUEST(CCharEntity* PChar)
         }
     }
 
-    packet.Conquest.Balance        = conquest::GetBalance(sandoria_regions, bastok_regions, windurst_regions, sandoria_prev, bastok_prev, windurst_prev);
-    packet.Conquest.Alliance       = conquest::GetAlliance(sandoria_regions, bastok_regions, windurst_regions, sandoria_prev, bastok_prev, windurst_prev);
+    packet.Conquest.Balance        = conquest::GetBalance(sandoria_regions, bastok_regions, windurst_regions);
+    packet.Conquest.Alliance       = conquest::GetAlliance(sandoria_regions, bastok_regions, windurst_regions);
     packet.Conquest.NextTally      = conquest::GetNextTally();
     packet.Conquest.ConquestPoints = charutils::GetPoints(PChar, charutils::GetConquestPointsName(PChar).c_str());
     packet.Conquest.Unknown9C      = 0x01;

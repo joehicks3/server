@@ -99,8 +99,8 @@ public:
     auto IncrementElapsedTickCount() -> void;
     auto SetStartTime(timer::time_point startTime) -> void;
 
-    auto addMod(Mod modType, int16 amount) -> void;
-    auto setMod(Mod modType, int16 value) -> void;
+    auto addMod(xi::Mod modType, int16 amount) -> void;
+    auto setMod(xi::Mod modType, int16 value) -> void;
 
     auto SetEffectName(std::string name) -> void;
     auto GetName() const -> const std::string&;
@@ -111,6 +111,9 @@ public:
     auto isDeleted() const -> bool;
 
 private:
+    // flags the owner for persistence after a change to a column we write to char_effects
+    auto MarkPersistDirty() const -> void;
+
     CBattleEntity* owner_{ nullptr };
 
     std::vector<CModifier> modList_;          // List of modifiers

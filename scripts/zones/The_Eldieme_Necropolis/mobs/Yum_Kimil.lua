@@ -18,7 +18,6 @@ end
 
 entity.onMobSpawn = function(mob)
     mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, 150)
-    mob:setMobMod(xi.mobMod.MAGIC_DELAY, 0)
     mob:setMod(xi.mod.PARALYZE_RES_RANK, 4)
     mob:setMod(xi.mod.BIND_RES_RANK, 4)
     mob:setMod(xi.mod.ICE_RES_RANK, 4)
@@ -30,18 +29,12 @@ entity.onAdditionalEffect = function(mob, target, damage)
         chance         = 100,
         attackType     = xi.attackType.MAGICAL,
         magicalElement = xi.element.FIRE,
-        basePower      = math.random(150, 200),
+        basePower      = math.randomInt(150, 200),
         actorStat      = xi.mod.INT,
         canResist      = true,
     }
 
     return xi.combat.action.executeAddEffectDamage(mob, target, pTable)
-end
-
-entity.onMobDeath = function(mob, player, optParams)
-    if player:getCharVar('TheRequiemCS') == 3 then
-        player:setCharVar('TheRequiemYumKilled', 1)
-    end
 end
 
 return entity

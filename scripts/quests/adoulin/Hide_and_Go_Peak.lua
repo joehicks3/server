@@ -19,6 +19,31 @@ quest.reward =
     bayld    = 500,
 }
 
+-- Scalable Area climbs, available once the player has earned Climbing + the Pair of Velkk Gloves and completed the quest.
+local scalableData =
+{
+    [xi.zone.CIRDAS_CAVERNS]        = { eventBase = 17 },
+    [xi.zone.DHO_GATES]             = { eventBase = 10 },
+    [xi.zone.MARJAMI_RAVINE]        = { eventBase = 14 },
+    [xi.zone.MOH_GATES]             = { eventBase = 12 },
+    [xi.zone.MORIMAR_BASALT_FIELDS] = { eventBase = 40 },
+    [xi.zone.SIH_GATES]             = { eventBase = 17 },
+    [xi.zone.WOH_GATES]             = { eventBase = 200 },
+}
+
+local function scalableAreaWarp(player, npc)
+    local zoneId   = player:getZoneID()
+    local data     = scalableData[zoneId]
+    local padIndex = npc:getID() - zones[zoneId].npc.SCALABLE_AREA_OFFSET
+
+    return quest:event(data.eventBase + padIndex, { [5] = padIndex + 1 })
+end
+
+local marjamiScalablePads = {}
+for i = 0, 23 do
+    marjamiScalablePads['Scalable_Area_' .. i] = { onTrigger = scalableAreaWarp }
+end
+
 quest.sections =
 {
     {
@@ -74,13 +99,13 @@ quest.sections =
             {
                 onTrigger = function(player, npc)
                     if
-                        not player:hasKeyItem(xi.ki.LARGE_STRIP_OF_VELKK_HIDE) and
+                        not player:hasKeyItem(xi.keyItem.LARGE_STRIP_OF_VELKK_HIDE) and
                         quest:getVar(player, 'Prog') == 0
                     then
                         player:messageSpecial(marjamiID.text.LEATHER_SCRAPS_STREWN)
                         quest:setVar(player, 'Prog', 1)
 
-                        return quest:keyItem(xi.ki.LARGE_STRIP_OF_VELKK_HIDE)
+                        return quest:keyItem(xi.keyItem.LARGE_STRIP_OF_VELKK_HIDE)
                     end
                 end,
             },
@@ -88,20 +113,34 @@ quest.sections =
             onEventFinish =
             {
                 [5] = function(player, csid, option, npc)
-                    player:delKeyItem(xi.ki.LARGE_STRIP_OF_VELKK_HIDE)
+                    player:delKeyItem(xi.keyItem.LARGE_STRIP_OF_VELKK_HIDE)
                     quest:setVar(player, 'Prog', 2)
 
-                    player:messageSpecial(marjamiID.text.KEYITEM_LOST, xi.ki.LARGE_STRIP_OF_VELKK_HIDE)
+                    player:messageSpecial(marjamiID.text.KEYITEM_LOST, xi.keyItem.LARGE_STRIP_OF_VELKK_HIDE)
                 end,
 
                 [7] = function(player, csid, option, npc)
-                    npcUtil.giveKeyItem(player, xi.ki.PAIR_OF_VELKK_GLOVES)
-                    player:addKeyItem(xi.ki.CLIMBING)
-                    player:messageSpecial(marjamiID.text.YOU_HAVE_LEARNED, xi.ki.CLIMBING)
+                    npcUtil.giveKeyItem(player, xi.keyItem.PAIR_OF_VELKK_GLOVES)
+                    player:addKeyItem(xi.keyItem.CLIMBING)
+                    player:messageSpecial(marjamiID.text.YOU_HAVE_LEARNED, xi.keyItem.CLIMBING)
                     quest:complete(player)
                 end,
             },
         },
+    },
+
+    {
+        check = function(player, status, vars)
+            return status == xi.questStatus.QUEST_COMPLETED
+        end,
+
+        [xi.zone.CIRDAS_CAVERNS]        = { ['Scalable_Area'] = { onTrigger = scalableAreaWarp } },
+        [xi.zone.DHO_GATES]             = { ['Scalable_Area'] = { onTrigger = scalableAreaWarp } },
+        [xi.zone.MARJAMI_RAVINE]        = marjamiScalablePads,
+        [xi.zone.MOH_GATES]             = { ['Scalable_Area'] = { onTrigger = scalableAreaWarp } },
+        [xi.zone.MORIMAR_BASALT_FIELDS] = { ['Scalable_Area'] = { onTrigger = scalableAreaWarp } },
+        [xi.zone.SIH_GATES]             = { ['Scalable_Area'] = { onTrigger = scalableAreaWarp } },
+        [xi.zone.WOH_GATES]             = { ['Scalable_Area'] = { onTrigger = scalableAreaWarp } },
     },
 }
 

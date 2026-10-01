@@ -23,15 +23,15 @@ local castMetalPlatePos =
 } -- TODO Capture spawn points for cast metal plate. 1, 8, 10 are known.
 
 entity.onSpawn = function(npc)
-    npc:setPos(unpack(castMetalPlatePos[math.random(1, 10)]))
+    npc:setPos(unpack(castMetalPlatePos[math.randomInt(1, 10)]))
 end
 
 entity.onTrigger = function(player, npc)
     if player:getCharVar('HalvungDoor') == 1 then
-        player:addKeyItem(xi.ki.CAST_METAL_PLATE)
-        player:messageSpecial(ID.text.FITS_LARGE_KEYHOLE, xi.ki.CAST_METAL_PLATE)
+        player:addKeyItem(xi.keyItem.CAST_METAL_PLATE)
+        player:messageSpecial(ID.text.FITS_LARGE_KEYHOLE, xi.keyItem.CAST_METAL_PLATE)
         player:setCharVar('HalvungDoor', 0)
-        npc:setPos(unpack(castMetalPlatePos[math.random(1, 10)]))
+        npc:setPos(unpack(castMetalPlatePos[math.randomInt(1, 10)]))
     else
         player:messageSpecial(ID.text.NOTHING_OUT_OF_ORDINARY)
     end

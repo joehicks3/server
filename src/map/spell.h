@@ -22,13 +22,20 @@
 #pragma once
 
 #include "common/cbasetypes.h"
+#include "common/types/maybe.h"
+#include "data/enums/skill_type.h"
+#include "data/enums/status_effect.h"
+#include "data/enums/zone_misc.h"
 #include "entities/battle_entity.h"
+
+#include <string_view>
 
 #define CANNOT_USE_SPELL 0
 
 enum class ActionAnimation : uint16_t;
 enum class ActionModifier : uint32_t;
 enum class FourCC : uint32_t;
+
 enum SPELLGROUP
 {
     SPELLGROUP_NONE      = 0,
@@ -1177,7 +1184,7 @@ public:
 
     uint16             getTotalTargets() const;
     SpellID            getID();
-    uint8              getJob(JOBTYPE JobID);
+    auto               getJob(xi::Job JobID) -> uint8;
     uint16             getMPCost() const;
     timer::duration    getCastTime() const;
     timer::duration    getRecastTime() const;
@@ -1186,8 +1193,8 @@ public:
     timer::duration    getAnimationTime() const;
     auto               getSpellGroup() const -> SPELLGROUP;
     SPELLFAMILY        getSpellFamily();
-    uint8              getSkillType() const;
-    uint16             getZoneMisc() const;
+    auto               getSkillType() const -> xi::SkillType;
+    xi::ZoneMisc       getZoneMisc() const;
     uint8              getAOE() const;
     uint16             getBase() const;
     uint16             getElement() const;
@@ -1199,7 +1206,6 @@ public:
     timer::duration    getModifiedRecast() const;
     float              getRadius() const;
     uint8              getRequirements() const;
-    uint16             getMeritId() const;
     uint8              getFlag() const;
     const std::string& getContentTag();
     float              getRange() const;
@@ -1213,6 +1219,8 @@ public:
     bool               isNa();             // is a -na spell
     bool               isRaise();          // is a raise spell (e.g. Trust: Ferreous Coffin)
     bool               canHitShadow();     // check if spell ignores shadows
+    auto               statusEffect() const -> Maybe<xi::StatusEffect>;
+    auto               statusEffectTier() const -> uint8;
 
     void setRadius(float radius);
     void setTotalTargets(uint16 total);
@@ -1226,8 +1234,8 @@ public:
     void setAnimationTime(timer::duration AnimationTime);
     void setSpellGroup(SPELLGROUP SpellGroup);
     void setSpellFamily(SPELLFAMILY SpellFamily);
-    void setSkillType(uint8 SkillType);
-    void setZoneMisc(uint16 Misc);
+    void setSkillType(xi::SkillType SkillType);
+    void setZoneMisc(xi::ZoneMisc Misc);
     void setAOE(uint8 AOE);
     void setBase(uint16 base);
     void setElement(uint16 element);
@@ -1243,11 +1251,12 @@ public:
     void setCE(int32 ce);
     void setVE(int32 ve);
     void setRequirements(uint8 requirements);
-    void setMeritId(uint16 meritId);
     void setModifiedRecast(timer::duration mrec);
     void setFlag(uint8 flag);
     void setContentTag(const std::string& contentTag);
     void setRange(float range);
+    void setStatusEffect(Maybe<xi::StatusEffect> statusEffect);
+    void setStatusEffectTier(uint8 tier);
 
     const std::string& getName();
     void               setName(const std::string& name);
@@ -1263,7 +1272,7 @@ private:
     timer::duration                m_recastTime{};      // recast time
     uint16                         m_animation{};       // animation for spell
     timer::duration                m_animationTime{};
-    uint8                          m_skillType{};
+    xi::SkillType                  m_skillType{};
     float                          m_range{};
     float                          m_radius{};
     uint16                         m_totalTargets{};
@@ -1272,7 +1281,7 @@ private:
     uint16                         m_ValidTarget{};                   // target pc/npc/both
     SPELLGROUP                     m_spellGroup{ SPELLGROUP_NONE };   // spellgroup
     SPELLFAMILY                    m_spellFamily{ SPELLFAMILY_NONE }; // spell family
-    uint16                         m_zoneMisc{};                      // spellcasting conditions
+    xi::ZoneMisc                   m_zoneMisc{};                      // spellcasting conditions
     uint8                          m_AOE{};                           // aoe or single target spell
     uint16                         m_base{};                          // spell base damage
     float                          m_multiplier{};                    // multiplier for upper tier spells
@@ -1286,9 +1295,10 @@ private:
     std::string                    m_name;                            // spell name
     timer::duration                m_modifiedRecastTime{};            // recast time after modifications
     uint8                          m_requirements{};                  // requirements before being able to cast spell
-    uint16                         m_meritId{};                       // associated merit (if applicable)
     uint8                          m_flag{};
     std::string                    m_contentTag{};
+    Maybe<xi::StatusEffect>        statusEffect_{};
+    uint8                          statusEffectTier_{};
 };
 
 // Namespace to work with spells
@@ -1301,6 +1311,8 @@ CSpell* GetSpellByMonsterSkillId(uint16 SkillID);
 CSpell* GetSpell(SpellID SpellID);
 bool    CanUseSpell(CBattleEntity* PCaster, SpellID SpellID);
 bool    CanUseSpell(CBattleEntity* PCaster, CSpell* PSpell);
-bool    CanUseSpellWith(SpellID spellId, JOBTYPE job, uint8 level);
+bool    CanUseSpellWith(SpellID spellId, xi::Job job, uint8 level);
+
+auto lookupIdByName(std::string_view name) -> Maybe<SpellID>;
 
 }; // namespace spell

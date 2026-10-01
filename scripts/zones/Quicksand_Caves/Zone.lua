@@ -55,7 +55,7 @@ end
 local function getWeight(player)
     local race = player:getRace()
 
-    if race == xi.race.GALKA or player:hasKeyItem(xi.ki.LOADSTONE) then
+    if race == xi.race.GALKA or player:hasKeyItem(xi.keyItem.LOADSTONE) then
         return 3
     elseif race == xi.race.TARU_M or race == xi.race.TARU_F then
         return 1
@@ -113,7 +113,7 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
         if
             totalWeight >= 3 and
             plate:getLocalVar('opening') == 0 and
-            door:getAnimation() == xi.anim.CLOSE_DOOR
+            door:getAnimation() == xi.animation.CLOSE_DOOR
         then
             SendEntityVisualPacket(plate:getID(), 'unlc') -- Play the light animation
             plate:setLocalVar('opening', 1)

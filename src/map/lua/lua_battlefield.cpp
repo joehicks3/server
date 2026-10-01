@@ -24,14 +24,13 @@
 
 #include "ai/ai_container.h"
 #include "battlefield.h"
+#include "data/enums/mob_mod.h"
 #include "entities/char_entity.h"
 #include "entities/mob_entity.h"
 #include "entities/npc_entity.h"
 #include "entities/trust_entity.h"
 #include "lua_base_entity.h"
 #include "lua_battlefield.h"
-#include "mob_modifier.h"
-#include "status_effect_container.h"
 #include "utils/mobutils.h"
 #include "utils/zoneutils.h"
 
@@ -49,7 +48,7 @@ uint16 CLuaBattlefield::getID()
     return m_PLuaBattlefield->GetID();
 }
 
-uint16 CLuaBattlefield::getZoneID()
+auto CLuaBattlefield::getZoneID() -> xi::ZoneId
 {
     return m_PLuaBattlefield->GetZoneID();
 }
@@ -74,19 +73,9 @@ uint32 CLuaBattlefield::getRemainingTime()
     return static_cast<uint32>(timer::count_seconds(m_PLuaBattlefield->GetRemainingTime()));
 }
 
-uint32 CLuaBattlefield::getFightTick()
-{
-    return static_cast<uint32>(timer::count_seconds(m_PLuaBattlefield->GetFightTime() - m_PLuaBattlefield->GetStartTime()));
-}
-
 uint32 CLuaBattlefield::getWipeTime()
 {
     return static_cast<uint32>(timer::count_seconds(m_PLuaBattlefield->GetWipeTime() - timer::start_time));
-}
-
-uint32 CLuaBattlefield::getFightTime()
-{
-    return static_cast<uint32>(timer::count_seconds(timer::start_time - m_PLuaBattlefield->GetFightTime()));
 }
 
 uint32 CLuaBattlefield::getMaxParticipants()
@@ -531,7 +520,7 @@ void CLuaBattlefield::addGroups(const sol::table& groups, bool hasMultipleArenas
                     return;
                 }
 
-                PMob->setMobMod(MOBMOD_SUPERLINK, superlinkId);
+                PMob->setMobMod(xi::MobMod::Superlink, superlinkId);
                 PMob->saveMobModifiers();
             }
         }
@@ -548,9 +537,9 @@ void CLuaBattlefield::addGroups(const sol::table& groups, bool hasMultipleArenas
                     return;
                 }
 
-                PMob->setMobMod(MOBMOD_ROAM_RESET_FACING, 1);
+                PMob->setMobMod(xi::MobMod::RoamResetFacing, 1);
                 PMob->m_maxRoamDistance = 0.5f;
-                PMob->m_roamFlags |= ROAMFLAG_SCRIPTED;
+                PMob->m_roamFlags |= xi::RoamFlag::Scripted;
                 PMob->saveMobModifiers();
             }
         }
@@ -569,7 +558,7 @@ void CLuaBattlefield::addGroups(const sol::table& groups, bool hasMultipleArenas
 
                 for (const auto& modifier : mods.get<sol::table>())
                 {
-                    PMob->setModifier(modifier.first.as<Mod>(), modifier.second.as<uint16>());
+                    PMob->setModifier(modifier.first.as<xi::Mod>(), modifier.second.as<uint16>());
                 }
                 PMob->saveModifiers();
             }
@@ -590,7 +579,7 @@ void CLuaBattlefield::addGroups(const sol::table& groups, bool hasMultipleArenas
                 for (const auto& modifier : mobMods.get<sol::table>())
                 {
                     const auto mobMod = modifier.first.as<uint16>();
-                    PMob->setMobMod(mobMod, modifier.second.as<uint16>());
+                    PMob->setMobMod(static_cast<xi::MobMod>(mobMod), modifier.second.as<uint16>());
                 }
                 PMob->saveMobModifiers();
             }
@@ -738,9 +727,7 @@ void CLuaBattlefield::Register()
     SOL_REGISTER("getTimeLimit", CLuaBattlefield::getTimeLimit);
     SOL_REGISTER("getRemainingTime", CLuaBattlefield::getRemainingTime);
     SOL_REGISTER("getTimeInside", CLuaBattlefield::getTimeInside);
-    SOL_REGISTER("getFightTick", CLuaBattlefield::getFightTick);
     SOL_REGISTER("getWipeTime", CLuaBattlefield::getWipeTime);
-    SOL_REGISTER("getFightTime", CLuaBattlefield::getFightTime);
     SOL_REGISTER("getMaxParticipants", CLuaBattlefield::getMaxParticipants);
     SOL_REGISTER("getPlayerCount", CLuaBattlefield::getPlayerCount);
     SOL_REGISTER("getPlayers", CLuaBattlefield::getPlayers);

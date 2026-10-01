@@ -12,32 +12,16 @@ entity.phList =
     [ID.mob.CITIPATI - 1] = ID.mob.CITIPATI, -- Confirmed on retail
 }
 
-entity.spawnPoints =
-{
-    { x = -364.014, y = -4.634,  z = -2.627 },
-    { x = -328.973, y = -12.876, z = 67.481 },
-    { x = -398.931, y = -4.536,  z = 79.640 },
-    { x = -381.284, y = -9.233,  z = 40.054 },
-}
-
 entity.onMobInitialize = function(mob)
     mob:addImmunity(xi.immunity.DARK_SLEEP)
     mob:addImmunity(xi.immunity.LIGHT_SLEEP)
 end
 
 entity.onMobSpawn = function(mob)
+    mob:setLocalVar('killed', 0)
     mob:setMod(xi.mod.BIND_RES_RANK, 10)
     mob:setMod(xi.mod.DARK_RES_RANK, 10)
     mob:setMobMod(xi.mobMod.NO_STANDBACK, 1)
-end
-
-entity.onMobRoam = function(mob)
-    -- Since DisallowRespawn() doesn't care about SPAWNTYPE_NIGHT we have to get creative
-    local totd = VanadielTOTD()
-    if totd ~= xi.time.NIGHT and totd ~= xi.time.MIDNIGHT then
-        mob:setLocalVar('doNotInvokeCooldown', 1)
-        DespawnMob(mob:getID())
-    end
 end
 
 entity.onMobSpellChoose = function(mob, target, spellId)
@@ -69,7 +53,20 @@ entity.onMobSpellChoose = function(mob, target, spellId)
 end
 
 entity.onMobDeath = function(mob, player, optParams)
+    if optParams.isKiller or optParams.noKiller then
+        mob:setLocalVar('killed', 1)
+    end
+
     xi.hunts.checkHunt(mob, player, 278)
+end
+
+entity.onMobDespawn = function(mob)
+    -- Only a kill starts the 3-6 hour lottery cooldown. A natural despawn at the
+    -- end of his spawn window skips it, so placeholders can pop him again the
+    -- same or next night.
+    if mob:getLocalVar('killed') == 0 then
+        mob:setLocalVar('doNotInvokeCooldown', 1)
+    end
 end
 
 return entity

@@ -11,22 +11,15 @@ mixins = { require('scripts/mixins/job_special') }
 ---@type TMobEntity
 local entity = {}
 
-entity.spawnPoints =
-{
-    { x = -17.176, y = -16.250, z = -16.468 }
-}
-
 entity.onMobInitialize = function(mob)
-    xi.mob.updateNMSpawnPoint(mob)
-    mob:setRespawnTime(math.random(900, 10800))
+    mob:setRespawnTime(math.randomInt(900, 10800))
 
     mob:setMobMod(xi.mobMod.MAGIC_COOL, 6)
     mob:setMod(xi.mod.SILENCE_MEVA, 100)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.updateNMSpawnPoint(mob)
-    mob:setRespawnTime(math.random(7200, 14400)) -- 2 to 4 hours
+    mob:setRespawnTime(math.randomInt(7200, 14400)) -- 2 to 4 hours
 end
 
 return entity

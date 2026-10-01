@@ -14,7 +14,7 @@ local content = Battlefield:new({
     index            = 2,
     entryNpc         = 'Wind_Pillar_3',
     exitNpc          = 'Wind_Pillar_Exit',
-    requiredKeyItems = { xi.ki.ZEPHYR_FAN, message = bearclawID.text.ZEPHYR_RIPS },
+    requiredKeyItems = { xi.keyItem.ZEPHYR_FAN, message = bearclawID.text.ZEPHYR_RIPS },
     grantXP          = 3000,
     armouryCrates    =
     {
@@ -28,8 +28,8 @@ local content = Battlefield:new({
 
 local function spawnSnowDevils(battlefield)
     local base   = bearclawID.mob.SNOW_DEVIL + (battlefield:getArea() - 1) * 8
-    local offset = math.random(0, 1) * 3
-    local count  = math.random(0, 2)
+    local offset = math.randomInt(0, 1) * 3
+    local count  = math.randomInt(0, 2)
     local wave   = battlefield:getLocalVar('wave')
 
     for i = 0, count do
@@ -130,8 +130,8 @@ end
 content.loot =
 {
     {
-        { itemId = xi.item.NONE,                   weight = 9500 },
-        { itemId = xi.item.CLOUD_EVOKER,           weight =  500 },
+        { itemId = xi.item.NONE,                   weight = 9750 },
+        { itemId = xi.item.CLOUD_EVOKER,           weight =  250 },
     },
 
     {

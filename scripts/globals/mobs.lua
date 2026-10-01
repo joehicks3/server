@@ -86,7 +86,7 @@ xi.mob.updateNMSpawnPoint = function(mobParam, spawnPointsOverride)
         #spawnPoints > 0
     then
         local chosenSpawn    = utils.randomEntry(spawnPoints)
-        local randomRotation = math.random(0, 255) -- rotation does not matter
+        local randomRotation = math.randomInt(0, 255) -- rotation does not matter
 
         -- Updates the mob's spawn point
         mobParam:setSpawn(chosenSpawn.x, chosenSpawn.y, chosenSpawn.z, randomRotation)
@@ -188,7 +188,7 @@ xi.mob.phOnDespawn = function(ph, phNmId, chance, cooldown, params)
     if
         GetSystemTime() <= pop or
         lotteryPrimed(phList) or
-        math.random(1, 1000) > chance
+        math.randomInt(1, 1000) > chance
     then
         return false
     end
@@ -211,9 +211,17 @@ xi.mob.phOnDespawn = function(ph, phNmId, chance, cooldown, params)
         return false
     end
 
-    -- on PH death, replace PH repop with NM repop
-    -- TODO, fetch phId's spawn slot and disable respawn for all mobs in that spawn slot
-    DisallowRespawn(phId, true)
+    -- On an NMs PH death we need to disable every mob that is inside the slot so it doesnt re-roll and pop the other mob in the slot
+    local phSlotMobs = ph:getSpawnSlotMobs()
+    if #phSlotMobs == 0 then
+        phSlotMobs = { phId } -- Set the ph to the only mob in the list if it is just a single slotted mob (aka no slot)
+    end
+
+    -- Disallow the entire slot to spawn
+    for _, slotMemberId in ipairs(phSlotMobs) do
+        DisallowRespawn(slotMemberId, true)
+    end
+
     DisallowRespawn(nmId, false)
 
     -- Update mob's spawn position, if available
@@ -221,14 +229,23 @@ xi.mob.phOnDespawn = function(ph, phNmId, chance, cooldown, params)
         xi.mob.updateNMSpawnPoint(nm, params.spawnPoints or nil)
     end
 
-    -- if params.immediate is true, spawn the nm params.immediately (1ms) else use placeholder's timer
-    nm:setRespawnTime(params.immediate and 1 or GetMobRespawnTime(phId))
+    -- Respawns are processed in 30s waves, so a 1s timer is not immediate. Spawn directly instead.
+    if params.immediate then
+        SpawnMob(nmId)
+    else
+        nm:setRespawnTime(GetMobRespawnTime(phId))
+    end
 
     nm:addListener('DESPAWN', 'DESPAWN_' .. nmId, function(m)
         -- on NM death, replace NM repop with PH repop
         DisallowRespawn(nmId, true)
         if not params.doNotEnablePhSpawn then
-            DisallowRespawn(phId, false)
+            for _, slotMemberId in ipairs(phSlotMobs) do
+                if slotMemberId ~= nmId then
+                    DisallowRespawn(slotMemberId, false)
+                end
+            end
+
             local phMob = GetMobByID(phId)
             if phMob then
                 phMob:setRespawnTime(GetMobRespawnTime(phId))
@@ -553,11 +570,24 @@ local addEffectImmediate = function(mob, target, damage, ae, params)
 
     power = addBonusesAbility(mob, ae.ele, target, power, ae.bonusAbilityParams)
     power = power * applyResistanceAddEffect(mob, target, ae.ele, 0)
-    power = power * xi.spells.damage.calculateAbsorption(target, ae.ele, true)
-    power = power * xi.spells.damage.calculateNullification(target, ae.ele, true, false)
+    power = power * xi.spells.damage.calculateAbsorption(target, ae.ele, false, true, false, false)
+    power = power * xi.spells.damage.calculateNullification(target, ae.ele, false, true, false, false)
 
     if ae.sub ~= xi.subEffect.TP_DRAIN and ae.sub ~= xi.subEffect.MP_DRAIN then
-        power = finalMagicNonSpellAdjustments(mob, target, ae.ele, power)
+        power = math.floor(power * xi.combat.damage.calculateDamageAdjustment(target, false, true, false, false))
+        power = math.floor(power * xi.spells.damage.calculateAbsorption(target, ae.ele, false, true, false, false))
+        power = math.floor(power * xi.spells.damage.calculateNullification(target, ae.ele, false, true, false, false))
+        power = math.floor(target:handleSevereDamage(power, false))
+        power = utils.handlePhalanx(target, power)
+        power = utils.handleOneForAll(target, power)
+        power = utils.handleStoneskin(target, power, xi.attackType.MAGICAL)
+        power = utils.clamp(power, -99999, 99999)
+
+        if power < 0 then
+            power = -(target:addHP(-power))
+        else
+            target:takeDamage(power, mob, xi.attackType.MAGICAL, xi.damageType.ELEMENTAL + ae.ele)
+        end
     end
 
     -- target:printToPlayer(string.format('Adjusted Power: %f', power)) -- DEBUG
@@ -613,7 +643,7 @@ xi.mob.onAddEffect = function(mob, target, damage, effect, params)
 
         -- target:printToPlayer(string.format('Chance: %i', chance)) -- DEBUG
 
-        if math.random(1, 100) <= chance then
+        if math.randomInt(1, 100) <= chance then
 
             -- STATUS EFFECT
             if ae.applyEffect then
@@ -629,6 +659,45 @@ xi.mob.onAddEffect = function(mob, target, damage, effect, params)
     end
 
     return 0, 0, 0
+end
+
+local function getPetSpawnPosition(mob, params)
+    if params.requireIdle then
+        if not mob:isAlive() or mob:isEngaged() or mob:isFollowingPath() then
+            return nil
+        end
+
+        -- The owner may have gained hate before it is marked as engaged.
+        for _, entry in ipairs(mob:getEnmityList()) do
+            if entry.active then
+                return nil
+            end
+        end
+    end
+
+    local pos = mob:getPos()
+    if params.requireValidPosition then
+        local zone = mob:getZone()
+        if not zone:isNavigablePoint(pos) then
+            return nil
+        end
+
+        pos = GetFurthestValidPosition(mob, 2, math.pi)
+
+        -- A valid ground point can still be too far from the owner or on another floor.
+        if
+            not pos or
+            mob:checkDistance(pos) > 3 or
+            math.abs(pos.y - mob:getYPos()) > 1 or
+            not zone:isNavigablePoint(pos)
+        then
+            return nil
+        end
+
+        pos.rot = mob:getRotPos()
+    end
+
+    return pos
 end
 
 -----------------------------------
@@ -648,6 +717,9 @@ xi.mob.callPets = function(mob, petIds, params)
     --      params.persistOnDeath: pets persist when owner dies/disengages (default: false)
     --      params.superLink:      mob will assist pet (pet will always assist mob)
     --      params.maxSpawns:      stop if this many pets get spawned
+    --      params.keepSpawnPoint: use the summon position as the pet's home position (default: false)
+    --      params.requireValidPosition: only summon near the owner on ground the pet can stand on (default: false)
+    --      params.requireIdle:    cancel if the owner is dead, has hate, or is moving (default: false)
     --      params.ignoreBusy:     allow pets to get summoned even if owner is busy, interupting any action it was performing
     --      params.noAnimation:    no animation packet from owner when calling pet
     --      params.inactiveTime:   how long for the call pet to take (owner will be inactive during period)
@@ -682,6 +754,14 @@ xi.mob.callPets = function(mob, petIds, params)
     end
 
     if not canSummonPets then
+        return false
+    end
+
+    -- Skip the animation if the requested idle or ground checks fail.
+    if
+        (params.requireIdle or params.requireValidPosition) and
+        not getPetSpawnPosition(mob, params)
+    then
         return false
     end
 
@@ -740,10 +820,10 @@ xi.mob.callPets = function(mob, petIds, params)
         actionParams =
         {
             finishCategory = params.action.finishCategory or 11,
-            actionID = params.action.messageID or 307,
-            animationID = params.action.animationID or 439,
-            messageID = params.action.messageID or 0,
-            param = params.action.param or 0,
+            actionID       = params.action.messageID or 307,
+            animationID    = params.action.animationID or 439,
+            messageID      = params.action.messageID or 0,
+            param          = params.action.param or 0,
         }
     end
 
@@ -765,10 +845,16 @@ xi.mob.callPets = function(mob, petIds, params)
             end
         end
 
-        local spawnPos = mobArg:getSpawnPos()
-        local pos = mobArg:getPos()
-        params.maxSpawns = params.maxSpawns or #petIds
+        -- Recheck when the animation ends. The owner may have moved or gained hate.
+        local pos = getPetSpawnPosition(mobArg, params)
+        if not pos then
+            return
+        end
+
+        local spawnPos     = mobArg:getSpawnPos()
+        params.maxSpawns   = params.maxSpawns or #petIds
         local spawnedCount = 0
+
         for _, petId in ipairs(petIds) do
             local petToSummon = GetMobByID(petId)
             if
@@ -778,10 +864,20 @@ xi.mob.callPets = function(mob, petIds, params)
             then
                 spawnedCount = spawnedCount + 1
                 -- spawn pet around owner
-                petToSummon:setSpawn(pos.x + math.random(-2, 2), pos.y, pos.z + math.random(-2, 2), pos.rot)
+                local randomX = 0
+                local randomZ = 0
+                if not params.requireValidPosition then
+                    randomX = math.randomInt(1, 100) <= 50 and 2 or -2
+                    randomZ = math.randomInt(1, 100) <= 50 and 2 or -2
+                end
+
+                petToSummon:setSpawn(pos.x + randomX, pos.y, pos.z + randomZ, pos.rot)
                 petToSummon:spawn()
-                -- set home to be the owner's home position
-                petToSummon:setSpawn(spawnPos.x, spawnPos.y, spawnPos.z, spawnPos.rot)
+
+                -- By default, the pet's home stays near the owner's original spawn point.
+                if not params.keepSpawnPoint then
+                    petToSummon:setSpawn(spawnPos.x + randomX, spawnPos.y, spawnPos.z + randomZ, spawnPos.rot)
+                end
 
                 local ownerRoamListenerName = fmt('OWNER_ASSIST_{}', petId)
                 if params.superLink then

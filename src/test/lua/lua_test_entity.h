@@ -24,9 +24,8 @@
 #include "lua_test_entity_assertions.h"
 #include "map/lua/lua_base_entity.h"
 
-#include <common/scheduler.h>
-
 class CBaseEntity;
+
 class CLuaTestEntity : public CLuaBaseEntity
 {
 public:
@@ -36,6 +35,7 @@ public:
     virtual void setEntity(CBaseEntity* entity);
     void         despawn() const;
     void         respawn() const;
+    void         setLevelRange(uint8 minLevel, uint8 maxLevel) const;
     auto         assert_() -> CLuaTestEntityAssertions;
 
     static void Register();

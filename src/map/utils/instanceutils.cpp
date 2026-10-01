@@ -21,26 +21,27 @@
 
 #include "instanceutils.h"
 
-#include <filesystem>
-
-#include "common/database.h"
 #include "common/logging.h"
+
+#include <common/types/hash_map.h>
 
 #include "lua/luautils.h"
 
 #include "instance_loader.h"
-#include "map_engine.h"
 #include "zoneutils.h"
 
 #include <coroutine>
+#include <filesystem>
 #include <queue>
+
+#include <fmt/ranges.h>
 
 namespace instanceutils
 {
 
-std::unordered_map<uint16, InstanceData_t> InstanceData;
-std::queue<std::pair<uint32, uint16>>      LoadQueue; // player id, instance id
-detail::LazyLoadState                      lazyLoad;
+HashMap<uint16, InstanceData_t>       InstanceData;
+std::queue<std::pair<uint32, uint16>> LoadQueue; // player id, instance id
+detail::LazyLoadState                 lazyLoad;
 
 namespace
 {
@@ -70,15 +71,14 @@ auto LoadInstances(const std::vector<uint16>& instanceIds) -> void
         return;
     }
 
-    const auto query = fmt::format("SELECT instanceid,instance_name,instance_zone,entrance_zone,"
-                                   "time_limit,start_x,start_y,start_z,"
-                                   "start_rot,instance_list.music_day,instance_list.music_night,instance_list.battlesolo,"
-                                   "instance_list.battlemulti,zone_settings.name AS zone_name "
-                                   "FROM instance_list INNER JOIN zone_settings "
-                                   "ON instance_zone = zone_settings.zoneid "
-                                   "WHERE instanceid IN ({})",
-                                   fmt::join(instanceIds, ","));
-    const auto rset  = db::preparedStmt(query);
+    const auto rset = db::preparedStmt("SELECT instanceid,instance_name,instance_zone,entrance_zone,"
+                                       "time_limit,start_x,start_y,start_z,"
+                                       "start_rot,instance_list.music_day,instance_list.music_night,instance_list.battlesolo,"
+                                       "instance_list.battlemulti,zone_settings.name AS zone_name "
+                                       "FROM instance_list INNER JOIN zone_settings "
+                                       "ON instance_zone = zone_settings.zoneid "
+                                       "WHERE FIND_IN_SET(instanceid, ?)",
+                                       fmt::format("{}", fmt::join(instanceIds, ",")));
 
     FOR_DB_MULTIPLE_RESULTS(rset)
     {
@@ -87,7 +87,7 @@ auto LoadInstances(const std::vector<uint16>& instanceIds) -> void
         // Main data
         data.id            = rset->get<uint16>("instanceid");
         data.instance_name = rset->get<std::string>("instance_name");
-        data.instance_zone = rset->get<uint16>("instance_zone");
+        data.instance_zone = rset->get<xi::ZoneId>("instance_zone");
         data.entrance_zone = rset->get<uint16>("entrance_zone");
         data.time_limit    = rset->get<uint16>("time_limit");
         data.start_x       = rset->get<float>("start_x");

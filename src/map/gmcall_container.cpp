@@ -20,7 +20,6 @@
 */
 
 #include "gmcall_container.h"
-#include "common/database.h"
 #include "common/ipc_structs.h"
 #include "common/logging.h"
 #include "entities/char_entity.h"
@@ -32,6 +31,7 @@
 
 namespace
 {
+
 constexpr std::size_t MAX_GMCALL_PACKETS = 6; // Arbitrary limit. Observed 3 packets at most.
 
 const std::unordered_set<std::string> ALLOWED_GMCALL_PARAMS = {
@@ -52,6 +52,7 @@ const std::unordered_set<std::string> ALLOWED_GMCALL_PARAMS = {
     "GMREPORT.BLOCK",
     "GMCALL.INPUT",
 };
+
 } // namespace
 
 // Store one GMCALL packet for later processing
@@ -71,7 +72,20 @@ auto GMCallContainer::addPacket(const GP_CLI_COMMAND_FAQ_GMCALL& packet) -> bool
 
     packets_.push_back(packet);
 
-    return packet.eos == 1; // Notify this was the last packet of the current GM call.
+    if (packet.eos != 1)
+    {
+        return false;
+    }
+
+    const auto now = timer::now();
+    if (now < lastCall_ + 10s)
+    {
+        clear();
+        return false;
+    }
+
+    lastCall_ = now;
+    return true; // Notify this was the last packet of the current GM call.
 }
 
 void GMCallContainer::clear()

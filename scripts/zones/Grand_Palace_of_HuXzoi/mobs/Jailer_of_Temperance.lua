@@ -2,6 +2,7 @@
 -- Area: Grand Palace of Hu'Xzoi
 --   NM: Jailer of Temperance
 -----------------------------------
+local ID           = zones[xi.zone.GRAND_PALACE_OF_HUXZOI]
 local huxzoiGlobal = require('scripts/zones/Grand_Palace_of_HuXzoi/globals')
 mixins = { require('scripts/mixins/job_special') }
 -----------------------------------
@@ -50,6 +51,7 @@ entity.onMobSpawn = function(mob)
     mob:addMod(xi.mod.MDEF, 20)
     mob:addMod(xi.mod.ATT, mob:getMod(xi.mod.ATT) * 0.65) -- Increase attack by 65%
     mob:delMod(xi.mod.DEF, 50)
+    mob:setMod(xi.mod.STORETP, 110)
 
     -- Change animation to pot
     mob:setAnimationSub(0)
@@ -57,10 +59,11 @@ entity.onMobSpawn = function(mob)
 
     -- Two usages of Meikyo at specific HP thresholds
     xi.mix.jobSpecial.config(mob, {
+        between  = 45,
         specials =
         {
-            { id = xi.mobSkill.MEIKYO_SHISUI_1, hpp = math.random(65, 70) },
-            { id = xi.mobSkill.MEIKYO_SHISUI_1, hpp = math.random(35, 40) },
+            { id = xi.mobSkill.MEIKYO_SHISUI_1, hpp = math.randomInt(65, 70) },
+            { id = xi.mobSkill.MEIKYO_SHISUI_1, hpp = math.randomInt(35, 40) },
         },
     })
 
@@ -70,20 +73,32 @@ entity.onMobSpawn = function(mob)
         mob:setMod(xi.data.element.getElementalSDTModifier(element), -10000)
     end
 
-    mob:setLocalVar('changeTime', GetSystemTime() + math.random(30, 180))
+    mob:setLocalVar('changeTime', GetSystemTime() + math.randomInt(30, 180))
+
+    -- Uses 6 skills while under the effect of Meikyo Shisui
+    mob:setLocalVar('[MeikyoShisui]SkillCount', 6)
 end
 
 entity.onMobFight = function(mob)
+    if xi.combat.behavior.isEntityBusy(mob) then
+        return
+    end
+
+    -- No form changes while under the effect of Meikyo Shisui
+    if mob:hasStatusEffect(xi.effect.MEIKYO_SHISUI) then
+        return
+    end
+
     local currentTime = GetSystemTime()
     local changeTime = mob:getLocalVar('changeTime')
     local currentForm = mob:getAnimationSub()
 
     -- Apply the form change
     if currentTime >= changeTime then
-        local newForm = math.random(1, 3)
+        local newForm = math.randomInt(1, 3)
 
         while newForm == currentForm do
-            newForm = math.random(1, 3)
+            newForm = math.randomInt(1, 3)
         end
 
         -- Briefly transition to animationSub 1, then change to new form
@@ -97,41 +112,83 @@ entity.onMobFight = function(mob)
             end
         end)
 
-        mob:setLocalVar('changeTime', currentTime + math.random(30, 390))
+        mob:setLocalVar('changeTime', currentTime + math.randomInt(30, 390))
+    end
+end
+
+-- If Meikyo Shisui is active, skills have essentially no ready time.
+entity.onMobSkillReadyTime = function(target, mob, skill)
+    -- 1 Produces a ready message and ready spikes, but is effectively instant (matches retail)
+    if mob:hasStatusEffect(xi.effect.MEIKYO_SHISUI) then
+        return 1
     end
 end
 
 entity.onMobMobskillChoose = function(mob, target, skillId)
-    local form = mob:getAnimationSub()
-    local tpMoves = { xi.mobSkill.REACTOR_COOL }
+    local form         = mob:getAnimationSub()
+    local meikyoActive = mob:hasStatusEffect(xi.effect.MEIKYO_SHISUI)
+    local skillList    = {}
 
     switch (form): caseof
     {
+        [0] = function()
+            table.insert(skillList, xi.mobSkill.REACTOR_COOL)
+        end,
+
         [1] = function()
-            if math.random(1, 100) <= 75 then
-                table.insert(tpMoves, xi.mobSkill.OPTIC_INDURATION)
+            if meikyoActive then
+                table.insert(skillList, xi.mobSkill.OPTIC_INDURATION)
+                return
             end
+
+            table.insert(skillList, xi.mobSkill.REACTOR_COOL)
+            table.insert(skillList, xi.mobSkill.OPTIC_INDURATION)
         end,
 
         [2] = function()
-            table.insert(tpMoves, xi.mobSkill.STATIC_FILAMENT)
-            table.insert(tpMoves, xi.mobSkill.DECAYED_FILAMENT)
+            if meikyoActive then
+                table.insert(skillList, xi.mobSkill.DECAYED_FILAMENT)
+                return
+            end
+
+            table.insert(skillList, xi.mobSkill.REACTOR_COOL)
+            table.insert(skillList, xi.mobSkill.STATIC_FILAMENT)
+            table.insert(skillList, xi.mobSkill.DECAYED_FILAMENT)
         end,
 
         [3] = function()
-            table.insert(tpMoves, xi.mobSkill.REACTOR_OVERLOAD)
-            table.insert(tpMoves, xi.mobSkill.REACTOR_OVERHEAT)
+            if meikyoActive then
+                table.insert(skillList, xi.mobSkill.REACTOR_OVERLOAD)
+                return
+            end
+
+            table.insert(skillList, xi.mobSkill.REACTOR_COOL)
+            table.insert(skillList, xi.mobSkill.REACTOR_OVERLOAD)
+            table.insert(skillList, xi.mobSkill.REACTOR_OVERHEAT)
         end,
     }
 
-    return tpMoves[math.random(1, #tpMoves)]
+    return skillList[math.randomInt(1, #skillList)]
 end
 
 entity.onMobDespawn = function(mob)
-    local ph = mob:getLocalVar('ph')
-    DisallowRespawn(mob:getID(), true)
-    DisallowRespawn(ph, false)
-    GetMobByID(ph):setRespawnTime(GetMobRespawnTime(ph))
+    local phId = mob:getLocalVar('ph')
+
+    -- Temperance can spawn outside of the zdei system with no placeholder set, so pick one at random.
+    if phId == 0 then
+        local phTable = ID.mob.JAILER_OF_TEMPERANCE_PH
+        phId = phTable[math.randomInt(1, #phTable)]
+    end
+
+    local ph = GetMobByID(phId)
+
+    -- allow the placeholder to respawn
+    if ph then
+        DisallowRespawn(mob:getID(), true)
+        DisallowRespawn(phId, false)
+        ph:setRespawnTime(GetMobRespawnTime(phId))
+    end
+
     mob:setLocalVar('pop', GetSystemTime() + 900) -- 15 mins
     huxzoiGlobal.pickTemperancePH()
 end

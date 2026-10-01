@@ -15,7 +15,7 @@ local entity = {}
 
 local function regenerateHead(mob, animationSub)
     -- Reset timer.
-    mob:setLocalVar('headTimer', GetSystemTime() + math.random(90, 210))
+    mob:setLocalVar('headTimer', GetSystemTime() + math.randomInt(90, 210))
 
     -- Set animationSub.
     mob:setAnimationSub(animationSub - 1)
@@ -60,12 +60,12 @@ entity.onMobSpawn = function(mob)
 
     mob:setLocalVar('[rage]timer', 3600) -- 60 minutes
 
-    mob:setLocalVar('headTimer', GetSystemTime() + math.random(90, 210))
+    mob:setLocalVar('headTimer', GetSystemTime() + math.randomInt(90, 210))
     mob:setLocalVar('head2Regeneration', 0)
     mob:setLocalVar('head3Regeneration', 0)
 
     -- Number of crits to lose a head
-    mob:setLocalVar('criticalsThreshold', math.random(10, 30))
+    mob:setLocalVar('criticalsThreshold', math.randomInt(10, 30))
     mob:setLocalVar('criticalsTaken', 0)
 end
 
@@ -120,6 +120,39 @@ entity.onMobFight = function(mob, target)
     mob:useMobAbility(xi.mobSkill.BAROFIELD)
 end
 
+entity.onMobMobskillChoose = function(mob, target, skillId)
+    local skillList = {}
+    local skillInfo =
+    {
+        [1] = { xi.mobSkill.TREMBLING,       100, 2, true,  true  },
+        [2] = { xi.mobSkill.SERPENTINE_TAIL, 100, 2, true,  false },
+        [3] = { xi.mobSkill.BAROFIELD,       100, 2, false, true  },
+        [4] = { xi.mobSkill.NERVE_GAS,       100, 0, true,  true  },
+        [5] = { xi.mobSkill.PYRIC_BULWARK,   100, 0, true,  true  },
+        [6] = { xi.mobSkill.PYRIC_BLAST,     100, 0, false, true  },
+        [7] = { xi.mobSkill.POLAR_BULWARK,   100, 1, true,  true  },
+        [8] = { xi.mobSkill.POLAR_BLAST,     100, 1, false, true  },
+    }
+
+    local hpp         = mob:getHPP()
+    local brokenHeads = mob:getAnimationSub()
+    local isInFront   = target:isInfront(mob, 128)
+    local isBehind    = target:isBehind(mob, 128)
+
+    for i = 1, #skillInfo do
+        if
+            hpp <= skillInfo[i][2] and
+            brokenHeads <= skillInfo[i][3] and
+            (skillInfo[i][4] or isInFront) and
+            (skillInfo[i][5] or isBehind)
+        then
+            table.insert(skillList, skillInfo[i][1])
+        end
+    end
+
+    return skillList[math.randomInt(1, #skillList)]
+end
+
 entity.onMobWeaponSkill = function(mob, target, skill, action)
     local skillId = skill:getID()
 
@@ -152,8 +185,8 @@ entity.onCriticalHit = function(mob)
     if criticalCounter >= mob:getLocalVar('criticalsThreshold') then
         criticalCounter = 0 -- Reset critical count.
         mob:setAnimationSub(animationSub + 1)
-        mob:setLocalVar('headTimer', GetSystemTime() + math.random(90, 210))
-        mob:setLocalVar('criticalsThreshold', math.random(10, 30)) -- Reset critical threshold.
+        mob:setLocalVar('headTimer', GetSystemTime() + math.randomInt(90, 210))
+        mob:setLocalVar('criticalsThreshold', math.randomInt(10, 30)) -- Reset critical threshold.
     end
 
     mob:setLocalVar('criticalsTaken', criticalCounter)

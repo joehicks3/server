@@ -13,7 +13,7 @@ entity.onTrigger = function(player, npc)
     local makingAmens = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.MAKING_AMENS) --Second quest in series
     local wonderWands = player:getQuestStatus(xi.questLog.WINDURST, xi.quest.id.windurst.WONDER_WANDS) --Third and final quest in series
     local pfame = player:getFameLevel(xi.fameArea.WINDURST)
-    local brokenWand = player:hasKeyItem(xi.ki.BROKEN_WAND)
+    local brokenWand = player:hasKeyItem(xi.keyItem.BROKEN_WAND)
 
     if
         makingAmends == xi.questStatus.QUEST_COMPLETED and
@@ -44,7 +44,7 @@ entity.onTrigger = function(player, npc)
             player:startEvent(286, 0, 937) -- Post Making Amens! dialogue (before Wonder Wands)
         end
     else
-        local rand = math.random(1, 2)
+        local rand = math.randomInt(1, 2)
         if rand == 1 then
             player:startEvent(225)   -- Standard Conversation
         else
@@ -58,10 +58,10 @@ entity.onEventFinish = function(player, csid, option, npc)
         player:addQuest(xi.questLog.WINDURST, xi.quest.id.windurst.MAKING_AMENS)
     elseif csid == 284 then
         player:needToZone(true)
-        player:delKeyItem(xi.ki.BROKEN_WAND)
+        player:delKeyItem(xi.keyItem.BROKEN_WAND)
         player:addTitle(xi.title.HAKKURU_RINKURUS_BENEFACTOR)
         npcUtil.giveCurrency(player, 'gil', 6000)
-        player:addFame(xi.fameArea.WINDURST, 150)
+        player:addFame(xi.fameArea.WINDURST, 40)
         player:completeQuest(xi.questLog.WINDURST, xi.quest.id.windurst.MAKING_AMENS)
     end
 end

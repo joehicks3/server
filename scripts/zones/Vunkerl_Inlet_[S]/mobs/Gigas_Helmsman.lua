@@ -2,6 +2,8 @@
 -- Area: Vunkerl Inlet [S]
 --   NM: Gigas Helmsman
 -----------------------------------
+mixins = { require('scripts/mixins/pet_resummon') }
+-----------------------------------
 local ID = zones[xi.zone.VUNKERL_INLET_S]
 -----------------------------------
 ---@type TMobEntity
@@ -12,7 +14,7 @@ entity.onMobInitialize = function(mob)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.phOnDespawn(mob, ID.mob.PALLAS, 5, math.random(1, 5) * 60 * 60) -- 1-5 hours
+    xi.mob.phOnDespawn(mob, ID.mob.PALLAS, 5, math.randomInt(1, 5) * 60 * 60) -- 1-5 hours
 end
 
 return entity

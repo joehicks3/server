@@ -188,19 +188,19 @@ xi.nyzul.handleRunicKey = function(mob)
             -- Does players Runic Disk have data saved to a floor of entering or higher
             if
                 entity:getVar('NyzulFloorProgress') + 1 >= startFloor and
-                not entity:hasKeyItem(xi.ki.RUNIC_KEY)
+                not entity:hasKeyItem(xi.keyItem.RUNIC_KEY)
             then
                 -- On early version only initiator of floor got progress saves and key credit
                 if not xi.settings.main.RUNIC_DISK_SAVE then
                     if entity:getID() == instance:getLocalVar('diskHolder') then
-                        if npcUtil.giveKeyItem(entity, xi.ki.RUNIC_KEY) then
+                        if npcUtil.giveKeyItem(entity, xi.keyItem.RUNIC_KEY) then
                             entity:setVar('NyzulFloorProgress', 0)
                         end
                     end
 
                 -- Anyone can get a key on 100 win if disk passed check
                 else
-                    npcUtil.giveKeyItem(entity, xi.ki.RUNIC_KEY)
+                    npcUtil.giveKeyItem(entity, xi.keyItem.RUNIC_KEY)
                 end
             end
         end
@@ -325,11 +325,11 @@ xi.nyzul.vigilWeaponDrop = function(player, mob)
             end
         end
 
-        player:addTreasure(xi.nyzul.baseWeapons[math.random(1, #xi.nyzul.baseWeapons)], mob)
+        player:addTreasure(xi.nyzul.baseWeapons[math.randomInt(1, #xi.nyzul.baseWeapons)], mob)
 
     -- Every NM can randomly drop a vigil weapon
-    elseif math.random(1, 100) <= 20 and xi.settings.main.ENABLE_VIGIL_DROPS then
-        player:addTreasure(xi.nyzul.baseWeapons[math.random(1, #xi.nyzul.baseWeapons)], mob)
+    elseif math.randomInt(1, 100) <= 20 and xi.settings.main.ENABLE_VIGIL_DROPS then
+        player:addTreasure(xi.nyzul.baseWeapons[math.randomInt(1, #xi.nyzul.baseWeapons)], mob)
     end
 end
 
@@ -363,7 +363,7 @@ xi.nyzul.spawnChest = function(mob, player)
         mobID < ID.mob.BOSS_OFFSET and
         xi.settings.main.ENABLE_NYZUL_CASKETS
     then
-        if math.random(1, 100) <= 6 then
+        if math.randomInt(1, 100) <= 6 then
             for casketID = ID.npc.TREASURE_CASKET_OFFSET, ID.npc.TREASURE_CASKET_OFFSET + 3 do
                 local casket = GetNPCByID(casketID, instance)
 

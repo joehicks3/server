@@ -67,7 +67,7 @@ enum class login_result : uint8_t
     LOGIN_ERROR_TRUST_TOKEN_INVALID = 0x13,
 };
 
-constexpr std::array<uint8, 3> SupportedXiloaderVersion = { 2, 1, 0 };
+constexpr std::array<uint8, 3> SupportedXiloaderVersion = { 2, 2, 0 };
 
 // NOTE: This collection of flags is 64-bits wide!
 enum AUTH_COMPONENTS
@@ -94,6 +94,7 @@ enum ACCOUNT_STATUS_CODE : uint8
     NORMAL = 0x01,
     BANNED = 0x02,
 };
+
 DECLARE_FORMAT_AS_UNDERLYING(ACCOUNT_STATUS_CODE);
 
 enum ACCOUNT_PRIVILEGE_CODE : uint8
@@ -102,6 +103,7 @@ enum ACCOUNT_PRIVILEGE_CODE : uint8
     ADMIN = 0x02,
     ROOT  = 0x04,
 };
+
 DECLARE_FORMAT_AS_UNDERLYING(ACCOUNT_PRIVILEGE_CODE);
 
 // Interaction with xiloader, port 54231

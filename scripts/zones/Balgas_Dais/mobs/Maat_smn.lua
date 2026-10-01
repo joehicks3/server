@@ -38,12 +38,13 @@ end
 
 entity.onMobSpawn = function(mob)
     mob:setUnkillable(true)
-    mob:setBaseSpeed(60)
-    mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, 125)
+    mob:setMod(xi.mod.DEF, 325)
+    mob:setMod(xi.mod.DMG, -5000)
+    mob:setMod(xi.mod.DARK_SLEEP_RES_RANK, 11)
 
     -- Reset mob.
     xi.combat.behavior.enableAllActions(mob)
-    mob:setLocalVar('[2hour]HPP', math.random(50, 55))
+    mob:setLocalVar('[2hour]HPP', math.randomInt(50, 55))
     mob:setLocalVar('[2hour]Used', 0)
     mob:setLocalVar('initialTaunt', 0)
     mob:setLocalVar('enrageTime', 0)
@@ -149,14 +150,14 @@ entity.onMobFight = function(mob, target)
     end
 
     -- If pet is alive, return.
-    if pet and pet:isAlive() then
+    if pet and pet:isSpawned() then
         return
     end
 
     -- If it's time to resummon our pet, summon it.
     if GetSystemTime() >= mob:getLocalVar('petSummonTime') then
         xi.mob.callPets(mob, petId, callPetParams)
-        mob:stun(5000)
+        mob:wait(5000)
     end
 end
 
@@ -176,7 +177,7 @@ entity.onMobMobskillChoose = function(mob, target, skillId)
         xi.mobSkill.DRAGON_KICK_MAAT,
     }
 
-    return tpTable[math.random(1, #tpTable)]
+    return tpTable[math.randomInt(1, #tpTable)]
 end
 
 entity.onMobWeaponSkill = function(mob, target, skill, action)
@@ -205,7 +206,7 @@ entity.onMobWeaponSkill = function(mob, target, skill, action)
         [2] = ID.text.TAKE_THAT_YOU_WHIPPERSNAPPER,
     }
 
-    mob:showText(mob, messageTable[math.random(1, #messageTable)])
+    mob:showText(mob, messageTable[math.randomInt(1, #messageTable)])
 end
 
 entity.onMobDisengage = function(mob)

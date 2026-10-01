@@ -16,8 +16,9 @@ local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.AYAME_AND_KAEDE)
 
 quest.reward =
 {
-    fame     = 30,
-    fameArea = xi.fameArea.BASTOK,
+    fame     = 20,
+    fameArea = xi.fameArea.NORG,
+    keyItem  = xi.keyItem.JOB_GESTURE_NINJA,
     title    = xi.title.SHADOW_WALKER,
 }
 
@@ -84,15 +85,15 @@ quest.sections =
                                 npc:hideNPC(xi.settings.main.FORCE_SPAWN_QM_RESET_TIME)
                             end
 
-                            return quest:keyItem(xi.ki.STRANGELY_SHAPED_CORAL)
+                            return quest:keyItem(xi.keyItem.STRANGELY_SHAPED_CORAL)
                         else
                             quest:setLocalVar(player, 'isActor', 1)
 
                             for nmId = korrolokaID.mob.KORROLOKA_LEECH, korrolokaID.mob.KORROLOKA_LEECH + 2 do
-                                SpawnMob(nmId)
+                                SpawnMob(nmId):updateClaim(player)
                             end
 
-                            return quest:messageSpecial(korrolokaID.text.SENSE_OF_FOREBODING)
+                            return quest:messageText(korrolokaID.text.HAIR_STANDS_ON_END)
                         end
                     end
                 end,
@@ -125,8 +126,8 @@ quest.sections =
             onEventFinish =
             {
                 [95] = function(player, csid, option, npc)
-                    npcUtil.giveKeyItem(player, xi.ki.SEALED_DAGGER)
-                    player:delKeyItem(xi.ki.STRANGELY_SHAPED_CORAL)
+                    npcUtil.giveKeyItem(player, xi.keyItem.SEALED_DAGGER)
+                    player:delKeyItem(xi.keyItem.STRANGELY_SHAPED_CORAL)
                     quest:setVar(player, 'Prog', 5)
                 end,
             },
@@ -149,7 +150,7 @@ quest.sections =
                     elseif questProgress == 4 then
                         return quest:event(243)
                     elseif questProgress == 5 then
-                        return quest:progressEvent(246, xi.ki.SEALED_DAGGER)
+                        return quest:progressEvent(246, xi.keyItem.SEALED_DAGGER)
                     end
                 end,
             },
@@ -183,6 +184,7 @@ quest.sections =
 
                 [246] = function(player, csid, option, npc)
                     if quest:complete(player) then
+                        player:delKeyItem(xi.keyItem.SEALED_DAGGER)
                         player:unlockJob(xi.job.NIN)
                         player:messageSpecial(portBastokID.text.UNLOCK_NINJA)
                     end

@@ -16,7 +16,7 @@ local content = Battlefield:new({
     index            = 1,
     entryNpc         = '_0n0',
     exitNpcs         = { '_0n1', '_0n2', '_0n3' },
-    requiredKeyItems = { xi.ki.CENSER_OF_ACRIMONY, message = spireOfVahzlID.text.FADES_INTO_NOTHINGNESS },
+    requiredKeyItems = { xi.keyItem.CENSER_OF_ACRIMONY, message = spireOfVahzlID.text.FADES_INTO_NOTHINGNESS },
     grantXP          = 3000,
     armouryCrates    =
     {
@@ -160,11 +160,11 @@ function content:onBattlefieldTick(battlefield, tick)
         -- All shields share the same position entry ID to maintain a coordinated formation
         local positions    = self.positions
         local lastPosition = battlefield:getLocalVar('position')
-        local newPosition  = math.random(1, #positions[area][1])
+        local newPosition  = math.randomInt(1, #positions[area][1])
 
         -- Ensure position is new
         while newPosition == lastPosition do
-            newPosition = math.random(1, #positions[area][1])
+            newPosition = math.randomInt(1, #positions[area][1])
         end
 
         battlefield:setLocalVar('position', newPosition)

@@ -12,8 +12,9 @@ local CBaseEntity = {}
 ---@param p3 integer?
 ---@param showName boolean?
 ---@param turn boolean?
+---@param messageType integer? Message type. Omit for the full type 0 packet. Otherwise compact unless showName is true.
 ---@return nil
-function CBaseEntity:showText(mob, messageID, p0, p1, p2, p3, showName, turn)
+function CBaseEntity:showText(mob, messageID, p0, p1, p2, p3, showName, turn, messageType)
 end
 
 ---@param PLuaBaseEntity CBaseEntity
@@ -55,8 +56,9 @@ end
 ---@param p2 integer?
 ---@param p3 integer?
 ---@param chat integer?
+---@param sender CBaseEntity? Speaker for private messages, separate from the named entity.
 ---@return nil
-function CBaseEntity:messageName(messageID, entity, p0, p1, p2, p3, chat)
+function CBaseEntity:messageName(messageID, entity, p0, p1, p2, p3, chat, sender)
 end
 
 ---@param messageID integer
@@ -171,6 +173,15 @@ end
 
 ---@return nil
 function CBaseEntity:resetLocalVars()
+end
+
+---@nodiscard
+---@return table
+function CBaseEntity:getData()
+end
+
+---@return nil
+function CBaseEntity:resetData()
 end
 
 ---@param prefix string
@@ -417,11 +428,11 @@ function CBaseEntity:resetAI()
 end
 
 ---@nodiscard
----@return integer
+---@return xi.status
 function CBaseEntity:getStatus()
 end
 
----@param status integer
+---@param status xi.status
 ---@return nil
 function CBaseEntity:setStatus(status)
 end
@@ -550,15 +561,11 @@ end
 function CBaseEntity:LimitDistance()
 end
 
----@param careful boolean
----@return nil
-function CBaseEntity:setCarefulPathing(careful)
-end
-
 ---@nodiscard
 ---@param target CBaseEntity
+---@param ignoreInvisibleBoundaries boolean?
 ---@return boolean
-function CBaseEntity:canSee(target)
+function CBaseEntity:canSee(target, ignoreInvisibleBoundaries)
 end
 
 ---@nodiscard
@@ -574,15 +581,6 @@ end
 ---@param seconds integer?
 ---@return nil
 function CBaseEntity:closeDoor(seconds)
-end
-
----@param id integer
----@param lowerDoor integer
----@param upperDoor integer
----@param elevatorId integer
----@param reversed boolean
----@return nil
-function CBaseEntity:setElevator(id, lowerDoor, upperDoor, elevatorId, reversed)
 end
 
 ---@param id integer
@@ -618,7 +616,7 @@ end
 function CBaseEntity:setWeather(weatherType)
 end
 
----@param blockID integer
+---@param blockID xi.musicSlot
 ---@param musicTrackID integer
 ---@return nil
 function CBaseEntity:changeMusic(blockID, musicTrackID)
@@ -630,20 +628,12 @@ function CBaseEntity:sendMenu(menu)
 end
 
 ---@nodiscard
----@param guildID integer
----@param open integer
----@param close integer
----@param holiday integer
----@return boolean
-function CBaseEntity:sendGuild(guildID, open, close, holiday)
-end
-
----@nodiscard
 ---@param npc CBaseEntity
 ---@param open integer
 ---@param close integer
+---@param holiday? integer Weekday the shop is closed (0-7); omit for none
 ---@return boolean
-function CBaseEntity:openGuildShop(npc, open, close)
+function CBaseEntity:openGuildShop(npc, open, close, holiday)
 end
 
 ---@return nil
@@ -652,8 +642,9 @@ end
 
 ---@param open integer
 ---@param close integer
+---@param passive boolean?
 ---@return nil
-function CBaseEntity:sendGuildClose(open, close)
+function CBaseEntity:sendGuildClose(open, close, passive)
 end
 
 ---@return nil
@@ -791,7 +782,7 @@ end
 function CBaseEntity:clearPlayerTriggerAreas()
 end
 
----@param statusID integer
+---@param statusID xi.status
 ---@param animation integer
 ---@param matchTime boolean?
 ---@return nil
@@ -812,10 +803,6 @@ end
 
 ---@return nil
 function CBaseEntity:forceRezone()
-end
-
----@return nil
-function CBaseEntity:forceLogout()
 end
 
 ---@nodiscard
@@ -1126,6 +1113,47 @@ end
 function CBaseEntity:sendLinkshellConcierge(data)
 end
 
+---@class ChocoboRaceStats
+---@field str xi.chocoboRaising.statRank?
+---@field ["end"] xi.chocoboRaising.statRank?
+---@field dsc xi.chocoboRaising.statRank?
+---@field rcp xi.chocoboRaising.statRank?
+
+---@class ChocoboRaceEntry
+---@field item xi.chocoboRacing.sectionEvent?
+---@field orders xi.chocoboRacing.order?
+---@field size xi.chocoboRacing.jockeySize?
+---@field color xi.chocoboRaising.color?
+---@field gender xi.chocoboRaising.gender?
+---@field weather xi.chocoboRaising.weather?
+---@field temperament xi.chocoboRaising.temperament?
+---@field ability1 xi.chocoboRaising.ability?
+---@field ability2 xi.chocoboRaising.ability?
+---@field stats ChocoboRaceStats?
+
+---@class ChocoboRaceTrigger
+---@field type xi.chocoboRacing.sectionEvent?
+---@field user integer? Bitmask: the acting chocobo
+---@field targets integer? Bitmask: affected chocobos
+---@field param integer? Bitmask: extra affected / type param
+
+---@class ChocoboRaceSection
+---@field from integer[] Per-chocobo positions at section start
+---@field to integer[] Per-chocobo positions at section end
+---@field trigger ChocoboRaceTrigger? Optional per-section event
+
+---@class ChocoboRace
+---@field counter integer? Race counter (rolling 0-3)
+---@field weather xi.weather? Race weather
+---@field chocobos ChocoboRaceEntry[]? The racers (up to 8)
+---@field sections ChocoboRaceSection[]? The race sections
+---@field places integer[]? Finishing place per chocobo (0 = 1st)
+
+---@param race ChocoboRace
+---@return nil
+function CBaseEntity:sendChocoboRace(race)
+end
+
 ---@nodiscard
 ---@param locationID integer
 ---@return integer
@@ -1338,11 +1366,11 @@ function CBaseEntity:setCostume2(costume)
 end
 
 ---@nodiscard
----@return integer
+---@return xi.animation
 function CBaseEntity:getAnimation()
 end
 
----@param animation integer
+---@param animation xi.animation
 ---@return nil
 function CBaseEntity:setAnimation(animation)
 end
@@ -1358,7 +1386,7 @@ end
 function CBaseEntity:setAnimationSub(animationsub, sendUpdate)
 end
 
----@param spawnAnimation integer
+---@param spawnAnimation xi.spawnAnimation
 ---@return nil
 function CBaseEntity:setSpawnAnimation(spawnAnimation)
 end
@@ -1394,11 +1422,11 @@ function CBaseEntity:setNation(nation)
 end
 
 ---@nodiscard
----@return integer
+---@return xi.allegiance
 function CBaseEntity:getAllegiance()
 end
 
----@param allegiance integer
+---@param allegiance xi.allegiance
 ---@return nil
 function CBaseEntity:setAllegiance(allegiance)
 end
@@ -1493,7 +1521,7 @@ function CBaseEntity:jail()
 end
 
 ---@nodiscard
----@param misc integer
+---@param misc xi.zoneMisc
 ---@return boolean
 function CBaseEntity:canUseMisc(misc)
 end
@@ -1530,12 +1558,12 @@ function CBaseEntity:getTimeCreated()
 end
 
 ---@nodiscard
----@return integer
+---@return xi.job
 function CBaseEntity:getMainJob()
 end
 
 ---@nodiscard
----@return integer
+---@return xi.job
 function CBaseEntity:getSubJob()
 end
 
@@ -1670,27 +1698,27 @@ function CBaseEntity:delTitle(titleID)
 end
 
 ---@nodiscard
----@param areaObj table|integer
+---@param area xi.fameArea
 ---@return integer
-function CBaseEntity:getFame(areaObj)
+function CBaseEntity:getFame(area)
 end
 
----@param areaObj table|integer
+---@param area xi.fameArea
 ---@param fame integer
 ---@return nil
-function CBaseEntity:addFame(areaObj, fame)
+function CBaseEntity:addFame(area, fame)
 end
 
----@param areaObj table|integer
+---@param area xi.fameArea
 ---@param fame integer
 ---@return nil
-function CBaseEntity:setFame(areaObj, fame)
+function CBaseEntity:setFame(area, fame)
 end
 
 ---@nodiscard
----@param areaObj table|integer
+---@param area xi.fameArea
 ---@return integer
-function CBaseEntity:getFameLevel(areaObj)
+function CBaseEntity:getFameLevel(area)
 end
 
 ---@nodiscard
@@ -1955,8 +1983,9 @@ function CBaseEntity:unseenKeyItem(keyItemID)
 end
 
 ---@param exp integer
+---@param allowLimitPoints boolean? Defaults to true. False grants EXP only without a gain message.
 ---@return nil
-function CBaseEntity:addExp(exp)
+function CBaseEntity:addExp(exp, allowLimitPoints)
 end
 
 ---@param capacity integer
@@ -2162,6 +2191,15 @@ end
 ---@param value integer
 ---@return nil
 function CBaseEntity:setHP(value)
+end
+
+---@class DeathParams
+---@field expLoss boolean? Whether the death costs experience points. Defaults to true
+---@field mijin boolean? Mijin Gakure: no weakness and half HP back on raise. Defaults to false
+
+---@param params DeathParams?
+---@return nil
+function CBaseEntity:die(params)
 end
 
 ---@param value integer
@@ -2573,6 +2611,11 @@ function CBaseEntity:getBattlefield()
 end
 
 ---@nodiscard
+---@return CBattlefield?
+function CBaseEntity:getRegisteredBattlefield()
+end
+
+---@nodiscard
 ---@return integer
 function CBaseEntity:getBattlefieldID()
 end
@@ -2928,8 +2971,8 @@ end
 ---@class StatusEffectParams
 ---@field origin CBaseEntity
 ---@field power number?
----@field duration number?
----@field tick number?
+---@field duration number? Seconds
+---@field tick number? Seconds
 ---@field icon xi.effect? Defaults to effectId if not set
 ---@field subType integer?
 ---@field subPower number?
@@ -3180,7 +3223,6 @@ end
 function CBaseEntity:isTandemActive()
 end
 
----@nodiscard
 ---@param element integer
 ---@param burden integer
 ---@return integer
@@ -3199,7 +3241,7 @@ function CBaseEntity:setStatDebilitation(statDebil)
 end
 
 ---@nodiscard
----@param statId integer
+---@param statId integer|xi.mod
 ---@param optSlot integer?
 ---@return integer
 function CBaseEntity:getStat(statId, optSlot)
@@ -3361,8 +3403,8 @@ end
 ---@param caster CBaseEntity
 ---@param spell CSpell
 ---@param damage integer
----@param atkType integer
----@param dmgType integer
+---@param atkType integer|xi.attackType
+---@param dmgType integer|xi.damageType
 ---@return nil
 function CBaseEntity:takeSpellDamage(caster, spell, damage, atkType, dmgType)
 end
@@ -3392,6 +3434,11 @@ end
 ---@param arg0 integer? Optional Pet ID
 ---@return nil
 function CBaseEntity:spawnPet(arg0)
+end
+
+---@param petId integer
+---@return nil
+function CBaseEntity:setPetStats(petId)
 end
 
 ---@return nil
@@ -3508,10 +3555,36 @@ end
 function CBaseEntity:setPetName(pType, value, arg2)
 end
 
----@param color xi.chocobo.color
----@param traits table
+---@param chocobo { color: xi.chocoboRaising.color?, largeBeak: boolean?, fullTail: boolean?, largeTalons: boolean?, speed: integer?, minutes: integer?, ability1: integer?, ability2: integer?, strength: integer?, endurance: integer?, discernment: integer?, receptivity: integer?, weather: integer?, silksSpeedBonus: integer? }
 ---@return nil
-function CBaseEntity:registerChocobo(color, traits)
+function CBaseEntity:registerChocobo(chocobo)
+end
+
+---@nodiscard
+---@return { color: xi.chocoboRaising.color, largeBeak: boolean, fullTail: boolean, largeTalons: boolean, speed: integer, minutes: integer, properties: integer }?
+function CBaseEntity:getFieldChocobo()
+end
+
+---@class ChocoboUserData
+---@field flags integer
+---@field chocobosRaised integer
+---@field registeredAbility1 integer
+---@field registeredAbility2 integer
+---@field registeredStrength integer
+---@field registeredEndurance integer
+---@field registeredDiscernment integer
+---@field registeredReceptivity integer
+---@field registeredWeather integer
+---@field silksSpeedBonus integer
+
+---@nodiscard
+---@return ChocoboUserData
+function CBaseEntity:getChocoboUserData()
+end
+
+---@param data { flags: integer?, chocobosRaised: integer? }
+---@return nil
+function CBaseEntity:setChocoboUserData(data)
 end
 
 ---@nodiscard
@@ -3711,7 +3784,7 @@ function CBaseEntity:getSpecies()
 end
 
 ---@nodiscard
----@param mobType integer
+---@param mobType xi.mobType
 ---@return boolean
 function CBaseEntity:isMobType(mobType)
 end
@@ -3807,6 +3880,11 @@ end
 function CBaseEntity:setRespawnTime(seconds)
 end
 
+---@nodiscard
+---@return table
+function CBaseEntity:getSpawnSlotMobs()
+end
+
 ---@param groupID integer
 ---@return nil
 function CBaseEntity:instantiateMob(groupID)
@@ -3819,17 +3897,17 @@ function CBaseEntity:hasTrait(traitID)
 end
 
 ---@nodiscard
----@param immunityID integer
+---@param immunityID xi.immunity
 ---@return boolean
 function CBaseEntity:hasImmunity(immunityID)
 end
 
----@param immunityID integer
+---@param immunityID xi.immunity
 ---@return nil
 function CBaseEntity:addImmunity(immunityID)
 end
 
----@param immunityID integer
+---@param immunityID xi.immunity
 ---@return nil
 function CBaseEntity:delImmunity(immunityID)
 end
@@ -3847,6 +3925,16 @@ end
 ---@param unkillable boolean
 ---@return nil
 function CBaseEntity:setUnkillable(unkillable)
+end
+
+---@param enabled boolean
+---@return nil
+function CBaseEntity:setPriorityRender(enabled)
+end
+
+---@nodiscard
+---@return boolean
+function CBaseEntity:getUnkillable()
 end
 
 ---@param untargetable boolean
@@ -3926,27 +4014,41 @@ function CBaseEntity:setMobSkillAttack(listId)
 end
 
 ---@nodiscard
----@param mobModID integer
+---@param mobModID xi.mobMod
 ---@return integer
 function CBaseEntity:getMobMod(mobModID)
 end
 
----@param mobModID integer
+---@param mobModID xi.mobMod
 ---@param value integer
 ---@return nil
 function CBaseEntity:setMobMod(mobModID, value)
 end
 
----@param mobModID integer
+---@param mobModID xi.mobMod
 ---@param value integer
 ---@return nil
 function CBaseEntity:addMobMod(mobModID, value)
 end
 
----@param mobModID integer
+---@param mobModID xi.mobMod
 ---@param value integer
 ---@return nil
 function CBaseEntity:delMobMod(mobModID, value)
+end
+
+---@nodiscard
+---@param skillId integer
+---@return number[]|nil
+function CBaseEntity:getfTPModifierOverride(skillId)
+end
+
+---@param skillId integer
+---@param ftp1 number
+---@param ftp2 number
+---@param ftp3 number
+---@return nil
+function CBaseEntity:setfTPModifierOverride(skillId, ftp1, ftp2, ftp3)
 end
 
 ---@nodiscard
@@ -3965,21 +4067,21 @@ function CBaseEntity:setCrystalElement(element)
 end
 
 ---@nodiscard
----@return integer
+---@return xi.behavior
 function CBaseEntity:getBehavior()
 end
 
----@param behavior integer
+---@param behavior xi.behavior
 ---@return nil
 function CBaseEntity:setBehavior(behavior)
 end
 
 ---@nodiscard
----@return integer
+---@return xi.roamFlag
 function CBaseEntity:getRoamFlags()
 end
 
----@param newRoamFlags integer
+---@param newRoamFlags xi.roamFlag
 ---@return nil
 function CBaseEntity:setRoamFlags(newRoamFlags)
 end

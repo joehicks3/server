@@ -162,7 +162,7 @@ mission.sections =
             {
                 onTrigger = function(player, npc)
                     if player:getMissionStatus(mission.areaId, xi.mission.status.COP.LOUVERANCE) == 3 then
-                        return mission:progressEvent(33)
+                        return mission:progressCutscene(33)
                     end
                 end,
             },
@@ -219,7 +219,7 @@ mission.sections =
                 onTrade = function(player, npc, trade)
                     if
                         player:getMissionStatus(mission.areaId, xi.mission.status.COP.LOUVERANCE) == 11 and
-                        npcUtil.tradeHasExactly(trade, xi.item.GOLD_KEY)
+                        npcUtil.tradeMatches(trade, { { xi.item.GOLD_KEY, 1 } })
                     then
                         return mission:progressEvent(3)
                     end
@@ -229,7 +229,7 @@ mission.sections =
             onEventFinish =
             {
                 [3] = function(player, csid, option, npc)
-                    player:confirmTrade()
+                    player:tradeComplete()
                     -- NOTE: This event transports you to the BCNM exit, and is handled by the client.
                     -- POS: -87.410 180 499.929 127 13
                     player:setMissionStatus(mission.areaId, 12, xi.mission.status.COP.LOUVERANCE)
@@ -295,7 +295,7 @@ mission.sections =
             {
                 onTrigger = function(player, npc)
                     if player:getMissionStatus(mission.areaId, xi.mission.status.COP.TENZEN) == 0 then
-                        return mission:event(203):importantEvent()
+                        return mission:event(203):importantEvent() -- TODO: Check if this is supposed to be a cutscene event
                     end
                 end,
             },
@@ -314,7 +314,7 @@ mission.sections =
             {
                 onTrigger = function(player, npc)
                     if player:getMissionStatus(mission.areaId, xi.mission.status.COP.TENZEN) == 2 then
-                        return mission:progressEvent(3)
+                        return mission:progressCutscene(3)
                     end
                 end,
             },
@@ -323,7 +323,7 @@ mission.sections =
             {
                 onTrigger = function(player, npc)
                     if player:getMissionStatus(mission.areaId, xi.mission.status.COP.TENZEN) == 11 then
-                        return mission:progressEvent(5)
+                        return mission:progressCutscene(5)
                     end
                 end,
             },
@@ -377,7 +377,7 @@ mission.sections =
             onEventFinish =
             {
                 [74] = function(player, csid, option, npc)
-                    npcUtil.giveKeyItem(player, xi.ki.ENVELOPE_FROM_MONBERAUX)
+                    npcUtil.giveKeyItem(player, xi.keyItem.ENVELOPE_FROM_MONBERAUX)
                     player:setMissionStatus(mission.areaId, 5, xi.mission.status.COP.TENZEN)
                 end,
             },
@@ -411,7 +411,7 @@ mission.sections =
                         if mission:getVar(player, 'Option') == 1 then
                             return mission:progressEvent(1)
                         else
-                            return mission:progressEvent(0)
+                            return mission:progressCutscene(0)
                         end
                     end
                 end,
@@ -424,7 +424,7 @@ mission.sections =
                 end,
 
                 [1] = function(player, csid, option, npc)
-                    npcUtil.giveKeyItem(player, xi.ki.DELKFUTT_RECOGNITION_DEVICE)
+                    npcUtil.giveKeyItem(player, xi.keyItem.DELKFUTT_RECOGNITION_DEVICE)
                     mission:setVar(player, 'Option', 0)
                     player:setMissionStatus(mission.areaId, 8, xi.mission.status.COP.TENZEN)
                 end,
@@ -440,7 +440,7 @@ mission.sections =
 
                     if
                         missionStatus == 8 and
-                        player:hasKeyItem(xi.ki.DELKFUTT_RECOGNITION_DEVICE)
+                        player:hasKeyItem(xi.keyItem.DELKFUTT_RECOGNITION_DEVICE)
                     then
                         if
                             mission:getLocalVar(player, 'hasKilled') == 0 and
@@ -448,7 +448,7 @@ mission.sections =
                         then
                             return mission:messageSpecial(lowerDelkfuttsID.text.SOMETHING_HUGE_BEARING_DOWN)
                         elseif mission:getLocalVar(player, 'hasKilled') == 1 then
-                            return mission:progressEvent(25)
+                            return mission:progressCutscene(25)
                         end
                     end
                 end,

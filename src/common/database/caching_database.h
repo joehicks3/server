@@ -25,12 +25,13 @@
 #include <common/database/connection.h>
 #include <common/database/database.h>
 #include <common/database/prepared_statement.h>
-#include <common/database/result_set.h>
 
+#include <common/types/fn.h>
+#include <common/types/hash_map.h>
+
+#include <atomic>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace db
 {
@@ -41,8 +42,14 @@ namespace detail
 // Per-(thread, backend) connection state: the live connection plus its prepared-statement cache.
 struct ConnectionState
 {
-    std::unique_ptr<Connection>                                         connection;
-    std::unordered_map<std::string, std::unique_ptr<PreparedStatement>> statements;
+    std::unique_ptr<Connection>                              connection;
+    HashMap<std::string, std::unique_ptr<PreparedStatement>> statements;
+
+    // open transaction on this connection
+    bool inTransaction{ false };
+
+    // the purge request this connection's statements were last cleared for
+    uint64 purgeGeneration{ 0 };
 };
 
 } // namespace detail
@@ -51,6 +58,11 @@ class CachingDatabase : public Database
 {
 public:
     auto execute(const std::string& query, const std::vector<BoundValue>& params) -> std::unique_ptr<ResultSet> override;
+    auto executeBulk(const std::string& query, const std::vector<BoundValue>& params) -> std::unique_ptr<ResultSet> override;
+
+    void setInTransaction(bool value) override;
+    void clearStatementCache() override;
+    void purgeStatementCaches() override;
 
     auto getSchema() -> std::string override;
     auto getVersion() -> std::string override;
@@ -62,6 +74,17 @@ protected:
 private:
     // The calling thread's connection state for this backend, connecting lazily on first use.
     auto getState() -> detail::ConnectionState&;
+
+    // Find-or-prepare the cached statement for this query on the given connection.
+    auto prepareCached(detail::ConnectionState& connState, const std::string& query) -> PreparedStatement&;
+
+    // Validate the query, then run `operation` on this thread's connection, retrying on connection loss.
+    //
+    // Terminates if the connection can't be re-established.
+    auto runWithRetry(const std::string& query, const Fn<std::unique_ptr<ResultSet>(detail::ConnectionState&) const>& operation) -> std::unique_ptr<ResultSet>;
+
+    // Bumped by purgeStatementCaches; each thread's cache lives in thread-local state, so only its own thread can clear it.
+    std::atomic<uint64> purgeGeneration_{ 0 };
 };
 
 } // namespace db

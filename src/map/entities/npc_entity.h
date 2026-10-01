@@ -22,6 +22,7 @@
 #pragma once
 
 #include "common/cbasetypes.h"
+#include "common/types/maybe.h"
 
 #include "base_entity.h"
 
@@ -31,11 +32,10 @@ public:
     CNpcEntity();
     ~CNpcEntity() override;
 
-    uint32 entityFlags() const;                // Returns the current value in m_flags
-    void   setEntityFlags(uint32 EntityFlags); // Change the current value in m_flags
+    auto entityFlags() const -> xi::EntityFlags;      // Returns the current value in m_flags
+    void setEntityFlags(xi::EntityFlags EntityFlags); // Change the current value in m_flags
 
     void hideHP(bool hide);
-    bool hpHidden() const;
 
     void setUntargetable(bool untargetable);
     bool GetUntargetable() const override;
@@ -65,8 +65,9 @@ public:
     // Public NPC data still referenced directly across the codebase.
     //
 
-    uint32 m_flags{};
-    uint8  name_prefix{};
+    xi::EntityFlags m_flags{};
+    uint8           name_prefix{};
+    Maybe<uint32>   door_id; // identity the client reads for a door, elevator or ship; unset falls back to the name
 
 private:
     uint8 widescan_    = 1;

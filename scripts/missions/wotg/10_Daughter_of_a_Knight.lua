@@ -16,7 +16,7 @@ local mission = Mission:new(xi.mission.log_id.WOTG, xi.mission.id.wotg.DAUGHTER_
 
 mission.reward =
 {
-    keyItem     = xi.ki.BOTTLE_OF_TREANT_TONIC,
+    keyItem     = xi.keyItem.BOTTLE_OF_TREANT_TONIC,
     nextMission = { xi.mission.log_id.WOTG, xi.mission.id.wotg.A_SPOONFUL_OF_SUGAR },
 }
 
@@ -59,7 +59,7 @@ mission.sections =
             ['Amaura'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.item.CERNUNNOS_BULB) then
+                    if npcUtil.tradeMatches(trade, { { xi.item.CERNUNNOS_BULB, 1 } }) then
                         -- TODO: What are these args from caps?
                         -- Observed : 647298804, 0, 1743, 1, 759, 600, 0, 4
                         return mission:progressEvent(937, 0, 2)
@@ -100,8 +100,8 @@ mission.sections =
             ['Humus-rich_Earth'] =
             {
                 onTrade = function(player, npc, trade)
-                    if npcUtil.tradeHasExactly(trade, xi.item.CERNUNNOS_BULB) then
-                        player:confirmTrade()
+                    if npcUtil.tradeMatches(trade, { { xi.item.CERNUNNOS_BULB, 1 } }) then
+                        player:tradeComplete()
                         player:setMissionStatus(mission.areaId, 3)
 
                         return mission:messageSpecial(pastJugnerID.text.YOU_PLANT_ITEM, xi.item.CERNUNNOS_BULB)
@@ -190,7 +190,7 @@ mission.sections =
             onEventFinish =
             {
                 [34] = function(player, csid, option, npc)
-                    npcUtil.giveKeyItem(player, xi.ki.CERNUNNOS_RESIN)
+                    npcUtil.giveKeyItem(player, xi.keyItem.CERNUNNOS_RESIN)
 
                     player:setLocalVar('cernunnosDefeated', 0)
                     player:setMissionStatus(mission.areaId, 5)
@@ -227,7 +227,7 @@ mission.sections =
             onEventFinish =
             {
                 [939] = function(player, csid, option, npc)
-                    player:delKeyItem(xi.ki.CERNUNNOS_RESIN)
+                    player:delKeyItem(xi.keyItem.CERNUNNOS_RESIN)
                     player:setMissionStatus(mission.areaId, 6)
 
                     mission:setVar(player, 'Timer', VanadielUniqueDay() + 1)

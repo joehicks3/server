@@ -22,7 +22,6 @@
 #pragma once
 
 #include "map_engine.h"
-#include "pch.h"
 
 #include <common/application.h>
 #include <common/timer.h>
@@ -46,7 +45,7 @@ public:
 
     auto createEngine() -> std::unique_ptr<Engine> override;
     void registerCommands(ConsoleService& console) override;
-    void run() override;
+    auto run() -> bool override;
 
 private:
     MapConfig engineConfig_{};

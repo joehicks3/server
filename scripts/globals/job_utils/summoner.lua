@@ -2,13 +2,12 @@
 -- Summoner Job Utilities
 -----------------------------------
 require('scripts/globals/ability')
-require('scripts/globals/jobpoints')
-require('scripts/globals/combat/tp')
 -----------------------------------
 xi = xi or {}
 xi.job_utils = xi.job_utils or {}
 xi.job_utils.summoner = xi.job_utils.summoner or {}
 -----------------------------------
+-- TODO: Blood Pact Wards need to be audited for accuracy.
 
 -- sort of a misnomer, as if Apogee is up, the 'base' mp cost rises.
 local function getBaseMPCost(player, ability)
@@ -158,8 +157,8 @@ local function getMPCost(baseMPCost, player, petskill)
     if petskill:getAddType() ~= xi.addType.ADDTYPE_ASTRAL_FLOW then
         local bloodBoonRate = player:getMod(xi.mod.BLOOD_BOON)
         -- assuming it works like Conserve MP... https://www.bg-wiki.com/ffxi/Conserve_MP
-        if math.random(1, 100) <= bloodBoonRate then
-            mpCost = mpCost * math.random(8, 15) / 16
+        if math.randomInt(1, 100) <= bloodBoonRate then
+            mpCost = mpCost * math.randomInt(8, 15) / 16
         end
     end
 
@@ -194,13 +193,17 @@ xi.job_utils.summoner.canUseBloodPact = function(player, pet, target, petAbility
             return xi.msg.basic.UNABLE_TO_USE_JA2, 0 -- TODO: verify exact message in packet.
         end
 
+        if target:isMob() then
+            target:addBaseEnmity(player)
+        end
+
         return 0, 0
     end
 
     return xi.msg.basic.UNABLE_TO_USE_JA2, 0 -- TODO: verify exact message in packet.
 end
 
-xi.job_utils.summoner.onUseBloodPact = function(target, petskill, summoner, action)
+xi.job_utils.summoner.onUseBloodPact = function(target, pet, petskill, summoner, action)
     local bloodPactAbility = GetAbility(petskill:getID()) -- Player abilities and Avatar abilities are mapped 1:1
     if not bloodPactAbility then
         return
@@ -210,13 +213,13 @@ xi.job_utils.summoner.onUseBloodPact = function(target, petskill, summoner, acti
     local mpCost           = getMPCost(baseMPCost, summoner, bloodPactAbility)
     local bloodPactRecast  = math.max(0, summoner:getLocalVar('bpRecastTime'))
 
+    if target:isMob() then
+        target:addBaseEnmity(pet)
+    end
+
     if target:getID() == action:getPrimaryTargetID() then
         -- MP and Cooldown is only consumed if the ability goes off
         summoner:delMP(mpCost)
-
-        if target:isMob() then
-            target:addBaseEnmity(summoner)
-        end
 
         if summoner:hasStatusEffect(xi.effect.APOGEE) then
             summoner:resetRecast(xi.recast.ABILITY, bloodPactAbility:getRecastID())
@@ -229,17 +232,6 @@ xi.job_utils.summoner.onUseBloodPact = function(target, petskill, summoner, acti
                 summoner:addRecast(xi.recast.ABILITY, bloodPactAbility:getRecastID(), bloodPactRecast)
             end
         end
-    end
-end
-
--- to be removed once damage is overhauled
-xi.job_utils.summoner.calculateTPReturn = function(avatar, target, damage, numHits)
-    if damage ~= 0 and numHits > 0 then -- absorbed hits still give TP, though we can't know how many hits actually connected in the current avatar damage formulas
-        local tpReturn = xi.combat.tp.getSingleMeleeHitTPReturn(avatar, false)
-        tpReturn = tpReturn + 10 * (numHits - 1) -- extra hits give 10 TP each
-        avatar:setTP(tpReturn)
-    else
-        avatar:setTP(0)
     end
 end
 
@@ -293,7 +285,7 @@ xi.job_utils.summoner.useSoothingRuby = function(target, pet, petskill, summoner
 
     if effectsErased > 0 then
         for i = 1, effectsErased do
-            local index = math.random(1, #erasableEffectTable)
+            local index = math.randomInt(1, #erasableEffectTable)
 
             target:delStatusEffect(erasableEffectTable[index])
             table.remove(erasableEffectTable, index)

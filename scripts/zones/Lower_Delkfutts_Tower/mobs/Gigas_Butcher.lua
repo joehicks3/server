@@ -2,6 +2,8 @@
 -- Area: Lower Delkfutt's Tower
 --  Mob: Gigas Butcher
 -----------------------------------
+mixins = { require('scripts/mixins/pet_resummon') }
+-----------------------------------
 ---@type TMobEntity
 local entity = {}
 

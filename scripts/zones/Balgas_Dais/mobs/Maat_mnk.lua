@@ -13,6 +13,17 @@ local function tauntPlayer(player, mob)
     mob:setLocalVar('initialTaunt', 1)
 end
 
+local accuracyTable =
+    {
+        [65] = 227,
+        [66] = 227,
+        [67] = 231,
+        [68] = 234,
+        [69] = 237,
+        [70] = 241,
+        [71] = 251,
+    }
+
 entity.onMobInitialize = function(mob)
     mob:setMobMod(xi.mobMod.NO_H2H_PENALTY, 1)
 
@@ -33,7 +44,7 @@ entity.onMobSpawn = function(mob)
 
     -- Reset mob.
     xi.combat.behavior.enableAllActions(mob)
-    mob:setLocalVar('[2hour]HPP', math.random(60, 65))
+    mob:setLocalVar('[2hour]HPP', math.randomInt(60, 65))
     mob:setLocalVar('[2hour]Used', 0)
     mob:setLocalVar('initialTaunt', 0)
     mob:setLocalVar('enrageTime', 0)
@@ -65,6 +76,10 @@ end
 
 entity.onMobEngage = function(mob, target)
     mob:setLocalVar('enrageTime', GetSystemTime() + 300)
+
+    -- TODO: Figure out appropriate level scaling for Maat
+    local targetLevel = math.min(target:getMainLvl(), 71)
+    mob:setMod(xi.mod.ACC, accuracyTable[targetLevel])
 
     if mob:getLocalVar('initialTaunt') == 1 then
         return
@@ -145,7 +160,7 @@ entity.onMobMobskillChoose = function(mob, target, skillId)
         xi.mobSkill.DRAGON_KICK_MAAT,
     }
 
-    return tpTable[math.random(1, #tpTable)]
+    return tpTable[math.randomInt(1, #tpTable)]
 end
 
 entity.onMobWeaponSkill = function(mob, target, skill, action)
@@ -174,7 +189,7 @@ entity.onMobWeaponSkill = function(mob, target, skill, action)
         [2] = ID.text.TAKE_THAT_YOU_WHIPPERSNAPPER,
     }
 
-    mob:showText(mob, messageTable[math.random(1, #messageTable)])
+    mob:showText(mob, messageTable[math.randomInt(1, #messageTable)])
 end
 
 entity.onMobDisengage = function(mob)

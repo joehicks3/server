@@ -23,39 +23,43 @@
 
 #include "common/tracy.h"
 
+#include <atomic>
+
 #include "ai/ai_container.h"
 
 #include "battlefield.h"
 #include "instance.h"
-#include "map/navmesh/navmesh.h"
+#include "lua/luautils.h"
+#include "utils/zoneutils.h"
 #include "zone.h"
-
-#include <map/ximesh/ximesh.h>
-
-#include <cstring>
+#include "zone_instance.h"
 
 CBaseEntity::CBaseEntity()
 : id(0)
 , targid(0)
 , objtype(ENTITYTYPE::TYPE_NONE)
-, status(STATUS_TYPE::DISAPPEAR)
+, status(xi::Status::Disappear)
 , m_TargID(0)
-, animation(0)
+, animation(xi::Animation::None)
 , animationsub(0)
 , baseSpeed(settings::get<uint8>("map.BASE_SPEED"))
-, namevis(0)
-, allegiance(ALLEGIANCE_TYPE::MOB)
+, namevis(xi::NameVis::None)
+, allegiance(xi::Allegiance::Mob)
 , updatemask(0)
 , priorityRender(false)
 , isRenamed(false)
 , m_bReleaseTargIDOnDisappear(false)
-, spawnAnimation(SPAWN_ANIMATION::NORMAL)
+, spawnAnimation(xi::SpawnAnimation::Normal)
 , PAI(nullptr)
 , PBattlefield(nullptr)
 , PInstance(nullptr)
 , m_nextUpdateTimer(timer::now())
 {
     TracyZoneScoped;
+
+    static std::atomic<uint64> nextSerial{ 1 };
+
+    serial_ = nextSerial.fetch_add(1, std::memory_order_relaxed);
 
     speed          = baseSpeed;
     animationSpeed = static_cast<uint8>(std::clamp<float>((baseSpeed / settings::get<float>("map.ANIMATION_SPEED_DIVISOR")), std::numeric_limits<uint8>::min(), std::numeric_limits<uint8>::max()));
@@ -69,19 +73,29 @@ CBaseEntity::~CBaseEntity()
     {
         PBattlefield->RemoveEntity(this, BATTLEFIELD_LEAVE_CODE_WARPDC);
     }
+
+    // Serials are never reused, so nothing can read this table again. Dropping it is what stops
+    // xi.entityData growing with every entity the process ever made.
+    luautils::resetEntityData(this);
 }
 
 void CBaseEntity::Spawn()
 {
-    status = allegiance == ALLEGIANCE_TYPE::MOB ? STATUS_TYPE::UPDATE : STATUS_TYPE::NORMAL;
+    status = allegiance == xi::Allegiance::Mob ? xi::Status::Update : xi::Status::Normal;
     updatemask |= UPDATE_HP;
+
     ResetLocalVars();
+
+    // Drop the previous life's data before any spawn script runs. CAutomatonEntity::Spawn does
+    // not chain here, but it only ever runs on a freshly allocated entity.
+    luautils::resetEntityData(this);
+
     PAI->Reset();
 }
 
 void CBaseEntity::FadeOut()
 {
-    status = STATUS_TYPE::DISAPPEAR;
+    status = xi::Status::Disappear;
     updatemask |= UPDATE_HP;
 }
 
@@ -95,9 +109,9 @@ const std::string& CBaseEntity::getPacketName()
     return packetName;
 }
 
-uint16 CBaseEntity::getZone() const
+auto CBaseEntity::getZone() const -> xi::ZoneId
 {
-    return loc.zone != nullptr ? (uint16)loc.zone->GetID() : (uint16)loc.destination;
+    return loc.zone != nullptr ? loc.zone->GetID() : loc.destination;
 }
 
 float CBaseEntity::GetXPos() const
@@ -137,11 +151,11 @@ void CBaseEntity::HideName(bool hide)
     if (hide)
     {
         // I totally guessed this number
-        namevis |= FLAG_HIDE_NAME;
+        namevis |= xi::NameVis::HideName;
     }
     else
     {
-        namevis &= ~FLAG_HIDE_NAME;
+        namevis &= ~xi::NameVis::HideName;
     }
     updatemask |= UPDATE_HP;
 }
@@ -150,18 +164,18 @@ void CBaseEntity::GhostPhase(bool ghost)
 {
     if (ghost)
     {
-        namevis |= VIS_GHOST_PHASE;
+        namevis |= xi::NameVis::GhostPhase;
     }
     else
     {
-        namevis &= ~VIS_GHOST_PHASE;
+        namevis &= ~xi::NameVis::GhostPhase;
     }
     updatemask |= UPDATE_HP;
 }
 
 bool CBaseEntity::IsNameHidden() const
 {
-    return namevis & FLAG_HIDE_NAME;
+    return (namevis & xi::NameVis::HideName) != xi::NameVis::None;
 }
 
 bool CBaseEntity::GetUntargetable() const
@@ -171,7 +185,7 @@ bool CBaseEntity::GetUntargetable() const
 
 bool CBaseEntity::isWideScannable()
 {
-    return status != STATUS_TYPE::DISAPPEAR && !IsNameHidden() && !GetUntargetable();
+    return status != xi::Status::Disappear && !IsNameHidden() && !GetUntargetable();
 }
 
 bool CBaseEntity::CanSeeTarget(CBaseEntity* target)
@@ -220,6 +234,16 @@ CBaseEntity* CBaseEntity::GetEntity(uint16 targid, uint8 filter) const
     }
 }
 
+auto CBaseEntity::serial() const -> uint64
+{
+    return serial_;
+}
+
+auto CBaseEntity::entityId() const -> EntityId
+{
+    return EntityId{ this };
+}
+
 void CBaseEntity::SendZoneUpdate()
 {
     loc.zone->UpdateEntityPacket(this, ENTITY_SPAWN, UPDATE_ALL_MOB, true);
@@ -230,9 +254,15 @@ void CBaseEntity::ResetLocalVars()
     localVars_.clear();
 }
 
-uint32 CBaseEntity::GetLocalVar(const std::string& var)
+uint32 CBaseEntity::GetLocalVar(const std::string& var) const
 {
-    return localVars_[var];
+    const auto it = localVars_.find(var);
+    if (it != localVars_.end())
+    {
+        return it->second;
+    }
+
+    return 0;
 }
 
 std::map<std::string, uint32>& CBaseEntity::GetLocalVars()

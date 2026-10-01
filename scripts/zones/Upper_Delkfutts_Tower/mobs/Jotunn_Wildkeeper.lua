@@ -2,6 +2,8 @@
 -- Area: Upper Delkfutt's Tower
 --  Mob: Jotunn Wildkeeper
 -----------------------------------
+mixins = { require('scripts/mixins/pet_resummon') }
+-----------------------------------
 ---@type TMobEntity
 local entity = {}
 

@@ -49,7 +49,7 @@ xi.maws.addMaw = function(player, maw)
 end
 
 xi.maws.gotoRandomMaw = function(player)
-    local x = math.random(1, 3)
+    local x = math.randomInt(1, 3)
     local maw
     if x == 1 then
         maw = xi.maws.pastMaws[xi.zone.BATALLIA_DOWNS]
@@ -84,7 +84,7 @@ xi.maws.onTrigger = function(player, npc)
     if hasMaw then
         event = maw.cs.warp
     else
-        local hasFeather = player:hasKeyItem(xi.ki.PURE_WHITE_FEATHER)
+        local hasFeather = player:hasKeyItem(xi.keyItem.PURE_WHITE_FEATHER)
         if maw.cs.new and not hasFeather then
             event = maw.cs.new
             eventParams = { maw.bit }

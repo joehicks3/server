@@ -148,13 +148,13 @@ mission.sections =
 
                 [104] = function(player, csid, option, npc)
                     if mission:complete(player) then
-                        player:delKeyItem(xi.ki.CRYSTAL_DOWSER)
+                        player:delKeyItem(xi.keyItem.CRYSTAL_DOWSER)
                     end
                 end,
 
                 [106] = function(player, csid, option, npc)
                     player:setMissionStatus(mission.areaId, 2)
-                    npcUtil.giveKeyItem(player, xi.ki.CRYSTAL_DOWSER)
+                    npcUtil.giveKeyItem(player, xi.keyItem.CRYSTAL_DOWSER)
                 end,
             }
         },
@@ -169,9 +169,9 @@ mission.sections =
 
                     if
                         player:getMissionStatus(mission.areaId) == 5 and
-                        player:hasKeyItem(xi.ki.PIECE_OF_A_BROKEN_KEY1) and
-                        player:hasKeyItem(xi.ki.PIECE_OF_A_BROKEN_KEY2) and
-                        player:hasKeyItem(xi.ki.PIECE_OF_A_BROKEN_KEY3) and
+                        player:hasKeyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY1) and
+                        player:hasKeyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY2) and
+                        player:hasKeyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY3) and
                         nioA and
                         nioHum and
                         (not nioA:isSpawned() or nioA:isDead()) and
@@ -182,9 +182,11 @@ mission.sections =
                         else
                             SpawnMob(uggalepihID.mob.NIO_A)
                             SpawnMob(uggalepihID.mob.NIO_HUM)
-                            return mission:messageSpecial(uggalepihID.text.BEGINS_TO_QUIVER, xi.ki.CRYSTAL_DOWSER)
+                            return mission:messageSpecial(uggalepihID.text.BEGINS_TO_QUIVER, xi.keyItem.CRYSTAL_DOWSER)
                         end
                     end
+
+                    return mission:messageSpecial(uggalepihID.text.YOU_CANNOT_OPEN_THIS_DOOR)
                 end,
             },
 
@@ -224,11 +226,11 @@ mission.sections =
             {
                 onTrigger = function(player, npc)
                     if
-                        not player:hasKeyItem(xi.ki.PIECE_OF_A_BROKEN_KEY1) and
+                        not player:hasKeyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY1) and
                         player:getMissionStatus(mission.areaId) >= 2
                     then
                         player:setMissionStatus(mission.areaId, player:getMissionStatus(mission.areaId) + 1)
-                        return mission:keyItem(xi.ki.PIECE_OF_A_BROKEN_KEY1)
+                        return mission:keyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY1)
                     end
                 end,
             },
@@ -237,11 +239,11 @@ mission.sections =
             {
                 onTrigger = function(player, npc)
                     if
-                        not player:hasKeyItem(xi.ki.PIECE_OF_A_BROKEN_KEY2) and
+                        not player:hasKeyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY2) and
                         player:getMissionStatus(mission.areaId) >= 2
                     then
                         player:setMissionStatus(mission.areaId, player:getMissionStatus(mission.areaId) + 1)
-                        return mission:keyItem(xi.ki.PIECE_OF_A_BROKEN_KEY2)
+                        return mission:keyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY2)
                     end
                 end,
             },
@@ -250,11 +252,11 @@ mission.sections =
             {
                 onTrigger = function(player, npc)
                     if
-                        not player:hasKeyItem(xi.ki.PIECE_OF_A_BROKEN_KEY3) and
+                        not player:hasKeyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY3) and
                         player:getMissionStatus(mission.areaId) >= 2
                     then
                         player:setMissionStatus(mission.areaId, player:getMissionStatus(mission.areaId) + 1)
-                        return mission:keyItem(xi.ki.PIECE_OF_A_BROKEN_KEY3)
+                        return mission:keyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY3)
                     end
                 end,
             },
@@ -262,7 +264,7 @@ mission.sections =
             ['qm17'] =
             {
                 onTrigger = function(player, npc)
-                    return mission:messageSpecial(uggalepihID.text.SLIGHTLY_QUIVERS, xi.ki.CRYSTAL_DOWSER)
+                    return mission:messageSpecial(uggalepihID.text.SLIGHTLY_QUIVERS, xi.keyItem.CRYSTAL_DOWSER)
                 end,
             },
 
@@ -270,19 +272,21 @@ mission.sections =
             {
                 [65] = function(player, csid, option, npc)
                     player:setMissionStatus(mission.areaId, 6)
+                    player:delKeyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY1)
+                    player:delKeyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY2)
+                    player:delKeyItem(xi.keyItem.PIECE_OF_A_BROKEN_KEY3)
                 end,
             },
         },
     },
 
-    -- Optional dialogue after completing the Mission.  Prince cutscenes are once events, and the
-    -- 'Option' mission variable needs to be reset on accepting the next mission.  We could have started
-    -- with bits set, but should a player skip these, it'd persist forever.
+    -- Optional once-per-character Prince cutscenes, available from completing the Mission until
+    -- The Heir to the Light begins.  The 'Option' mission variable is cleared on M9-2 completion.
     {
         check = function(player, currentMission, missionStatus, vars)
             return player:hasCompletedMission(mission.areaId, mission.missionId) and
                 player:getRank(mission.areaId) == 9 and
-                player:getRankPoints() == 0
+                currentMission ~= xi.mission.id.sandoria.THE_HEIR_TO_THE_LIGHT
         end,
 
         [xi.zone.CHATEAU_DORAGUILLE] =
@@ -305,10 +309,6 @@ mission.sections =
                 end
             },
 
-            ['Aramaviont'] = mission:messageText(chateauID.text.LIGHTBRINGER_EXTRA + 1),
-            ['Milchupain'] = mission:messageText(chateauID.text.LIGHTBRINGER_EXTRA + 3),
-            ['Rahal']      = mission:event(42):replaceDefault(),
-
             onEventFinish =
             {
                 [63] = function(player, csid, option, npc)
@@ -319,6 +319,22 @@ mission.sections =
                     mission:setVarBit(player, 'Option', 1)
                 end,
             },
+        },
+    },
+
+    -- Optional dialogue immediately after completing the Mission.
+    {
+        check = function(player, currentMission, missionStatus, vars)
+            return player:hasCompletedMission(mission.areaId, mission.missionId) and
+                player:getRank(mission.areaId) == 9 and
+                player:getRankPoints() == 0
+        end,
+
+        [xi.zone.CHATEAU_DORAGUILLE] =
+        {
+            ['Aramaviont'] = mission:messageText(chateauID.text.LIGHTBRINGER_EXTRA + 1),
+            ['Milchupain'] = mission:messageText(chateauID.text.LIGHTBRINGER_EXTRA + 3),
+            ['Rahal']      = mission:event(42):replaceDefault(),
         },
     },
 }

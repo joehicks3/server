@@ -10,7 +10,7 @@ abilityObject.onAbilityCheck = function(player, target, ability)
 end
 
 abilityObject.onPetAbility = function(target, pet, petskill, summoner, action)
-    xi.job_utils.summoner.onUseBloodPact(target, petskill, summoner, action)
+    xi.job_utils.summoner.onUseBloodPact(target, pet, petskill, summoner, action)
 
     local holyRollOneAnimID = 164
     local primaryTargetID   = action:getPrimaryTargetID()
@@ -18,7 +18,7 @@ abilityObject.onPetAbility = function(target, pet, petskill, summoner, action)
     -- If primary target, roll for power by setting random animation.
     -- We do this so the animation is random, but only rolled for once. (AKA: The same for all targets)
     if primaryTargetID == target:getID() then
-        action:setAnimation(primaryTargetID, holyRollOneAnimID + math.random(0, 5))
+        action:setAnimation(primaryTargetID, holyRollOneAnimID + math.randomInt(0, 5))
     else
         local animationId = action:getAnimation(primaryTargetID)
         if animationId then

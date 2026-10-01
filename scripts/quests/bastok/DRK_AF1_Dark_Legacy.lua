@@ -54,7 +54,7 @@ quest.sections =
                 onTrigger = function(player, npc)
                     if quest:getVar(player, 'Prog') == 0 then
                         return quest:progressEvent(752)
-                    elseif player:hasKeyItem(xi.ki.DARKSTEEL_FORMULA) then
+                    elseif player:hasKeyItem(xi.keyItem.DARKSTEEL_FORMULA) then
                         return quest:event(754)
                     end
                 end,
@@ -63,7 +63,7 @@ quest.sections =
             ['Raibaht'] =
             {
                 onTrigger = function(player, npc)
-                    if player:hasKeyItem(xi.ki.DARKSTEEL_FORMULA) then
+                    if player:hasKeyItem(xi.keyItem.DARKSTEEL_FORMULA) then
                         return quest:progressEvent(755)
                     end
                 end,
@@ -72,13 +72,13 @@ quest.sections =
             onEventFinish =
             {
                 [752] = function(player, csid, option, npc)
-                    npcUtil.giveKeyItem(player, xi.ki.LETTER_FROM_THE_DARKSTEEL_FORGE)
+                    npcUtil.giveKeyItem(player, xi.keyItem.LETTER_FROM_THE_DARKSTEEL_FORGE)
                     quest:setVar(player, 'Prog', 1)
                 end,
 
                 [755] = function(player, csid, option, npc)
                     if quest:complete(player) then
-                        player:delKeyItem(xi.ki.DARKSTEEL_FORMULA)
+                        player:delKeyItem(xi.keyItem.DARKSTEEL_FORMULA)
                     end
                 end,
             },
@@ -95,7 +95,7 @@ quest.sections =
                         return quest:progressEvent(697)
                     elseif questProgress == 2 then
                         return quest:event(698)
-                    elseif player:hasKeyItem(xi.ki.DARKSTEEL_FORMULA) then
+                    elseif player:hasKeyItem(xi.keyItem.DARKSTEEL_FORMULA) then
                         return quest:event(699)
                     end
                 end,
@@ -104,7 +104,7 @@ quest.sections =
             onEventFinish =
             {
                 [697] = function(player, csid, option, npc)
-                    player:delKeyItem(xi.ki.LETTER_FROM_THE_DARKSTEEL_FORGE)
+                    player:delKeyItem(xi.keyItem.LETTER_FROM_THE_DARKSTEEL_FORGE)
                     quest:setVar(player, 'Prog', 2)
                 end,
             },
@@ -116,11 +116,11 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.item.YAGUDO_CHERRY) and
+                        quest:getVar(player, 'Prog') == 2 and
                         not GetMobByID(giddeusID.mob.VAA_HUJA_THE_ERUDITE):isSpawned() and
-                        quest:getVar(player, 'Prog') == 2
+                        npcUtil.tradeMatches(trade, { { xi.item.YAGUDO_CHERRY, 1 } })
                     then
-                        player:confirmTrade()
+                        player:tradeComplete()
                         SpawnMob(giddeusID.mob.VAA_HUJA_THE_ERUDITE):updateClaim(player)
 
                         return quest:messageSpecial(giddeusID.text.SENSE_OF_FOREBODING)
@@ -129,10 +129,10 @@ quest.sections =
 
                 onTrigger = function(player, npc)
                     if
-                        not player:hasKeyItem(xi.ki.DARKSTEEL_FORMULA) and
+                        not player:hasKeyItem(xi.keyItem.DARKSTEEL_FORMULA) and
                         quest:getVar(player, 'Prog') == 3
                     then
-                        return quest:keyItem(xi.ki.DARKSTEEL_FORMULA)
+                        return quest:keyItem(xi.keyItem.DARKSTEEL_FORMULA)
                     end
                 end,
             },
@@ -141,9 +141,9 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.item.YAGUDO_CHERRY) and
                         quest:getVar(player, 'Prog') == 2 and
-                        quest:getVar(player, 'Option') == 0
+                        quest:getVar(player, 'Option') == 0 and
+                        npcUtil.tradeMatches(trade, { { xi.item.YAGUDO_CHERRY, 1 } })
                     then
                         return quest:progressEvent(62)
                     end
@@ -168,7 +168,7 @@ quest.sections =
             onEventFinish =
             {
                 [62] = function(player, csid, option, npc)
-                    player:confirmTrade()
+                    player:tradeComplete()
 
                     quest:setVar(player, 'Option', 1)
                 end,

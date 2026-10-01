@@ -41,6 +41,7 @@ end
 
 entity.onMobInitialize = function(mob)
     mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 300)
+    mob:setMobMod(xi.mobMod.SUPERLINK, mob:getTargID())
     mob:addImmunity(xi.immunity.BIND)
     mob:addImmunity(xi.immunity.BLIND)
     mob:addImmunity(xi.immunity.DARK_SLEEP)
@@ -61,6 +62,7 @@ entity.onMobInitialize = function(mob)
 end
 
 entity.onMobSpawn = function(mob)
+    mob:setMod(xi.mod.STORETP, 100)
     -- reset the subanim otherwise it will respawn with bracers on
     -- note that Aerns are never actually supposed to be in subanim 0
     mob:setAnimationSub(1)
@@ -136,7 +138,7 @@ entity.onMobDespawn = function(mob)
 
     local qm = GetNPCByID(ID.npc.QM_IXAERN_MNK)
     if qm then
-        if math.random(0, 1) == 1 then
+        if math.randomInt(0, 1) == 1 then
             qm:setPos(380, 0, 540, 0) -- G-7
         else
             qm:setPos(460, 0, 540, 0) -- I-7

@@ -4,7 +4,7 @@
 
 xi = xi or {}
 xi.guildShops = xi.guildShops or {}
-xi.guildShops.state = xi.guildShops.state or {} -- In-memory shop state, keyed by NPC name.
+xi.guildShops.state = xi.guildShops.state or {} -- In-memory shop state, keyed by canonical NPC name.
 
 --- Buy-curve divisor for an item.
 local priceFloorOf = function(cfg)
@@ -66,19 +66,42 @@ local shopConfig = function(shop, itemId)
     end
 end
 
+-- Resolve an NPC to its Shop Name
+-- Some NPCs share stock
+local canonicalShop = function(npc)
+    local name = npc:getName()
+    local cfg  = xi.data.guildShops[name]
+    return (cfg and cfg.sharedStock) or name
+end
+
 local shopFor = function(npc)
-    return xi.data.guildShops[npc:getName()]
+    return xi.data.guildShops[canonicalShop(npc)]
+end
+
+-- The shop's holiday weekday, or nil when holidays are disabled or unset.
+local shopHoliday = function(shop)
+    if not xi.settings.main.GUILD_SHOP_HOLIDAYS then
+        return nil
+    end
+
+    return shop.holiday
+end
+
+-- True when today is the shop's guild holiday.
+local isHolidayToday = function(shop)
+    local holiday = shopHoliday(shop)
+    return holiday ~= nil and holiday == VanadielDayOfTheWeek()
 end
 
 ---A rejected result: zeroed itemNo/count with a Trade reason code.
-local rejected = function(trade)
-    return { itemNo = 0, count = 0, trade = trade }
+local rejected = function(tradeCode)
+    return { itemNo = 0, count = 0, tradeCode = tradeCode }
 end
 
 ---Rolls the shop to the current day: restock/trim each item to targetStock, lock prices.
 ---Mutates only once per Vanaday
 local rollShopDay = function(npc, shop)
-    local state = getShopState(npc:getName())
+    local state = getShopState(canonicalShop(npc))
     local today = VanadielUniqueDay()
     if state.lastRoll == today then
         return state
@@ -114,7 +137,7 @@ end
 
 local guildShopIsOpen = function(npc)
     local shop = shopFor(npc)
-    if shop == nil then
+    if shop == nil or isHolidayToday(shop) then
         return false
     end
 
@@ -134,7 +157,7 @@ xi.guildShops.onTrigger = function(player, npc)
     npc:facePlayer(player)
     rollShopDay(npc, shop)
 
-    return player:openGuildShop(npc, shop.hours[1], shop.hours[2])
+    return player:openGuildShop(npc, shop.hours[1], shop.hours[2], shopHoliday(shop))
 end
 
 ---Process player purchase.
@@ -142,7 +165,7 @@ end
 ---@param npc CBaseEntity
 ---@param itemId xi.item
 ---@param quantity integer
----@return { itemNo: integer, count: integer, trade: integer }
+---@return { itemNo: integer, count: integer, tradeCode: integer }
 xi.guildShops.onPlayerBuy = function(player, npc, itemId, quantity)
     local shop = shopFor(npc)
 
@@ -178,17 +201,21 @@ xi.guildShops.onPlayerBuy = function(player, npc, itemId, quantity)
         return rejected(-1)
     end
 
-    -- Inventory is full
-    if not player:addItem(itemId, quantity) then
+    -- Take the gil first
+    if not player:delGil(cost) then
         return rejected(-1)
     end
 
-    -- Delete player gil and adjust remaining stock
-    player:delGil(cost)
+    -- Inventory is full
+    if not player:addItem(itemId, quantity) then
+        player:addGil(cost)
+        return rejected(-1)
+    end
+
     item.stock = item.stock - quantity
 
     -- Hand off result to core for packet purposes
-    return { itemNo = itemId, count = item.stock, trade = quantity }
+    return { itemNo = itemId, count = item.stock, tradeCode = quantity }
 end
 
 ---Items the shop offers today.
@@ -225,7 +252,7 @@ end
 ---@param npc CBaseEntity
 ---@param itemId xi.item
 ---@param quantity integer
----@return { itemNo: integer, count: integer, trade: integer, sold: integer, price: integer }
+---@return { itemNo: integer, count: integer, sold: integer?, price: integer?, tradeCode: integer? }
 xi.guildShops.onPlayerSell = function(player, npc, itemId, quantity)
     local shop = shopFor(npc)
 
@@ -241,37 +268,19 @@ xi.guildShops.onPlayerSell = function(player, npc, itemId, quantity)
     end
 
     -- Get current item state
-    local state  = rollShopDay(npc, shop)
-    local item   = state.items[itemId]
+    local state = rollShopDay(npc, shop)
+    local item  = state.items[itemId]
 
-    -- Cap the purchase to the least of requested quantity or remaining stock
-    local want   = math.min(quantity, cfg.maxStock - item.stock)
-
-    -- Packet does NOT provide specific inventory slots, we have to iterate the player inventory ourselves
-    -- The sale can potentially span multiple stacks
-    local stacks = player:findItems(itemId, xi.inventoryLocation.INVENTORY)
-    local sold   = 0
-    for _ = 1, #stacks do
-        local front = player:findItems(itemId, xi.inventoryLocation.INVENTORY)[1]
-        local take  = front and math.min(want - sold, front:getQuantity() - front:getReservedValue()) or 0
-        if take <= 0 then
-            break
-        end
-
-        player:delItem(itemId, take)
-        sold = sold + take
-    end
-
+    -- Cap the purchase to the least of offered quantity or remaining stock
+    local sold  = math.min(quantity, cfg.maxStock - item.stock)
     if sold <= 0 then
         return rejected(-4)
     end
 
-    player:addGil(item.sellPrice * sold)
     item.stock = item.stock + sold
 
-    -- Return sale status to core for packet and audit purposes.
-    local trade = (sold < quantity) and -1 or sold
-    return { itemNo = itemId, count = item.stock, trade = trade, sold = sold, price = item.sellPrice }
+    -- Return sale status to core for payout, packet and audit purposes.
+    return { itemNo = itemId, count = item.stock, sold = sold, price = item.sellPrice }
 end
 
 ---Items the shop buys.
@@ -329,7 +338,7 @@ end
 xi.guildShops.onShopClose = function(player, npc)
     local shop = shopFor(npc)
     if shop ~= nil then
-        player:sendGuildClose(shop.hours[1], shop.hours[2])
+        player:sendGuildClose(shop.hours[1], shop.hours[2], true)
     end
 
     player:clearGuildShop()

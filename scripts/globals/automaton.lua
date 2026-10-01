@@ -147,11 +147,16 @@ xi.automaton.attachmentModifiers =
     ['smoke_screen'       ] = { { modifier = xi.mod.EVA,                         values = {    20,    40,    80,   160 }, opticFiber = true  },
                                 { modifier = xi.mod.ACC,                         values = {   -20,   -40,   -80,  -160 }, opticFiber = true  },
                                 { modifier = xi.mod.RACC,                        values = {   -20,   -40,   -80,  -160 }, opticFiber = true  }, },
-    ['stabilizer'         ] = { { modifier = xi.mod.ACC,                         values = {     5,    10,    15,    20 }, opticFiber = true  }, },
-    ['stabilizer_ii'      ] = { { modifier = xi.mod.ACC,                         values = {    10,    15,    20,    25 }, opticFiber = true  }, },
-    ['stabilizer_iii'     ] = { { modifier = xi.mod.ACC,                         values = {    20,    30,    40,    50 }, opticFiber = true  }, },
-    ['stabilizer_iv'      ] = { { modifier = xi.mod.ACC,                         values = {    30,    40,    55,    70 }, opticFiber = true  }, },
-    ['stabilizer_v'       ] = { { modifier = xi.mod.ACC,                         values = {    40,    50,    65,    80 }, opticFiber = true  }, },
+    ['stabilizer'         ] = { { modifier = xi.mod.ACC,                         values = {     5,    10,    15,    20 }, opticFiber = true  },
+                                { modifier = xi.mod.RACC,                        values = {     5,    10,    15,    20 }, opticFiber = true  }, },
+    ['stabilizer_ii'      ] = { { modifier = xi.mod.ACC,                         values = {    10,    15,    20,    25 }, opticFiber = true  },
+                                { modifier = xi.mod.RACC,                        values = {    10,    15,    20,    25 }, opticFiber = true  }, },
+    ['stabilizer_iii'     ] = { { modifier = xi.mod.ACC,                         values = {    20,    30,    40,    50 }, opticFiber = true  },
+                                { modifier = xi.mod.RACC,                        values = {    20,    30,    40,    50 }, opticFiber = true  }, },
+    ['stabilizer_iv'      ] = { { modifier = xi.mod.ACC,                         values = {    30,    40,    55,    70 }, opticFiber = true  },
+                                { modifier = xi.mod.RACC,                        values = {    30,    40,    55,    70 }, opticFiber = true  }, },
+    ['stabilizer_v'       ] = { { modifier = xi.mod.ACC,                         values = {    40,    50,    65,    80 }, opticFiber = true  },
+                                { modifier = xi.mod.RACC,                        values = {    40,    50,    65,    80 }, opticFiber = true  }, },
     ['stealth_screen'     ] = { { modifier = xi.mod.ENMITY,                      values = {   -10,   -20,   -30,   -40 }, opticFiber = true  }, },
     ['stealth_screen_ii'  ] = { { modifier = xi.mod.ENMITY,                      values = {   -15,   -25,   -35,   -45 }, opticFiber = true  }, },
     ['steam_jacket'       ] = { { modifier = xi.mod.AUTO_STEAM_JACKET_REDUCTION, values = {    30,    45,    60,    80 }, opticFiber = true  }, },
@@ -262,7 +267,7 @@ xi.automaton.getExtraHits = function(automaton, numHits)
     local extraHits        = 0
     if doubleAttackRate > 0 then
         for _ = 1, numHits do
-            if math.random(1, 100) <= doubleAttackRate then
+            if math.randomInt(1, 100) <= doubleAttackRate then
                 extraHits = extraHits + 1
             end
         end

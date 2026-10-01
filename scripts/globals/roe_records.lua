@@ -32,7 +32,7 @@ xi.roe.records =
 
     [1] =
     { -- First Step Forward +
-        reward = { item = { { xi.item.STRIP_OF_MEAT_JERKY, 6 } }, keyItem = xi.ki.MEMORANDOLL, sparks = 100, exp = 300 }
+        reward = { item = { { xi.item.STRIP_OF_MEAT_JERKY, 6 } }, keyItem = xi.keyItem.MEMORANDOLL, sparks = 100, exp = 300 }
     },
 
     [2] =
@@ -53,7 +53,7 @@ xi.roe.records =
 
     [5] =
     { -- All for One
-        reward = { sparks = 100, exp = 300, accolades = 1000, keyItem = xi.ki.CONCORDOLL }
+        reward = { sparks = 100, exp = 300, accolades = 1000, keyItem = xi.keyItem.CONCORDOLL }
     },
 
     [11] =
@@ -63,7 +63,7 @@ xi.roe.records =
 
     [499] =
     { -- Stepping into an Ambuscade
-        reward = { sparks = 100, exp = 300, keyItem = xi.ki.AMBUSCADE_PRIMER_VOLUME_TWO }
+        reward = { sparks = 100, exp = 300, keyItem = xi.keyItem.AMBUSCADE_PRIMER_VOLUME_TWO }
     },
 
     [932] =
@@ -5254,6 +5254,25 @@ xi.roe.records =
     },
 
     -----------------------------------
+    -- Harvesting (General)
+    -----------------------------------
+
+    [61] =
+    { -- Total Successful Harvesting Attempts
+        trigger = xi.roeTrigger.HELM_SUCCESS,
+        goal = 300,
+        reward = { sparks = 2000, exp = 6000, accolades = 200 },
+    },
+
+    [118] =
+    { -- Total Suc. Harvesting Attempts II
+        trigger = xi.roeTrigger.HELM_SUCCESS,
+        goal = 30,
+        flags = set { 'repeat' },
+        reward = { sparks = 200, exp = 600, accolades = 20 },
+    },
+
+    -----------------------------------
     -- Harvesting - Original Areas
     -----------------------------------
 
@@ -5932,7 +5951,7 @@ xi.roe.records =
     [757] =
     { -- Subjugation: Dynamis Lord
         trigger = xi.roeTrigger.DEFEAT_MOB,
-        reqs = { mobID = set { 17330177 } },
+        reqs = { mobID = set { 17330177, 17330178, 17330179, 17330180, 17330181, 17330182 } },
         flags = set { 'repeat' },
         reward = { sparks = 300, exp = 1500, accolades = 30 },
     },

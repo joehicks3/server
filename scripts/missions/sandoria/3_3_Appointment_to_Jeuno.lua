@@ -143,7 +143,7 @@ mission.sections =
 
                 [537] = function(player, csid, option, npc)
                     player:setMissionStatus(mission.areaId, 3)
-                    npcUtil.giveKeyItem(player, xi.ki.LETTER_TO_THE_AMBASSADOR)
+                    npcUtil.giveKeyItem(player, xi.keyItem.LETTER_TO_THE_AMBASSADOR)
                 end,
             },
         },
@@ -182,7 +182,7 @@ mission.sections =
 
                 [42] = function(player, csid, option, npc)
                     player:setMissionStatus(mission.areaId, 4)
-                    player:delKeyItem(xi.ki.LETTER_TO_THE_AMBASSADOR)
+                    player:delKeyItem(xi.keyItem.LETTER_TO_THE_AMBASSADOR)
                 end,
             },
         },
@@ -196,7 +196,7 @@ mission.sections =
                     -- the key into a key item, allowing the player to drop the inventory key for space.
                     if
                         player:getMissionStatus(mission.areaId) == 4 and
-                        npcUtil.tradeHasExactly(trade, xi.item.DELKFUTT_KEY)
+                        npcUtil.tradeMatches(trade, { { xi.item.DELKFUTT_KEY, 1 } })
                     then
                         return mission:progressCutscene(0)
                     end
@@ -204,7 +204,7 @@ mission.sections =
 
                 onTrigger = function(player, npc)
                     if player:getMissionStatus(mission.areaId) == 4 then
-                        if player:hasKeyItem(xi.ki.DELKFUTT_KEY) then
+                        if player:hasKeyItem(xi.keyItem.DELKFUTT_KEY) then
                             return mission:progressCutscene(0)
                         else
                             return mission:messageSpecial(lowerDelkfuttID.text.THE_DOOR_IS_FIRMLY_SHUT_OPEN_KEY):setPriority(1000)
@@ -218,9 +218,9 @@ mission.sections =
                 [0] = function(player, csid, option, npc)
                     player:setMissionStatus(mission.areaId, 5)
 
-                    if not player:hasKeyItem(xi.ki.DELKFUTT_KEY) then
-                        npcUtil.giveKeyItem(player, xi.ki.DELKFUTT_KEY)
-                        player:confirmTrade()
+                    if not player:hasKeyItem(xi.keyItem.DELKFUTT_KEY) then
+                        npcUtil.giveKeyItem(player, xi.keyItem.DELKFUTT_KEY)
+                        player:tradeComplete()
                     end
                 end,
             },

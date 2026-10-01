@@ -23,11 +23,10 @@ entity.onMobSpawn = function(mob)
     mob:setMod(xi.mod.LIGHT_SLEEP_RES_RANK, 11)
     mob:setMod(xi.mod.DARK_SLEEP_RES_RANK, 11)
     mob:setMod(xi.mod.STORETP, 140)
-    mob:setMobMod(xi.mobMod.MAGIC_DELAY, 0)
 end
 
 entity.onAdditionalEffect = function(mob, target, damage)
-    return xi.mob.onAddEffect(mob, target, damage, xi.mob.ae.MP_DRAIN, { chance = 5, power = math.random(50, 200) })
+    return xi.mob.onAddEffect(mob, target, damage, xi.mob.ae.MP_DRAIN, { chance = 5, power = math.randomInt(50, 200) })
 end
 
 entity.onMobDeath = function(mob, player, optParams)

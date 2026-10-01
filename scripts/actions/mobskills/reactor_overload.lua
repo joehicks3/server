@@ -18,14 +18,14 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     params.element        = xi.element.WIND
     params.attackType     = xi.attackType.MAGICAL
     params.damageType     = xi.damageType.WIND
-    params.shadowBehavior = xi.mobskills.shadowBehavior.IGNORE_SHADOWS
+    params.shadowBehavior = xi.mobskills.shadowBehavior.NUMSHADOWS_3
 
     local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
 
     if xi.mobskills.processDamage(mob, target, skill, action, info) then
         target:takeDamage(info.damage, mob, info.attackType, info.damageType)
 
-        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.SILENCE, 1, 0, math.random(15, 60))
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.SILENCE, 1, 0, math.randomInt(15, 60))
     end
 
     return info.damage

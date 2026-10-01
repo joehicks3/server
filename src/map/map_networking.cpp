@@ -21,7 +21,6 @@
 
 #include "map_networking.h"
 
-#include <common/arguments.h>
 #include <common/md52.h>
 #include <common/tracy.h>
 #include <common/zlib.h>
@@ -32,20 +31,16 @@
 #include "packets/s2c/0x00b_logout.h"
 
 #include "utils/charutils.h"
+#include "utils/zoneutils.h"
 
 #include "ipc_client.h"
-#include "job_points.h"
 #include "latent_effect_container.h"
-#include "map_engine.h"
 #include "map_session.h"
 #include "map_statistics.h"
-#include "roe.h"
-#include "status_effect_container.h"
-#include "transport.h"
 #include "zone.h"
 #include "zone_entities.h"
 
-extern std::map<uint16, CZone*> g_PZoneList; // Global array of pointers for zones
+extern std::map<xi::ZoneId, CZone*> g_PZoneList; // Global array of pointers for zones
 
 MapNetworking::MapNetworking(Scheduler& scheduler, MapStatistics& mapStatistics, MapConfig config)
 : scheduler_(scheduler)
@@ -69,7 +64,7 @@ MapNetworking::MapNetworking(Scheduler& scheduler, MapStatistics& mapStatistics,
     try
     {
         const auto udpPort = mapIPP_.getPort() == 0 ? settings::get<uint16>("network.MAP_PORT") : mapIPP_.getPort();
-        socket_            = std::make_unique<MapSocket>(scheduler_, udpPort, std::bind(&MapNetworking::handle_incoming_packet, this, std::placeholders::_1, std::placeholders::_2));
+        socket_            = std::make_unique<MapSocket>(scheduler_, mapStatistics_, udpPort, std::bind(&MapNetworking::handle_incoming_packet, this, std::placeholders::_1, std::placeholders::_2));
     }
     catch (const std::exception& e)
     {
@@ -187,7 +182,7 @@ int32 MapNetworking::map_decipher_packet(uint8* buff, size_t buffsize, MapSessio
     // We can fail to decipher if the client is attempting to zone.
     if (PSession->blowfish.status != BLOWFISH_PENDING_ZONE)
     {
-        ShowError(fmt::format("map_decipher_packet: bad packet from <{}>", ip2str(ip)));
+        ShowError(fmt::format("map_decipher_packet: bad packet from <{}> (charid {})", ip2str(ip), PSession->charID));
     }
 
     return -1;
@@ -261,14 +256,35 @@ int32 MapNetworking::recv_parse(uint8* buff, size_t* buffsize, MapSession* PSess
                 PSession = mapSessions_.createSession(ipp);
                 if (PSession == nullptr)
                 {
-                    // TODO: err msg?
+                    ShowWarningFmt("recv_parse: 0x00A for charid {} from {} rejected, no login session from this address", packetCharID, ipp.toString());
                     return -1;
                 }
             }
             else
             {
+                // unknown00 goes up by one on every client retry
+                if (const auto* existing = mapSessions_.getSessionByCharId(packetCharID))
+                {
+                    const auto zoning = existing->blowfish.status == BLOWFISH_PENDING_ZONE;
+                    ShowWarningFmt("recv_parse: 0x00A for charid {} from {} ignored, session is bound to {} (pending zone: {}, retry {})", packetCharID, ipp.toString(), existing->client_ipp.toString(), zoning, loginPacket.unknown00);
+                }
+                else
+                {
+                    ShowWarningFmt("recv_parse: 0x00A for charid {} from {} ignored, no session or pending session (retry {})", packetCharID, ipp.toString(), loginPacket.unknown00);
+                }
+
                 return -1;
             }
+        }
+
+        if (PSession->charID != 0 && PSession->charID != packetCharID)
+        {
+            return -1;
+        }
+
+        if (PSession->blowfish.status == BLOWFISH_ACCEPTED && PSession->hasDecryptedPacket)
+        {
+            return -1;
         }
 
         // We can only get here if an 0x00A (not encrypted) packet was here.
@@ -285,7 +301,11 @@ int32 MapNetworking::recv_parse(uint8* buff, size_t* buffsize, MapSession* PSess
 
             std::ignore = langID;
 
-            auto rset = db::preparedStmt("SELECT accid FROM chars WHERE charid = ? LIMIT 1", packetCharID);
+            auto rset = db::preparedStmt("SELECT c.accid, s.session_key "
+                                         "FROM chars c "
+                                         "LEFT JOIN accounts_sessions s ON s.charid = c.charid "
+                                         "WHERE c.charid = ? LIMIT 1",
+                                         packetCharID);
             if (!rset || rset->rowsCount() == 0 || !rset->next())
             {
                 ShowError("recv_parse: Cannot load char %u (no such charid)", packetCharID);
@@ -294,8 +314,7 @@ int32 MapNetworking::recv_parse(uint8* buff, size_t* buffsize, MapSession* PSess
 
             accountID = rset->get<uint32>("accid");
 
-            rset = db::preparedStmt("SELECT session_key FROM accounts_sessions WHERE charid = ? LIMIT 1", packetCharID);
-            if (rset && rset->rowsCount() && rset->next())
+            if (!rset->isNull("session_key"))
             {
                 db::extractFromBlob(rset, "session_key", PSession->blowfish.key);
                 PSession->initBlowfish();
@@ -303,15 +322,19 @@ int32 MapNetworking::recv_parse(uint8* buff, size_t* buffsize, MapSession* PSess
             else
             {
                 ShowError("recv_parse: Cannot load session_key for charid %u", packetCharID);
+                return -1;
             }
 
-            PSession->PChar     = charutils::LoadChar(scheduler_, config_, packetCharID);
+            PSession->PChar     = charutils::LoadChar(packetCharID);
             PSession->charID    = packetCharID;
             PSession->accountID = accountID;
 
             auto* PChar = PSession->PChar.get();
 
             PChar->PSession = PSession;
+
+            // the 0x00A handler puts the char in this zone, so it has to be loaded before it gets there
+            zoneutils::EnsureZoneLoaded(scheduler_, config_, PChar->loc.destination);
 
             // If we're a new char on a new instance and prevzone != zone
             if (PSession->blowfish.status == BLOWFISH_WAITING && PChar->loc.destination != PChar->loc.prevzone)
@@ -355,6 +378,13 @@ int32 MapNetworking::recv_parse(uint8* buff, size_t* buffsize, MapSession* PSess
                 *buffsize = 0;
                 return -1;
             }
+        }
+
+        // This is when a real decrypt of the current key hits.
+        // We gate this variable to allow no longer allow incoming 0x00As to be handled
+        if (decryptCount == 0)
+        {
+            PSession->hasDecryptedPacket = true;
         }
 
         // reading data size
@@ -403,7 +433,7 @@ int32 MapNetworking::parse(uint8* buff, size_t* buffsize, MapSession* PSession)
     {
         // Update the time we last got a char sync packet
         // The client can spam some other packets when trying to zone, preventing timely session deletions
-        PSession->last_update = timer::now();
+        PSession->tapLastUpdate();
     }
 
     for (uint8* SmallPD_ptr = PacketData_Begin; SmallPD_ptr + (ref<uint8>(SmallPD_ptr, 1) & 0xFE) * 2 <= PacketData_End && (ref<uint8>(SmallPD_ptr, 1) & 0xFE);
@@ -447,6 +477,8 @@ int32 MapNetworking::parse(uint8* buff, size_t* buffsize, MapSession* PSession)
 
     if (PChar->retriggerLatents)
     {
+        TracyZoneNamed(latentZone, "parse: retrigger latents");
+
         for (uint8 equipSlotID = 0; equipSlotID < 16; ++equipSlotID)
         {
             if (PChar->getEquip(static_cast<SLOTTYPE>(equipSlotID)))
@@ -457,8 +489,12 @@ int32 MapNetworking::parse(uint8* buff, size_t* buffsize, MapSession* PSession)
         PChar->retriggerLatents = false; // reset as we have retriggered the latents somewhere
     }
 
-    // Flush any batched equip changes after processing all incoming packets
-    PChar->flushEquipChanges();
+    {
+        TracyZoneNamed(equipFlushZone, "parse: flush equip changes");
+
+        // Flush any batched equip changes after processing all incoming packets
+        PChar->flushEquipChanges();
+    }
 
     PSession->client_packet_id = SmallPD_Code;
 
@@ -512,13 +548,25 @@ int32 MapNetworking::send_parse(uint8* buff, size_t* buffsize, MapSession* PSess
 
     mapStatistics_.increment(MapStatistics::Key::TotalPacketsToSendPerTick, static_cast<uint32>(PChar->getPacketCount()));
 
+    uint32 attempts = 0;
+
     do
     {
         do
         {
-            *buffsize       = FFXI_HEADER_SIZE;
-            auto packetList = PChar->getPacketListCopy();
-            packets         = 0;
+            ++attempts;
+
+            TracyZoneNamed(attemptZone, "send_parse: attempt");
+
+            *buffsize = FFXI_HEADER_SIZE;
+            packets   = 0;
+
+            auto packetList = [&]
+            {
+                TracyZoneNamed(copyZone, "send_parse: copy packet list");
+
+                return PChar->getPacketListCopy();
+            }();
 
             while (!packetList.empty() && *buffsize + packetList.front()->getSize() < kMaxBufferSize && static_cast<size_t>(packets) < PacketCount)
             {
@@ -538,8 +586,19 @@ int32 MapNetworking::send_parse(uint8* buff, size_t* buffsize, MapSession* PSess
 
                     incrementKeyAfterEncrypt = true;
 
-                    // Set client port to zero, indicating the client tried to zone out and no longer has a port until the next 0x00A
-                    db::preparedStmt("UPDATE accounts_sessions SET client_port = 0, last_zoneout_time = NOW() WHERE charid = ?", PSession->charID);
+                    if (PSession->zone_type != GP_GAME_LOGOUT_STATE::LOGOUT)
+                    {
+                        auto ip   = PSession->zone_ipp.getIP();
+                        auto port = PSession->zone_ipp.getPort();
+
+                        // Set client port to zero, indicating the client tried to zone out and no longer has a port until the next 0x00A
+                        db::preparedStmt("UPDATE accounts_sessions SET server_addr = ?, server_port = ?, client_port = 0, last_zoneout_time = NOW() WHERE charid = ?", ip, port, PSession->charID);
+                    }
+                    else
+                    {
+                        // This probably isn't necessary - the session should be deleted shortly.
+                        db::preparedStmt("UPDATE accounts_sessions SET client_port = 0, last_zoneout_time = NOW() WHERE charid = ?", PSession->charID);
+                    }
                 }
 
                 std::memcpy(buff + *buffsize, *PSmallPacket, PSmallPacket->getSize());
@@ -553,7 +612,13 @@ int32 MapNetworking::send_parse(uint8* buff, size_t* buffsize, MapSession* PSess
 
             // Compress the data without regard to the header
             // The returned size is 8 times the real data
-            auto maybePacketSize = compressPacket(buff, static_cast<size_t>(*buffsize));
+            const auto maybePacketSize = [&]
+            {
+                TracyZoneNamed(compressZone, "send_parse: compress");
+
+                return compressPacket(buff, static_cast<size_t>(*buffsize));
+            }();
+
             if (!maybePacketSize)
             {
                 ShowError("zlib compression error");
@@ -582,7 +647,15 @@ int32 MapNetworking::send_parse(uint8* buff, size_t* buffsize, MapSession* PSess
     mapStatistics_.increment(MapStatistics::Key::TotalPacketsSentPerTick, static_cast<uint32>(packets));
     TracyZoneString(fmt::format("Sending {} packets", packets));
 
-    finalizePacket(buff, buffsize, PacketSize, PSession, usePreviousKey);
+    // Every extra attempt re-copies the whole outgoing list and re-runs zlib, so this is the
+    // number to watch when send_parse spikes.
+    TracyReportGraphNumber("send_parse Attempts", static_cast<int64>(attempts));
+
+    {
+        TracyZoneNamed(finalizeZone, "send_parse: finalize");
+
+        finalizePacket(buff, buffsize, PacketSize, PSession, usePreviousKey);
+    }
 
     auto remainingPackets = PChar->getPacketCount();
     mapStatistics_.increment(MapStatistics::Key::TotalPacketsDelayedPerTick, static_cast<uint32>(remainingPackets));
@@ -634,8 +707,6 @@ int32 MapNetworking::send_parse(uint8* buff, size_t* buffsize, MapSession* PSess
 
 void MapNetworking::preparePacket(uint8* buff, MapSession* PSession)
 {
-    TracyZoneScoped;
-
     // Modify the header of the outgoing packet
     // The essence of the transformations:
     // - send the client the number of the last packet received from him
@@ -721,7 +792,7 @@ void MapNetworking::flushStatistics()
 
     for (auto& [id, PZone] : g_PZoneList)
     {
-        if (PZone->IsZoneActive())
+        if (!PZone->GetZoneEntities()->CharListEmpty())
         {
             activeZoneCount += 1;
             playerCount += PZone->GetZoneEntities()->GetCharList().size();
@@ -741,6 +812,12 @@ void MapNetworking::flushStatistics()
                              : 0.0;
 
     mapStatistics_.set(MapStatistics::Key::DynamicTargIdUsagePercent, static_cast<int64>(percent));
+
+    // Null on test servers, which don't open a socket
+    if (socket_)
+    {
+        socket_->flushDiagnostics();
+    }
 
     // This also zeroes out all the stats
     mapStatistics_.flush();

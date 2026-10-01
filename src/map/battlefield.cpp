@@ -21,6 +21,8 @@
 
 #include "battlefield.h"
 
+#include <algorithm>
+
 #include "common/settings.h"
 #include "common/timer.h"
 
@@ -38,14 +40,12 @@
 
 #include "lua/luautils.h"
 
-#include "packets/entity_update.h"
 #include "packets/s2c/0x038_schedulor.h"
 
 #include "status_effect_container.h"
 
 #include "enums/four_cc.h"
 #include "utils/charutils.h"
-#include "utils/itemutils.h"
 #include "utils/petutils.h"
 #include "utils/zoneutils.h"
 #include "zone.h"
@@ -66,9 +66,9 @@ CBattlefield::CBattlefield(uint16 id, CZone* PZone, uint8 area, CCharEntity* PIn
 {
     m_Initiator.id     = PInitiator->id;
     m_Initiator.name   = PInitiator->name;
-    m_Record.name      = "Meme";
+    m_Record.name      = "Someone";
     m_Record.time      = 24h;
-    m_Record.partySize = 69;
+    m_Record.partySize = 6;
     m_Tick             = m_StartTime;
     m_RegisteredPlayers.emplace(PInitiator->id);
 }
@@ -89,7 +89,7 @@ CZone* CBattlefield::GetZone() const
     return m_Zone;
 }
 
-uint16 CBattlefield::GetZoneID() const
+auto CBattlefield::GetZoneID() const -> xi::ZoneId
 {
     return m_Zone->GetID();
 }
@@ -132,11 +132,6 @@ timer::time_point CBattlefield::GetStartTime() const
 timer::duration CBattlefield::GetTimeInside() const
 {
     return m_Tick - m_StartTime;
-}
-
-timer::time_point CBattlefield::GetFightTime() const
-{
-    return m_FightTick;
 }
 
 timer::duration CBattlefield::GetTimeLimit() const
@@ -284,6 +279,8 @@ void CBattlefield::ApplyLevelRestrictions(CCharEntity* PChar) const
 
         PChar->StatusEffectContainer->DelStatusEffectsByFlag(xi::StatusEffectFlag::Dispelable, EffectNotice::Silent);
         PChar->StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::Reraise);
+        PChar->health.tp = 0;
+        PChar->updatemask |= UPDATE_HP;
         PChar->StatusEffectContainer->AddStatusEffect(xi::StatusEffect::LevelRestriction, static_cast<uint16>(xi::StatusEffect::LevelRestriction), cap, 0s, 0s);
     }
     else
@@ -357,7 +354,7 @@ bool CBattlefield::InsertEntity(CBaseEntity* PEntity, bool enter, BATTLEFIELDMOB
     }
     else if (PEntity->objtype == TYPE_NPC)
     {
-        PEntity->status = (conditions & CONDITION_DISAPPEAR_AT_START) == CONDITION_DISAPPEAR_AT_START ? STATUS_TYPE::DISAPPEAR : STATUS_TYPE::NORMAL;
+        PEntity->status = (conditions & CONDITION_DISAPPEAR_AT_START) == CONDITION_DISAPPEAR_AT_START ? xi::Status::Disappear : xi::Status::Normal;
         PEntity->loc.zone->UpdateEntityPacket(PEntity, ENTITY_SPAWN, UPDATE_ALL_MOB);
         m_NpcList.emplace_back(static_cast<CNpcEntity*>(PEntity));
     }
@@ -457,7 +454,7 @@ CBaseEntity* CBattlefield::GetEntity(CBaseEntity* PEntity)
     }
     else if (PEntity->objtype == TYPE_MOB)
     {
-        if (PEntity->allegiance == ALLEGIANCE_TYPE::MOB)
+        if (PEntity->allegiance == xi::Allegiance::Mob)
         {
             for (const auto& mob : m_AdditionalEnemyList)
             {
@@ -474,7 +471,7 @@ CBaseEntity* CBattlefield::GetEntity(CBaseEntity* PEntity)
                 }
             }
         }
-        else if (PEntity->allegiance == ALLEGIANCE_TYPE::PLAYER)
+        else if (PEntity->allegiance == xi::Allegiance::Player)
         {
             for (auto* PAlly : m_AllyList)
             {
@@ -514,6 +511,26 @@ CBaseEntity* CBattlefield::GetEntity(CBaseEntity* PEntity)
 bool CBattlefield::IsRegistered(CCharEntity* PChar)
 {
     return PChar && m_RegisteredPlayers.find(PChar->id) != m_RegisteredPlayers.end();
+}
+
+// The Battlefield effect is the players clearance and names the battlefield it was granted for
+bool CBattlefield::HasClearance(CCharEntity* PChar) const
+{
+    const auto* PEffect = PChar->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Battlefield);
+    return PEffect != nullptr && PEffect->GetPower() == GetID() && PEffect->GetSubPower() == GetArea();
+}
+
+// Forgets a registration that no clearance backs any more, so an old party's battlefield cannot claim the player again
+void CBattlefield::RemoveRegistration(CCharEntity* PChar)
+{
+    m_RegisteredPlayers.erase(PChar->id);
+}
+
+// Hands a registered player the clearance effect back after zoning dropped it, as if the initiator had just copied it on
+void CBattlefield::GrantClearance(CCharEntity* PChar)
+{
+    PChar->StatusEffectContainer->AddStatusEffectSilent(
+        xi::StatusEffect::Battlefield, static_cast<uint16>(xi::StatusEffect::Battlefield), GetID(), 0s, 0s, m_Initiator.id, GetArea());
 }
 
 bool CBattlefield::RemoveEntity(CBaseEntity* PEntity, uint8 leavecode)
@@ -595,16 +612,6 @@ bool CBattlefield::RemoveEntity(CBaseEntity* PEntity, uint8 leavecode)
 
         m_EnteredPlayers.erase(PEntity->id);
 
-        if (leavecode != 255)
-        {
-            // todo: probably shouldnt hardcode this
-            if (leavecode == BATTLEFIELD_LEAVE_CODE_WARPDC)
-            {
-                PEntity->loc.p.x = 0;
-                PEntity->loc.p.y = 0;
-                PEntity->loc.p.z = 0;
-            }
-        }
         charutils::SendClearTimerPacket(PChar);
 
         // Remove enmity from character and their pet with all mobs
@@ -635,14 +642,14 @@ bool CBattlefield::RemoveEntity(CBaseEntity* PEntity, uint8 leavecode)
 
         if (PEntity->objtype == TYPE_NPC)
         {
-            PEntity->status = STATUS_TYPE::DISAPPEAR;
+            PEntity->status = xi::Status::Disappear;
             PEntity->loc.zone->UpdateEntityPacket(PEntity, ENTITY_DESPAWN, UPDATE_ALL_MOB);
 
             if (auto* PNpcEntity = dynamic_cast<CNpcEntity*>(PEntity))
             {
-                if (std::find(m_NpcList.begin(), m_NpcList.end(), PNpcEntity) != m_NpcList.end())
+                if (std::ranges::contains(m_NpcList, PNpcEntity))
                 {
-                    m_NpcList.erase(std::remove_if(m_NpcList.begin(), m_NpcList.end(), check), m_NpcList.end());
+                    std::erase_if(m_NpcList, check);
                 }
             }
         }
@@ -656,22 +663,22 @@ bool CBattlefield::RemoveEntity(CBaseEntity* PEntity, uint8 leavecode)
                 auto* PPetEntity = dynamic_cast<CPetEntity*>(PEntity);
                 if (PPetEntity && (!PPetEntity->PMaster || PPetEntity->PMaster->objtype != TYPE_PC))
                 {
-                    PEntity->status = STATUS_TYPE::DISAPPEAR;
+                    PEntity->status = xi::Status::Disappear;
                 }
 
                 if (auto* PMobEntity = dynamic_cast<CMobEntity*>(PEntity))
                 {
-                    if (std::find(m_AllyList.begin(), m_AllyList.end(), PMobEntity) != m_AllyList.end())
+                    if (std::ranges::contains(m_AllyList, PMobEntity))
                     {
                         // We should not put an isAlive check here because some ally can be dead at cleanup
                         // but not despawned (for example Prishe in Dawn fight)
                         if (PMobEntity->PAI->IsSpawned())
                         {
-                            PEntity->status = STATUS_TYPE::DISAPPEAR;
+                            PEntity->status = xi::Status::Disappear;
                             PEntity->loc.zone->UpdateEntityPacket(PEntity, ENTITY_DESPAWN, UPDATE_NONE);
                         }
 
-                        m_AllyList.erase(std::remove_if(m_AllyList.begin(), m_AllyList.end(), check), m_AllyList.end());
+                        std::erase_if(m_AllyList, check);
                     }
                 }
             }
@@ -762,6 +769,12 @@ bool CBattlefield::Cleanup(timer::time_point time, bool force)
 
     for (const auto& mob : m_RequiredEnemyList)
     {
+        // Negate the no despawn bit to allow mobs that may use no despawn mechanics to despawn properly
+        if ((mob.PMob->m_Behavior & xi::Behavior::NoDespawn) != xi::Behavior::None)
+        {
+            mob.PMob->m_Behavior &= ~xi::Behavior::NoDespawn;
+        }
+
         if (mob.PMob->isAlive() && mob.PMob->PAI->IsSpawned())
         {
             mob.PMob->PAI->Despawn();
@@ -770,6 +783,12 @@ bool CBattlefield::Cleanup(timer::time_point time, bool force)
 
     for (const auto& mob : m_AdditionalEnemyList)
     {
+        // Negate the no despawn bit to allow mobs that may use no despawn mechanics to despawn properly
+        if ((mob.PMob->m_Behavior & xi::Behavior::NoDespawn) != xi::Behavior::None)
+        {
+            mob.PMob->m_Behavior &= ~xi::Behavior::NoDespawn;
+        }
+
         if (mob.PMob->isAlive() && mob.PMob->PAI->IsSpawned())
         {
             mob.PMob->PAI->Despawn();
@@ -814,11 +833,11 @@ bool CBattlefield::Cleanup(timer::time_point time, bool force)
         }
     }
 
-    // Remove all registered players as long as they're in the zone
+    // Remove all registered players as long as they're in the zone and still hold clearance for this battlefield
     for (auto id : m_RegisteredPlayers)
     {
         auto* PChar = GetZone()->GetCharByID(id);
-        if (PChar)
+        if (PChar && HasClearance(PChar))
         {
             PChar->StatusEffectContainer->DelStatusEffectsByFlag(xi::StatusEffectFlag::Confrontation, EffectNotice::Silent);
             m_Zone->updateCharLevelRestriction(PChar);
@@ -872,7 +891,7 @@ bool CBattlefield::CheckInProgress()
     ForEachEnemy([&](const CMobEntity* PMob)
                  {
                      // Any entry in enmity list or currently chasing someone
-                     if (!PMob->PEnmityContainer->GetEnmityList()->empty() || PMob->GetBattleTargetID())
+                     if (!PMob->PEnmityContainer->GetEnmityList()->empty() || PMob->battleTarget().isSet())
                      {
                          if (m_Status == BATTLEFIELD_STATUS_OPEN)
                          {
@@ -887,7 +906,7 @@ bool CBattlefield::CheckInProgress()
     return m_Status != BATTLEFIELD_STATUS_OPEN;
 }
 
-void CBattlefield::ForEachPlayer(const std::function<void(CCharEntity*)>& func)
+void CBattlefield::ForEachPlayer(FnRef<void(CCharEntity*)> func)
 {
     for (auto player : m_EnteredPlayers)
     {
@@ -895,13 +914,13 @@ void CBattlefield::ForEachPlayer(const std::function<void(CCharEntity*)>& func)
     }
 }
 
-void CBattlefield::ForEachEnemy(const std::function<void(CMobEntity*)>& func)
+void CBattlefield::ForEachEnemy(FnRef<void(CMobEntity*)> func)
 {
     ForEachRequiredEnemy(func);
     ForEachAdditionalEnemy(func);
 }
 
-void CBattlefield::ForEachRequiredEnemy(const std::function<void(CMobEntity*)>& func)
+void CBattlefield::ForEachRequiredEnemy(FnRef<void(CMobEntity*)> func)
 {
     for (auto mob : m_RequiredEnemyList)
     {
@@ -909,7 +928,7 @@ void CBattlefield::ForEachRequiredEnemy(const std::function<void(CMobEntity*)>& 
     }
 }
 
-void CBattlefield::ForEachAdditionalEnemy(const std::function<void(CMobEntity*)>& func)
+void CBattlefield::ForEachAdditionalEnemy(FnRef<void(CMobEntity*)> func)
 {
     for (auto mob : m_AdditionalEnemyList)
     {
@@ -917,7 +936,7 @@ void CBattlefield::ForEachAdditionalEnemy(const std::function<void(CMobEntity*)>
     }
 }
 
-void CBattlefield::ForEachNpc(const std::function<void(CNpcEntity*)>& func)
+void CBattlefield::ForEachNpc(FnRef<void(CNpcEntity*)> func)
 {
     for (auto* npc : m_NpcList)
     {
@@ -925,7 +944,7 @@ void CBattlefield::ForEachNpc(const std::function<void(CNpcEntity*)>& func)
     }
 }
 
-void CBattlefield::ForEachAlly(const std::function<void(CMobEntity*)>& func)
+void CBattlefield::ForEachAlly(FnRef<void(CMobEntity*)> func)
 {
     for (auto* ally : m_AllyList)
     {

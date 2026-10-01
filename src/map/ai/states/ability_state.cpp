@@ -23,7 +23,6 @@
 
 #include "ability.h"
 #include "action/action.h"
-#include "action/interrupts.h"
 #include "ai/ai_container.h"
 #include "common/utils.h"
 #include "enmity_container.h"
@@ -41,6 +40,7 @@
 
 namespace
 {
+
 // Handle Blood Pacts and Ready distance checks separately.
 // They come in as the final ability to be used through the packets but must pass the intermediary ability distance before triggering
 // Examples:
@@ -95,39 +95,38 @@ auto PetSkillDistanceCheck(CCharEntity* PChar, CBaseEntity* PTarget, const CAbil
 
     return true;
 }
+
 } // namespace
 
-CAbilityState::CAbilityState(CBattleEntity* PEntity, uint16 targid, uint16 abilityid)
-: CState(PEntity, targid)
+CAbilityState::CAbilityState(xi::Badge<CState>, CBattleEntity* PEntity, const EntityId& target, const uint16 abilityid)
+: CState(PEntity, target)
 , m_PEntity(PEntity)
+, m_abilityId(abilityid)
 {
-    CAbility* PAbility = ability::GetAbility(abilityid);
+    // Capture constructor arguments into members and nothing else. All other logic goes into init().
+}
+
+auto CAbilityState::init() -> StateErrorOr<void>
+{
+    CAbility* PAbility = ability::GetAbility(m_abilityId);
 
     if (!PAbility)
     {
-        throw CStateInitException(std::make_unique<GP_SERV_COMMAND_BATTLE_MESSAGE>(m_PEntity, m_PEntity, 0, 0, MsgBasic::UnableToUseJobAbility));
+        return Error{ std::make_unique<GP_SERV_COMMAND_BATTLE_MESSAGE>(m_PEntity, m_PEntity, 0, 0, MsgBasic::UnableToUseJobAbility) };
     }
-    auto* PTarget = m_PEntity->IsValidTarget(m_targid, PAbility->getValidTarget(), m_errorMsg);
+    auto* PTarget = m_PEntity->IsValidTarget(target(), PAbility->getValidTarget(), m_errorMsg);
 
     if (!PTarget || this->HasErrorMsg())
     {
-        if (this->HasErrorMsg())
-        {
-            throw CStateInitException(m_errorMsg->copy());
-        }
-        else
-        {
-            throw CStateInitException(std::make_unique<CBasicPacket>());
-        }
+        return refuseWithErrorMsg();
     }
-    SetTarget(PTarget->targid);
     m_PAbility = std::make_unique<CAbility>(*PAbility);
     m_castTime = PAbility->getCastTime();
 
     if (m_castTime > 0s && CanUseAbility())
     {
         action_t action{
-            .actorId    = PEntity->id,
+            .actorId    = m_PEntity->id,
             .actiontype = ActionCategory::AbilityStart,
             .targets    = {
                 {
@@ -143,7 +142,7 @@ CAbilityState::CAbilityState(CBattleEntity* PEntity, uint16 targid, uint16 abili
             }
         };
 
-        PEntity->loc.zone->PushPacket(PEntity, CHAR_INRANGE_SELF, std::make_unique<GP_SERV_COMMAND_BATTLE2>(action));
+        m_PEntity->loc.zone->PushPacket(m_PEntity, CHAR_INRANGE_SELF, std::make_unique<GP_SERV_COMMAND_BATTLE2>(action));
         m_PEntity->PAI->EventHandler.triggerListener("ABILITY_START", m_PEntity, PAbility);
 
         // face toward target
@@ -153,16 +152,18 @@ CAbilityState::CAbilityState(CBattleEntity* PEntity, uint16 targid, uint16 abili
     {
         m_PEntity->PAI->EventHandler.triggerListener("ABILITY_START", m_PEntity, PAbility);
     }
+
+    return Success();
 }
 
-CAbility* CAbilityState::GetAbility()
+auto CAbilityState::GetAbility() const -> CAbility*
 {
     return m_PAbility.get();
 }
 
-void CAbilityState::ApplyEnmity()
+void CAbilityState::ApplyEnmity() const
 {
-    auto* PTarget = GetTarget();
+    auto* PTarget = target().resolve();
     if (PTarget)
     {
         if (m_PAbility->getValidTarget() & TARGET_ENEMY && PTarget->allegiance != m_PEntity->allegiance)
@@ -181,17 +182,17 @@ void CAbilityState::ApplyEnmity()
     }
 }
 
-bool CAbilityState::CanChangeState()
+auto CAbilityState::CanChangeState() -> bool
 {
     return IsCompleted();
 }
 
-bool CAbilityState::Update(timer::time_point tick)
+auto CAbilityState::Update(const timer::time_point tick) -> bool
 {
     // Rotate towards target during ability
     if (m_castTime > 0s && tick < GetEntryTime() + m_castTime)
     {
-        CBaseEntity* PTarget = GetTarget();
+        CBaseEntity* PTarget = target().resolve();
         if (PTarget)
         {
             battleutils::turnTowardsTarget(m_PEntity, PTarget);
@@ -200,23 +201,27 @@ bool CAbilityState::Update(timer::time_point tick)
 
     if (!IsCompleted() && tick > GetEntryTime() + m_castTime)
     {
-        if (CanUseAbility())
+        // A failed validity check exits immediately and doesn't serve out the animation lock.
+        if (!CanUseAbility())
         {
-            action_t action{};
-            m_PEntity->OnAbility(*this, action);
-            m_PEntity->PAI->EventHandler.triggerListener("ABILITY_USE", m_PEntity, GetTarget(), m_PAbility.get(), &action);
-            // Only send packet if action was populated (e.g. interrupts return early)
-            if (!action.targets.empty())
+            return true;
+        }
+
+        action_t action{};
+        m_PEntity->OnAbility(*this, action);
+        m_PEntity->PAI->EventHandler.triggerListener("ABILITY_USE", m_PEntity, target().resolve(), m_PAbility.get(), &action);
+        // Only send packet if action was populated (e.g. interrupts return early)
+        if (!action.targets.empty())
+        {
+            m_PEntity->loc.zone->PushPacket(m_PEntity, CHAR_INRANGE_SELF, std::make_unique<GP_SERV_COMMAND_BATTLE2>(action));
+        }
+
+        for (auto& actionTarget : action.targets)
+        {
+            auto* PActionTarget = dynamic_cast<CBattleEntity*>(zoneutils::GetEntity(actionTarget.actorId));
+            if (PActionTarget)
             {
-                m_PEntity->loc.zone->PushPacket(m_PEntity, CHAR_INRANGE_SELF, std::make_unique<GP_SERV_COMMAND_BATTLE2>(action));
-            }
-            for (auto& actionTarget : action.targets)
-            {
-                auto* PActionTarget = dynamic_cast<CBattleEntity*>(zoneutils::GetEntity(actionTarget.actorId));
-                if (PActionTarget)
-                {
-                    PActionTarget->PAI->EventHandler.triggerListener("ABILITY_TAKE", m_PEntity, PActionTarget, m_PAbility.get(), &action);
-                }
+                PActionTarget->PAI->EventHandler.triggerListener("ABILITY_TAKE", m_PEntity, PActionTarget, m_PAbility.get(), &action);
             }
         }
 
@@ -237,16 +242,19 @@ bool CAbilityState::Update(timer::time_point tick)
     return false;
 }
 
-bool CAbilityState::CanUseAbility()
+auto CAbilityState::CanUseAbility() const -> bool
 {
     CAbility*    PAbility = GetAbility();
-    CBaseEntity* PTarget  = GetTarget();
+    CBaseEntity* PTarget  = target().resolve();
 
     std::unique_ptr<CBasicPacket> errMsg;
 
     if (m_PEntity->objtype == TYPE_PC)
     {
         auto* PChar = static_cast<CCharEntity*>(m_PEntity);
+
+        const bool isLuopanAbility = PAbility->getID() >= ABILITY_CONCENTRIC_PULSE && PAbility->getID() <= ABILITY_RADIAL_ARCANA;
+
         if (PChar->PRecastContainer->HasRecast(RECAST_ABILITY, PAbility->getRecastId(), PAbility->getRecastTime()))
         {
             PChar->pushPacket<GP_SERV_COMMAND_BATTLE_MESSAGE>(PChar, PChar, 0, 0, MsgBasic::WaitLonger);
@@ -255,7 +263,7 @@ bool CAbilityState::CanUseAbility()
 
         if (PChar->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Amnesia) ||
             (PChar->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Impairment) && (PChar->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Impairment)->GetPower() == 0x01 || PChar->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Impairment)->GetPower() == 0x03)) ||
-            (!PAbility->isPetAbility() && !charutils::hasAbility(PChar, PAbility->getID())) ||
+            ((!PAbility->isPetAbility() || isLuopanAbility) && !charutils::hasAbility(PChar, PAbility->getID())) ||
             (PAbility->isPetAbility() && PAbility->getID() >= ABILITY_HEALING_RUBY && !charutils::hasPetAbility(PChar, PAbility->getID() - ABILITY_HEALING_RUBY)))
         {
             PChar->pushPacket<GP_SERV_COMMAND_BATTLE_MESSAGE>(PChar, PChar, 0, 0, MsgBasic::UnableToUseJobAbility2);
@@ -265,8 +273,7 @@ bool CAbilityState::CanUseAbility()
         if (PTarget && PChar->IsValidTarget(PTarget->targid, PAbility->getValidTarget(), errMsg))
         {
             // TODO: Rework the way abilities and pet abilities are laid out so it can all go through the same block and have the pet special checks done in lua
-            const CPetSkill* PPetSkill       = PAbility->isPetAbility() ? battleutils::GetPetSkill(PAbility->getID()) : nullptr;
-            const bool       isLuopanAbility = PAbility->getID() >= ABILITY_CONCENTRIC_PULSE && PAbility->getID() <= ABILITY_RADIAL_ARCANA;
+            const CPetSkill* PPetSkill = PAbility->isPetAbility() ? battleutils::GetPetSkill(PAbility->getID()) : nullptr;
             if (PPetSkill && !isLuopanAbility && (PPetSkill->isBloodPactRage() || PPetSkill->isBloodPactWard() || PPetSkill->getMobSkillID() > 0))
             {
                 if (!PetSkillDistanceCheck(PChar, PTarget, PAbility))
@@ -280,7 +287,7 @@ bool CAbilityState::CanUseAbility()
                 return false;
             }
 
-            if (m_PEntity->loc.zone->CanUseMisc(MISC_LOS_PLAYER_BLOCK) && !m_PEntity->CanSeeTarget(PTarget))
+            if (m_PEntity->loc.zone->CanUseMisc(xi::ZoneMisc::LosPlayerBlock) && !m_PEntity->CanSeeTarget(PTarget))
             {
                 PChar->pushPacket<GP_SERV_COMMAND_BATTLE_MESSAGE>(PChar, PTarget, 0, 0, MsgBasic::UnableToSeeTarget);
                 return false;
@@ -331,4 +338,18 @@ bool CAbilityState::CanUseAbility()
         // TODO: should luautils::OnAbilityCheck go here too?
     }
     return true;
+}
+
+auto CAbilityState::CanFollowPath() -> bool
+{
+    return true;
+}
+
+auto CAbilityState::CanInterrupt() -> bool
+{
+    return true;
+}
+
+void CAbilityState::Cleanup(timer::time_point tick)
+{
 }

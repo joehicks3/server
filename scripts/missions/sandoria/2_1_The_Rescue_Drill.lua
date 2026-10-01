@@ -98,13 +98,13 @@ mission.sections =
             {
                 [1005] = function(player, csid, option, npc)
                     if mission:complete(player) then
-                        player:delKeyItem(xi.ki.RESCUE_TRAINING_CERTIFICATE)
+                        player:delKeyItem(xi.keyItem.RESCUE_TRAINING_CERTIFICATE)
                     end
                 end,
 
                 [2005] = function(player, csid, option, npc)
                     if mission:complete(player) then
-                        player:delKeyItem(xi.ki.RESCUE_TRAINING_CERTIFICATE)
+                        player:delKeyItem(xi.keyItem.RESCUE_TRAINING_CERTIFICATE)
                     end
                 end,
             },
@@ -127,7 +127,7 @@ mission.sections =
             {
                 [1005] = function(player, csid, option, npc)
                     if mission:complete(player) then
-                        player:delKeyItem(xi.ki.RESCUE_TRAINING_CERTIFICATE)
+                        player:delKeyItem(xi.keyItem.RESCUE_TRAINING_CERTIFICATE)
                     end
                 end,
             },
@@ -293,7 +293,7 @@ mission.sections =
                     elseif missionStatus == 10 then
                         return mission:progressEvent(115)
                     elseif missionStatus == 11 then
-                        return mission:messageText(laTheinePlateauID.text.RESCUE_DRILL + 29, xi.ki.RESCUE_TRAINING_CERTIFICATE)
+                        return mission:messageText(laTheinePlateauID.text.RESCUE_DRILL + 29, xi.keyItem.RESCUE_TRAINING_CERTIFICATE)
                     else
                         return mission:progressEvent(5)
                     end
@@ -362,7 +362,7 @@ mission.sections =
                 end,
 
                 [115] = function(player, csid, option, npc)
-                    npcUtil.giveKeyItem(player, xi.ki.RESCUE_TRAINING_CERTIFICATE)
+                    npcUtil.giveKeyItem(player, xi.keyItem.RESCUE_TRAINING_CERTIFICATE)
                     player:setMissionStatus(mission.areaId, 11)
                 end,
             },
@@ -375,7 +375,7 @@ mission.sections =
                 onTrade = function(player, npc, trade)
                     if
                         player:getMissionStatus(mission.areaId) == 9 and
-                        npcUtil.tradeHasExactly(trade, xi.item.BRONZE_SWORD)
+                        npcUtil.tradeMatches(trade, { { xi.item.BRONZE_SWORD, 1 } })
                     then
                         return mission:progressEvent(2)
                     end
@@ -400,13 +400,13 @@ mission.sections =
             onEventFinish =
             {
                 [1] = function(player, csid, option, npc)
-                    mission:setVar(player, 'Option', math.random(1, 3))
+                    mission:setVar(player, 'Option', math.randomInt(1, 3))
                     player:setMissionStatus(mission.areaId, 8)
                 end,
 
                 [2] = function(player, csid, option, npc)
                     player:setMissionStatus(mission.areaId, 10)
-                    player:confirmTrade()
+                    player:tradeComplete()
                 end,
             },
         },

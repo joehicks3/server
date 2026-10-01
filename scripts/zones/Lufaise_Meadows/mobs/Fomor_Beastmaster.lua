@@ -7,17 +7,15 @@ mixins =
     require('scripts/mixins/follow'),
     require('scripts/mixins/fomor_hate'),
     require('scripts/mixins/fomor_party'),
+    require('scripts/mixins/pet_resummon'),
 }
 -----------------------------------
 ---@type TMobEntity
 local entity = {}
 
 entity.onMobInitialize = function(mob)
-    xi.pet.setMobPet(mob, 1, 'Fomors_Bat')
-end
-
-entity.onMobSpawn = function(mob)
     xi.mix.fomorParty.onPartySpawn(mob)
+    xi.pet.setMobPet(mob, 1, 'Fomors_Bat')
 end
 
 entity.onMobRoam = function(mob)

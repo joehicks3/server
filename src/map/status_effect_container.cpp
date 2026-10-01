@@ -1,4 +1,4 @@
-﻿/*
+/*
 ===========================================================================
 
   Copyright (c) 2010-2015 Darkstar Dev Teams
@@ -30,13 +30,22 @@ When a status effect is gained twice on a player. It can do one or more of the f
 */
 
 #include "common/logging.h"
-#include "common/timer.h"
 
+#include "common/timer.h"
+#include "data/datasets/status_effects/dataset.h"
+#include "data/enums/weather.h"
+
+#include <common/database.h>
+#include <common/types/hash_map.h>
+
+#include <algorithm>
 #include <array>
 #include <cstring>
 
-#include "data/loader.h"
+#include "map_constants.h"
+
 #include "lua/luautils.h"
+#include "utils/dataset_loader.h"
 
 #include "ai/ai_container.h"
 #include "ai/states/inactive_state.h"
@@ -64,6 +73,8 @@ When a status effect is gained twice on a player. It can do one or more of the f
 namespace effects
 {
 
+using StatusEffectsDataset = xi::data::datasets::status_effects::Dataset;
+
 // Default effect of statuses are overwrite if equal or higher
 struct EffectParams_t
 {
@@ -89,7 +100,7 @@ void LoadEffectsParameters()
         EffectsParams[static_cast<uint16>(i)].Flag = xi::StatusEffectFlag::None;
     }
 
-    for (const auto& [id, data] : LoadStatusEffects())
+    for (const auto& [id, data] : xi::data::loadDataset<StatusEffectsDataset>())
     {
         if (id >= MAX_EFFECTID)
         {
@@ -238,11 +249,11 @@ bool CStatusEffectContainer::CanGainStatusEffect(CStatusEffect* PStatusEffect)
         case xi::StatusEffect::Lullaby:
         {
             uint16 subPower = PStatusEffect->GetSubPower();
-            if (subPower == ELEMENT_LIGHT && m_POwner->hasImmunity(IMMUNITY_LIGHT_SLEEP))
+            if (subPower == ELEMENT_LIGHT && m_POwner->hasImmunity(xi::Immunity::LightSleep))
             {
                 return false;
             }
-            else if (subPower == ELEMENT_DARK && m_POwner->hasImmunity(IMMUNITY_DARK_SLEEP))
+            else if (subPower == ELEMENT_DARK && m_POwner->hasImmunity(xi::Immunity::DarkSleep))
             {
                 return false;
             }
@@ -250,73 +261,85 @@ bool CStatusEffectContainer::CanGainStatusEffect(CStatusEffect* PStatusEffect)
             break;
         }
         case xi::StatusEffect::Weight:
-            if (m_POwner->hasImmunity(IMMUNITY_GRAVITY))
+            if (m_POwner->hasImmunity(xi::Immunity::Gravity))
             {
                 return false;
             }
             break;
         case xi::StatusEffect::Bind:
-            if (m_POwner->hasImmunity(IMMUNITY_BIND))
+            if (m_POwner->hasImmunity(xi::Immunity::Bind))
             {
                 return false;
             }
             break;
         case xi::StatusEffect::Stun:
-            if (m_POwner->hasImmunity(IMMUNITY_STUN))
+            if (m_POwner->hasImmunity(xi::Immunity::Stun))
             {
                 return false;
             }
             break;
         case xi::StatusEffect::Silence:
-            if (m_POwner->hasImmunity(IMMUNITY_SILENCE))
+            if (m_POwner->hasImmunity(xi::Immunity::Silence))
             {
                 return false;
             }
             break;
         case xi::StatusEffect::Paralysis:
-            if (m_POwner->hasImmunity(IMMUNITY_PARALYZE))
+            if (m_POwner->hasImmunity(xi::Immunity::Paralyze))
             {
                 return false;
             }
             break;
         case xi::StatusEffect::Blindness:
-            if (m_POwner->hasImmunity(IMMUNITY_BLIND))
+            if (m_POwner->hasImmunity(xi::Immunity::Blind))
             {
                 return false;
             }
             break;
         case xi::StatusEffect::Slow:
-            if (m_POwner->hasImmunity(IMMUNITY_SLOW))
+            if (m_POwner->hasImmunity(xi::Immunity::Slow))
             {
                 return false;
             }
             break;
         case xi::StatusEffect::Poison:
-            if (m_POwner->hasImmunity(IMMUNITY_POISON))
+            if (m_POwner->hasImmunity(xi::Immunity::Poison))
             {
                 return false;
             }
             break;
         case xi::StatusEffect::Elegy:
-            if (m_POwner->hasImmunity(IMMUNITY_ELEGY))
+            if (m_POwner->hasImmunity(xi::Immunity::Elegy))
             {
                 return false;
             }
             break;
         case xi::StatusEffect::Requiem:
-            if (m_POwner->hasImmunity(IMMUNITY_REQUIEM))
+            if (m_POwner->hasImmunity(xi::Immunity::Requiem))
             {
                 return false;
             }
             break;
         case xi::StatusEffect::Terror:
-            if (m_POwner->hasImmunity(IMMUNITY_TERROR))
+            if (m_POwner->hasImmunity(xi::Immunity::Terror))
             {
                 return false;
             }
             break;
         case xi::StatusEffect::Petrification:
-            if (m_POwner->hasImmunity(IMMUNITY_PETRIFY))
+            if (m_POwner->hasImmunity(xi::Immunity::Petrify))
+            {
+                return false;
+            }
+            break;
+        case xi::StatusEffect::CurseI:
+            if (m_POwner->hasImmunity(xi::Immunity::Curse))
+            {
+                return false;
+            }
+            break;
+        case xi::StatusEffect::CurseIi:
+            if (m_POwner->hasImmunity(xi::Immunity::Curse))
             {
                 return false;
             }
@@ -502,7 +525,7 @@ bool CStatusEffectContainer::AddStatusEffect(std::unique_ptr<CStatusEffect> PSta
 
         m_StatusEffectSet.insert(std::move(PStatusEffectPtr));
 
-        ApplyStateAlteringEffects(PStatusEffect);
+        HandleEffectGainSideEffects(PStatusEffect);
 
         luautils::OnEffectGain(m_POwner, PStatusEffect);
         m_POwner->PAI->EventHandler.triggerListener("EFFECT_GAIN", m_POwner, PStatusEffect);
@@ -525,6 +548,8 @@ bool CStatusEffectContainer::AddStatusEffect(std::unique_ptr<CStatusEffect> PSta
         if (m_POwner->objtype == TYPE_PC)
         {
             CCharEntity* PChar = (CCharEntity*)m_POwner;
+
+            PChar->setPersist(CharPersist::Effects);
 
             if (PStatusEffect->GetIcon() != 0)
             {
@@ -557,9 +582,6 @@ bool CStatusEffectContainer::AddStatusEffect(std::unique_ptr<CStatusEffect> PSta
 
 void CStatusEffectContainer::DeleteStatusEffects()
 {
-    TracyZoneScoped;
-    TracyZoneString(m_POwner->getName());
-
     bool update_icons    = false;
     bool effects_removed = false;
     for (auto effect_iter = m_StatusEffectSet.begin(); effect_iter != m_StatusEffectSet.end();)
@@ -615,6 +637,8 @@ void CStatusEffectContainer::RemoveStatusEffect(CStatusEffect* PStatusEffect, co
         if (m_POwner->objtype == TYPE_PC)
         {
             auto* PChar = static_cast<CCharEntity*>(m_POwner);
+
+            PChar->setPersist(CharPersist::Effects);
 
             if (notice != EffectNotice::Silent && PStatusEffect->GetIcon() != 0 && !(PStatusEffect->HasEffectFlag(xi::StatusEffectFlag::NoLossMessage)))
             {
@@ -773,8 +797,7 @@ void CStatusEffectContainer::KillAllStatusEffect()
     m_POwner->UpdateHealth();
 }
 
-// Apply any state alterations for the effect if applicable.
-void CStatusEffectContainer::ApplyStateAlteringEffects(CStatusEffect* StatusEffect)
+void CStatusEffectContainer::HandleEffectGainSideEffects(CStatusEffect* StatusEffect)
 {
     TracyZoneScoped;
 
@@ -800,11 +823,6 @@ void CStatusEffectContainer::ApplyStateAlteringEffects(CStatusEffect* StatusEffe
             if (effect == xi::StatusEffect::SleepIi || effect == xi::StatusEffect::Lullaby)
             {
                 StatusEffect->SetIcon(static_cast<uint16>(xi::StatusEffect::SleepI));
-            }
-
-            if (!m_POwner->PAI->IsCurrentState<CInactiveState>() && !m_POwner->PAI->IsCurrentState<CMobSkillState>())
-            {
-                m_POwner->PAI->Inactive(0ms, false);
             }
         }
     }
@@ -1108,7 +1126,7 @@ uint8 CStatusEffectContainer::GetActiveRuneCount()
 
 auto CStatusEffectContainer::GetHighestRuneEffect() -> xi::StatusEffect
 {
-    std::unordered_map<xi::StatusEffect, uint8> runeEffects;
+    HashMap<xi::StatusEffect, uint8> runeEffects;
 
     for (const auto& PStatusEffect : m_StatusEffectSet)
     {
@@ -1600,11 +1618,11 @@ void CStatusEffectContainer::LoadStatusEffects()
         // load shadows left
         if (PStatusEffect->GetStatusID() == xi::StatusEffect::CopyImage)
         {
-            m_POwner->setModifier(Mod::UTSUSEMI, PStatusEffect->GetSubPower());
+            m_POwner->setModifier(xi::Mod::UTSUSEMI, PStatusEffect->GetSubPower());
         }
         else if (PStatusEffect->GetStatusID() == xi::StatusEffect::Blink)
         {
-            m_POwner->setModifier(Mod::BLINK, PStatusEffect->GetPower());
+            m_POwner->setModifier(xi::Mod::BLINK, PStatusEffect->GetPower());
         }
 
         PEffectList.emplace_back(std::move(PStatusEffect));
@@ -1615,6 +1633,9 @@ void CStatusEffectContainer::LoadStatusEffects()
         AddStatusEffect(std::move(PStatusEffect));
     }
 
+    // nothing changed since the read
+    static_cast<CCharEntity*>(m_POwner)->clearPersist(CharPersist::Effects);
+
     m_POwner->UpdateHealth(); // after loading the effects, recalculate the maximum amount of HP/MP
 }
 
@@ -1624,23 +1645,19 @@ void CStatusEffectContainer::LoadStatusEffects()
  *                                                                       *
  ************************************************************************/
 
-void CStatusEffectContainer::SaveStatusEffects(bool logout)
+auto CStatusEffectContainer::BuildPersistRows(const IsLogout logout) -> std::vector<PersistedEffect>
 {
-    // Print entity name and bail out if entity isn't a player.
+    std::vector<PersistedEffect> rows;
+
     if (m_POwner->objtype != TYPE_PC)
     {
-        ShowDebug("Non-player entity %s (ID: %d) attempt to save Status Effect.", m_POwner->getName(), m_POwner->id);
-
-        return;
+        return rows;
     }
-
-    db::preparedStmt("DELETE FROM char_effects WHERE charid = ?", m_POwner->id);
 
     for (const auto& PStatusEffect : m_StatusEffectSet)
     {
         if ((logout && PStatusEffect->HasEffectFlag(xi::StatusEffectFlag::Logout)) || (!logout && PStatusEffect->HasEffectFlag(xi::StatusEffectFlag::OnZone)))
         {
-            RemoveStatusEffect(PStatusEffect.get(), EffectNotice::Silent);
             continue;
         }
 
@@ -1652,65 +1669,113 @@ void CStatusEffectContainer::SaveStatusEffects(bool logout)
         const auto durationSeconds     = timer::count_seconds(PStatusEffect->GetDuration());
         const auto realDurationSeconds = timer::count_seconds(PStatusEffect->GetStartTime() + PStatusEffect->GetDuration() - timer::now());
 
-        if (realDurationSeconds > 0 || durationSeconds == 0)
+        if (!(realDurationSeconds > 0 || durationSeconds == 0))
         {
-            // save power of utsusemi and blink
-            if (PStatusEffect->GetStatusID() == xi::StatusEffect::CopyImage)
-            {
-                PStatusEffect->SetSubPower(m_POwner->getMod(Mod::UTSUSEMI));
-            }
-            else if (PStatusEffect->GetStatusID() == xi::StatusEffect::Blink)
-            {
-                PStatusEffect->SetPower(m_POwner->getMod(Mod::BLINK));
-            }
-            else if (PStatusEffect->GetStatusID() == xi::StatusEffect::Stoneskin)
-            {
-                PStatusEffect->SetPower(m_POwner->getMod(Mod::STONESKIN));
-            }
+            continue;
+        }
 
-            uint32 duration = 0;
+        // save power of utsusemi and blink
+        if (PStatusEffect->GetStatusID() == xi::StatusEffect::CopyImage)
+        {
+            PStatusEffect->SetSubPower(m_POwner->getMod(xi::Mod::UTSUSEMI));
+        }
+        else if (PStatusEffect->GetStatusID() == xi::StatusEffect::Blink)
+        {
+            PStatusEffect->SetPower(m_POwner->getMod(xi::Mod::BLINK));
+        }
 
-            if (durationSeconds > 0)
+        uint32 duration = 0;
+
+        if (durationSeconds > 0)
+        {
+            if (PStatusEffect->HasEffectFlag(xi::StatusEffectFlag::OfflineTick))
             {
-                if (PStatusEffect->HasEffectFlag(xi::StatusEffectFlag::OfflineTick))
+                duration = static_cast<uint32>(durationSeconds);
+            }
+            else
+            {
+                if (realDurationSeconds > 0)
                 {
-                    duration = static_cast<uint32>(durationSeconds);
+                    duration = static_cast<uint32>(realDurationSeconds);
                 }
                 else
                 {
-                    if (realDurationSeconds > 0)
-                    {
-                        duration = static_cast<uint32>(realDurationSeconds);
-                    }
-                    else
-                    {
-                        continue;
-                    }
+                    continue;
                 }
             }
+        }
 
-            uint32 tick      = static_cast<uint32>(timer::count_seconds(PStatusEffect->GetTickTime()));
-            auto   timestamp = earth_time::timestamp(timer::to_utc(PStatusEffect->GetStartTime()));
+        rows.push_back({
+            .charid          = m_POwner->id,
+            .effectId        = static_cast<uint16>(PStatusEffect->GetStatusID()),
+            .icon            = PStatusEffect->GetIcon(),
+            .power           = PStatusEffect->GetPower(),
+            .tick            = static_cast<uint32>(timer::count_seconds(PStatusEffect->GetTickTime())),
+            .duration        = duration,
+            .subId           = PStatusEffect->GetSubID(),
+            .subPower        = PStatusEffect->GetSubPower(),
+            .tier            = PStatusEffect->GetTier(),
+            .flags           = static_cast<uint32>(PStatusEffect->GetEffectFlags()),
+            .timestamp       = earth_time::timestamp(timer::to_utc(PStatusEffect->GetStartTime())),
+            .sourceType      = PStatusEffect->GetSourceType(),
+            .sourceTypeParam = PStatusEffect->GetSourceTypeParam(),
+            .originId        = PStatusEffect->GetOriginID(),
+        });
+    }
 
-            db::preparedStmt("INSERT INTO char_effects (charid, effectid, icon, power, tick, duration, subid, subpower, tier, flags, timestamp, sourcetype, sourcetypeparam, originid) "
-                             "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                             m_POwner->id,
-                             static_cast<uint16>(PStatusEffect->GetStatusID()),
-                             PStatusEffect->GetIcon(),
-                             PStatusEffect->GetPower(),
-                             tick,
-                             duration,
-                             PStatusEffect->GetSubID(),
-                             PStatusEffect->GetSubPower(),
-                             PStatusEffect->GetTier(),
-                             static_cast<uint32>(PStatusEffect->GetEffectFlags()),
-                             timestamp,
-                             PStatusEffect->GetSourceType(),
-                             PStatusEffect->GetSourceTypeParam(),
-                             PStatusEffect->GetOriginID());
+    return rows;
+}
+
+void CStatusEffectContainer::DropEffectsForTransition(const IsLogout logout)
+{
+    // Print entity name and bail out if entity isn't a player.
+    if (m_POwner->objtype != TYPE_PC)
+    {
+        ShowDebug("Non-player entity %s (ID: %d) attempt to drop Status Effects.", m_POwner->getName(), m_POwner->id);
+
+        return;
+    }
+
+    for (const auto& PStatusEffect : m_StatusEffectSet)
+    {
+        if ((logout && PStatusEffect->HasEffectFlag(xi::StatusEffectFlag::Logout)) || (!logout && PStatusEffect->HasEffectFlag(xi::StatusEffectFlag::OnZone)))
+        {
+            RemoveStatusEffect(PStatusEffect.get(), EffectNotice::Silent);
         }
     }
+
     DeleteStatusEffects();
+}
+
+void effects::SaveEffectRows(const std::vector<uint32>& replaceFor, const std::vector<PersistedEffect>& rows)
+{
+    TracyZoneScoped;
+
+    if (replaceFor.empty())
+    {
+        return;
+    }
+
+    db::transaction(
+        [&]()
+        {
+            db::executeBulk(
+                "DELETE FROM char_effects WHERE charid = ?",
+                replaceFor,
+                [](uint32 charid)
+                {
+                    return std::make_tuple(charid);
+                });
+
+            db::executeBulk(
+                "INSERT INTO char_effects (charid, effectid, icon, power, tick, duration, subid, subpower, tier, flags, timestamp, sourcetype, sourcetypeparam, originid) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                rows,
+                [](const PersistedEffect& row)
+                {
+                    return std::make_tuple(row.charid, row.effectId, row.icon, row.power, row.tick, row.duration, row.subId, row.subPower, row.tier, row.flags, row.timestamp, row.sourceType, row.sourceTypeParam, row.originId);
+                });
+        });
 }
 
 /************************************************************************
@@ -1747,7 +1812,7 @@ void CStatusEffectContainer::HandleAura(CStatusEffect* PStatusEffect)
 
     CBattleEntity* PEntity    = m_POwner;
     AURA_TARGET    auraTarget = static_cast<AURA_TARGET>(PStatusEffect->GetTier());
-    float          aura_range = 6.0f + (PEntity->getMod(Mod::AURA_SIZE) / 100.0f); // Adding to this mod should be the value you want * 100
+    float          aura_range = 6.0f + (PEntity->getMod(xi::Mod::AURA_SIZE) / 100.0f); // Adding to this mod should be the value you want * 100
 
     if (PEntity->objtype == TYPE_PET || PEntity->objtype == TYPE_TRUST)
     {
@@ -2003,10 +2068,14 @@ void CStatusEffectContainer::TickRegen(timer::time_point tick)
             PChar = (CCharEntity*)m_POwner;
         }
 
-        int16 regen   = m_POwner->getMod(Mod::REGEN);
-        int16 poison  = m_POwner->getMod(Mod::REGEN_DOWN);
-        int16 refresh = m_POwner->getMod(Mod::REFRESH) - m_POwner->getMod(Mod::REFRESH_DOWN);
-        int16 regain  = m_POwner->getMod(Mod::REGAIN) - m_POwner->getMod(Mod::REGAIN_DOWN);
+        // Regen / Refresh are clamped to 0 so that negative values don't drain HP/MP from the player.
+        // A busted Dancer(Regen) or Evoker(Refresh) carry negative values but do not cause the player to lose HP/MP.
+        // Negative values will only counteract a positive regen or refresh value.
+        // This is an abnormal way of handling this, for intentional degens, use REGEN_DOWN or REFRESH_DOWN instead.
+        int16 regen   = std::max<int16>(m_POwner->getMod(xi::Mod::REGEN), 0);
+        int16 poison  = m_POwner->getMod(xi::Mod::REGEN_DOWN);
+        int16 refresh = std::max<int16>(m_POwner->getMod(xi::Mod::REFRESH), 0) - m_POwner->getMod(xi::Mod::REFRESH_DOWN);
+        int16 regain  = m_POwner->getMod(xi::Mod::REGAIN) - m_POwner->getMod(xi::Mod::REGAIN_DOWN);
         m_POwner->addHP(regen);
 
         if (poison)
@@ -2031,9 +2100,9 @@ void CStatusEffectContainer::TickRegen(timer::time_point tick)
         }
 
         // Final perpetuation = (Base / Half_Factor +- Reductions Or Penalties) * Avatar_Favor_Factor -> Minimum perpetuation is 1 except with 2Hour. Then refresh is applied.
-        if (m_POwner->getMod(Mod::AVATAR_PERPETUATION) > 0 && (m_POwner->objtype == TYPE_PC))
+        if (m_POwner->getMod(xi::Mod::AVATAR_PERPETUATION) > 0 && (m_POwner->objtype == TYPE_PC))
         {
-            int16 perpetuationCost = m_POwner->getMod(Mod::AVATAR_PERPETUATION);
+            int16 perpetuationCost = m_POwner->getMod(xi::Mod::AVATAR_PERPETUATION);
 
             if (m_POwner->PPet != nullptr && PChar != nullptr)
             {
@@ -2056,17 +2125,17 @@ void CStatusEffectContainer::TickRegen(timer::time_point tick)
                     petElementIdx = static_cast<uint8>(petElement) - 1;
                 }
 
-                static const Mod     strong[8]        = { Mod::FIRE_AFFINITY_PERP, Mod::ICE_AFFINITY_PERP, Mod::WIND_AFFINITY_PERP, Mod::EARTH_AFFINITY_PERP, Mod::THUNDER_AFFINITY_PERP, Mod::WATER_AFFINITY_PERP, Mod::LIGHT_AFFINITY_PERP, Mod::DARK_AFFINITY_PERP };
-                static const Weather weatherStrong[8] = { Weather::HotSpell, Weather::Snow, Weather::Wind, Weather::DustStorm, Weather::Thunder, Weather::Rain, Weather::Auroras, Weather::Gloom };
+                static const xi::Mod     strong[8]        = { xi::Mod::FIRE_AFFINITY_PERP, xi::Mod::ICE_AFFINITY_PERP, xi::Mod::WIND_AFFINITY_PERP, xi::Mod::EARTH_AFFINITY_PERP, xi::Mod::THUNDER_AFFINITY_PERP, xi::Mod::WATER_AFFINITY_PERP, xi::Mod::LIGHT_AFFINITY_PERP, xi::Mod::DARK_AFFINITY_PERP };
+                static const xi::Weather weatherStrong[8] = { xi::Weather::HotSpell, xi::Weather::Snow, xi::Weather::Wind, xi::Weather::DustStorm, xi::Weather::Thunder, xi::Weather::Rain, xi::Weather::Auroras, xi::Weather::Gloom };
 
                 // Day / Weather elemental matches.
                 bool dayMatch     = elementValid && dayElement == petElement;
-                bool weatherMatch = elementValid && (weather == weatherStrong[petElementIdx] || weather == static_cast<Weather>(static_cast<uint16_t>(weatherStrong[petElementIdx]) + 1));
+                bool weatherMatch = elementValid && (weather == weatherStrong[petElementIdx] || weather == static_cast<xi::Weather>(static_cast<uint16_t>(weatherStrong[petElementIdx]) + 1));
 
                 // Halve perpetuation cost before all regular reductions.
-                bool halfFromCarby   = PChar->getMod(Mod::HALF_PERPETUATION_CARBUNCLE) != 0 && PPet->petID() == PETID_CARBUNCLE;
-                bool halfFromDay     = PChar->getMod(Mod::HALF_PERPETUATION_DAY) != 0 && dayMatch;
-                bool halfFromWeather = PChar->getMod(Mod::HALF_PERPETUATION_WEATHER) != 0 && weatherMatch;
+                bool halfFromCarby   = PChar->getMod(xi::Mod::HALF_PERPETUATION_CARBUNCLE) != 0 && PPet->petID() == PETID_CARBUNCLE;
+                bool halfFromDay     = PChar->getMod(xi::Mod::HALF_PERPETUATION_DAY) != 0 && dayMatch;
+                bool halfFromWeather = PChar->getMod(xi::Mod::HALF_PERPETUATION_WEATHER) != 0 && weatherMatch;
 
                 if (halfFromCarby || halfFromDay || halfFromWeather)
                 {
@@ -2074,7 +2143,7 @@ void CStatusEffectContainer::TickRegen(timer::time_point tick)
                 }
 
                 // Apply regular perpetuation reduction.
-                perpetuationCost = perpetuationCost - PChar->getMod(Mod::PERPETUATION_REDUCTION);
+                perpetuationCost = perpetuationCost - PChar->getMod(xi::Mod::PERPETUATION_REDUCTION);
 
                 // Apply elemental affinity perpetuation bonus/penalty.
                 if (elementValid)
@@ -2085,13 +2154,13 @@ void CStatusEffectContainer::TickRegen(timer::time_point tick)
                 // Apply day element perpetuation reduction.
                 if (dayMatch)
                 {
-                    perpetuationCost = perpetuationCost - PChar->getMod(Mod::DAY_REDUCTION);
+                    perpetuationCost = perpetuationCost - PChar->getMod(xi::Mod::DAY_REDUCTION);
                 }
 
                 // Apply weather element perpetuation reduction.
                 if (weatherMatch)
                 {
-                    perpetuationCost = perpetuationCost - PChar->getMod(Mod::WEATHER_REDUCTION);
+                    perpetuationCost = perpetuationCost - PChar->getMod(xi::Mod::WEATHER_REDUCTION);
                 }
 
                 // Avatar's Favor multiplier after all regular reductions.
@@ -2164,6 +2233,19 @@ uint16 CStatusEffectContainer::GetConfrontationEffect()
             return PEffect->GetPower();
         }
     }
+    return 0;
+}
+
+auto CStatusEffectContainer::GetConfrontationSubPower() const -> uint16
+{
+    for (const auto& PEffect : m_StatusEffectSet)
+    {
+        if (PEffect->HasEffectFlag(xi::StatusEffectFlag::Confrontation))
+        {
+            return PEffect->GetSubPower();
+        }
+    }
+
     return 0;
 }
 

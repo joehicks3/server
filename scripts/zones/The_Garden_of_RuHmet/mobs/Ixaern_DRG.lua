@@ -52,6 +52,7 @@ end
 
 entity.onMobInitialize = function(mob)
     mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 300)
+    mob:setMobMod(xi.mobMod.SUPERLINK, mob:getTargID())
     mob:addImmunity(xi.immunity.BIND)
     mob:addImmunity(xi.immunity.LIGHT_SLEEP)
     mob:addImmunity(xi.immunity.DARK_SLEEP)
@@ -61,6 +62,7 @@ entity.onMobInitialize = function(mob)
 end
 
 entity.onMobSpawn = function(mob)
+    mob:setMod(xi.mod.STORETP, 100)
     mob:setLocalVar('braceletTimer', GetSystemTime() + 80)
 end
 
@@ -133,9 +135,14 @@ entity.onMobDisengage = function(mob)
 end
 
 entity.onMobDespawn = function(mob)
+    local zone = mob:getZone()
+    if not zone then
+        return
+    end
+
     -- Give Ix'DRG a random placeholder by picking one of the four groups' first PH, then adding a random number of 0-2 for the specific mob.
     local basePhId = utils.randomEntry(ID.mob.AWAERN_DRG_GROUPS)
-    SetServerVariable('[SEA]IxAernDRG_PH', basePhId + math.random(0, 2))
+    zone:setLocalVar('[SEA]IxAernDRG_PH', basePhId + math.randomInt(0, 2))
 end
 
 return entity

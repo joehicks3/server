@@ -10,16 +10,16 @@ local quest = Quest:new(xi.questLog.BASTOK, xi.quest.id.bastok.MOM_THE_ADVENTURE
 
 quest.reward =
 {
-    fame     = 20,
+    fame     = 10,
     fameArea = xi.fameArea.BASTOK,
     title    = xi.title.RINGBEARER,
 }
 
 local handleEventFinish = function(player, csid, option, npc)
-    if quest:complete(player) then
-        local gilReward = csid == 233 and 200 or 100
+    local gilReward = csid == 233 and 200 or 100
 
-        player:delKeyItem(xi.ki.LETTER_FROM_ROH_LATTEH)
+    if quest:complete(player) then
+        player:delKeyItem(xi.keyItem.LETTER_FROM_ROH_LATTEH)
         npcUtil.giveCurrency(player, 'gil', gilReward)
         quest:setMustZone(player)
     end
@@ -29,8 +29,7 @@ quest.sections =
 {
     {
         check = function(player, status, vars)
-            return status ~= xi.questStatus.QUEST_ACCEPTED and
-                vars.Prog == 0
+            return status == xi.questStatus.QUEST_AVAILABLE
         end,
 
         [xi.zone.BASTOK_MARKETS] =
@@ -41,11 +40,7 @@ quest.sections =
             {
                 [230] = function(player, csid, option, npc)
                     if npcUtil.giveItem(player, xi.item.FIRE_CRYSTAL) then
-                        quest:setVar(player, 'Prog', 1)
-
-                        if player:getQuestStatus(quest.areaId, quest.questId) == xi.questStatus.QUEST_AVAILABLE then
-                            quest:begin(player)
-                        end
+                        quest:begin(player)
                     end
                 end,
             },
@@ -54,8 +49,7 @@ quest.sections =
 
     {
         check = function(player, status, vars)
-            return status ~= xi.questStatus.QUEST_AVAILABLE and
-                vars.Prog == 1
+            return status == xi.questStatus.QUEST_ACCEPTED
         end,
 
         [xi.zone.BASTOK_MARKETS] =
@@ -63,8 +57,8 @@ quest.sections =
             ['Nbu_Latteh'] =
             {
                 onTrigger = function(player, npc)
-                    if player:hasKeyItem(xi.ki.LETTER_FROM_ROH_LATTEH) then
-                        if player:seenKeyItem(xi.ki.LETTER_FROM_ROH_LATTEH) then
+                    if player:hasKeyItem(xi.keyItem.LETTER_FROM_ROH_LATTEH) then
+                        if player:seenKeyItem(xi.keyItem.LETTER_FROM_ROH_LATTEH) then
                             return quest:progressEvent(234)
                         else
                             return quest:progressEvent(233)
@@ -74,6 +68,8 @@ quest.sections =
                     end
                 end,
             },
+
+            ['Parnika'] = quest:event(232),
 
             onEventFinish =
             {
@@ -88,8 +84,8 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        npcUtil.tradeHasExactly(trade, xi.item.COPPER_RING) and
-                        not player:hasKeyItem(xi.ki.LETTER_FROM_ROH_LATTEH)
+                        npcUtil.tradeMatches(trade, { { xi.item.COPPER_RING, 1 } }) and
+                        not player:hasKeyItem(xi.keyItem.LETTER_FROM_ROH_LATTEH)
                     then
                         return quest:progressEvent(95)
                     end
@@ -99,9 +95,83 @@ quest.sections =
             onEventFinish =
             {
                 [95] = function(player, csid, option, npc)
-                    player:confirmTrade()
+                    player:tradeComplete()
+                    npcUtil.giveKeyItem(player, xi.keyItem.LETTER_FROM_ROH_LATTEH)
+                end,
+            },
+        },
+    },
 
-                    npcUtil.giveKeyItem(player, xi.ki.LETTER_FROM_ROH_LATTEH)
+    {
+        check = function(player, status, vars)
+            return status == xi.questStatus.QUEST_COMPLETED and
+                not quest:getMustZone(player)
+        end,
+
+        [xi.zone.BASTOK_MARKETS] =
+        {
+            ['Nbu_Latteh'] =
+            {
+                onTrigger = function(player, npc)
+                    -- Allow quest completion regardless of fame level.
+                    if player:hasKeyItem(xi.keyItem.LETTER_FROM_ROH_LATTEH) then
+                        if player:seenKeyItem(xi.keyItem.LETTER_FROM_ROH_LATTEH) then
+                            return quest:progressEvent(234)
+                        else
+                            return quest:progressEvent(233)
+                        end
+                    end
+
+                    -- Allow quest repeat at Bastok fame 1.
+                    local questProgress = quest:getVar(player, 'Prog')
+                    if
+                        player:getFameLevel(xi.fameArea.BASTOK) == 1 and
+                        questProgress == 0
+                    then
+                        return quest:progressEvent(230)
+
+                    -- Now you are stuck.
+                    elseif questProgress == 1 then
+                        return quest:event(231)
+                    end
+                end,
+            },
+
+            ['Parnika'] = quest:event(232),
+
+            onEventFinish =
+            {
+                [230] = function(player, csid, option, npc)
+                    if npcUtil.giveItem(player, xi.item.FIRE_CRYSTAL) then
+                        quest:setVar(player, 'Prog', 1)
+                    end
+                end,
+
+                [233] = handleEventFinish,
+                [234] = handleEventFinish,
+            },
+        },
+
+        [xi.zone.BASTOK_MINES] =
+        {
+            ['Roh_Latteh'] =
+            {
+                onTrade = function(player, npc, trade)
+                    if
+                        quest:getVar(player, 'Prog') == 1 and
+                        not player:hasKeyItem(xi.keyItem.LETTER_FROM_ROH_LATTEH) and
+                        npcUtil.tradeMatches(trade, { { xi.item.COPPER_RING, 1 } })
+                    then
+                        return quest:progressEvent(95)
+                    end
+                end,
+            },
+
+            onEventFinish =
+            {
+                [95] = function(player, csid, option, npc)
+                    player:tradeComplete()
+                    npcUtil.giveKeyItem(player, xi.keyItem.LETTER_FROM_ROH_LATTEH)
                 end,
             },
         },

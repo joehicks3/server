@@ -10,9 +10,9 @@ end
 
 abilityObject.onPetAbility = function(target, pet, petskill, summoner, action)
     local dint = pet:getStat(xi.mod.INT) - target:getStat(xi.mod.INT)
-    local dmg = 500 + dint * 1.5 + pet:getTP() / 20
+    local dmg = 500 + dint * 1.5 + petskill:getTP() / 20
 
-    xi.job_utils.summoner.onUseBloodPact(target, petskill, summoner, action)
+    xi.job_utils.summoner.onUseBloodPact(target, pet, petskill, summoner, action)
 
     target:updateEnmityFromDamage(pet, dmg)
     target:takeDamage(dmg, pet, xi.attackType.MAGICAL, xi.damageType.LIGHT)

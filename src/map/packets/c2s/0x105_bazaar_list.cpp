@@ -29,20 +29,19 @@ auto GP_CLI_COMMAND_BAZAAR_LIST::validate(MapSession* PSession, const CCharEntit
 {
     return PacketValidator(PChar)
         .blockedBy({ BlockedState::InEvent })
-        .mustEqual(PChar->BazaarID.id, 0, "Character already has a Bazaar ID")
-        .mustEqual(PChar->BazaarID.targid, 0, "Character already has a Bazaar Target ID");
+        .mustEqual(PChar->BazaarID.UniqueNo, 0, "Character already has a Bazaar ID")
+        .mustEqual(PChar->BazaarID.ActIndex, 0, "Character already has a Bazaar Target ID");
 }
 
 void GP_CLI_COMMAND_BAZAAR_LIST::process(MapSession* PSession, CCharEntity* PChar) const
 {
     CCharEntity* PTarget = this->UniqueNo != 0 ? PChar->loc.zone->GetCharByID(this->UniqueNo) : static_cast<CCharEntity*>(PChar->GetEntity(PChar->m_TargID, TYPE_PC));
 
-    if (PTarget != nullptr && PTarget->id == this->UniqueNo && PTarget->hasBazaar())
+    if (PTarget != nullptr && PTarget->id == this->UniqueNo && PTarget->hasBazaar() && PTarget->m_moghouseID == PChar->m_moghouseID)
     {
-        PChar->BazaarID.id     = PTarget->id;
-        PChar->BazaarID.targid = PTarget->targid;
+        PChar->BazaarID = EntityId(PTarget);
 
-        EntityID_t EntityID = { PChar->id, PChar->targid };
+        auto EntityID = PChar->entityId();
 
         if (!PChar->m_isGMHidden || (PChar->m_isGMHidden && PTarget->m_GMlevel >= PChar->m_GMlevel))
         {

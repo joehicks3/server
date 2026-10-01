@@ -5,78 +5,50 @@
 ---@type TMobEntity
 local entity = {}
 
-entity.spawnPoints =
-{
-    { x = -509.612, y = -7.883,  z = -57.162 },
-    { x = -511.114, y = -8.854,  z = -61.300 },
-    { x = -513.979, y = -9.972,  z = -66.404 },
-    { x = -516.567, y = -11.228, z = -71.118 },
-    { x = -516.019, y = -12.018, z = -77.012 },
-    { x = -516.266, y = -12.074, z = -82.299 },
-    { x = -520.644, y = -12.033, z = -84.040 },
-    { x = -525.511, y = -11.937, z = -79.784 },
-    { x = -531.459, y = -12.028, z = -75.823 },
-    { x = -537.182, y = -11.317, z = -79.414 },
-    { x = -541.642, y = -11.083, z = -80.879 },
-    { x = -546.247, y = -11.653, z = -78.959 },
-    { x = -550.252, y = -11.713, z = -81.462 },
-    { x = -553.738, y = -12.191, z = -83.898 },
-    { x = -558.361, y = -12.178, z = -84.656 },
-    { x = -562.449, y = -12.202, z = -84.500 },
-    { x = -565.689, y = -12.420, z = -79.477 },
-    { x = -559.911, y = -11.622, z = -67.839 },
-    { x = -556.672, y = -11.939, z = -66.284 },
-    { x = -551.187, y = -12.342, z = -67.364 },
-    { x = -545.686, y = -11.851, z = -64.526 },
-    { x = -540.688, y = -12.420, z = -61.299 },
-    { x = -547.407, y = -11.494, z = -56.208 },
-    { x = -545.911, y = -11.480, z = -53.302 },
-    { x = -543.347, y = -11.080, z = -49.358 },
-    { x = -547.281, y = -11.188, z = -46.117 },
-    { x = -551.477, y = -11.580, z = -48.592 },
-    { x = -555.466, y = -11.945, z = -50.986 },
-    { x = -560.512, y = -12.042, z = -51.924 },
-    { x = -563.436, y = -12.140, z = -48.995 },
-    { x = -563.185, y = -12.002, z = -46.441 },
-    { x = -563.587, y = -12.005, z = -43.905 },
-    { x = -566.766, y = -12.674, z = -41.782 },
-    { x = -563.552, y = -12.000, z = -39.131 },
-    { x = -560.329, y = -12.000, z = -37.608 },
-    { x = -553.611, y = -11.488, z = -36.440 },
-    { x = -547.924, y = -9.652,  z = -32.699 },
-    { x = -545.229, y = -9.139,  z = -26.835 },
-    { x = -539.781, y = -6.688,  z = -24.802 },
-    { x = -537.228, y = -6.278,  z = -21.546 },
-    { x = -536.608, y = -4.329,  z = -16.014 },
-    { x = -540.775, y = -4.301,  z = -13.786 },
-    { x = -547.040, y = -4.759,  z = -13.895 },
-    { x = -552.430, y = -5.316,  z = -11.979 },
-    { x = -556.140, y = -4.988,  z = -8.711  },
-    { x = -560.106, y = -4.234,  z = -5.819  },
-    { x = -559.868, y = -4.000,  z = -1.305  },
-    { x = -557.823, y = -4.000,  z = 3.232   },
-    { x = -553.009, y = -3.918,  z = 4.200   },
-    { x = -549.802, y = -8.944,  z = -24.848 },
-}
-
+-----------------------------------
+-- Enter/Exit Flight Functions
+-----------------------------------
 local function enterFlight(mob)
-    mob:setAnimationSub(1) -- Change to flight.
-    mob:addStatusEffect(xi.effect.ALL_MISS, { power = 1, origin = mob, icon = 0 })
     mob:setMobSkillAttack(730)
+    mob:addStatusEffect(xi.effect.ALL_MISS, { power = 1, duration = 7200, origin = mob, icon = 0 })
+    mob:setBehavior(bit.band(mob:getBehavior(), bit.bnot(xi.behavior.NO_TURN)))
+    mob:setAnimationSub(1)
     mob:setLocalVar('flightTime', GetSystemTime() + 120)
-    mob:setLocalVar('changeHP', mob:getHP() - 10000)
+    mob:setLocalVar('changeHP', math.max(0, mob:getHP() - 10000))
+end
+
+local function exitFlight(mob)
+    mob:useMobAbility(xi.mobSkill.TOUCHDOWN_3)
+    mob:setBehavior(bit.bor(mob:getBehavior(), xi.behavior.NO_TURN))
+    mob:setLocalVar('flightTime', GetSystemTime() + 120)
+    mob:setLocalVar('changeHP', math.max(0, mob:getHP() - 10000))
+end
+
+local function checkEnrage(mob)
+    local hpp = mob:getHPP()
+
+    if
+        hpp <= 25 and
+        not mob:hasStatusEffect(xi.effect.ATTACK_BOOST)
+    then
+        mob:addStatusEffect(xi.effect.ATTACK_BOOST, { power = 75, origin = mob })
+        mob:getStatusEffect(xi.effect.ATTACK_BOOST):addEffectFlag(xi.effectFlag.DEATH)
+    end
+
+    if hpp <= 10 then
+        mob:setDelay(160)
+    else
+        mob:setDelay(210)
+    end
 end
 
 entity.onMobInitialize = function(mob)
-    mob:setCarefulPathing(true) -- Used for drawin
     mob:setMobMod(xi.mobMod.AOE_HIT_ALL, 1)
 
-    xi.mob.updateNMSpawnPoint(mob)
-    mob:setRespawnTime(math.random(144, 240) * 1800) -- 3 to 5 days in 30 minute windows
+    mob:setRespawnTime(math.randomInt(144, 240) * 1800) -- 3 to 5 days in 30 minute windows
 end
 
 entity.onMobSpawn = function(mob)
-    -- Ensure Tiamat spawns with correct ground status
     mob:setMobSkillAttack(0)
     mob:setAnimationSub(0)
     mob:delStatusEffect(xi.effect.ALL_MISS)
@@ -114,18 +86,17 @@ entity.onMobRoam = function(mob)
 end
 
 entity.onMobEngage = function(mob, target)
-    local flightTime = mob:getLocalVar('flightTime')
+    local currentTime = GetSystemTime()
+    local flightTime  = mob:getLocalVar('flightTime')
 
-    -- Set flight time to two min if fresh spawn
     if flightTime == 0 then
-        mob:setLocalVar('flightTime', GetSystemTime() + 120)
-    -- Otherwise, set how many seconds left to fly from last pull
+        mob:setLocalVar('flightTime', currentTime + 120)
     else
-        mob:setLocalVar('flightTime', GetSystemTime() + flightTime)
+        mob:setLocalVar('flightTime', currentTime + flightTime)
     end
 
-    mob:setLocalVar('twohourTime', GetSystemTime() + 210)
-    mob:setLocalVar('changeHP', mob:getHP() - 10000)
+    mob:setLocalVar('twohourTime', currentTime + 210)
+    mob:setLocalVar('changeHP', math.max(0, mob:getHP() - 10000))
 end
 
 entity.onMobFight = function(mob, target)
@@ -152,93 +123,55 @@ entity.onMobFight = function(mob, target)
         end
     end
 
-    -- Gains a large attack boost when health is under 25% which cannot be Dispelled.
-    local hpp = mob:getHPP()
+    -- Gains a large attack boost under 25% HP and increased attack speed under 10% HP.
+    checkEnrage(mob)
+
+    local currentAnimation = mob:getAnimationSub()
+    local currentTime      = GetSystemTime()
+
     if
-        hpp <= 25 and
-        not mob:hasStatusEffect(xi.effect.ATTACK_BOOST)
-    then
-        mob:addStatusEffect(xi.effect.ATTACK_BOOST, { power = 75, origin = mob })
-        mob:getStatusEffect(xi.effect.ATTACK_BOOST):addEffectFlag(xi.effectFlag.DEATH)
-    end
-
-    -- Gains a delay reduction (from 210 to 160) when health is under 10%
-    if hpp <= 10 and mob:getLocalVar('appliedDelayReduction') == 0 then
-        mob:addMod(xi.mod.DELAY, -833)
-        mob:setLocalVar('appliedDelayReduction', 1)
-    elseif hpp > 10 and mob:getLocalVar('appliedDelayReduction') == 1 then
-        mob:delMod(xi.mod.DELAY, -833)
-        mob:setLocalVar('appliedDelayReduction', 0)
-    end
-
-    -- Animation (Ground or flight mode) logic.
-    if
-        not mob:hasStatusEffect(xi.effect.MIGHTY_STRIKES) and
-        not xi.combat.behavior.isEntityBusy(mob)
-    then
-        local flightTime  = mob:getLocalVar('flightTime')
-        local twohourTime = mob:getLocalVar('twohourTime')
-        local changeHP    = mob:getLocalVar('changeHP')
-        local animation   = mob:getAnimationSub()
-
-        -- Initial grounded mode.
-        if
-            animation == 0 and
-            (GetSystemTime() > flightTime and mob:getHP() < changeHP)
-        then
-            enterFlight(mob)
-
-        -- Flight mode.
-        elseif
-            animation == 1 and
-            (GetSystemTime() > flightTime and mob:getHP() < changeHP)
-        then
-            mob:useMobAbility(1282) -- This ability also handles animation change to 2.
-            mob:setBehavior(bit.bor(mob:getBehavior(), xi.behavior.NO_TURN))
-            mob:setLocalVar('flightTime', GetSystemTime() + 120)
-            mob:setLocalVar('changeHP', mob:getHP() - 10000)
-
-        -- Subsequent grounded mode.
-        elseif animation == 2 then
-             -- 2-Hour logic.
-            if GetSystemTime() > twohourTime then
-                mob:useMobAbility(688) -- Mighty Strikes
-                mob:setLocalVar('twohourTime', GetSystemTime() + 210)
-
-            elseif
-                GetSystemTime() > flightTime or
-                mob:getHP() < changeHP
-            then
-                enterFlight(mob)
-            end
-        end
-    end
-
-    -- Tiamat wakes from sleep in air
-    if
-        (mob:hasStatusEffect(xi.effect.SLEEP_I) or
-        mob:hasStatusEffect(xi.effect.SLEEP_II) or
-        mob:hasStatusEffect(xi.effect.LULLABY)) and
-        mob:getAnimationSub() == 1
+        currentAnimation == 1 and
+        mob:hasStatusEffect(xi.effect.SLEEP_I)
     then
         mob:wakeUp()
     end
-end
 
-entity.onMobMobskillChoose = function(mob, target, skillId)
-    if mob:getAnimationSub() == 1 then
-        mob:setLocalVar('skill_tp', mob:getTP())
+    -- No Casting or TP Abilities while Mighty Strikes is active.
+    local mightyStrikesActive = mob:hasStatusEffect(xi.effect.MIGHTY_STRIKES)
+
+    mob:setMobAbilityEnabled(not mightyStrikesActive)
+    mob:setMagicCastingEnabled(not mightyStrikesActive)
+
+    -- Cannot change phases while Mighty Strikes is active.
+    if
+        mightyStrikesActive or
+        xi.combat.behavior.isEntityBusy(mob)
+    then
+        return
     end
-end
 
-entity.onMobWeaponSkill = function(mob, target, skill, action)
-    -- Don't lose TP from autos during flight
-    if skill:getID() == 1278 then
-        mob:addTP(64) -- Needs to gain TP from flight auto attacks
-        mob:setLocalVar('skill_tp', 0)
-    elseif skill:getID() == 1282 then -- Don't consume TP on touchdown
-        mob:addTP(mob:getLocalVar('skill_tp'))
-        mob:setLocalVar('skill_tp', 0)
+    if
+        currentAnimation == 2 and
+        currentTime > mob:getLocalVar('twohourTime')
+    then
+        mob:useMobAbility(xi.mobSkill.MIGHTY_STRIKES_1)
+        mob:setLocalVar('twohourTime', currentTime + 210)
+        return
+    end
+
+    local flightTime  = mob:getLocalVar('flightTime')
+    local changeHP    = mob:getLocalVar('changeHP')
+    local currentHP   = mob:getHP()
+
+    if
+        currentTime > flightTime or
+        currentHP < changeHP
+    then
+        if currentAnimation == 1 then
+            exitFlight(mob)
+        else
+            enterFlight(mob)
+        end
     end
 end
 
@@ -255,17 +188,32 @@ entity.onAdditionalEffect = function(mob, target, damage)
     return xi.combat.action.executeAddEffectDamage(mob, target, pTable)
 end
 
+entity.onMobSpellChoose = function(mob, target, spellId)
+    local spellList =
+    {
+        [1] = { xi.magic.spell.FIRAGA_III,   target, false, xi.action.type.DAMAGE_TARGET,        nil,                    0, 100 },
+        [2] = { xi.magic.spell.BLAZE_SPIKES, mob,    false, xi.action.type.ENHANCING_FORCE_SELF, xi.effect.BLAZE_SPIKES, 0, 100 },
+    }
+
+    return xi.combat.behavior.chooseAction(mob, target, nil, spellList)
+end
+
 entity.onMobDisengage = function(mob)
-    -- Reset Tiamat back to the ground on wipe
     if mob:getAnimationSub() == 1 then
-        local flightTime = mob:getLocalVar('flightTime')
-        mob:setLocalVar('flightTime', flightTime - GetSystemTime()) -- Get seconds left to fly for next pull
+        local flightTime = math.max(mob:getLocalVar('flightTime') - GetSystemTime(), 1)
+
+        mob:setLocalVar('flightTime', flightTime)
         mob:setAnimationSub(0)
         mob:delStatusEffect(xi.effect.ALL_MISS)
         mob:setBehavior(bit.bor(mob:getBehavior(), xi.behavior.NO_TURN))
         mob:setMobSkillAttack(0)
         mob:setLocalVar('changeHP', 0)
+    else
+        mob:setLocalVar('flightTime', 0)
     end
+
+    mob:setMobMod(xi.mobMod.NO_MOVE, 0)
+    mob:setAnimationSub(0)
 end
 
 entity.onMobDeath = function(mob, player, optParams)
@@ -275,8 +223,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    xi.mob.updateNMSpawnPoint(mob)
-    mob:setRespawnTime(math.random(144, 240) * 1800) -- 3 to 5 days in 30 minute windows
+    mob:setRespawnTime(math.randomInt(144, 240) * 1800) -- 3 to 5 days in 30 minute windows
 end
 
 return entity

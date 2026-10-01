@@ -27,6 +27,7 @@
 #include <set>
 #include <utility>
 
+#include "persist_batch.h"
 #include "status_effect.h"
 
 /************************************************************************
@@ -70,7 +71,7 @@ public:
     void DelStatusEffectsByType(uint16 Type);
     auto DelStatusEffectByTier(xi::StatusEffect StatusID, uint16 power) -> bool;
     void KillAllStatusEffect();
-    void ApplyStateAlteringEffects(CStatusEffect* StatusEffect);
+    void HandleEffectGainSideEffects(CStatusEffect* StatusEffect);
 
     auto HasStatusEffect(xi::StatusEffect StatusID) -> bool;               // We check the presence of the effect
     auto HasStatusEffect(xi::StatusEffect StatusID, uint16 SubID) -> bool; // Check the presence of an effect with a unique Subid
@@ -101,8 +102,9 @@ public:
     void TickEffects(timer::time_point tick);
     void TickRegen(timer::time_point tick);
 
-    void LoadStatusEffects();                    // We load the character effects
-    void SaveStatusEffects(bool logout = false); // We keep the character effects
+    void LoadStatusEffects();                       // We load the character effects
+    void DropEffectsForTransition(IsLogout logout); // Remove the effects that don't survive a zone change or logout
+    auto BuildPersistRows(IsLogout logout) -> std::vector<PersistedEffect>;
 
     auto  GetEffectsCount(xi::StatusEffect ID) -> uint8;               // We get the number of effects with the specified ID
     auto  GetEffectsCountWithFlag(xi::StatusEffectFlag flag) -> uint8; // We get the number of effects with the specified flag
@@ -129,6 +131,7 @@ public:
     bool HasPreventActionEffect(bool ignoreCharm = false); // checks if owner has an effect that prevents actions, like stun, petrify, sleep etc
 
     uint16 GetConfrontationEffect();                        // gets confrontation number (bcnm, confrontation, campaign, reive mark)
+    auto   GetConfrontationSubPower() const -> uint16;      // Fenced content GateId
     void   CopyConfrontationEffect(CBattleEntity* PEntity); // copies confrontation status (pet summoning, etc)
 
     [[nodiscard]] auto statusIcons() const -> const uint8*;
@@ -200,5 +203,7 @@ namespace effects
 void        LoadEffectsParameters();
 uint16      GetEffectElement(uint16 effect);
 std::string GetEffectName(uint16 effect);
+
+void SaveEffectRows(const std::vector<uint32>& replaceFor, const std::vector<PersistedEffect>& rows);
 
 }; // namespace effects

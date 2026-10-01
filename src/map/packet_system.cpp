@@ -21,6 +21,8 @@
 
 #include "packet_system.h"
 
+#include "common/logging_context.h"
+
 #include "common/logging.h"
 #include "common/tracy.h"
 
@@ -217,7 +219,7 @@ void ValidatedPacketHandler(MapSession* const PSession, CCharEntity* const PChar
     }
     else
     {
-        ShowWarningFmt("Invalid {} packet from {}: {} ", T::name, PChar->getName(), result.errorString());
+        ShowWarningFmt("Invalid {} packet from {}: {}", T::name, PChar->getName(), result.errorString());
     }
 }
 

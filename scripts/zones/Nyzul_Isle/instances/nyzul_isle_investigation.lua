@@ -10,7 +10,7 @@ local function pickSetPoint(instance)
     local currentFloor = instance:getLocalVar('Nyzul_Current_Floor')
 
     -- Random the floor layout
-    instance:setLocalVar('Nyzul_Isle_FloorLayout', math.random(1, (#xi.nyzul.FloorLayout - 1)))
+    instance:setLocalVar('Nyzul_Isle_FloorLayout', math.randomInt(1, (#xi.nyzul.FloorLayout - 1)))
     instance:setLocalVar('gearObjective', 0)
 
     -- Condition for floors
@@ -19,7 +19,7 @@ local function pickSetPoint(instance)
         instance:setStage(xi.nyzul.objective.ELIMINATE_ENEMY_LEADER)
         instance:setLocalVar('Nyzul_Isle_FloorLayout', 0)
     -- 3.33% for a free floor
-    elseif math.random(1, 30) == 1 and instance:getLocalVar('freeFloor') == 0 then -- 3.33% for a free floor
+    elseif math.randomInt(1, 30) == 1 and instance:getLocalVar('freeFloor') == 0 then -- 3.33% for a free floor
         instance:setStage(xi.nyzul.objective.FREE_FLOOR)
         instance:setLocalVar('freeFloor', 1)
 
@@ -44,8 +44,8 @@ local function pickSetPoint(instance)
         -- Randomly pick the objective from the generated list
         instance:setStage(utils.randomEntry(objective))
 
-        if math.random(1, 30) <= 5 then
-            instance:setLocalVar('gearObjective', math.random(xi.nyzul.gearObjective.AVOID_AGRO, xi.nyzul.gearObjective.DO_NOT_DESTROY))
+        if math.randomInt(1, 30) <= 5 then
+            instance:setLocalVar('gearObjective', math.randomInt(xi.nyzul.gearObjective.AVOID_AGRO, xi.nyzul.gearObjective.DO_NOT_DESTROY))
         end
     end
 
@@ -85,17 +85,17 @@ local function pickSetPoint(instance)
     end
 
     -- Set Rune of Transfer Menu
-    instance:setLocalVar('menuChoice', math.random(1, 20))
+    instance:setLocalVar('menuChoice', math.randomInt(1, 20))
 end
 
 -- Requirements for the first player registering the instance
 instanceObject.registryRequirements = function(player)
-    return player:hasKeyItem(xi.ki.NYZUL_ISLE_ASSAULT_ORDERS)
+    return player:hasKeyItem(xi.keyItem.NYZUL_ISLE_ASSAULT_ORDERS)
 end
 
 -- Requirements for further players entering an already-registered instance
 instanceObject.entryRequirements = function(player)
-    return player:hasKeyItem(xi.ki.NYZUL_ISLE_ASSAULT_ORDERS)
+    return player:hasKeyItem(xi.keyItem.NYZUL_ISLE_ASSAULT_ORDERS)
 end
 
 -- Called on the instance once it is created and ready
@@ -119,12 +119,12 @@ instanceObject.afterInstanceRegister = function(player)
     local instance = player:getInstance()
 
     player:messageName(ID.text.COMMENCE, player, 51)
-    player:messageName(ID.text.TIME_TO_COMPLETE, player, instance:getTimeLimit())
+    player:messageName(ID.text.TIME_TO_COMPLETE, player, instance:getTimeLimit() / 60)
 
     player:addTempItem(xi.item.UNDERSEA_RUINS_FIREFLIES)
     player:setCharVar('assaultEntered', 1)
-    player:delKeyItem(xi.ki.NYZUL_ISLE_ASSAULT_ORDERS)
-    player:messageSpecial(ID.text.KEYITEM_LOST, xi.ki.NYZUL_ISLE_ASSAULT_ORDERS)
+    player:delKeyItem(xi.keyItem.NYZUL_ISLE_ASSAULT_ORDERS)
+    player:messageSpecial(ID.text.KEYITEM_LOST, xi.keyItem.NYZUL_ISLE_ASSAULT_ORDERS)
 end
 
 -- Instance 'tick'

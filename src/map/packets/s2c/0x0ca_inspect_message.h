@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include "common/cbasetypes.h"
-
 #include "base.h"
 
 class CCharEntity;
@@ -42,5 +40,5 @@ public:
         uint32_t DesignationNo;        // PS2: DesignationNo
     };
 
-    GP_SERV_COMMAND_INSPECT_MESSAGE(const CCharEntity* PChar);
+    GP_SERV_COMMAND_INSPECT_MESSAGE(const CCharEntity* PChar, const CCharEntity* PTarget);
 };

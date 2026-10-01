@@ -35,9 +35,9 @@ xi.amk.helpers.helmTrade = function(player, helmType, broke)
     local regionId = player:getCurrentRegion()
     local helmMapping =
     {
-        [xi.helmType.MINING] = xi.ki.STURDY_METAL_STRIP,
-        [xi.helmType.LOGGING] = xi.ki.PIECE_OF_RUGGED_TREE_BARK,
-        [xi.helmType.HARVESTING] = xi.ki.SAVORY_LAMB_ROAST,
+        [xi.helmType.MINING] = xi.keyItem.STURDY_METAL_STRIP,
+        [xi.helmType.LOGGING] = xi.keyItem.PIECE_OF_RUGGED_TREE_BARK,
+        [xi.helmType.HARVESTING] = xi.keyItem.SAVORY_LAMB_ROAST,
     }
 
     if
@@ -46,7 +46,7 @@ xi.amk.helpers.helmTrade = function(player, helmType, broke)
         if
             helmMapping[helmType] and
             validRegions[regionId] and
-            math.random(1, 100) <= amkChance
+            math.randomInt(1, 100) <= amkChance
         then
             npcUtil.giveKeyItem(player, helmMapping[helmType])
         end
@@ -76,7 +76,7 @@ xi.amk.helpers.cardianOrbDrop = function(mob, player, orb)
 
         -- Chance ranges from 4% to 25.8% (based on max mob lvl of 44)
         local dropChance = (3 * mob:getMainLvl()) + (30 * utils.clamp(partySize, 1, 6)) - 10
-        local roll = math.random(1, 1000)
+        local roll = math.randomInt(1, 1000)
 
         if roll < dropChance then
             mob:setLocalVar('Mission[10][5]cardianOrbDrop', 1)
@@ -339,7 +339,7 @@ xi.amk.helpers.getDiggingZone = function(player)
         -- 11 = Yhoator Jungle
         -- 12 = Western Altepa Desert
         -- 13 = Eastern Altepa Desert
-        diggingZone = digZoneIds[math.random(#digZoneIds)]
+        diggingZone = digZoneIds[math.randomInt(1, #digZoneIds)]
         player:setCharVar('Mission[10][6]diggingZone', diggingZone)
     end
 
@@ -350,7 +350,7 @@ xi.amk.helpers.tryRandomlyPlaceDiggingLocation = function(player)
     -- Randomly selects a dig spot every time player zones into an AMK7 zone
     local diggingZoneId = xi.amk.helpers.getDiggingZone(player)
     local diggingSiteTable = xi.amk.helpers.digSites[diggingZoneId].spots
-    player:setLocalVar('Mission[10][6]diggingSpot', math.random(#diggingSiteTable))
+    player:setLocalVar('Mission[10][6]diggingSpot', math.randomInt(1, #diggingSiteTable))
 end
 
 xi.amk.helpers.chocoboDig = function(player, zoneId, text)
@@ -359,7 +359,7 @@ xi.amk.helpers.chocoboDig = function(player, zoneId, text)
     local diggingSiteTable = xi.amk.helpers.digSites[diggingZoneId].spots
 
     if
-        player:hasKeyItem(xi.ki.MOLDY_WORM_EATEN_CHEST) or
+        player:hasKeyItem(xi.keyItem.MOLDY_WORM_EATEN_CHEST) or
         zoneId ~= diggingZoneId
     then
         return false
@@ -376,7 +376,7 @@ xi.amk.helpers.chocoboDig = function(player, zoneId, text)
 
     -- Success!
     if distance < 5 then
-        npcUtil.giveKeyItem(player, xi.ki.MOLDY_WORM_EATEN_CHEST)
+        npcUtil.giveKeyItem(player, xi.keyItem.MOLDY_WORM_EATEN_CHEST)
         return true
     end
 
@@ -510,7 +510,7 @@ xi.amk.helpers.puzzleOneOnTrigger = function(player, npc, mission, offset)
         pos.z * 1000,
         pos.y * 1000,
         element,
-        xi.ki.MAP_OF_THE_NORTHLANDS_AREA
+        xi.keyItem.MAP_OF_THE_NORTHLANDS_AREA
     )
 end
 
@@ -526,7 +526,7 @@ local xarc = zones[xi.zone.XARCABARD]
 
 -- returns -1 or 1 to offset the wrong answer randomly
 local randomSign = function()
-    return math.random(1, 100) <= 50 and 1 or -1
+    return math.randomInt(1, 100) <= 50 and 1 or -1
 end
 
 -- Structured list of the trivia questions
@@ -694,7 +694,7 @@ local assignRandomTriviaQuestions = function(player, mission)
     end
 
     for i = 1, 3 do
-        local index = math.random(1, #questions)
+        local index = math.randomInt(1, #questions)
         mission:setLocalVar(player, '[p2]question' .. i, questions[index])
         table.remove(questions, index)
     end
@@ -734,7 +734,7 @@ xi.amk.helpers.puzzleTwoOnTrigger = function(player, npc, mission)
 
     -- Puzzle already beaten, show flavor text
     if
-        player:hasKeyItem(xi.ki.GAUNTLET_CHALLENGE_KUPON) or
+        player:hasKeyItem(xi.keyItem.GAUNTLET_CHALLENGE_KUPON) or
         player:getCharVar('Mission[10][12]progress') == 3
     then
         p2Progress = 10
@@ -774,7 +774,7 @@ xi.amk.helpers.puzzleTwoOnEventUpdate = function(player, csid, option, npc, miss
 
         -- Right and wrong answer/stooge has to be randomized in terms of order given to updateEvent
         -- Randomize which of the two other options is correct.  Set vars to a default choice, then swap only when answerOne is 2
-        local answerOne = math.random(1, 2)
+        local answerOne = math.randomInt(1, 2)
 
         -- Default: answerOne == 1
         local correctOption = stooge.answerOne
@@ -801,7 +801,7 @@ xi.amk.helpers.puzzleTwoOnEventUpdate = function(player, csid, option, npc, miss
         )
     elseif option == 11 then
         -- Incorrect Answer
-        local randomFlavorText = math.random(1, 2)
+        local randomFlavorText = math.randomInt(1, 2)
         if randomFlavorText == 1 then
             player:messageSpecial(xarc.text.INCORRECT_NO_GIFTS)
         else
@@ -821,8 +821,8 @@ xi.amk.helpers.puzzleTwoOnEventFinish = function(player, csid, option, npc, miss
         elseif option == 2 and p2Progress == 4 then
             -- Won game, reset all vars
             resetPuzzleVars(player, mission)
-            npcUtil.giveKeyItem(player, xi.ki.GAUNTLET_CHALLENGE_KUPON)
-            player:delKeyItem(xi.ki.TRIVIA_CHALLENGE_KUPON)
+            npcUtil.giveKeyItem(player, xi.keyItem.GAUNTLET_CHALLENGE_KUPON)
+            player:delKeyItem(xi.keyItem.TRIVIA_CHALLENGE_KUPON)
 
             -- Advance to puzzle 3
             mission:setVar(player, 'progress', 3)
@@ -833,8 +833,8 @@ end
 xi.amk.helpers.puzzleFourOnEventFinish = function(player, csid, option, npc, mission)
     if option == 1 then
         mission:setVar(player, 'cohortIdx', 0)
-        npcUtil.giveKeyItem(player, xi.ki.MEGA_BONANZA_KUPON)
-        player:delKeyItem(xi.ki.FESTIVAL_SOUVENIR_KUPON)
+        npcUtil.giveKeyItem(player, xi.keyItem.MEGA_BONANZA_KUPON)
+        player:delKeyItem(xi.keyItem.FESTIVAL_SOUVENIR_KUPON)
 
         -- Advance to final fight
         mission:setVar(player, 'progress', 5)

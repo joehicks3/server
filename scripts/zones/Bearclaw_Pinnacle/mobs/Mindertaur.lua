@@ -10,7 +10,6 @@ entity.onMobSpawn = function(mob)
     mob:setMod(xi.mod.SILENCE_RES_RANK, 6)
     mob:setMod(xi.mod.REGAIN, 50)
     mob:setMod(xi.mod.DOUBLE_ATTACK, 15)
-    mob:setMobMod(xi.mobMod.MAGIC_DELAY, 0)
     mob:setMobMod(xi.mobMod.MAGIC_COOL, 55)
 end
 
@@ -30,7 +29,7 @@ entity.onMobMobskillChoose = function(mob, target, skillId)
         table.insert(skills, xi.mobSkill.CHTHONIAN_RAY)
     end
 
-    return skills[math.random(1, #skills)]
+    return skills[math.randomInt(1, #skills)]
 end
 
 entity.onMobSpellChoose = function(mob, target, spellId)

@@ -9,11 +9,6 @@ local ID = zones[xi.zone.SEA_SERPENT_GROTTO]
 ---@type TMobEntity
 local entity = {}
 
-entity.spawnPoints =
-{
-    { x =  3.000, y =  20.000, z = -140.000 }
-}
-
 entity.phList =
 {
     [ID.mob.YARR_THE_PEARLEYED - 2] = ID.mob.YARR_THE_PEARLEYED, -- Confirmed on retail
@@ -36,7 +31,7 @@ entity.onMobSpawn = function(mob)
     xi.mix.jobSpecial.config(mob, {
         specials =
         {
-            { id = xi.mobSkill.BENEDICTION_1, hpp = math.random(1, 50) } -- "Uses Benediction at around 50% or as low as 1%"
+            { id = xi.mobSkill.BENEDICTION_1, hpp = math.randomInt(1, 50) } -- "Uses Benediction at around 50% or as low as 1%"
         }
     })
 end

@@ -23,12 +23,12 @@ xi.settings.network =
     LOGIN_VIEW_PORT = 54001,
     LOGIN_AUTH_IP   = '0.0.0.0',
     LOGIN_AUTH_PORT = 54231,
-    LOGIN_CONF_IP   = '0.0.0.0',
-    LOGIN_CONF_PORT = 51220,
 
     MAP_PORT = 54230,
 
     SEARCH_PORT = 54002,
+
+    PROFILE_PORT = 51220,
 
     -- DB queries will attempt each query once, and reconnect and retry up to `SQL_QUERY_RETRY_COUNT` times.
     SQL_QUERY_RETRY_COUNT = 1,
@@ -41,6 +41,21 @@ xi.settings.network =
     ZMQ_TRANSPORT = 'tcp',
     ZMQ_IP        = '127.0.0.1',
     ZMQ_PORT      = 54003,
+
+    -- Minimum milliseconds between two handled copies of the same packet from one player.
+    PACKET_RATE_LIMITS =
+    {
+        GP_CLI_COMMAND_SUBCONTAINER    = 1000, -- Mannequin Equip
+        GP_CLI_COMMAND_MOTION          = 1000, -- Emotes
+        GP_CLI_COMMAND_SHOP_BUY        = 250,  -- Vendor Shop Purchase
+        GP_CLI_COMMAND_GUILD_BUY       = 250,  -- Guild Shop Purchase
+        GP_CLI_COMMAND_ASSIST_CHANNEL  = 1000, -- Assist Channel
+        GP_CLI_COMMAND_TRACKING_LIST   = 1000, -- Wide Scan
+        GP_CLI_COMMAND_TRACKING_START  = 1000, -- Wide Scan Track
+        GP_CLI_COMMAND_MASTERY_DISPLAY = 2000, -- Set Job Master Display
+        GP_CLI_COMMAND_JUMP            = 2000, -- Jump
+        GP_CLI_COMMAND_SUBMAPCHANGE    = 200,  -- Sub-area change
+    },
 
     -- ===========================
     -- NOTE: The settings that follow will not necessarily need to be modified

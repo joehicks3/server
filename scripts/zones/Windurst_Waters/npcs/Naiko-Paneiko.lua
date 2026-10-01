@@ -17,7 +17,7 @@ entity.onTrigger = function(player, npc)
         local prog = player:getCharVar('QuestMakingHeadlines_var')
 
         if not utils.mask.isFull(prog, 4) then
-            if math.random(1, 100) <= 50 then
+            if math.randomInt(1, 100) <= 50 then
                 player:startEvent(666) -- Quest Reminder 1
             else
                 player:startEvent(671) -- Quest Reminder 2
@@ -25,7 +25,7 @@ entity.onTrigger = function(player, npc)
         elseif not utils.mask.getBit(prog, 4) then
             player:startEvent(673) -- Advises to validate story
         else
-            if math.random(1, 100) <= 50 then
+            if math.randomInt(1, 100) <= 50 then
                 player:startEvent(674) -- Quest finish 1
             else
                 player:startEvent(670) -- Quest finish 2
@@ -45,10 +45,10 @@ entity.onEventFinish = function(player, csid, option, npc)
             gil = 560,
             var = 'QuestMakingHeadlines_var',
         })
-        player:delKeyItem(xi.ki.WINDURST_WOODS_SCOOP)
-        player:delKeyItem(xi.ki.WINDURST_WALLS_SCOOP)
-        player:delKeyItem(xi.ki.WINDURST_WATERS_SCOOP)
-        player:delKeyItem(xi.ki.PORT_WINDURST_SCOOP)
+        player:delKeyItem(xi.keyItem.WINDURST_WOODS_SCOOP)
+        player:delKeyItem(xi.keyItem.WINDURST_WALLS_SCOOP)
+        player:delKeyItem(xi.keyItem.WINDURST_WATERS_SCOOP)
+        player:delKeyItem(xi.keyItem.PORT_WINDURST_SCOOP)
     end
 end
 

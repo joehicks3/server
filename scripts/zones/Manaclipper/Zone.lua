@@ -6,7 +6,36 @@ local ID = zones[xi.zone.MANACLIPPER]
 ---@type TZone
 local zoneObject = {}
 
+local deckMobs =
+{
+    ID.mob.CUTTER,
+    ID.mob.FATTY_PUGIL,
+    ID.mob.URAGNITE[1],
+    ID.mob.URAGNITE[2],
+    ID.mob.CLOT[1],
+    ID.mob.CLOT[2],
+    ID.mob.COLOSSAL_CALAMARI,
+}
+
 zoneObject.onInitialize = function(zone)
+    zone:setLocalVar('nextSpawnTime', GetSystemTime() + 60)
+end
+
+zoneObject.onZoneTick = function(zone)
+    local currentTime = GetSystemTime()
+    if currentTime < zone:getLocalVar('nextSpawnTime') then
+        return
+    end
+
+    -- Keep spawns running between rides.
+    zone:setLocalVar('nextSpawnTime', currentTime + 60)
+
+    for _, mobId in ipairs(deckMobs) do
+        local mob = GetMobByID(mobId)
+        if mob and not mob:isSpawned() and math.randomInt(1, 100) <= 15 then
+            SpawnMob(mobId)
+        end
+    end
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -35,16 +64,16 @@ zoneObject.onZoneIn = function(player, prevZone)
         zoredonite:setLocalVar('zoneWindow', GetSystemTime() + 20) -- Block multiple spawn chance rolls per boat ride.
         if
             zoredoniteRespawn and
-            math.random(1, 100) <= 30
+            math.randomInt(1, 100) <= 30
         then
-            zoredonite:setRespawnTime(math.random(120, 480))
+            zoredonite:setRespawnTime(math.randomInt(120, 480))
         end
     end
 
     return cs
 end
 
-zoneObject.onTransportEvent = function(player, prevZoneId, transportId)
+zoneObject.onTransportEvent = function(player, prevZoneId, transportName)
     player:startEvent(100)
 end
 

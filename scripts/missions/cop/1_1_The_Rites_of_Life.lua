@@ -13,7 +13,7 @@ local mission = Mission:new(xi.mission.log_id.COP, xi.mission.id.cop.THE_RITES_O
 
 mission.reward =
 {
-    keyItem     = xi.ki.MYSTERIOUS_AMULET,
+    keyItem     = xi.keyItem.MYSTERIOUS_AMULET,
     nextMission = { xi.mission.log_id.COP, xi.mission.id.cop.BELOW_THE_ARKS },
 }
 
@@ -56,7 +56,7 @@ mission.sections =
                 -- pattern should also change in section 3
                 [22] = function(player, csid, option, npc)
                     if option == 1 then
-                        player:startEvent(36)
+                        player:startEvent(36, { isHidden = true })
                     else
                         local lowerDelkfuttsIDs = zones[xi.zone.LOWER_DELKFUTTS_TOWER]
 
@@ -68,15 +68,15 @@ mission.sections =
                 end,
 
                 [36] = function(player, csid, option, npc)
-                    player:startEvent(37)
+                    player:startEvent(37, { isHidden = true })
                 end,
 
                 [37] = function(player, csid, option, npc)
-                    player:startEvent(38)
+                    player:startEvent(38, { isHidden = true })
                 end,
 
                 [38] = function(player, csid, option, npc)
-                    player:startEvent(39)
+                    player:startEvent(39, { isHidden = true })
                 end,
 
                 [39] = function(player, csid, option, npc)

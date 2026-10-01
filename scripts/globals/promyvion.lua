@@ -29,16 +29,16 @@ xi.promyvion.mobType =
 -- Contains model IDs and subAnimations, in elemental order, per mob type.
 local mobTable =
 {
-    [xi.promyvion.mobType.WANDERER] = { { 1108,  6 }, { 1110,  5 }, { 1110,  6 }, { 1107,  6 }, { 1107,  5 }, { 1106,  6 }, { 1108,  5 }, { 1106,  5 } },
-    [xi.promyvion.mobType.STRAY   ] = { { 1108, 14 }, { 1110, 13 }, { 1110, 14 }, { 1107, 14 }, { 1107, 13 }, { 1106, 14 }, { 1108, 13 }, { 1106, 13 } },
-    [xi.promyvion.mobType.WEEPER  ] = { { 1114,  6 }, { 1115,  5 }, { 1115,  6 }, { 1113,  6 }, { 1113,  5 }, { 1112,  6 }, { 1114,  5 }, { 1112,  5 } },
-    [xi.promyvion.mobType.SEETHER ] = { { 1120,  6 }, { 1121,  5 }, { 1121,  6 }, { 1119,  6 }, { 1119,  5 }, { 1117,  6 }, { 1120,  5 }, { 1117,  5 } },
-    [xi.promyvion.mobType.THINKER ] = { { 1126, 14 }, { 1127, 13 }, { 1127, 14 }, { 1124, 14 }, { 1124, 13 }, { 1123, 14 }, { 1126, 13 }, { 1123, 13 } },
-    [xi.promyvion.mobType.GORGER  ] = { { 1131, 14 }, { 1132, 13 }, { 1132, 14 }, { 1130, 14 }, { 1130, 13 }, { 1129, 14 }, { 1131, 13 }, { 1129, 13 } },
-    [xi.promyvion.mobType.CRAVER  ] = { { 1137, 14 }, { 1138, 13 }, { 1138, 14 }, { 1135, 14 }, { 1135, 13 }, { 1134, 14 }, { 1137, 13 }, { 1134, 13 } },
-    [xi.promyvion.mobType.DRIFTER ] = { { 3616,  6 }, { 3617,  5 }, { 3617,  6 }, { 3615,  6 }, { 3615,  5 }, { 3614,  6 }, { 3616,  5 }, { 3614,  5 } },
-    [xi.promyvion.mobType.LAMENTER] = { { 3621,  6 }, { 3622,  5 }, { 3622,  6 }, { 3620,  6 }, { 3620,  5 }, { 3619,  6 }, { 3621,  5 }, { 3619,  5 } },
-    [xi.promyvion.mobType.RAGER   ] = { { 3626,  6 }, { 3627,  5 }, { 3627,  6 }, { 3625,  6 }, { 3625,  5 }, { 3624,  6 }, { 3626,  5 }, { 3624,  5 } },
+    [xi.promyvion.mobType.WANDERER] = { { 1108,  6, 40 }, { 1110,  5, 50 }, { 1110,  6, 50 }, { 1107,  6, 40 }, { 1107,  5, 40 }, { 1106,  6, 40 }, { 1108,  5, 40 }, { 1106,  5, 40 } },
+    [xi.promyvion.mobType.STRAY   ] = { { 1108, 14, 40 }, { 1110, 13, 50 }, { 1110, 14, 50 }, { 1107, 14, 40 }, { 1107, 13, 40 }, { 1106, 14, 40 }, { 1108, 13, 40 }, { 1106, 13, 40 } },
+    [xi.promyvion.mobType.WEEPER  ] = { { 1114,  6, 40 }, { 1115,  5, 40 }, { 1115,  6, 40 }, { 1113,  6, 40 }, { 1113,  5, 40 }, { 1112,  6, 50 }, { 1114,  5, 40 }, { 1112,  5, 50 } },
+    [xi.promyvion.mobType.SEETHER ] = { { 1120,  6, 40 }, { 1121,  5, 40 }, { 1121,  6, 40 }, { 1119,  6, 40 }, { 1119,  5, 40 }, { 1117,  6, 40 }, { 1120,  5, 40 }, { 1117,  5, 40 } },
+    [xi.promyvion.mobType.THINKER ] = { { 1126, 14, 40 }, { 1127, 13, 40 }, { 1127, 14, 40 }, { 1124, 14, 40 }, { 1124, 13, 40 }, { 1123, 14, 40 }, { 1126, 13, 40 }, { 1123, 13, 40 } },
+    [xi.promyvion.mobType.GORGER  ] = { { 1131, 14, 40 }, { 1132, 13, 40 }, { 1132, 14, 40 }, { 1130, 14, 40 }, { 1130, 13, 40 }, { 1129, 14, 40 }, { 1131, 13, 40 }, { 1129, 13, 40 } },
+    [xi.promyvion.mobType.CRAVER  ] = { { 1137, 14, 40 }, { 1138, 13, 40 }, { 1138, 14, 40 }, { 1135, 14, 40 }, { 1135, 13, 40 }, { 1134, 14, 40 }, { 1137, 13, 40 }, { 1134, 13, 40 } },
+    [xi.promyvion.mobType.DRIFTER ] = { { 3616,  6, 40 }, { 3617,  5, 40 }, { 3617,  6, 40 }, { 3615,  6, 40 }, { 3615,  5, 40 }, { 3614,  6, 40 }, { 3616,  5, 40 }, { 3614,  5, 40 } },
+    [xi.promyvion.mobType.LAMENTER] = { { 3621,  6, 40 }, { 3622,  5, 40 }, { 3622,  6, 40 }, { 3620,  6, 40 }, { 3620,  5, 40 }, { 3619,  6, 40 }, { 3621,  5, 40 }, { 3619,  5, 40 } },
+    [xi.promyvion.mobType.RAGER   ] = { { 3626,  6, 40 }, { 3627,  5, 40 }, { 3627,  6, 40 }, { 3625,  6, 40 }, { 3625,  5, 40 }, { 3624,  6, 40 }, { 3626,  5, 40 }, { 3624,  5, 40 } },
 }
 
 local receptacleInfoTable =
@@ -202,7 +202,7 @@ xi.promyvion.setupInitialPortals = function(zone)
 
     for portalGroup = 1, #portalGroupTable[zoneId] do
         local groupTable = portalGroupTable[zoneId][portalGroup]  -- Fetch the whole group entry.
-        local newPortal  = GetNPCByID(groupTable[math.random(1, #groupTable)]) -- Fetch an NPC object from table, at random.
+        local newPortal  = GetNPCByID(groupTable[math.randomInt(1, #groupTable)]) -- Fetch an NPC object from table, at random.
 
         if newPortal then
             newPortal:setLocalVar('[Portal]Chosen', 1) -- Mark new portal.
@@ -212,8 +212,8 @@ end
 
 xi.promyvion.handlePortal = function(player, npcId, eventId)
     if
-        player:getAnimation() == xi.anim.NONE and
-        GetNPCByID(npcId):getAnimation() == xi.anim.OPEN_DOOR
+        player:getAnimation() == xi.animation.NONE and
+        GetNPCByID(npcId):getAnimation() == xi.animation.OPEN_DOOR
     then
         player:startOptionalCutscene(eventId, { cs_option = 0, canSkip = true })
     end
@@ -223,7 +223,7 @@ end
 -- Mob global functions (Element setup)
 -----------------------------------
 xi.promyvion.emptyOnMobSpawn = function(mob, mobType)
-    local element    = math.random(xi.element.FIRE, xi.element.DARK)
+    local element    = math.randomInt(xi.element.FIRE, xi.element.DARK)
     local opposite   = xi.data.element.getElementWeakness(element)
     local complement = xi.data.element.getElementStrength(element)
 
@@ -244,9 +244,13 @@ xi.promyvion.emptyOnMobSpawn = function(mob, mobType)
         mob:setMod(resRankModId, value)
     end
 
-    -- Set model and animationSub
-    mob:setModelId(mobTable[mobType][element][1])
-    mob:setAnimationSub(mobTable[mobType][element][2])
+    -- Set model, animationSub and speed.
+    local info = mobTable[mobType][element]
+
+    mob:setModelId(info[1])
+    mob:setAnimationSub(info[2])
+    mob:setBaseSpeed(info[3])
+    mob:setAnimationSpeed(info[3])
 end
 
 -----------------------------------
@@ -260,13 +264,13 @@ end
 
 xi.promyvion.receptacleOnMobSpawn = function(mob)
     -- Handle Stray pop cooldown.
-    mob:setLocalVar('[Stray]CooldownIdle', GetSystemTime() + 60 * math.random(2, 6))
+    mob:setLocalVar('[Stray]CooldownIdle', GetSystemTime() + 60 * math.randomInt(2, 6))
     mob:setLocalVar('[Stray]CooldownFight', 0)
 
     -- Handle decoration: Fade-in.
     local decoration = GetNPCByID(mob:getID() - 1)
     if decoration then
-        decoration:updateToEntireZone(xi.status.NORMAL, xi.anim.NONE)
+        decoration:updateToEntireZone(xi.status.NORMAL, xi.animation.NONE)
     end
 end
 
@@ -283,7 +287,7 @@ xi.promyvion.receptacleOnMobRoam = function(mob)
         end
 
         -- Handle cooldown.
-        mob:setLocalVar('[Stray]CooldownIdle', GetSystemTime() + 60 * math.random(2, 6))
+        mob:setLocalVar('[Stray]CooldownIdle', GetSystemTime() + 60 * math.randomInt(2, 6))
     end
 end
 
@@ -299,7 +303,7 @@ xi.promyvion.receptacleOnMobFight = function(mob, target)
 
     -- Handle initial cooldown.
     if strayCooldown == 0 then
-        strayCooldown = GetSystemTime() + 5 * math.random(2, 4)
+        strayCooldown = GetSystemTime() + 5 * math.randomInt(2, 4)
         mob:setLocalVar('[Stray]CooldownFight', strayCooldown)
     end
 
@@ -313,7 +317,7 @@ xi.promyvion.receptacleOnMobFight = function(mob, target)
         end
 
         -- Handle cooldown.
-        mob:setLocalVar('[Stray]CooldownFight', GetSystemTime() + 5 * math.random(2, 4))
+        mob:setLocalVar('[Stray]CooldownFight', GetSystemTime() + 5 * math.randomInt(2, 4))
     end
 
     -- Check for alive associated Strays and update enmity.
@@ -340,7 +344,7 @@ end
 
 xi.promyvion.receptacleOnMobWeaponSkill = function(mob)
     -- When left alone after hitting it, Memory Receptacle uses it's skill every 1-3 minutes (aprox).
-    mob:setMod(xi.mod.REGAIN, 50 * math.random(1, 3))
+    mob:setMod(xi.mod.REGAIN, 50 * math.randomInt(1, 3))
 end
 
 xi.promyvion.receptacleOnMobDespawn = function(mob)
@@ -357,7 +361,7 @@ xi.promyvion.receptacleOnMobDespawn = function(mob)
         -- Choose new portal.
         local mobGroup   = receptacleInfoTable[zoneId][mobId][1]               -- Fetch group ID the mob belongs to.
         local groupTable = portalGroupTable[zoneId][mobGroup]                  -- Fetch the whole group table.
-        local newPortal  = GetNPCByID(groupTable[math.random(1, #groupTable)]) -- Fetch NPC object from table, at random.
+        local newPortal  = GetNPCByID(groupTable[math.randomInt(1, #groupTable)]) -- Fetch NPC object from table, at random.
 
         if newPortal then
             newPortal:setLocalVar('[Portal]Chosen', 1) -- Mark new portal.
@@ -374,7 +378,7 @@ xi.promyvion.receptacleOnMobDespawn = function(mob)
     if decoration then
         decoration:entityAnimationPacket(xi.animationString.STATUS_DISAPPEAR)
         decoration:timer(2500, function(decorationArg)
-            decorationArg:updateToEntireZone(xi.status.CUTSCENE_ONLY, xi.anim.DESPAWN)
+            decorationArg:updateToEntireZone(xi.status.CUTSCENE_ONLY, xi.animation.DESPAWN)
             decorationArg:entityAnimationPacket(xi.animationString.STATUS_VISIBLE)
         end)
     end

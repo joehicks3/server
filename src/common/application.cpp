@@ -21,30 +21,36 @@
 
 #include "application.h"
 
+#include "common/database.h"
+
 #include "arguments.h"
 #include "console_service.h"
 #include "debug.h"
 #include "logging.h"
 #include "lua.h"
 #include "settings.h"
-#include "xirand.h"
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+#include <timeapi.h>
 #else // UNIX
 #include <sys/resource.h>
 #include <sys/time.h>
 #endif
 
 #include <csignal>
+#include <string_view>
 #include <thread>
 
 namespace
 {
 
 #ifdef _WIN32
+constexpr unsigned int kTimerResolutionMs = 1;
+
 unsigned long prevQuickEditMode;
+bool          timerResolutionRaised = false;
 #endif // _WIN32
 
 } // namespace
@@ -62,6 +68,8 @@ Application::Application(const ApplicationConfig& appConfig, int argc, char** ar
     tryDisableQuickEditMode();
     usercheck();
     tryIncreaseRLimits();
+    tryRaiseTimerResolution();
+    tryPreventBackgroundThrottling();
 
     debug::init();
 
@@ -72,20 +80,21 @@ Application::Application(const ApplicationConfig& appConfig, int argc, char** ar
     // It is safe to use the logging macros and settings from this point on
     //
 
+    debug::setCoreDumpsEnabled(settings::get<bool>("main.GENERATE_CORE_DUMP"));
+
     ShowInfoFmt("=======================================================================");
     ShowInfoFmt("Begin {}-server init...", serverName_);
 
-#ifdef ENV64BIT
-    ShowInfo("64-bit environment detected");
-#else
-    ShowInfo("32-bit environment detected");
-#endif
+    ShowInfoFmt("Build type: {}", XI_BUILD_TYPE);
 
     consoleService_ = std::make_unique<ConsoleService>(*this);
+
+    statementUsageToken_.emplace(scheduler_.intervalOnMainThread(std::chrono::hours(1), db::checkStatementUsage));
 }
 
 Application::~Application()
 {
+    tryRestoreTimerResolution();
     tryRestoreQuickEditMode();
     logging::ShutDown();
 }
@@ -129,7 +138,7 @@ void Application::registerSignalHandlers()
 #ifdef _WIN32
     signals_.add(SIGBREAK);
     // Don't register crash signals with ASIO on Windows - they need to reach SEH
-    // for WheatyExceptionReport to generate crash dumps
+    // for our unhandled-exception filter to write the tombstone and minidump
 #endif
 #ifndef _WIN32
     signals_.add(SIGXFSZ);
@@ -161,19 +170,64 @@ void Application::tryIncreaseRLimits()
 #ifndef _WIN32
     rlimit limits{};
 
-    uint32 newRLimit = 10240;
-
-    // Get old limits
+    // Raise the soft limit to the hard limit.
     if (getrlimit(RLIMIT_NOFILE, &limits) == 0)
     {
-        // Increase open file limit, which includes sockets, to newRLimit. This only effects the current process and child processes
-        limits.rlim_cur = newRLimit;
+        limits.rlim_cur = limits.rlim_max;
         if (setrlimit(RLIMIT_NOFILE, &limits) == -1)
         {
-            std::cerr << fmt::format("Failed to increase rlim_cur to {}\n", newRLimit);
+            std::cerr << fmt::format("Failed to increase rlim_cur to {}\n", static_cast<uint64>(limits.rlim_max));
         }
     }
 #endif
+}
+
+void Application::tryRaiseTimerResolution()
+{
+#ifdef _WIN32
+    // Windows' default system timer resolution is ~15.6ms, which coarsely quantises every
+    // sleep and timed wait we make. Ask the OS for the finest resolution (1ms) so our
+    // scheduler ticks and network timing behave predictably.
+    // See: https://devblogs.microsoft.com/go/high-resolution-timers-windows/
+    if (timeBeginPeriod(kTimerResolutionMs) != TIMERR_NOERROR)
+    {
+        std::cerr << fmt::format("Failed to raise the system timer resolution to {}ms; timing may be coarse\n", kTimerResolutionMs);
+        return;
+    }
+
+    timerResolutionRaised = true;
+#endif // _WIN32
+}
+
+void Application::tryRestoreTimerResolution()
+{
+#ifdef _WIN32
+    // Balance timeBeginPeriod with a matching timeEndPeriod on the way out, but only if we
+    // actually raised the resolution.
+    if (timerResolutionRaised)
+    {
+        timeEndPeriod(kTimerResolutionMs);
+        timerResolutionRaised = false;
+    }
+#endif // _WIN32
+}
+
+void Application::tryPreventBackgroundThrottling() const
+{
+#ifdef _WIN32
+    // Since Windows 10, processes that aren't in the foreground can be throttled (EcoQoS),
+    // deprioritising their execution speed even when we've asked for high-resolution timers.
+    // Opt out so the server keeps running at full speed while backgrounded.
+    PROCESS_POWER_THROTTLING_STATE powerThrottling{};
+    powerThrottling.Version     = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
+    powerThrottling.ControlMask = PROCESS_POWER_THROTTLING_EXECUTION_SPEED;
+    powerThrottling.StateMask   = 0; // 0 == throttling disabled for the masked controls
+
+    if (!SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling, &powerThrottling, sizeof(powerThrottling)))
+    {
+        std::cerr << fmt::format("Failed to opt out of background execution-speed throttling (error {})\n", GetLastError());
+    }
+#endif // _WIN32
 }
 
 void Application::tryDisableQuickEditMode() const
@@ -229,7 +283,10 @@ void Application::markLoaded()
     if (Application::isRunningInCI())
     {
         ShowInfo("CI mode enabled: exiting after successful initialization");
-        std::exit(0);
+
+        // Unwind through main() rather than std::exit() so that luautils::cleanup()
+        // is properly called.
+        requestExit();
     }
 }
 
@@ -257,7 +314,7 @@ auto Application::isRunningInCI() const -> bool
     return args_->get<bool>("--ci");
 }
 
-void Application::run()
+auto Application::run() -> bool
 {
     ShowInfo("Creating engine");
     engine_ = createEngine();
@@ -292,8 +349,11 @@ void Application::run()
         catch (std::exception& e)
         {
             ShowErrorFmt("Fatal exception: {}", e.what());
+            return false;
         }
     }
+
+    return true;
 }
 
 auto Application::scheduler() -> Scheduler&

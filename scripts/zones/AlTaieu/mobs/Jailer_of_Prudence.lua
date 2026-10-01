@@ -42,6 +42,7 @@ entity.onMobInitialize = function(mob)
 end
 
 entity.onMobSpawn = function(mob)
+    mob:setMod(xi.mod.STORETP, 100)
     mob:setAnimationSub(0) -- Mouth closed
     mob:setMod(xi.mod.TRIPLE_ATTACK, 20)
     mob:addMod(xi.mod.DEFP, 33)
@@ -57,8 +58,8 @@ local teleportToTarget = function(mob, target, currentTargetId)
         end
 
         local targetX, targetY, targetZ = target:getXPos(), target:getYPos(), target:getZPos()
-        local offsetX = math.random(-2, 2)
-        local offsetZ = math.random(-2, 2)
+        local offsetX = math.randomInt(-2, 2)
+        local offsetZ = math.randomInt(-2, 2)
         mobArg:setStatus(xi.status.INVISIBLE)
         mobArg:setPos(targetX + offsetX, targetY, targetZ + offsetZ, target:getRotPos())
 

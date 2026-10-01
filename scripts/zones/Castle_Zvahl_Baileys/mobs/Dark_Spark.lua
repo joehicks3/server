@@ -13,7 +13,6 @@ end
 
 entity.onMobSpawn = function(mob)
     mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, 150)
-    mob:setMobMod(xi.mobMod.MAGIC_DELAY, 0)
 end
 
 entity.onMobMobskillChoose = function(mob, target, skillId)
@@ -26,7 +25,7 @@ entity.onMobMobskillChoose = function(mob, target, skillId)
         table.insert(skillList, xi.mobSkill.SELF_DESTRUCT_BOMB)
     end
 
-    return skillList[math.random(1, #skillList)]
+    return skillList[math.randomInt(1, #skillList)]
 end
 
 return entity

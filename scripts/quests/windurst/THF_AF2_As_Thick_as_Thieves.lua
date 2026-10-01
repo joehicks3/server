@@ -24,7 +24,9 @@ local quest = Quest:new(xi.questLog.WINDURST, xi.quest.id.windurst.AS_THICK_AS_T
 
 quest.reward =
 {
-    item = xi.item.ROGUES_BONNET,
+    fame     = 20,
+    fameArea = xi.fameArea.WINDURST,
+    item     = xi.item.ROGUES_BONNET,
 }
 
 local function isNaked(player)
@@ -44,7 +46,7 @@ local towerIncorrectTrade = function(player, npc, trade)
 end
 
 local towerOnTrigger = function(player, npc)
-    if not player:hasKeyItem(xi.ki.FIRST_SIGNED_FORGED_ENVELOPE) then
+    if not player:hasKeyItem(xi.keyItem.FIRST_SIGNED_FORGED_ENVELOPE) then
         if
             quest:getLocalVar(npc, 'Option') == 1 and
             not player:findItem(xi.item.GRAPNEL) and
@@ -62,8 +64,8 @@ local towerOnTrigger = function(player, npc)
 end
 
 local function handleDangrufMinigame(player, winEventId, loseEventId, itemPlaced)
-    local rand1 = math.random(1, 999)
-    local rand2 = math.random(1, 999)
+    local rand1 = math.randomInt(1, 999)
+    local rand2 = math.randomInt(1, 999)
 
     if rand1 > rand2 then
         player:messageSpecial(dangrufID.text.YOU_PLACE_ITEM, 0, itemPlaced)
@@ -120,14 +122,14 @@ quest.sections =
 
         [xi.zone.WINDURST_WOODS] =
         {
-            ['Nanaa_Mihgo'] = quest:progressEvent(504, 0, xi.ki.SIGNED_ENVELOPE, xi.ki.TENSHODO_ENVELOPE),
+            ['Nanaa_Mihgo'] = quest:progressEvent(504, 0, xi.keyItem.SIGNED_ENVELOPE, xi.keyItem.TENSHODO_ENVELOPE),
 
             onEventFinish =
             {
                 [504] = function(player, csid, option, npc)
                     if option == 1 then
                         quest:begin(player)
-                        npcUtil.giveKeyItem(player, { xi.ki.GANG_WHEREABOUTS_NOTE, xi.ki.FIRST_FORGED_ENVELOPE, xi.ki.SECOND_FORGED_ENVELOPE })
+                        npcUtil.giveKeyItem(player, { xi.keyItem.GANG_WHEREABOUTS_NOTE, xi.keyItem.FIRST_FORGED_ENVELOPE, xi.keyItem.SECOND_FORGED_ENVELOPE })
                     end
                 end,
             },
@@ -213,7 +215,7 @@ quest.sections =
                         npcUtil.tradeHasExactly(trade, xi.item.REGAL_DIE) and
                         quest:getVar(player, 'Prog') == 6
                     then
-                        return quest:progressEvent(10026, 0, xi.item.REGAL_DIE, math.random(1, 700))
+                        return quest:progressEvent(10026, 0, xi.item.REGAL_DIE, math.randomInt(1, 700))
                     end
                 end,
 
@@ -221,8 +223,8 @@ quest.sections =
                     -- NOTE: 'Prog' questVar is only used for the gambling phase of this quest.  All other tracking utilizes
                     -- key items obtained.
                     local questProgress = quest:getVar(player, 'Prog')
-                    local rand1 = math.random(1, 999)
-                    local rand2 = math.random(1, 999)
+                    local rand1 = math.randomInt(1, 999)
+                    local rand2 = math.randomInt(1, 999)
 
                     if questProgress == 0 then
                         return quest:progressEvent(10024, 0, xi.item.REGAL_DIE, rand1, rand2)
@@ -247,8 +249,8 @@ quest.sections =
 
                 [10026] = function(player, csid, option, npc)
                     player:confirmTrade()
-                    player:delKeyItem(xi.ki.SECOND_FORGED_ENVELOPE)
-                    npcUtil.giveKeyItem(player, xi.ki.SECOND_SIGNED_FORGED_ENVELOPE)
+                    player:delKeyItem(xi.keyItem.SECOND_FORGED_ENVELOPE)
+                    npcUtil.giveKeyItem(player, xi.keyItem.SECOND_SIGNED_FORGED_ENVELOPE)
                     quest:setVar(player, 'Prog', 7)
                 end,
             },
@@ -295,7 +297,7 @@ quest.sections =
             {
                 onTrade = function(player, npc, trade)
                     if
-                        not player:hasKeyItem(xi.ki.FIRST_SIGNED_FORGED_ENVELOPE) and
+                        not player:hasKeyItem(xi.keyItem.FIRST_SIGNED_FORGED_ENVELOPE) and
                         npcUtil.tradeHasExactly(trade, xi.item.GRAPNEL)
                     then
                         if isNaked(player) then
@@ -343,8 +345,8 @@ quest.sections =
             {
                 [2] = function(player, csid, option, npc)
                     player:confirmTrade()
-                    player:delKeyItem(xi.ki.FIRST_FORGED_ENVELOPE)
-                    npcUtil.giveKeyItem(player, xi.ki.FIRST_SIGNED_FORGED_ENVELOPE)
+                    player:delKeyItem(xi.keyItem.FIRST_FORGED_ENVELOPE)
+                    npcUtil.giveKeyItem(player, xi.keyItem.FIRST_SIGNED_FORGED_ENVELOPE)
                 end,
             },
         },
@@ -358,12 +360,12 @@ quest.sections =
             {
                 onTrigger = function(player, npc)
                     if
-                        player:hasKeyItem(xi.ki.FIRST_SIGNED_FORGED_ENVELOPE) and
-                        player:hasKeyItem(xi.ki.SECOND_SIGNED_FORGED_ENVELOPE)
+                        player:hasKeyItem(xi.keyItem.FIRST_SIGNED_FORGED_ENVELOPE) and
+                        player:hasKeyItem(xi.keyItem.SECOND_SIGNED_FORGED_ENVELOPE)
                     then
                         return quest:progressEvent(508)
                     else
-                        return quest:progressEvent(505, 0, xi.ki.GANG_WHEREABOUTS_NOTE)
+                        return quest:progressEvent(505, 0, xi.keyItem.GANG_WHEREABOUTS_NOTE)
                     end
                 end,
             },
@@ -372,9 +374,9 @@ quest.sections =
             {
                 [508] = function(player, csid, option, npc)
                     if quest:complete(player) then
-                        player:delKeyItem(xi.ki.GANG_WHEREABOUTS_NOTE)
-                        player:delKeyItem(xi.ki.FIRST_SIGNED_FORGED_ENVELOPE)
-                        player:delKeyItem(xi.ki.SECOND_SIGNED_FORGED_ENVELOPE)
+                        player:delKeyItem(xi.keyItem.GANG_WHEREABOUTS_NOTE)
+                        player:delKeyItem(xi.keyItem.FIRST_SIGNED_FORGED_ENVELOPE)
+                        player:delKeyItem(xi.keyItem.SECOND_SIGNED_FORGED_ENVELOPE)
                         player:setLocalVar('Quest[2][71]mustZone', 1)
                     end
                 end,

@@ -23,6 +23,33 @@ local requiredTradeItems =
     { xi.item.TWITHERYM_SCALE,           1 },
 }
 
+-- Castoff Point navigation, available once the player has earned Watercrafting and completed the quest.
+local castoffData =
+{
+    [xi.zone.CIRDAS_CAVERNS]        = { eventId = 11, pad0Bank = 1 },
+    [xi.zone.FORET_DE_HENNETIEL]    = { eventId = 18, isRiverRoute = true },
+    [xi.zone.MORIMAR_BASALT_FIELDS] = { eventId = 18, pad0Bank = 0 },
+    [xi.zone.SIH_GATES]             = { eventId = 12, pad0Bank = 1 },
+    [xi.zone.YAHSE_HUNTING_GROUNDS] = { eventId = 16, pad0Bank = 0 },
+}
+
+local function castoffPointWarp(player, npc)
+    local zoneId   = player:getZoneID()
+    local data     = castoffData[zoneId]
+    local padIndex = npc:getID() - zones[zoneId].npc.CASTOFF_POINT_OFFSET
+    if data.isRiverRoute then
+        return quest:event(data.eventId, padIndex)
+    end
+
+    return quest:event(data.eventId, (data.pad0Bank + padIndex) % 2)
+end
+
+-- Foret's six river docks all navigatable post quest.
+local foretCastoffPads = {}
+for i = 0, 5 do
+    foretCastoffPads['Castoff_Point_' .. i] = { onTrigger = castoffPointWarp }
+end
+
 quest.sections =
 {
     {
@@ -61,7 +88,7 @@ quest.sections =
                 end,
 
                 onTrigger = function(player, npc)
-                    if not player:hasKeyItem(xi.ki.WATERCRAFT) then
+                    if not player:hasKeyItem(xi.keyItem.WATERCRAFT) then
                         return quest:event(2562)
                     elseif quest:getVar(player, 'Prog') == 2 then
                         return quest:progressEvent(2563)
@@ -74,7 +101,7 @@ quest.sections =
             ['Castoff_Point_4'] =
             {
                 onTrigger = function(player, npc)
-                    if player:hasKeyItem(xi.ki.WATERCRAFT) then
+                    if player:hasKeyItem(xi.keyItem.WATERCRAFT) then
                         local hasTitle = player:hasTitle(xi.title.TOXIN_TUSSLER) and 1 or 0
 
                         return quest:event(19, 4, hasTitle)
@@ -85,7 +112,7 @@ quest.sections =
             ['Castoff_Point_5'] =
             {
                 onTrigger = function(player, npc)
-                    if player:hasKeyItem(xi.ki.WATERCRAFT) then
+                    if player:hasKeyItem(xi.keyItem.WATERCRAFT) then
                         local hasTitle = player:hasTitle(xi.title.TOXIN_TUSSLER) and 1 or 0
 
                         return quest:event(19, 5, hasTitle)
@@ -113,21 +140,33 @@ quest.sections =
                 end,
 
                 [2563] = function(player, csid, option, npc)
-                    player:messageSpecial(foretID.text.YOU_HAVE_LEARNED, xi.ki.WATERCRAFTING)
+                    player:messageSpecial(foretID.text.YOU_HAVE_LEARNED, xi.keyItem.WATERCRAFTING)
 
                     if quest:complete(player) then
-                        player:delKeyItem(xi.ki.WATERCRAFT)
-                        player:addKeyItem(xi.ki.WATERCRAFTING)
+                        player:delKeyItem(xi.keyItem.WATERCRAFT)
+                        player:addKeyItem(xi.keyItem.WATERCRAFTING)
                     end
                 end,
 
                 [2576] = function(player, csid, option, npc)
                     player:confirmTrade()
 
-                    npcUtil.giveKeyItem(player, xi.ki.WATERCRAFT)
+                    npcUtil.giveKeyItem(player, xi.keyItem.WATERCRAFT)
                 end,
             },
         },
+    },
+
+    {
+        check = function(player, status, vars)
+            return status == xi.questStatus.QUEST_COMPLETED
+        end,
+
+        [xi.zone.CIRDAS_CAVERNS]        = { ['Castoff_Point'] = { onTrigger = castoffPointWarp } },
+        [xi.zone.FORET_DE_HENNETIEL]    = foretCastoffPads,
+        [xi.zone.MORIMAR_BASALT_FIELDS] = { ['Castoff_Point'] = { onTrigger = castoffPointWarp } },
+        [xi.zone.SIH_GATES]             = { ['Castoff_Point'] = { onTrigger = castoffPointWarp } },
+        [xi.zone.YAHSE_HUNTING_GROUNDS] = { ['Castoff_Point'] = { onTrigger = castoffPointWarp } },
     },
 }
 

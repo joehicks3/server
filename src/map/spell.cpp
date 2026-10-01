@@ -22,15 +22,15 @@
 #include <array>
 #include <cstring>
 
+#include "common/types/hash_map.h"
+
 #include "lua/luautils.h"
 
 #include "blue_spell.h"
-#include "items/item_weapon.h"
 #include "mob_spell_list.h"
 #include "spell.h"
 
 #include "enums/four_cc.h"
-#include "map_engine.h"
 #include "status_effect_container.h"
 #include "utils/blueutils.h"
 
@@ -65,9 +65,9 @@ SpellID CSpell::getID()
     return m_ID;
 }
 
-uint8 CSpell::getJob(JOBTYPE JobID)
+auto CSpell::getJob(xi::Job JobID) -> uint8
 {
-    return (m_job[JobID] == CANNOT_USE_SPELL ? 255 : m_job[JobID]);
+    return (m_job[static_cast<uint8>(JobID)] == CANNOT_USE_SPELL ? 255 : m_job[static_cast<uint8>(JobID)]);
 }
 
 void CSpell::setJob(const std::array<uint8, MAX_JOBTYPE>& jobs)
@@ -125,12 +125,12 @@ void CSpell::setSpellFamily(SPELLFAMILY SpellFamily)
     m_spellFamily = SpellFamily;
 }
 
-uint8 CSpell::getSkillType() const
+auto CSpell::getSkillType() const -> xi::SkillType
 {
     return m_skillType;
 }
 
-void CSpell::setSkillType(uint8 SkillType)
+void CSpell::setSkillType(xi::SkillType SkillType)
 {
     m_skillType = SkillType;
 }
@@ -138,6 +138,26 @@ void CSpell::setSkillType(uint8 SkillType)
 bool CSpell::isBuff() const
 {
     return (getValidTarget() & TARGET_SELF) && !(getValidTarget() & TARGET_ENEMY);
+}
+
+auto CSpell::statusEffect() const -> Maybe<xi::StatusEffect>
+{
+    return statusEffect_;
+}
+
+void CSpell::setStatusEffect(const Maybe<xi::StatusEffect> statusEffect)
+{
+    statusEffect_ = statusEffect;
+}
+
+auto CSpell::statusEffectTier() const -> uint8
+{
+    return statusEffectTier_;
+}
+
+void CSpell::setStatusEffectTier(const uint8 tier)
+{
+    statusEffectTier_ = tier;
 }
 
 bool CSpell::tookEffect() const
@@ -152,7 +172,7 @@ bool CSpell::hasMPCost()
 
 bool CSpell::isHeal()
 {
-    return ((getValidTarget() & TARGET_SELF) && getSkillType() == SKILL_HEALING_MAGIC) || m_ID == SpellID::Pollen || m_ID == SpellID::Wild_Carrot ||
+    return ((getValidTarget() & TARGET_SELF) && getSkillType() == xi::SkillType::HealingMagic) || m_ID == SpellID::Pollen || m_ID == SpellID::Wild_Carrot ||
            m_ID == SpellID::Healing_Breeze || m_ID == SpellID::Magic_Fruit;
 }
 
@@ -164,7 +184,7 @@ bool CSpell::isCure()
 
 bool CSpell::isDebuff()
 {
-    return ((getValidTarget() & TARGET_ENEMY) && getSkillType() == SKILL_ENFEEBLING_MAGIC) || m_spellFamily == SPELLFAMILY_ELE_DOT ||
+    return ((getValidTarget() & TARGET_ENEMY) && getSkillType() == xi::SkillType::EnfeeblingMagic) || m_spellFamily == SPELLFAMILY_ELE_DOT ||
            m_spellFamily == SPELLFAMILY_BIO || m_ID == SpellID::Stun || m_ID == SpellID::Curse;
 }
 
@@ -199,12 +219,12 @@ float CSpell::getRadius() const
     return m_radius;
 }
 
-uint16 CSpell::getZoneMisc() const
+xi::ZoneMisc CSpell::getZoneMisc() const
 {
     return m_zoneMisc;
 }
 
-void CSpell::setZoneMisc(uint16 Misc)
+void CSpell::setZoneMisc(xi::ZoneMisc Misc)
 {
     m_zoneMisc = Misc;
 }
@@ -384,16 +404,6 @@ void CSpell::setRequirements(uint8 requirements)
     m_requirements = requirements;
 }
 
-uint16 CSpell::getMeritId() const
-{
-    return m_meritId;
-}
-
-void CSpell::setMeritId(uint16 meritId)
-{
-    m_meritId = meritId;
-}
-
 uint8 CSpell::getFlag() const
 {
     return m_flag;
@@ -467,7 +477,7 @@ std::map<uint16, uint16>          PMobSkillToBlueSpell; // maps the skill id (ke
 void LoadSpellList()
 {
     auto rset = db::preparedStmt("SELECT spellid, name, jobs, `group`, family, validTargets, skill, castTime, recastTime, animation, animationTime, mpCost, "
-                                 "AOE, base, element, zonemisc, multiplier, message, magicBurstMessage, CE, VE, requirements, content_tag, spell_range, radius "
+                                 "AOE, base, element, zonemisc, multiplier, message, magicBurstMessage, CE, VE, requirements, content_tag, spell_range, radius, status_effect, status_effect_tier "
                                  "FROM spell_list");
     FOR_DB_MULTIPLE_RESULTS(rset)
     {
@@ -496,7 +506,7 @@ void LoadSpellList()
         PSpell->setSpellGroup(rset->get<SPELLGROUP>("group"));
         PSpell->setSpellFamily(rset->get<SPELLFAMILY>("family"));
         PSpell->setValidTarget(rset->get<uint16>("validTargets"));
-        PSpell->setSkillType(rset->get<uint8>("skill"));
+        PSpell->setSkillType(rset->get<xi::SkillType>("skill"));
         PSpell->setCastTime(std::chrono::milliseconds(rset->get<uint32>("castTime")));
         PSpell->setRecastTime(std::chrono::milliseconds(rset->get<uint32>("recastTime")));
         PSpell->setAnimationID(rset->get<uint16>("animation"));
@@ -505,7 +515,7 @@ void LoadSpellList()
         PSpell->setAOE(rset->get<uint8>("AOE"));
         PSpell->setBase(rset->get<uint16>("base"));
         PSpell->setElement(rset->get<uint16>("element"));
-        PSpell->setZoneMisc(rset->get<uint16>("zonemisc"));
+        PSpell->setZoneMisc(rset->get<xi::ZoneMisc>("zonemisc"));
         PSpell->setMultiplier(rset->get<float>("multiplier"));
         PSpell->setMessage(rset->get<MsgBasic>("message"));
         PSpell->setMagicBurstMessage(rset->get<MsgBasic>("magicBurstMessage"));
@@ -516,6 +526,13 @@ void LoadSpellList()
 
         PSpell->setRange(rset->get<float>("spell_range") / 10);
         PSpell->setRadius(rset->get<float>("radius") / 10);
+
+        if (!rset->isNull("status_effect"))
+        {
+            PSpell->setStatusEffect(rset->get<xi::StatusEffect>("status_effect"));
+        }
+
+        PSpell->setStatusEffectTier(rset->get<uint8>("status_effect_tier"));
 
         PSpellList[static_cast<uint16>(PSpell->getID())] = PSpell;
 
@@ -614,28 +631,12 @@ void LoadSpellList()
     FOR_DB_MULTIPLE_RESULTS(rset)
     {
         const auto spellId = rset->get<uint16>("spellId");
-        const auto modID   = rset->get<Mod>("modId");
+        const auto modID   = rset->get<xi::Mod>("modId");
         const auto value   = rset->get<int16>("value");
 
         if (PSpellList[spellId])
         {
             static_cast<CBlueSpell*>(PSpellList[spellId])->addModifier(CModifier(modID, value));
-        }
-    }
-
-    rset = db::preparedStmt("SELECT spellId, meritId, content_tag "
-                            "FROM spell_list INNER JOIN merits ON spell_list.name = merits.name");
-    FOR_DB_MULTIPLE_RESULTS(rset)
-    {
-        if (!luautils::IsContentEnabled(rset->getOrDefault<std::string>("content_tag", "")))
-        {
-            continue;
-        }
-
-        const auto spellId = rset->get<uint16>("spellId");
-        if (PSpellList[spellId])
-        {
-            PSpellList[spellId]->setMeritId(rset->get<uint16>("meritId"));
         }
     }
 }
@@ -669,6 +670,31 @@ CSpell* GetSpell(SpellID SpellID)
     // False positive: this is CSpell*, so it's OK
     // cppcheck-suppress CastIntegerToAddressAtReturn
     return PSpellList[id];
+}
+
+auto lookupIdByName(const std::string_view name) -> Maybe<SpellID>
+{
+    static const auto byName = []
+    {
+        HashMap<std::string, SpellID> names;
+        for (auto* PSpell : PSpellList)
+        {
+            if (PSpell)
+            {
+                names.try_emplace(PSpell->getName(), PSpell->getID());
+            }
+        }
+
+        return names;
+    }();
+
+    const auto entry = byName.find(std::string{ name });
+    if (entry == byName.end())
+    {
+        return std::nullopt;
+    }
+
+    return entry->second;
 }
 
 bool CanUseSpell(CBattleEntity* PCaster, SpellID SpellID)
@@ -724,7 +750,7 @@ bool CanUseSpell(CBattleEntity* PCaster, CSpell* spell)
                         usable = false;
                     }
                 }
-                if (PCaster->GetMJob() == JOB_SCH)
+                if (PCaster->GetMJob() == xi::Job::SCH)
                 {
                     if (requirements & SPELLREQ_ADDENDUM_BLACK)
                     {
@@ -772,7 +798,7 @@ bool CanUseSpell(CBattleEntity* PCaster, CSpell* spell)
                         usable = false;
                     }
                 }
-                if (PCaster->GetSJob() == JOB_SCH)
+                if (PCaster->GetSJob() == xi::Job::SCH)
                 {
                     if (requirements & SPELLREQ_ADDENDUM_BLACK)
                     {
@@ -839,7 +865,7 @@ bool CanUseSpell(CBattleEntity* PCaster, CSpell* spell)
 
 // This is a utility method for mobutils, when we want to work out if we can give monsters a spell
 // but they are on an odd job (e.g. PLDs getting -ga3)
-bool CanUseSpellWith(SpellID spellId, JOBTYPE job, uint8 level)
+auto CanUseSpellWith(SpellID spellId, xi::Job job, uint8 level) -> bool
 {
     if (GetSpell(spellId) != nullptr)
     {

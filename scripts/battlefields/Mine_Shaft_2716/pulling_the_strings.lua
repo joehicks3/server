@@ -16,7 +16,7 @@ local content = Battlefield:new({
     index            = 3,
     entryNpc         = '_0d0',
     exitNpcs         = { '_0d1', '_0d2', '_0d3' },
-    requiredKeyItems = { xi.ki.SHAFT_GATE_OPERATING_DIAL, message = mineshaftID.text.SNAPS_IN_TWO, },
+    requiredKeyItems = { xi.keyItem.SHAFT_GATE_OPERATING_DIAL, message = mineshaftID.text.SNAPS_IN_TWO, },
     grantXP          = 2000,
     armouryCrates    =
     {
@@ -163,7 +163,7 @@ local function getLootPool(battlefield)
         local bonusAttachment = lootTables[key]
         if key == xi.job.PUP and type(bonusAttachment) == 'table' then
             for _ = 1, 2 do
-                if math.random(1, 100) <= 20 then
+                if math.randomInt(1, 100) <= 20 then
                     table.insert(bonusLootPools, utils.randomEntry(bonusAttachment))
                 end
             end

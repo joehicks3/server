@@ -7,6 +7,28 @@ local entity = {}
 
 local ID = zones[xi.zone.KING_RANPERRES_TOMB]
 
+local charmThresholds =
+{
+    [ 1] = 90,
+    [ 2] = 85,
+    [ 3] = 80,
+    [ 4] = 75,
+    [ 5] = 70,
+    [ 6] = 65,
+    [ 7] = 60,
+    [ 8] = 55,
+    [ 9] = 50,
+    [10] = 45,
+    [11] = 40,
+    [12] = 35,
+    [13] = 30,
+    [14] = 25,
+    [15] = 20,
+    [16] = 15,
+    [17] = 10,
+    [18] =  5,
+}
+
 local pets =
 {
     ID.mob.VRTRA + 1,
@@ -20,66 +42,11 @@ local pets =
 local callPetParams =
 {
     inactiveTime = 3000,
+    ignoreInactive = true,
     maxSpawns = 1,
 }
 
-entity.spawnPoints =
-{
-    { x = 228.000, y = 7.134, z = -311.000 },
-    { x = 220.463, y = 8.136, z = -302.294 },
-    { x = 204.672, y = 7.500, z = -271.593 },
-    { x = 214.618, y = 7.457, z = -286.165 },
-    { x = 223.101, y = 8.025, z = -315.119 },
-    { x = 247.336, y = 7.494, z = -304.864 },
-    { x = 234.925, y = 8.097, z = -293.001 },
-    { x = 235.257, y = 7.176, z = -322.734 },
-    { x = 207.240, y = 7.613, z = -277.323 },
-    { x = 209.889, y = 6.901, z = -323.897 },
-    { x = 233.434, y = 7.474, z = -315.569 },
-    { x = 244.405, y = 7.500, z = -318.060 },
-    { x = 209.411, y = 8.072, z = -311.097 },
-    { x = 196.773, y = 8.252, z = -308.707 },
-    { x = 212.375, y = 8.006, z = -309.179 },
-    { x = 205.479, y = 7.084, z = -284.712 },
-    { x = 226.669, y = 7.500, z = -308.960 },
-    { x = 205.457, y = 7.780, z = -299.290 },
-    { x = 229.418, y = 7.924, z = -281.928 },
-    { x = 234.193, y = 7.500, z = -327.967 },
-    { x = 229.321, y = 8.725, z = -296.566 },
-    { x = 248.498, y = 7.700, z = -287.928 },
-    { x = 212.373, y = 7.891, z = -273.686 },
-    { x = 219.563, y = 8.500, z = -280.989 },
-    { x = 235.472, y = 6.751, z = -284.453 },
-    { x = 213.845, y = 7.951, z = -273.953 },
-    { x = 226.365, y = 8.500, z = -319.678 },
-    { x = 225.367, y = 8.098, z = -296.425 },
-    { x = 200.939, y = 7.846, z = -289.484 },
-    { x = 227.849, y = 8.500, z = -320.373 },
-    { x = 196.482, y = 8.226, z = -300.558 },
-    { x = 237.806, y = 8.372, z = -304.311 },
-    { x = 236.669, y = 7.483, z = -310.887 },
-    { x = 197.317, y = 8.213, z = -294.733 },
-    { x = 194.723, y = 7.272, z = -314.654 },
-    { x = 223.670, y = 8.183, z = -278.056 },
-    { x = 215.315, y = 8.183, z = -282.985 },
-    { x = 213.837, y = 8.386, z = -277.434 },
-    { x = 239.121, y = 7.477, z = -311.985 },
-    { x = 204.118, y = 7.840, z = -296.797 },
-    { x = 204.809, y = 7.510, z = -293.735 },
-    { x = 218.759, y = 8.385, z = -314.973 },
-    { x = 218.131, y = 8.442, z = -282.762 },
-    { x = 217.237, y = 8.473, z = -315.697 },
-    { x = 219.195, y = 8.338, z = -314.381 },
-    { x = 234.118, y = 7.500, z = -319.658 },
-    { x = 243.304, y = 7.563, z = -286.714 },
-    { x = 201.935, y = 7.500, z = -323.092 },
-    { x = 209.553, y = 7.118, z = -292.888 },
-    { x = 213.200, y = 8.350, z = -316.937 },
-}
-
 entity.onMobInitialize = function(mob)
-    xi.mob.updateNMSpawnPoint(mob)
-
     mob:addImmunity(xi.immunity.BIND)
     mob:addImmunity(xi.immunity.BLIND)
     mob:addImmunity(xi.immunity.DARK_SLEEP)
@@ -88,8 +55,7 @@ entity.onMobInitialize = function(mob)
     mob:addImmunity(xi.immunity.TERROR)
     mob:setMobMod(xi.mobMod.AOE_HIT_ALL, 1)
 
-    mob:setCarefulPathing(true)
-    mob:setRespawnTime(math.random(144, 240) * 1800) -- 3 to 5 days in 30 minute windows
+    mob:setRespawnTime(math.randomInt(144, 240) * 1800) -- 3 to 5 days in 30 minute windows
 end
 
 entity.onMobSpawn = function(mob)
@@ -118,44 +84,22 @@ entity.onMobRoam = function(mob)
 end
 
 entity.onMobEngage = function(mob, target)
-    -- Reset the onMobFight variables
-    mob:setLocalVar('spawnTime', 0)
-    mob:setLocalVar('twohourTime', 0)
+    local currentTime = GetSystemTime()
+    local hpPercent   = mob:getHPP()
+    local charmsLeft  = 0
+
+    -- Amount of charms remaining set on engage, to reset properly on wipe.
+    for _, threshold in ipairs(charmThresholds) do
+        if hpPercent >= threshold then
+            charmsLeft = charmsLeft + 1
+        end
+    end
+
+    mob:setLocalVar('charmsLeft', charmsLeft)
+    mob:setLocalVar('petTime', currentTime + math.randomInt(3, 5) * 15)
 end
 
 entity.onMobFight = function(mob, target)
-    local spawnTime = mob:getLocalVar('spawnTime')
-    local twohourTime = mob:getLocalVar('twohourTime')
-    local fifteenBlock = mob:getBattleTime() / 15
-
-    if twohourTime == 0 then
-        twohourTime = math.random(4, 6)
-        mob:setLocalVar('twohourTime', twohourTime)
-    end
-
-    if spawnTime == 0 then
-        spawnTime = math.random(3, 5)
-        mob:setLocalVar('spawnTime', spawnTime)
-    end
-
-    if
-        fifteenBlock > twohourTime and
-        mob:canUseAbilities()
-    then
-        mob:useMobAbility(710)
-        mob:setLocalVar('skill_tp', mob:getTP()) -- 2 hr shouldn't wipe TP
-        mob:setLocalVar('twohourTime', fifteenBlock + math.random(4, 6))
-
-        -- call the first pet that is not spawned, will wait for actions to finish
-    elseif
-        fifteenBlock > spawnTime and
-        xi.mob.callPets(mob, utils.shuffle(pets), callPetParams)
-    then
-        spawnTime = math.random(3, 5)
-        mob:setLocalVar('spawnTime', fifteenBlock + spawnTime)
-    end
-
-    -- Vrtra draws in if you attempt to leave the room
     local drawInTable =
     {
         conditions =
@@ -165,19 +109,33 @@ entity.onMobFight = function(mob, target)
         position = mob:getPos(),
         wait = 3,
     }
+
     if drawInTable.conditions[1] then
         mob:setMobMod(xi.mobMod.NO_MOVE, 1)
         utils.drawIn(target, drawInTable)
     else
         mob:setMobMod(xi.mobMod.NO_MOVE, 0)
     end
-end
 
-entity.onMobWeaponSkill = function(mob, target, skill, action)
-    -- Don't lose TP from charm 2hr
-    if skill:getID() == 710 then
-        mob:addTP(mob:getLocalVar('skill_tp'))
-        mob:setLocalVar('skill_tp', 0)
+    local currentTime = GetSystemTime()
+
+    if
+        currentTime > mob:getLocalVar('petTime') and
+        xi.mob.callPets(mob, utils.shuffle(pets), callPetParams)
+    then
+        mob:setLocalVar('petTime', currentTime + math.randomInt(3, 5) * 15)
+    end
+
+    local charmsLeft  = mob:getLocalVar('charmsLeft')
+    local charmIndex  = #charmThresholds - charmsLeft + 1
+
+    if
+        charmsLeft > 0 and
+        mob:getHPP() <= charmThresholds[charmIndex] and
+        not xi.combat.behavior.isEntityBusy(mob)
+    then
+        mob:useMobAbility(xi.mobSkill.CHARM)
+        mob:setLocalVar('charmsLeft', charmsLeft - 1)
     end
 end
 
@@ -209,8 +167,7 @@ end
 
 entity.onMobDespawn = function(mob)
     -- Set Vrtra's spawnpoint and respawn time (3-5 days)
-    xi.mob.updateNMSpawnPoint(mob)
-    mob:setRespawnTime(math.random(144, 240) * 1800) -- 3 to 5 days in 30 minute windows
+    mob:setRespawnTime(math.randomInt(144, 240) * 1800) -- 3 to 5 days in 30 minute windows
 end
 
 return entity

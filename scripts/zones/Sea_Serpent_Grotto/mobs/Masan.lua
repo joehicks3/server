@@ -7,11 +7,6 @@ local ID = zones[xi.zone.SEA_SERPENT_GROTTO]
 ---@type TMobEntity
 local entity = {}
 
-entity.spawnPoints =
-{
-    { x =  1.178, y =  10.799, z =  178.807 }
-}
-
 entity.phList =
 {
     [ID.mob.MASAN - 3] = ID.mob.MASAN, -- Confirmed on retail
@@ -31,7 +26,7 @@ entity.onMobSpawn = function(mob)
 end
 
 entity.onAdditionalEffect = function(mob, target, damage)
-    return xi.mob.onAddEffect(mob, target, damage, xi.mob.ae.TP_DRAIN, { power = (math.random(250, 500)) })  -- Wiki reports of HP drain add effect seem to be made up, only TP drain found in extensive testing
+    return xi.mob.onAddEffect(mob, target, damage, xi.mob.ae.TP_DRAIN, { power = (math.randomInt(250, 500)) })  -- Wiki reports of HP drain add effect seem to be made up, only TP drain found in extensive testing
 end
 
 entity.onMobDeath = function(mob, player, optParams)

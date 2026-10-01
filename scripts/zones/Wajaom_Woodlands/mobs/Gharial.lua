@@ -5,11 +5,6 @@
 ---@type TMobEntity
 local entity = {}
 
-entity.spawnPoints =
-{
-    { x = -531.255, y = -9.756, z =  42.421 }
-}
-
 entity.onMobInitialize = function(mob)
     mob:setMod(xi.mod.DOUBLE_ATTACK, 50)
     mob:setMod(xi.mod.MOVE_SPEED_STACKABLE, 12)
@@ -35,7 +30,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    mob:setRespawnTime(7200 + math.random(0, 600)) -- 2 hours, then 10 minute window
+    mob:setRespawnTime(7200 + math.randomInt(0, 600)) -- 2 hours, then 10 minute window
 end
 
 return entity

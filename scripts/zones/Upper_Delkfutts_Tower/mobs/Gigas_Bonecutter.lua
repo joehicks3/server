@@ -3,6 +3,8 @@
 --  Mob: Gigas Bonecutter
 -- Note: PH for Enkelados
 -----------------------------------
+mixins = { require('scripts/mixins/pet_resummon') }
+-----------------------------------
 local ID = zones[xi.zone.UPPER_DELKFUTTS_TOWER]
 -----------------------------------
 ---@type TMobEntity

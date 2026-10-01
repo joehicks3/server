@@ -137,7 +137,17 @@ uint16 CLuaSpell::getElement()
     return m_PLuaSpell->getElement();
 }
 
-uint8 CLuaSpell::isAoE()
+bool CLuaSpell::isAoE() const
+{
+    return m_PLuaSpell->getAOE() == SPELLAOE_RADIAL;
+}
+
+bool CLuaSpell::isConal() const
+{
+    return m_PLuaSpell->getAOE() == SPELLAOE_CONAL;
+}
+
+uint8 CLuaSpell::getAoE() const
 {
     return m_PLuaSpell->getAOE();
 }
@@ -164,7 +174,7 @@ uint16 CLuaSpell::getMPCost()
 
 uint8 CLuaSpell::getSkillType()
 {
-    return m_PLuaSpell->getSkillType();
+    return static_cast<uint8>(m_PLuaSpell->getSkillType());
 }
 
 uint8 CLuaSpell::getSpellGroup()
@@ -182,7 +192,7 @@ uint8 CLuaSpell::getFlag()
     return m_PLuaSpell->getFlag();
 }
 
-uint8 CLuaSpell::getLevel(JOBTYPE jobId)
+auto CLuaSpell::getLevel(xi::Job jobId) -> uint8
 {
     return m_PLuaSpell->getJob(jobId);
 }
@@ -202,6 +212,8 @@ void CLuaSpell::Register()
     SOL_REGISTER("setCastTime", CLuaSpell::setCastTime);
     SOL_REGISTER("setMPCost", CLuaSpell::setMPCost);
     SOL_REGISTER("isAoE", CLuaSpell::isAoE);
+    SOL_REGISTER("getAoE", CLuaSpell::getAoE);
+    SOL_REGISTER("isConal", CLuaSpell::isConal);
     SOL_REGISTER("getRadius", CLuaSpell::getRadius);
     SOL_REGISTER("tookEffect", CLuaSpell::tookEffect);
     SOL_REGISTER("getMagicBurstMessage", CLuaSpell::getMagicBurstMessage);

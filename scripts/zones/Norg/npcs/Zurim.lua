@@ -169,8 +169,8 @@ local domainInvasionItems =
             [15] = { item = xi.item.VENERIAN_ABJURATION_BODY, cost = 400 },
             [16] = { item = xi.item.VENERIAN_ABJURATION_HANDS, cost = 400 },
         },
-                [4] =
-                    {
+        [4] =
+        {
             [1] = { item = xi.item.VENERIAN_ABJURATION_LEGS, cost = 400 },
             [2] = { item = xi.item.VENERIAN_ABJURATION_FEET, cost = 400 },
             [3] = { item = xi.item.CYLLENIAN_ABJURATION_HEAD, cost = 400 },
@@ -178,7 +178,7 @@ local domainInvasionItems =
             [5] = { item = xi.item.CYLLENIAN_ABJURATION_HANDS, cost = 400 },
             [6] = { item = xi.item.CYLLENIAN_ABJURATION_LEGS, cost = 400 },
             [7] = { item = xi.item.CYLLENIAN_ABJURATION_FEET, cost = 400 },
-                    },
+        },
     },
     [7] =
     {
@@ -289,9 +289,6 @@ local domainInvasionItems =
     },
 }
 
-entity.onTrade = function(player, npc, trade)
-end
-
 entity.onTrigger = function(player, npc)
     local domainInvPoints = player:getCurrency('domain_points')
 
@@ -299,20 +296,24 @@ entity.onTrigger = function(player, npc)
 end
 
 entity.onEventUpdate = function(player, csid, option, npc)
-    local itemPage = bit.band(bit.rshift(option, 2), 0x0F) + 1
-    local itemSubPage = bit.band(bit.rshift(option, 10), 0x0F) + 1
-    local itemSelected = bit.band(bit.rshift(option, 6), 0x0F) + 1
-    local domainInvPurchase = domainInvasionItems[itemPage][itemSubPage][itemSelected]
-    local domainInvPoints = player:getCurrency('domain_points')
+    local itemPage          = bit.band(bit.rshift(option, 2), 0x0F) + 1
+    local itemSubPage       = bit.band(bit.rshift(option, 10), 0x0F) + 1
+    local itemSelected      = bit.band(bit.rshift(option, 6), 0x0F) + 1
+    local page              = domainInvasionItems[itemPage] or {}
+    local subPage           = page[itemSubPage] or {}
+    local domainInvPurchase = subPage[itemSelected]
+    local domainInvPoints   = player:getCurrency('domain_points')
+
+    if not domainInvPurchase or domainInvPoints < domainInvPurchase.cost then
+        player:updateEvent(domainInvPoints)
+        return
+    end
 
     if npcUtil.giveItem(player, { { domainInvPurchase.item, 1 } }) then
         player:delCurrency('domain_points', domainInvPurchase.cost)
     end
 
     player:updateEvent(domainInvPoints - domainInvPurchase.cost)
-end
-
-entity.onEventFinish = function(player, csid, option, npc)
 end
 
 return entity

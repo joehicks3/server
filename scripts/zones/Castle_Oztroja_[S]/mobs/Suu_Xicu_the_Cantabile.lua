@@ -10,14 +10,8 @@ mixins = { require('scripts/mixins/job_special') }
 ---@type TMobEntity
 local entity = {}
 
-entity.spawnPoints =
-{
-    { x = -214.770, y = -0.681, z =  96.357 }
-}
-
 entity.onMobInitialize = function(mob)
-    xi.mob.updateNMSpawnPoint(mob)
-    mob:setRespawnTime(math.random(900, 10800))
+    mob:setRespawnTime(math.randomInt(900, 10800))
 end
 
 entity.onMobRoam = function(mob)
@@ -61,7 +55,7 @@ entity.onMobFight = function(mob, target)
         for i = mobId + 5, mobId + 6 do
             local pet = GetMobByID(i)
             if pet and not pet:isSpawned() then
-                pet:setSpawn(x + math.random(-2, 2), y, z + math.random(-2, 2), r)
+                pet:setSpawn(x + math.randomInt(-2, 2), y, z + math.randomInt(-2, 2), r)
                 pet:spawn()
             end
         end
@@ -73,7 +67,7 @@ entity.onMobFight = function(mob, target)
         for i = mobId + 7, mobId + 8 do
             local pet = GetMobByID(i)
             if pet and not pet:isSpawned() then
-                pet:setSpawn(x + math.random(-2, 2), y, z + math.random(-2, 2), r)
+                pet:setSpawn(x + math.randomInt(-2, 2), y, z + math.randomInt(-2, 2), r)
                 pet:spawn()
             end
         end
@@ -90,8 +84,7 @@ entity.onMobDespawn = function(mob)
         end
     end
 
-    xi.mob.updateNMSpawnPoint(mob)
-    mob:setRespawnTime(math.random(14400, 18000)) -- 4 to 5 hours
+    mob:setRespawnTime(math.randomInt(14400, 18000)) -- 4 to 5 hours
 end
 
 return entity
