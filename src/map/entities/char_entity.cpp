@@ -25,6 +25,7 @@
 #include "common/timer.h"
 #include "common/utils.h"
 
+#include <algorithm>
 #include <cstring>
 
 #include "enums/item_lockflg.h"
@@ -78,6 +79,7 @@
 #include "item_container.h"
 #include "items/item_equipment.h"
 #include "items/item_furnishing.h"
+#include "items/item_linkshell.h"
 #include "items/item_usable.h"
 #include "items/item_weapon.h"
 #include "items/transactions/npc_trade.h"
@@ -135,24 +137,24 @@ CCharEntity::CCharEntity()
     Container      = new CTradeContainer();
     UContainer     = new CUContainer();
 
-    m_Inventory  = std::make_unique<CItemContainer>(LOC_INVENTORY);
-    m_Mogsafe    = std::make_unique<CItemContainer>(LOC_MOGSAFE);
-    m_Storage    = std::make_unique<CItemContainer>(LOC_STORAGE);
-    m_Tempitems  = std::make_unique<CItemContainer>(LOC_TEMPITEMS);
-    m_Moglocker  = std::make_unique<CItemContainer>(LOC_MOGLOCKER);
-    m_Mogsatchel = std::make_unique<CItemContainer>(LOC_MOGSATCHEL);
-    m_Mogsack    = std::make_unique<CItemContainer>(LOC_MOGSACK);
-    m_Mogcase    = std::make_unique<CItemContainer>(LOC_MOGCASE);
-    m_Wardrobe   = std::make_unique<CItemContainer>(LOC_WARDROBE);
-    m_Mogsafe2   = std::make_unique<CItemContainer>(LOC_MOGSAFE2);
-    m_Wardrobe2  = std::make_unique<CItemContainer>(LOC_WARDROBE2);
-    m_Wardrobe3  = std::make_unique<CItemContainer>(LOC_WARDROBE3);
-    m_Wardrobe4  = std::make_unique<CItemContainer>(LOC_WARDROBE4);
-    m_Wardrobe5  = std::make_unique<CItemContainer>(LOC_WARDROBE5);
-    m_Wardrobe6  = std::make_unique<CItemContainer>(LOC_WARDROBE6);
-    m_Wardrobe7  = std::make_unique<CItemContainer>(LOC_WARDROBE7);
-    m_Wardrobe8  = std::make_unique<CItemContainer>(LOC_WARDROBE8);
-    m_RecycleBin = std::make_unique<CItemContainer>(LOC_RECYCLEBIN);
+    m_Inventory  = std::make_unique<CItemContainer>(LOC_INVENTORY, this);
+    m_Mogsafe    = std::make_unique<CItemContainer>(LOC_MOGSAFE, this);
+    m_Storage    = std::make_unique<CItemContainer>(LOC_STORAGE, this);
+    m_Tempitems  = std::make_unique<CItemContainer>(LOC_TEMPITEMS, this);
+    m_Moglocker  = std::make_unique<CItemContainer>(LOC_MOGLOCKER, this);
+    m_Mogsatchel = std::make_unique<CItemContainer>(LOC_MOGSATCHEL, this);
+    m_Mogsack    = std::make_unique<CItemContainer>(LOC_MOGSACK, this);
+    m_Mogcase    = std::make_unique<CItemContainer>(LOC_MOGCASE, this);
+    m_Wardrobe   = std::make_unique<CItemContainer>(LOC_WARDROBE, this);
+    m_Mogsafe2   = std::make_unique<CItemContainer>(LOC_MOGSAFE2, this);
+    m_Wardrobe2  = std::make_unique<CItemContainer>(LOC_WARDROBE2, this);
+    m_Wardrobe3  = std::make_unique<CItemContainer>(LOC_WARDROBE3, this);
+    m_Wardrobe4  = std::make_unique<CItemContainer>(LOC_WARDROBE4, this);
+    m_Wardrobe5  = std::make_unique<CItemContainer>(LOC_WARDROBE5, this);
+    m_Wardrobe6  = std::make_unique<CItemContainer>(LOC_WARDROBE6, this);
+    m_Wardrobe7  = std::make_unique<CItemContainer>(LOC_WARDROBE7, this);
+    m_Wardrobe8  = std::make_unique<CItemContainer>(LOC_WARDROBE8, this);
+    m_RecycleBin = std::make_unique<CItemContainer>(LOC_RECYCLEBIN, this);
 
     keys = {};
 
@@ -318,14 +320,11 @@ CCharEntity::~CCharEntity()
             }
             if (PParty->GetSyncTarget() != nullptr)
             {
-                uint8 count = 0;
-                for (uint32 i = 0; i < PParty->members.size(); ++i)
-                {
-                    if (PParty->members.at(i) != this && PParty->members.at(i)->getZone() == PParty->GetSyncTarget()->getZone())
-                    {
-                        count++;
-                    }
-                }
+                const auto count = static_cast<uint8>(std::ranges::count_if(PParty->members,
+                                                                            [&](const auto* member)
+                                                                            {
+                                                                                return member != this && member->getZone() == PParty->GetSyncTarget()->getZone();
+                                                                            }));
                 if (count < 2) // 3, because one is zoning out - thus at least 2 will be left
                 {
                     PParty->SetSyncTarget("", MsgStd::LevelSyncRemoveTooFewMembers);
@@ -562,6 +561,20 @@ bool CCharEntity::hasAutoTargetEnabled() const
     return !playerConfig.AutoTargetOffFlg;
 }
 
+auto CCharEntity::heldSlots(const uint8 location) const -> uint8
+{
+    uint8 held = 0;
+    for (const auto& transaction : transactions_)
+    {
+        if (transaction->isOpen())
+        {
+            held += transaction->heldSlots(location);
+        }
+    }
+
+    return held;
+}
+
 auto CCharEntity::isCrafting() const -> bool
 {
     return animation == xi::Animation::Synth || this->activeTransaction<SynthTransaction>();
@@ -754,14 +767,7 @@ auto CCharEntity::getAutomatonAttachment(const uint8 slotid) const -> uint8
 
 auto CCharEntity::hasAutomatonAttachment(const uint8 attachment) const -> bool
 {
-    for (auto&& attachmentid : automatonInfo_.equip.attachments)
-    {
-        if (attachmentid == attachment)
-        {
-            return true;
-        }
-    }
-    return false;
+    return std::ranges::contains(automatonInfo_.equip.attachments, attachment);
 }
 
 auto CCharEntity::getAutomatonElementMax(const uint8 element) const -> uint8
@@ -901,21 +907,18 @@ bool CCharEntity::hasBazaar()
     }
 
     CItemContainer* playerInventory = getStorage(LOC_INVENTORY);
-
-    if (playerInventory)
+    if (!playerInventory)
     {
-        for (uint8 slotID = 1; slotID <= playerInventory->GetSize(); ++slotID)
-        {
-            CItem* PItem = playerInventory->GetItem(slotID);
-
-            if ((PItem != nullptr) && (PItem->getCharPrice() != 0))
-            {
-                return true;
-                break;
-            }
-        }
+        return false;
     }
-    return false;
+
+    const auto* PListedItem = playerInventory->FindItem(
+        [](CItem* PItem)
+        {
+            return PItem->getCharPrice() != 0;
+        });
+
+    return PListedItem != nullptr;
 }
 
 void CCharEntity::SetName(const std::string& name)
@@ -999,7 +1002,30 @@ auto CCharEntity::getEquip(const SLOTTYPE slot) const -> CItemEquipment*
         return nullptr;
     }
 
-    return static_cast<CItemEquipment*>(equipped_[slot]);
+    auto* PItem = equipped_[slot];
+    if (!PItem || !PItem->isType(ITEM_EQUIPMENT))
+    {
+        return nullptr;
+    }
+
+    return static_cast<CItemEquipment*>(PItem);
+}
+
+auto CCharEntity::getLinkshell(const SLOTTYPE slot) const -> CItemLinkshell*
+{
+    if (slot != SLOT_LINK1 && slot != SLOT_LINK2)
+    {
+        ShowWarningFmt("getLinkshell: slot {} is not a linkshell slot", slot);
+        return nullptr;
+    }
+
+    auto* PItem = equipped_[slot];
+    if (!PItem || !PItem->isType(ITEM_LINKSHELL))
+    {
+        return nullptr;
+    }
+
+    return static_cast<CItemLinkshell*>(PItem);
 }
 
 auto CCharEntity::equipLocation(const uint8 equipSlot) const -> Maybe<ItemLocation>
@@ -1085,12 +1111,7 @@ void CCharEntity::RemoveTrust(CTrustEntity* PTrust)
         return;
     }
 
-    // clang-format off
-    auto trustIt = std::find_if(PTrusts.begin(), PTrusts.end(), [PTrust](auto trust)
-    {
-        return PTrust == trust;
-    });
-    // clang-format on
+    auto trustIt = std::ranges::find(PTrusts, PTrust);
 
     if (trustIt != PTrusts.end())
     {
@@ -2235,7 +2256,7 @@ void CCharEntity::OnRaise()
             ratioReturned          = ((GetMLevel() <= 50) ? 0.50f : 0.90f) * static_cast<double>(1 - settings::get<uint8>("map.EXP_RETAIN"));
         }
 
-        addHP(((hpReturned < 1) ? 1 : hpReturned));
+        addHP(std::max<uint16>(hpReturned, 1));
         updatemask |= UPDATE_HP;
 
         loc.zone->PushPacket(this, CHAR_INRANGE_SELF, std::make_unique<GP_SERV_COMMAND_BATTLE2>(action));
@@ -2597,19 +2618,19 @@ void CCharEntity::UpdateMoghancement()
     std::array<uint16, 8> elements = { 0 };
     for (auto containerID : { LOC_MOGSAFE, LOC_MOGSAFE2 })
     {
-        CItemContainer* PContainer = getStorage(containerID);
-        for (int slotID = 1; slotID <= PContainer->GetSize(); ++slotID)
-        {
-            CItem* PItem = PContainer->GetItem(slotID);
-            if (PItem != nullptr && PItem->isType(ITEM_FURNISHING))
+        auto* PContainer = getStorage(containerID);
+        PContainer->ForEachItem(
+            [&](CItem* PItem)
             {
-                CItemFurnishing* PFurniture = static_cast<CItemFurnishing*>(PItem);
-                if (PFurniture->isInstalled() && !PFurniture->getOn2ndFloor())
+                if (PItem->isType(ITEM_FURNISHING))
                 {
-                    elements[PFurniture->getElement() - 1] += PFurniture->getAura();
+                    auto* PFurniture = static_cast<CItemFurnishing*>(PItem);
+                    if (PFurniture->isInstalled() && !PFurniture->getOn2ndFloor())
+                    {
+                        elements[PFurniture->getElement() - 1] += PFurniture->getAura();
+                    }
                 }
-            }
-        }
+            });
     }
 
     // Determine the dominant aura
@@ -2638,26 +2659,26 @@ void CCharEntity::UpdateMoghancement()
     {
         for (auto containerID : { LOC_MOGSAFE, LOC_MOGSAFE2 })
         {
-            CItemContainer* PContainer = getStorage(containerID);
-            for (int slotID = 1; slotID <= PContainer->GetSize(); ++slotID)
-            {
-                CItem* PItem = PContainer->GetItem(slotID);
-                if (PItem != nullptr && PItem->isType(ITEM_FURNISHING))
+            auto* PContainer = getStorage(containerID);
+            PContainer->ForEachItem(
+                [&](CItem* PItem)
                 {
-                    CItemFurnishing* PFurniture = static_cast<CItemFurnishing*>(PItem);
-                    // Highest aura wins, ties broken by highest moghancement id.
-                    if (PFurniture->isInstalled() && !PFurniture->getOn2ndFloor() && PFurniture->getElement() == dominantElement)
+                    if (PItem->isType(ITEM_FURNISHING))
                     {
-                        const uint8  aura         = PFurniture->getAura();
-                        const uint16 moghancement = PFurniture->getMoghancement();
-                        if (aura > bestAura || (aura == bestAura && moghancement > newMoghancementID))
+                        auto* PFurniture = static_cast<CItemFurnishing*>(PItem);
+                        // Highest aura wins, ties broken by highest moghancement id.
+                        if (PFurniture->isInstalled() && !PFurniture->getOn2ndFloor() && PFurniture->getElement() == dominantElement)
                         {
-                            bestAura          = aura;
-                            newMoghancementID = moghancement;
+                            const uint8  aura         = PFurniture->getAura();
+                            const uint16 moghancement = PFurniture->getMoghancement();
+                            if (aura > bestAura || (aura == bestAura && moghancement > newMoghancementID))
+                            {
+                                bestAura          = aura;
+                                newMoghancementID = moghancement;
+                            }
                         }
                     }
-                }
-            }
+                });
         }
     }
 
@@ -2952,7 +2973,7 @@ bool CCharEntity::OnAttackError(CAttackState& state)
 
 bool CCharEntity::isInTriggerArea(uint32 triggerAreaID)
 {
-    return charTriggerAreaIDs.find(triggerAreaID) != charTriggerAreaIDs.end();
+    return charTriggerAreaIDs.contains(triggerAreaID);
 }
 
 void CCharEntity::onTriggerAreaEnter(uint32 triggerAreaID)
@@ -3264,7 +3285,7 @@ void CCharEntity::clearCharVarsWithPrefix(const std::string& prefix)
     auto iter = charVarCache.begin();
     while (iter != charVarCache.end())
     {
-        if (iter->first.rfind(prefix, 0) == 0)
+        if (iter->first.starts_with(prefix))
         {
             iter->second = { 0, 0 };
         }

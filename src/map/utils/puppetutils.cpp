@@ -24,6 +24,7 @@
 #include "charutils.h"
 #include "entities/automaton_entity.h"
 #include "enums/automaton.h"
+#include "enums/msg_basic.h"
 #include "items/item_puppet.h"
 #include "itemutils.h"
 #include "lua/luautils.h"
@@ -533,7 +534,7 @@ auto getSkillCap(const CCharEntity* PChar, const xi::SkillType skill, const uint
         rank = 13 + rank;
     }
 
-    return battleutils::GetMaxSkill(rank, level > 99 ? 99 : level);
+    return battleutils::GetMaxSkill(rank, std::min<uint8>(level, 99));
 }
 
 void TrySkillUP(CAutomatonEntity* PAutomaton, xi::SkillType SkillID, uint8 lvl)
@@ -555,10 +556,7 @@ void TrySkillUP(CAutomatonEntity* PAutomaton, xi::SkillType SkillID, uint8 lvl)
 
         double random = xirand::GetRandomNumber(1.);
 
-        if (SkillUpChance > 0.5)
-        {
-            SkillUpChance = 0.5;
-        }
+        SkillUpChance = std::min(SkillUpChance, 0.5);
 
         SkillUpChance *= ((100.0f + PAutomaton->getMod(xi::Mod::COMBAT_SKILLUP_RATE)) / 100.0f);
 
@@ -608,10 +606,7 @@ void TrySkillUP(CAutomatonEntity* PAutomaton, xi::SkillType SkillID, uint8 lvl)
             if (settings::get<uint8>("map.SKILLUP_AMOUNT_MULTIPLIER") > 1)
             {
                 SkillAmount += static_cast<uint8>(SkillAmount * settings::get<uint8>("map.SKILLUP_AMOUNT_MULTIPLIER"));
-                if (SkillAmount > 9)
-                {
-                    SkillAmount = 9;
-                }
+                SkillAmount = std::min<uint8>(SkillAmount, 9);
             }
 
             if (SkillAmount + CurSkill >= MaxSkill)

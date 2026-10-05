@@ -22,6 +22,7 @@
 #include "attack.h"
 #include "ai/ai_container.h"
 #include "attackround.h"
+#include "common/lua.h"
 #include "data/enums/mob_mod.h"
 #include "entities/automaton_entity.h"
 #include "entities/battle_entity.h"
@@ -29,6 +30,7 @@
 #include "job_points.h"
 #include "status_effect_container.h"
 #include "utils/puppetutils.h"
+#include "zone.h"
 
 CAttack::CAttack(CBattleEntity* attacker, CBattleEntity* defender, PHYSICAL_ATTACK_TYPE type, PHYSICAL_ATTACK_DIRECTION direction, CAttackRound* attackRound)
 : m_attacker(attacker)
@@ -757,10 +759,7 @@ void CAttack::ProcessDamage()
     // TODO: find out proper fSTR calc for low level mobs when your VIT is ridiculously high. It's likely that this is slightly wrong (possibly you'd get more hits for 0 than you should)
     // However, there are legitimate strategies on retail with 1 dmg weapons and negative fSTR ranks that result in all auto attacks hitting for 0 but using enspells for damage so no TP is fed.
     // Absorption isn't possible at this point in the calculation, so zero it.
-    if (m_damage < 0)
-    {
-        m_damage = 0;
-    }
+    m_damage = std::max(m_damage, 0);
 
     // Try skill up.
     if (m_damage > 0)

@@ -25,13 +25,16 @@
 #include "action/interrupts.h"
 #include "ai/ai_container.h"
 #include "enmity_container.h"
+#include "entities/char_entity.h"
 #include "entities/pet_entity.h"
 #include "enums/four_cc.h"
+#include "enums/msg_basic.h"
 #include "packets/s2c/0x028_battle2.h"
 #include "petskill.h"
 #include "status_effect_container.h"
 #include "utils/battleutils.h"
 #include "utils/petutils.h"
+#include "zone.h"
 
 CPetSkillState::CPetSkillState(xi::Badge<CState>, CPetEntity* PEntity, const EntityId& target, uint16 wsid)
 : CState(PEntity, target)
@@ -172,7 +175,7 @@ auto CPetSkillState::Update(const timer::time_point tick) -> bool
                 // Retail: Power is gained for BP use
                 auto levelGained = m_PSkill->isBloodPactRage() ? 3 : 2;
                 power += levelGained;
-                PSummoner->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::AvatarsFavor)->SetPower(power > 11 ? power : 11);
+                PSummoner->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::AvatarsFavor)->SetPower(std::max<uint16>(power, 11));
             }
 
             if (PTarget && m_PEntity->getPetType() == PET_TYPE::AVATAR && (m_PEntity->petID() != PETID_ALEXANDER && m_PEntity->petID() != PETID_ATOMOS))
